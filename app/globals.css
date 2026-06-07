@@ -8,4 +8,25 @@
   .pt-safe {
     padding-top: max(1.5rem, env(safe-area-inset-top));
   }
+
+  .animate-enter-glow {
+    animation: enter-glow 2.2s ease-in-out infinite;
+  }
+}
+
+@keyframes enter-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 22px rgba(255, 0, 140, 0.55),
+      0 0 40px rgba(255, 0, 140, 0.25);
+    border-color: rgba(244, 114, 182, 0.75);
+  }
+
+  50% {
+    box-shadow:
+      0 0 35px rgba(255, 0, 140, 0.95),
+      0 0 65px rgba(255, 0, 140, 0.45);
+    border-color: rgba(244, 114, 182, 1);
+  }
 }

@@ -1,131 +1,90 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { useAudio } from "@/app/context/AudioContext";
 
-const RUNTIME_MS = 10_000;
+const SPLASH_FALLBACK = "/images/awakening-splash.png";
+
+type SplashImageProps = {
+  src: string;
+  className: string;
+  objectPosition?: string;
+};
+
+function SplashImage({ src, className, objectPosition = "center" }: SplashImageProps) {
+  const [currentSrc, setCurrentSrc] = useState(src);
+
+  return (
+    <img
+      src={currentSrc}
+      alt=""
+      aria-hidden="true"
+      className={className}
+      style={{ objectPosition }}
+      onError={() => {
+        if (currentSrc !== SPLASH_FALLBACK) {
+          setCurrentSrc(SPLASH_FALLBACK);
+        }
+      }}
+    />
+  );
+}
 
 export default function AwakeningLaunch() {
   const router = useRouter();
   const { playTrack } = useAudio();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const countdownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const exitingRef = useRef(false);
 
-  const [started, setStarted] = useState(false);
-  const [showEnter, setShowEnter] = useState(false);
-  const [videoMuted, setVideoMuted] = useState(true);
-
-  const clearCountdown = useCallback(() => {
-    if (countdownRef.current !== null) {
-      clearTimeout(countdownRef.current);
-      countdownRef.current = null;
-    }
-  }, []);
-
-  const exitToEmailGate = useCallback(() => {
-    if (exitingRef.current) return;
-    exitingRef.current = true;
-    clearCountdown();
-    router.push("/email-gate");
-  }, [clearCountdown, router]);
-
-  const syncMedia = useCallback(async () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    video.currentTime = 0;
-    setVideoMuted(false);
-
+  const handleEnter = useCallback(async () => {
     try {
-      await Promise.all([playTrack(), video.play()]);
-    } catch {
-      try {
-        await video.play();
-      } catch {
-        /* autoplay may still be blocked until user gesture */
-      }
       await playTrack();
+    } catch {
+      /* gesture consumed; audio may require retry on next tap */
     }
-  }, [playTrack]);
-
-  const handleFirstInteraction = useCallback(() => {
-    if (started) return;
-
-    setStarted(true);
-    setShowEnter(true);
-    void syncMedia();
-
-    countdownRef.current = setTimeout(() => {
-      exitToEmailGate();
-    }, RUNTIME_MS);
-  }, [exitToEmailGate, started, syncMedia]);
-
-  const handleEnterClick = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => {
-      event.stopPropagation();
-      exitToEmailGate();
-    },
-    [exitToEmailGate],
-  );
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    video.muted = true;
-    video.playsInline = true;
-
-    void video.play().catch(() => {
-      /* silent loop until first user tap unlocks full sync */
-    });
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      clearCountdown();
-    };
-  }, [clearCountdown]);
+    router.push("/experience");
+  }, [playTrack, router]);
 
   return (
-    <main className="flex h-screen w-screen items-center justify-center overflow-hidden bg-[#0B090A]">
-      <div className="relative h-full w-full max-w-[420px] overflow-hidden bg-black md:max-h-[85vh] md:rounded-[40px] md:border-8 md:border-zinc-800/80 md:shadow-2xl">
-        <video
-          ref={videoRef}
-          src="/intro-video.mp4"
-          className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover object-center"
-          muted={videoMuted}
-          playsInline
-          autoPlay
-          loop
-          preload="auto"
+    <main className="relative h-dvh min-h-screen w-full overflow-hidden bg-black">
+      <SplashImage
+        src="/images/mobile-splash.png"
+        className="absolute inset-0 h-full w-full object-cover md:hidden"
+        objectPosition="center top"
+      />
+      <SplashImage
+        src="/images/desktop-splash.png"
+        className="absolute inset-0 hidden h-full w-full object-cover md:block"
+        objectPosition="center 42%"
+      />
+
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/20 md:from-black/45 md:via-transparent md:to-black/45 lg:from-black/55 lg:to-black/55"
+      />
+
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-[20%] h-48 w-72 -translate-x-1/2 animate-pulse rounded-full bg-[radial-gradient(circle,rgba(255,0,180,0.35)_0%,rgba(0,220,255,0.12)_45%,transparent_72%)] blur-2xl sm:top-[18%] md:top-[16%] md:h-56 md:w-96"
+      />
+
+      <div className="pointer-events-none absolute left-1/2 top-[14%] z-10 w-[min(82vw,360px)] -translate-x-1/2 sm:top-[12%] md:top-[10%]">
+        <img
+          src="/logo.png"
+          alt="300 Awakening"
+          className="mx-auto w-full drop-shadow-[0_0_40px_rgba(255,0,180,0.75)]"
         />
+      </div>
 
-        {!started && (
-          <button
-            type="button"
-            aria-label="Start experience"
-            onClick={handleFirstInteraction}
-            className="absolute inset-0 z-20 h-full w-full cursor-default border-0 bg-transparent p-0"
-          />
-        )}
-
-        <div className="relative z-10 flex h-full flex-col justify-between p-6 pb-safe">
-          <div aria-hidden="true" />
-
-          {showEnter && (
-            <div className="flex justify-center">
-              <button
-                type="button"
-                onClick={handleEnterClick}
-                className="rounded-full border border-white/25 bg-white/10 px-10 py-3 text-xs font-semibold uppercase tracking-[0.35em] text-white/90 backdrop-blur-sm transition hover:border-white/40 hover:bg-white/15 active:scale-[0.98]"
-              >
-                Enter
-              </button>
-            </div>
-          )}
-        </div>
+      <div className="absolute bottom-[8%] left-1/2 z-20 w-full -translate-x-1/2 px-6 pb-safe">
+        <motion.button
+          type="button"
+          onClick={handleEnter}
+          whileTap={{ scale: 0.97 }}
+          className="animate-enter-glow mx-auto block rounded-full border border-pink-400/80 bg-black/25 px-16 py-5 text-sm font-semibold uppercase tracking-[0.35em] text-white backdrop-blur-sm"
+        >
+          Enter
+        </motion.button>
       </div>
     </main>
   );
