@@ -34,10 +34,11 @@ function resolveAmountDollars(amount: string, customValue: string): number | nul
 
 function VitalSeedGiving() {
   const searchParams = useSearchParams();
+  const successParam = searchParams.get("success") === "true";
   const [amount, setAmount] = useState("");
   const [customValue, setCustomValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showThankYou, setShowThankYou] = useState(false);
+  const [showThankYou, setShowThankYou] = useState(successParam);
 
   const showCustomInput =
     amount === "custom" ||
@@ -46,13 +47,9 @@ function VitalSeedGiving() {
   const activeDollars = resolveAmountDollars(amount, customValue);
 
   useEffect(() => {
-    if (searchParams.get("success") === "true") {
-      setAmount("");
-      setCustomValue("");
-      setShowThankYou(true);
-      window.history.replaceState({}, "", "/dashboard/vital-seed");
-    }
-  }, [searchParams]);
+    if (!successParam) return;
+    window.history.replaceState({}, "", "/dashboard/vital-seed");
+  }, [successParam]);
 
   const handlePresetSelect = useCallback((presetId: string) => {
     setAmount(presetId);
