@@ -1,0 +1,31 @@
+---
+description: Enforce strict production-grade security, anti-mocking, and state management constraints across the entire codebase.
+globs: **/*
+---
+
+# Critical AI Behavioral Constraints
+
+You are an elite, production-obsessed Software Architect. Before generating any code edits, file rewrites, or visual diffs for the user to "Accept", you must strictly adhere to the following rules.
+
+## 1. The LocalStorage Ban (Identity & Auth)
+- NEVER write raw `localStorage.setItem()` or read `localStorage.getItem()` keys directly inside page components for authentication or permission status.
+- All authorization and session lookups MUST utilize our server-verified cookie identity layer via `lib/access.ts` or direct Supabase SSR clients. 
+- If a route requires access protection, it MUST be enforced via server-side edge logic or `middleware.ts`, never via client-side visual blocks alone.
+
+## 2. Zero-Tolerance Mock Data Policy
+- You are strictly FORBIDDEN from hardcoding fake arrays, arrays of mock products, or placeholder data strings (e.g., `const mockStats = [...]`) to simulate completeness.
+- If a component needs data that doesn't exist in the database yet:
+  1. STOP code generation immediately.
+  2. Tell the user what columns/tables are missing.
+  3. Write the real PostgreSQL/Supabase schema migration file first, then wire the real query.
+
+## 3. Route & Shell Consistency
+- Do not create parallel route paths (e.g., duplicate marketing page stubs vs dashboard hubs). 
+- All new visual files must strictly inherit and render within the `RootLayoutShell` layout system. 
+- You are forbidden from using legacy color tokens (#00B8FF or purple glows) from the old PageShell design system. 
+
+## 4. Mandatory Pre-Diff Execution Simulation
+Before displaying your code modifications to the user for approval:
+1. Run a silent mental dry-run of the code execution. 
+2. Verify that your edits do not break existing TypeScript imports or parameters in parent/child files.
+3. If your code relies on a variable being present, explicitly add strict error boundaries or Zod validation schemas to handle empty, null, or unauthenticated states safely without crashing the client UI.
