@@ -89,12 +89,12 @@ export default function AwakeningLaunch() {
   }, [clearCountdown]);
 
   return (
-    <main className="relative h-screen w-screen overflow-hidden bg-black">
-      <div className="relative h-full min-h-full w-full min-w-full overflow-hidden">
+    <main className="flex h-screen w-screen items-center justify-center overflow-hidden bg-[#0B090A]">
+      <div className="relative h-full w-full max-w-[420px] overflow-hidden bg-black md:max-h-[85vh] md:rounded-[40px] md:border-8 md:border-zinc-800/80 md:shadow-2xl">
         <video
           ref={videoRef}
           src="/intro-video.mp4"
-          className="pointer-events-none absolute inset-0 z-0 h-full min-h-full w-full min-w-full object-cover object-center"
+          className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover object-center"
           muted={videoMuted}
           playsInline
           autoPlay
@@ -111,7 +111,7 @@ export default function AwakeningLaunch() {
           />
         )}
 
-        <div className="relative z-10 flex h-full w-full flex-col justify-between p-6 pb-safe">
+        <div className="relative z-10 flex h-full flex-col justify-between p-6 pb-safe">
           <div aria-hidden="true" />
 
           {showEnter && (

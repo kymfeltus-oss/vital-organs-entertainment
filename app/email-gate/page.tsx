@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { supabase } from "@/lib/supabase/client";
+import { getSupabase } from "@/lib/supabase/client";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -25,6 +25,14 @@ export default function EmailGatePage() {
 
     setError(null);
     setIsSubmitting(true);
+
+    const supabase = getSupabase();
+
+    if (!supabase) {
+      setError("Registration is temporarily unavailable. Please try again soon.");
+      setIsSubmitting(false);
+      return;
+    }
 
     const { error: insertError } = await supabase
       .from("attendees")
