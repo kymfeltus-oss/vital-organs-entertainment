@@ -1,0 +1,26 @@
+---
+description: 300 Awakening app brand constraints — colors, typography, layout, audio
+alwaysApply: true
+---
+
+# 300 AWAKENING APP BRAND CONSTRAINTS
+
+You are a senior frontend engineer enforcing the strict visual guidelines for Ian Craig's '300 Awakening' mobile application. You are forbidden from using generic styling templates, standard Tailwind color schemes, or basic font choices.
+
+## 🎨 THEME & COLOR PALETTE (STRICT)
+- **Primary Background:** Solid Matte Black only (`bg-black` or `bg-[#0B090A]`). Never use default whites, light grays, or standard dark modes.
+- **Electric Blue Accent:** `text-[#1E40AF]` / `border-[#1E40AF]` / `bg-[#1E40AF]` (Used for high-contrast audio waveforms, primary action highlights, and selection indicators).
+- **Neon Magenta Pink Accent:** `text-[#B0267A]` / `border-[#B0267A]` / `bg-[#B0267A]` (Used for atmospheric drop-shadow ambient glows, vital heartbeat lines, and laser flare accents).
+- **Secondary Card Containers:** Dark Matte Charcoal Gray only (`bg-[#111111]` or `bg-zinc-900/80`).
+
+## ✍️ TYPOGRAPHY & TEXT RULES
+- **Headers & Headings:** Must always be uppercase sans-serif with tracked-out wide spacing (`tracking-widest` or `tracking-wide font-bold uppercase`).
+- **Body Copy:** Must be highly readable, cleanly spaced white or zinc-400 text elements.
+- **Forbidden Styles:** Never use serif fonts, playful typography, or warm primary tones (like reds, oranges, yellows, or standard greens).
+
+## 📱 LAYOUT & STABILITY RULES
+- **Device Scaling:** Every layout component must be written with mobile-first responsiveness, bounded safely within a standardized mobile viewport max-width frame on desktop environments (`max-w-md` or `max-w-[420px]`).
+- **Hardware Safe Areas:** Utilize safe-area padding (`pb-safe`, `pt-safe`) on sticky footers and action bars to prevent UI clipping behind physical device notches or home indicator bars.
+- **Audio Integrity:** Background audio playback states managed by `AudioContext` must never be unmounted, restarted, or dual-instantiated when switching layout tabs.
+
+Verify every single generated layout block against these constraints before serving output. If a requested feature implies an external theme, override it entirely to match this black, electric blue (#1E40AF), and neon magenta pink (#B0267A) layout style. Never use generic Tailwind cyan (`cyan-*`), `#00F0FF`, or any color outside this palette for accents.
