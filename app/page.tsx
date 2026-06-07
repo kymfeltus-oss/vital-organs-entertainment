@@ -89,12 +89,12 @@ export default function AwakeningLaunch() {
   }, [clearCountdown]);
 
   return (
-    <main className="flex h-screen min-h-screen w-screen items-center justify-center bg-[#0B090A]">
-      <div className="relative h-full w-full max-w-md overflow-hidden md:h-[85vh] md:rounded-3xl md:border md:border-zinc-800/40 md:shadow-2xl">
+    <main className="relative h-screen w-screen overflow-hidden bg-black">
+      <div className="relative h-full min-h-full w-full min-w-full overflow-hidden">
         <video
           ref={videoRef}
           src="/intro-video.mp4"
-          className="absolute top-0 left-0 min-w-full min-h-full w-full h-full object-cover object-center z-0 pointer-events-none"
+          className="pointer-events-none absolute inset-0 z-0 h-full min-h-full w-full min-w-full object-cover object-center"
           muted={videoMuted}
           playsInline
           autoPlay
