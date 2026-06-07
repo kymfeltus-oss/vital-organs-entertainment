@@ -32,3 +32,5 @@ Thumbs.db
 # capacitor native builds (optional - keep source, ignore heavy artifacts if needed)
 # android/app/build/
 # ios/App/Pods/
+
+.vercel
