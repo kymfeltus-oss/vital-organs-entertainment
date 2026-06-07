@@ -1,32 +1,29 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand-blue: #1e40af;
+  --color-brand-pink: #b0267a;
+  --color-brand-black: #0b090a;
+  --color-brand-charcoal: #111111;
+}
+
 @layer utilities {
   .pb-safe {
     padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
   }
-
   .pt-safe {
     padding-top: max(1.5rem, env(safe-area-inset-top));
   }
-
-  .animate-enter-glow {
-    animation: enter-glow 2.2s ease-in-out infinite;
+  .text-brand-blue {
+    color: var(--color-brand-blue);
   }
-}
-
-@keyframes enter-glow {
-  0%,
-  100% {
-    box-shadow:
-      0 0 22px rgba(255, 0, 140, 0.55),
-      0 0 40px rgba(255, 0, 140, 0.25);
-    border-color: rgba(244, 114, 182, 0.75);
+  .text-brand-pink {
+    color: var(--color-brand-pink);
   }
-
-  50% {
-    box-shadow:
-      0 0 35px rgba(255, 0, 140, 0.95),
-      0 0 65px rgba(255, 0, 140, 0.45);
-    border-color: rgba(244, 114, 182, 1);
+  .border-brand-blue {
+    border-color: var(--color-brand-blue);
+  }
+  .border-brand-pink {
+    border-color: var(--color-brand-pink);
   }
 }

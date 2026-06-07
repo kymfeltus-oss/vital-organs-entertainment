@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node scripts/debug-verify-dev.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -17,9 +16,11 @@
     "@supabase/supabase-js": "^2.107.0",
     "@tailwindcss/postcss": "^4.3.0",
     "framer-motion": "^12.40.0",
+    "hls.js": "^1.6.16",
     "next": "^16.2.7",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "stripe": "^22.2.0",
     "tailwindcss": "^4.3.0"
   },
   "devDependencies": {

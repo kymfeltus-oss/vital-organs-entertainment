@@ -5,99 +5,102 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { getSupabase } from "@/lib/supabase/client";
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
 
 export default function EmailGatePage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleJoin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const trimmedEmail = email.trim().toLowerCase();
 
-    if (!EMAIL_PATTERN.test(trimmedEmail)) {
-      setError("Please enter a valid email address.");
+    if (!isValidEmail(trimmedEmail)) {
+      window.alert("Please enter a valid email address.");
       return;
     }
 
-    setError(null);
     setIsSubmitting(true);
 
-    const supabase = getSupabase();
+    try {
+      const supabase = getSupabase();
 
-    if (!supabase) {
-      setError("Registration is temporarily unavailable. Please try again soon.");
+      const { error: attendeeError } = await supabase
+        .from("attendees")
+        .insert([{ email: trimmedEmail }]);
+
+      if (attendeeError && attendeeError.code !== "23505") {
+        throw new Error(attendeeError.message);
+      }
+
+      const { error: orderError } = await supabase.from("orders").insert([
+        {
+          customer_email: trimmedEmail,
+          product_id: "live-pass",
+          selected_size: "N/A",
+          status: "paid",
+          stripe_session_id: `dev_bypass_${Date.now()}`,
+        },
+      ]);
+
+      if (orderError) {
+        throw new Error(orderError.message);
+      }
+
+      localStorage.setItem("awakening_user_email", trimmedEmail);
+      router.push("/dashboard/live");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to complete signup.";
+      window.alert(message);
+    } finally {
       setIsSubmitting(false);
-      return;
     }
-
-    const { error: insertError } = await supabase
-      .from("attendees")
-      .insert([{ email: trimmedEmail }]);
-
-    if (insertError) {
-      setError("Something went wrong. Please try again.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    localStorage.setItem("awakening_user_email", trimmedEmail);
-    router.push("/dashboard/live");
   };
 
   return (
-    <main className="flex h-screen min-h-screen w-screen items-center justify-center bg-[#0B090A]">
-      <div className="relative flex h-full w-full max-w-md flex-col justify-between overflow-hidden p-6 md:h-[85vh] md:rounded-3xl md:border md:border-zinc-800/40 md:shadow-2xl">
-        <section className="flex flex-col items-center pt-safe text-center">
-          <div className="mt-6 flex w-full justify-center">
-            <img
-              src="/logo.png"
-              alt="300 Awakening"
-              className="w-[72vw] max-w-[280px] drop-shadow-[0_0_45px_rgba(255,0,180,0.85)]"
-            />
-          </div>
-
-          <p className="mt-8 max-w-xs text-xs font-bold uppercase leading-relaxed tracking-[0.28em] text-white">
-            A NIGHT OF FAITH. A MOVE OF GOD. A GENERATION AWAKENED.
+    <main className="flex min-h-screen w-full items-center justify-center bg-[#0B090A] px-6 pt-safe pb-safe">
+      <form
+        onSubmit={handleJoin}
+        className="mx-auto flex w-full max-w-md flex-col items-center gap-6"
+      >
+        <header className="text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#1E40AF]">
+            300 Awakening
           </p>
-        </section>
+          <h1 className="mt-4 text-xl font-bold uppercase tracking-widest text-white">
+            Join The Experience
+          </h1>
+          <p className="mt-3 text-sm text-zinc-400">
+            A night of faith. A move of God. A generation awakened.
+          </p>
+        </header>
 
-        <section className="flex flex-1 flex-col items-center justify-center px-1">
-          <form
-            onSubmit={handleSubmit}
-            className="flex w-full max-w-sm flex-col items-center gap-5"
-          >
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="Enter your email address to enter the experience..."
-              autoComplete="email"
-              className="w-full rounded-2xl border border-zinc-700/80 bg-[#121014] px-5 py-4 text-center text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-[#B0267A] focus:ring-1 focus:ring-[#B0267A]"
-            />
+        <input
+          type="email"
+          name="email"
+          autoComplete="email"
+          inputMode="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          disabled={isSubmitting}
+          className="w-full rounded-2xl border border-white/15 bg-[#111111] px-4 py-4 text-center text-sm text-white outline-none focus:border-[#B0267A] focus:ring-1 focus:ring-[#B0267A] disabled:opacity-60"
+        />
 
-            {error && (
-              <p className="text-center text-xs text-[#ff6eb4]" role="alert">
-                {error}
-              </p>
-            )}
-
-            <motion.button
-              type="submit"
-              disabled={isSubmitting}
-              whileTap={{ scale: 0.98 }}
-              className="w-full rounded-2xl bg-gradient-to-b from-cyan-400 to-purple-600 px-6 py-5 text-sm font-black uppercase tracking-[0.12em] text-white shadow-[0_0_35px_rgba(0,220,255,0.35)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSubmitting ? "JOINING..." : "JOIN THE EXPERIENCE 🙌"}
-            </motion.button>
-          </form>
-        </section>
-
-        <div aria-hidden="true" className="pb-safe" />
-      </div>
+        <motion.button
+          type="submit"
+          whileTap={{ scale: 0.98 }}
+          disabled={isSubmitting}
+          className="w-full rounded-2xl bg-gradient-to-r from-[#1E40AF] to-[#B0267A] px-6 py-5 text-sm font-bold uppercase tracking-[0.14em] text-white shadow-[0_0_35px_rgba(176,38,122,0.45)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isSubmitting ? "Unlocking Access..." : "Join The Experience 🙌"}
+        </motion.button>
+      </form>
     </main>
   );
 }

@@ -1,5 +1,6 @@
 {
   "appId": "com.iancraig.awakening",
   "appName": "Awakening",
-  "webDir": "out"
+  "webDir": "out",
+  "bundledWebRuntime": false
 }

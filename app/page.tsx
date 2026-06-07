@@ -1,91 +1,138 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { useAudio } from "@/app/context/AudioContext";
 
-const SPLASH_FALLBACK = "/images/awakening-splash.png";
-
-type SplashImageProps = {
-  src: string;
-  className: string;
-  objectPosition?: string;
-};
-
-function SplashImage({ src, className, objectPosition = "center" }: SplashImageProps) {
-  const [currentSrc, setCurrentSrc] = useState(src);
-
-  return (
-    <img
-      src={currentSrc}
-      alt=""
-      aria-hidden="true"
-      className={className}
-      style={{ objectPosition }}
-      onError={() => {
-        if (currentSrc !== SPLASH_FALLBACK) {
-          setCurrentSrc(SPLASH_FALLBACK);
-        }
-      }}
-    />
-  );
-}
+const AUDIO_SRC = "/audio/Video%20Project%206.m4a";
+const PLAYBACK_RATE = 0.9;
+const ENTER_REVEAL_MS = 1_500;
+const VIDEO_FALLBACK_MS = 12_000;
 
 export default function AwakeningLaunch() {
   const router = useRouter();
-  const { playTrack } = useAudio();
+  const fallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const exitingRef = useRef(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-  const handleEnter = useCallback(async () => {
-    try {
-      await playTrack();
-    } catch {
-      /* gesture consumed; audio may require retry on next tap */
+  const [showEnter, setShowEnter] = useState(false);
+
+  const routeToDestination = useCallback(() => {
+    if (exitingRef.current) return;
+    exitingRef.current = true;
+
+    if (fallbackRef.current !== null) {
+      clearTimeout(fallbackRef.current);
+      fallbackRef.current = null;
     }
-    router.push("/experience");
-  }, [playTrack, router]);
+
+    audioRef.current?.pause();
+
+    const savedEmail = localStorage.getItem("awakening_user_email");
+
+    if (savedEmail) {
+      router.replace("/dashboard/live");
+    } else {
+      router.replace("/email-gate");
+    }
+  }, [router]);
+
+  const startIntroAudio = useCallback(async () => {
+    const audio = audioRef.current;
+    if (!audio || !audio.paused) return;
+
+    try {
+      audio.volume = 0.85;
+      audio.playbackRate = PLAYBACK_RATE;
+      await audio.play();
+    } catch {
+      /* Autoplay blocked — retried on first tap */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = PLAYBACK_RATE;
+    }
+
+    void startIntroAudio();
+
+    const enterRevealTimer = setTimeout(() => setShowEnter(true), ENTER_REVEAL_MS);
+    fallbackRef.current = setTimeout(routeToDestination, VIDEO_FALLBACK_MS);
+
+    return () => {
+      clearTimeout(enterRevealTimer);
+
+      if (fallbackRef.current !== null) {
+        clearTimeout(fallbackRef.current);
+      }
+    };
+  }, [routeToDestination, startIntroAudio]);
+
+  const applyVideoPlaybackRate = useCallback(() => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = PLAYBACK_RATE;
+    }
+  }, []);
+
+  const applyAudioPlaybackRate = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = PLAYBACK_RATE;
+    }
+  }, []);
+
+  const handleVideoEnded = useCallback(() => {
+    routeToDestination();
+  }, [routeToDestination]);
+
+  const handleScreenTap = useCallback(() => {
+    void startIntroAudio();
+  }, [startIntroAudio]);
+
+  const handleEnter = useCallback(() => {
+    routeToDestination();
+  }, [routeToDestination]);
 
   return (
-    <main className="relative h-dvh min-h-screen w-full overflow-hidden bg-black">
-      <SplashImage
-        src="/images/mobile-splash.png"
-        className="absolute inset-0 h-full w-full object-cover md:hidden"
-        objectPosition="center top"
-      />
-      <SplashImage
-        src="/images/desktop-splash.png"
-        className="absolute inset-0 hidden h-full w-full object-cover md:block"
-        objectPosition="center 42%"
-      />
-
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/20 md:from-black/45 md:via-transparent md:to-black/45 lg:from-black/55 lg:to-black/55"
+    <main className="fixed inset-0 z-0 flex h-[100dvh] w-screen items-center justify-center overflow-hidden bg-black">
+      <video
+        ref={videoRef}
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
+        src="/intro-video.mp4"
+        autoPlay
+        muted
+        playsInline
+        onLoadedMetadata={applyVideoPlaybackRate}
+        onEnded={handleVideoEnded}
       />
 
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-[20%] h-48 w-72 -translate-x-1/2 animate-pulse rounded-full bg-[radial-gradient(circle,rgba(255,0,180,0.35)_0%,rgba(0,220,255,0.12)_45%,transparent_72%)] blur-2xl sm:top-[18%] md:top-[16%] md:h-56 md:w-96"
+      <audio
+        ref={audioRef}
+        src={AUDIO_SRC}
+        loop
+        preload="auto"
+        autoPlay
+        onLoadedMetadata={applyAudioPlaybackRate}
+        className="hidden"
       />
 
-      <div className="pointer-events-none absolute left-1/2 top-[14%] z-10 w-[min(82vw,360px)] -translate-x-1/2 sm:top-[12%] md:top-[10%]">
-        <img
-          src="/logo.png"
-          alt="300 Awakening"
-          className="mx-auto w-full drop-shadow-[0_0_40px_rgba(255,0,180,0.75)]"
-        />
-      </div>
+      <button
+        type="button"
+        aria-label="Tap to start intro audio if blocked"
+        onClick={handleScreenTap}
+        className="absolute inset-0 z-10 h-full w-full cursor-pointer"
+      />
 
-      <div className="absolute bottom-[8%] left-1/2 z-20 w-full -translate-x-1/2 px-6 pb-safe">
-        <motion.button
-          type="button"
-          onClick={handleEnter}
-          whileTap={{ scale: 0.97 }}
-          className="animate-enter-glow mx-auto block rounded-full border border-pink-400/80 bg-black/25 px-16 py-5 text-sm font-semibold uppercase tracking-[0.35em] text-white backdrop-blur-sm"
-        >
-          Enter
-        </motion.button>
-      </div>
+      {showEnter && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-6 pb-[12%] pb-safe">
+          <button
+            type="button"
+            aria-label="Enter the experience"
+            onClick={handleEnter}
+            className="pointer-events-auto h-16 w-full max-w-[280px] rounded-full opacity-0"
+          />
+        </div>
+      )}
     </main>
   );
 }

@@ -1,17 +1,17 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 let supabaseClient: SupabaseClient | null = null;
 
-export function getSupabase(): SupabaseClient | null {
+export function getSupabase(): SupabaseClient {
   if (supabaseClient) return supabaseClient;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return null;
+  if (!url || !anonKey) {
+    throw new Error("Supabase client credentials are not configured.");
   }
 
-  supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+  supabaseClient = createClient(url, anonKey);
   return supabaseClient;
 }
