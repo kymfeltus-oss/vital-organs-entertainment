@@ -1,41 +1,54 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { motion } from "framer-motion";
+import { fetchAccessContext } from "@/lib/access";
 
-const AUDIO_SRC = "/audio/Video%20Project%206.m4a";
+const INTRO_VIDEO_SRC = "/intro-video.mp4";
+const INTRO_AUDIO_SRC = "/audio/Video%20Project%206.m4a";
+const ENTRY_DURATION_MS = 12_000;
 const PLAYBACK_RATE = 0.9;
-const ENTER_REVEAL_MS = 1_500;
-const VIDEO_FALLBACK_MS = 12_000;
 
-export default function AwakeningLaunch() {
+function resolveNextPath(rawNext: string | null): string {
+  if (!rawNext || !rawNext.startsWith("/") || rawNext.startsWith("//")) {
+    return "/dashboard/live";
+  }
+  return rawNext;
+}
+
+function buildEmailGateHref(searchParams: URLSearchParams): string {
+  const next = searchParams.get("next");
+  if (!next || !next.startsWith("/") || next.startsWith("//")) {
+    return "/email-gate";
+  }
+  return `/email-gate?next=${encodeURIComponent(next)}`;
+}
+
+function EntryPageContent() {
   const router = useRouter();
-  const fallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const exitingRef = useRef(false);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const searchParams = useSearchParams();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const redirectedRef = useRef(false);
 
-  const [showEnter, setShowEnter] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+  const [progress, setProgress] = useState(0);
 
-  const routeToDestination = useCallback(() => {
-    if (exitingRef.current) return;
-    exitingRef.current = true;
+  const handleIntroComplete = useCallback(() => {
+    if (redirectedRef.current) return;
+    redirectedRef.current = true;
 
-    if (fallbackRef.current !== null) {
-      clearTimeout(fallbackRef.current);
-      fallbackRef.current = null;
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
     }
 
     audioRef.current?.pause();
-
-    const savedEmail = localStorage.getItem("awakening_user_email");
-
-    if (savedEmail) {
-      router.replace("/dashboard/live");
-    } else {
-      router.replace("/email-gate");
-    }
-  }, [router]);
+    videoRef.current?.pause();
+    router.push(buildEmailGateHref(searchParams));
+  }, [router, searchParams]);
 
   const startIntroAudio = useCallback(async () => {
     const audio = audioRef.current;
@@ -46,28 +59,56 @@ export default function AwakeningLaunch() {
       audio.playbackRate = PLAYBACK_RATE;
       await audio.play();
     } catch {
-      /* Autoplay blocked — retried on first tap */
+      /* Autoplay may be blocked until user interaction */
     }
   }, []);
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.playbackRate = PLAYBACK_RATE;
+    let cancelled = false;
+
+    async function checkSession() {
+      const context = await fetchAccessContext();
+
+      if (cancelled) return;
+
+      if (context.userId) {
+        redirectedRef.current = true;
+        router.push(resolveNextPath(searchParams.get("next")));
+        return;
+      }
+
+      setIsChecking(false);
+      void startIntroAudio();
+
+      const startedAt = performance.now();
+
+      const tick = (now: number) => {
+        if (redirectedRef.current || cancelled) return;
+
+        const elapsed = now - startedAt;
+        const nextProgress = Math.min(100, (elapsed / ENTRY_DURATION_MS) * 100);
+        setProgress(nextProgress);
+
+        if (elapsed >= ENTRY_DURATION_MS) {
+          handleIntroComplete();
+          return;
+        }
+
+        rafRef.current = requestAnimationFrame(tick);
+      };
+
+      rafRef.current = requestAnimationFrame(tick);
     }
 
-    void startIntroAudio();
-
-    const enterRevealTimer = setTimeout(() => setShowEnter(true), ENTER_REVEAL_MS);
-    fallbackRef.current = setTimeout(routeToDestination, VIDEO_FALLBACK_MS);
+    void checkSession();
 
     return () => {
-      clearTimeout(enterRevealTimer);
-
-      if (fallbackRef.current !== null) {
-        clearTimeout(fallbackRef.current);
+      cancelled = true;
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
       }
     };
-  }, [routeToDestination, startIntroAudio]);
+  }, [handleIntroComplete, router, searchParams, startIntroAudio]);
 
   const applyVideoPlaybackRate = useCallback(() => {
     if (videoRef.current) {
@@ -81,58 +122,78 @@ export default function AwakeningLaunch() {
     }
   }, []);
 
-  const handleVideoEnded = useCallback(() => {
-    routeToDestination();
-  }, [routeToDestination]);
-
-  const handleScreenTap = useCallback(() => {
-    void startIntroAudio();
-  }, [startIntroAudio]);
-
-  const handleEnter = useCallback(() => {
-    routeToDestination();
-  }, [routeToDestination]);
+  if (isChecking) {
+    return (
+      <div className="flex h-dvh w-screen items-center justify-center bg-zinc-950" />
+    );
+  }
 
   return (
-    <main className="fixed inset-0 z-0 flex h-[100dvh] w-screen items-center justify-center overflow-hidden bg-black">
+    <div className="relative h-dvh w-screen overflow-hidden bg-zinc-950">
       <video
         ref={videoRef}
-        className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
-        src="/intro-video.mp4"
+        className="absolute inset-0 h-full w-full object-cover object-center"
+        src={INTRO_VIDEO_SRC}
         autoPlay
         muted
         playsInline
         onLoadedMetadata={applyVideoPlaybackRate}
-        onEnded={handleVideoEnded}
+        onEnded={handleIntroComplete}
+      />
+
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/20 to-zinc-950/50"
       />
 
       <audio
         ref={audioRef}
-        src={AUDIO_SRC}
+        src={INTRO_AUDIO_SRC}
         loop
         preload="auto"
-        autoPlay
         onLoadedMetadata={applyAudioPlaybackRate}
         className="hidden"
       />
 
       <button
         type="button"
-        aria-label="Tap to start intro audio if blocked"
-        onClick={handleScreenTap}
-        className="absolute inset-0 z-10 h-full w-full cursor-pointer"
+        aria-label="Tap to enable intro audio"
+        onClick={() => void startIntroAudio()}
+        className="absolute inset-0 z-10"
       />
 
-      {showEnter && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-6 pb-[12%] pb-safe">
-          <button
-            type="button"
-            aria-label="Enter the experience"
-            onClick={handleEnter}
-            className="pointer-events-auto h-16 w-full max-w-[280px] rounded-full opacity-0"
-          />
+      <div className="absolute inset-x-0 bottom-0 z-20 flex flex-col gap-4 px-6 pb-safe">
+        <div className="w-full">
+          <div className="h-1 overflow-hidden rounded-full bg-zinc-800">
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-[#1E40AF] to-[#B0267A]"
+              style={{ width: `${progress}%` }}
+              transition={{ duration: 0.1, ease: "linear" }}
+            />
+          </div>
         </div>
-      )}
-    </main>
+
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.98 }}
+          onClick={handleIntroComplete}
+          className="mb-4 w-full rounded-2xl bg-gradient-to-r from-[#1E40AF] to-[#B0267A] px-6 py-4 text-sm font-bold uppercase tracking-[0.14em] text-white shadow-[0_0_35px_rgba(176,38,122,0.45)]"
+        >
+          Enter Hub
+        </motion.button>
+      </div>
+    </div>
+  );
+}
+
+export default function EntryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-dvh w-screen items-center justify-center bg-zinc-950" />
+      }
+    >
+      <EntryPageContent />
+    </Suspense>
   );
 }

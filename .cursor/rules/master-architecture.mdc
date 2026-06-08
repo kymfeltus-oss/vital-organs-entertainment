@@ -1,0 +1,52 @@
+---
+description: Master architecture — fluid responsive layout, routing shells, identity & access
+globs: app/**/*.{tsx,css},components/**/*.tsx,lib/**/*.ts
+alwaysApply: true
+---
+
+# Master Architecture: Automatic Responsive Fluidity
+
+## 1. Global layout mandate
+
+- Absolute fluid scaling across all viewports.
+- **NEVER** use artificial width clamping (`max-w-md`, `max-w-[430px]`) on main page wrappers or shell elements.
+- Eliminate all desktop smartphone-shell emulation, letterboxing, and empty black framing margins.
+- **Mobile:** compact, thumb-scrollable vertical stacks.
+- **Desktop/laptop:** stretch edge-to-edge; convert vertical layouts into multi-column layouts using Tailwind grids (`grid md:grid-cols-12`, `grid-cols-1 md:grid-cols-2 lg:grid-cols-3`).
+- Use `flex-col md:flex-row` for split panels (video + chat + stats, toolbars, side menus).
+
+## 2. Directory routing & shell system
+
+- Next.js App Router: `app/layout.tsx` (root), `app/page.tsx` (intro), route segments per feature.
+- Shell components: `@/components/AppShell`, tokens in `lib/responsive.ts`, utilities in `app/globals.css`.
+- **Navigation** (`@/components/BottomNav`) transforms by breakpoint:
+  - **Mobile (`< md`):** sticky bottom horizontal tab bar.
+  - **Desktop (`>= md`):** sticky left vertical sidebar (`w-20`). Content uses `CONTENT_WITH_NAV` from `lib/responsive.ts` (`pb-32 md:pb-0 md:pl-20`).
+- Pages with nav: wrap content in `CONTENT_WITH_NAV` or use `PageShell`.
+
+## 3. Storage & state context
+
+| Key / table | Purpose |
+|-------------|---------|
+| `localStorage.awakening_user_email` | Client identity — set at email gate, read across checkout & live access |
+| Supabase `orders` | Ticket gate — `product_id: 'live-pass'`, `status: 'paid'` unlocks live room |
+| Supabase `attendees` | Email list from signup |
+| `dev_bypass_*` stripe_session_id | Guest/dev entry — email gate grants paid `live-pass` without Stripe |
+
+Access helpers live in `lib/access.ts`. Do not scatter raw `localStorage` key strings across components.
+
+## 3b. Live routing split (attendee vs operator)
+
+| Surface | Route | Audience | Scope |
+|---------|-------|----------|-------|
+| Attendee live room | `/dashboard/live` | Pass holders / guests after email gate | Pre-live lobby, player, chat, emotes, seeds, harvest — **mobile-friendly** |
+| Operator production console | `/ops/live-hub` | Ops admins only (`requireOpsAdminUser`) | vMix, Restream, readiness, safety, timeline, Go Live — **desktop-only** |
+
+- `app/dashboard/live/*`, `components/live/*`, `lib/live/*` — attendee-facing only. No vMix/Restream/ops controls.
+- `app/ops/live-hub/*`, `components/live-hub/*`, `lib/live-hub/*`, `app/api/ops/live-hub/*` — operator production features only.
+
+## 4. Forbidden (layout)
+
+- Phone-frame shells, 430px clamps, desktop letterboxing
+- Infinite single-column stacking on wide viewports when a grid fits
+- Hardcoded `w-[375px]` page wrappers

@@ -1,0 +1,82 @@
+---
+description: Global responsive experience system — absolute fluid scaling for 300 Awakening
+globs: app/**/*.{tsx,css},components/**/*.tsx,lib/**/*.ts
+alwaysApply: true
+---
+
+# Responsive Experience System (300 Awakening)
+
+**Permanent project rule.** Applies to every page, component, layout, modal, splash, dashboard, and future feature. See also `master-architecture.mdc` for routing, identity, and access rules.
+
+## Core mandate: automatic fit
+
+- **No artificial boundaries:** Never clamp primary page layouts, containers, or shells with fixed phone widths (`max-w-md`, `max-w-[430px]`, etc.) on desktop.
+- **Fluid adaptability:** Layouts must scale and refactor with viewport width — use every pixel on large displays, stay packed on mobile.
+- **Grid over stacking:** Convert mobile single-column flows into responsive grids (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`) or split columns as viewports expand.
+- **No desktop letterboxing:** Never frame content inside simulated phone layouts with empty side margins.
+
+## Supported range
+
+320px phones → fold → tablets → iPad → laptops → desktop → ultrawide → 4K. Test at: **320, 375, 390, 414, 768, 1024, 1280, 1440, 1920, 2560**.
+
+## Layout architecture
+
+- **Mobile-first** with Tailwind breakpoints (`sm`, `md`, `lg`, `xl`, `2xl`)
+- **`min-h-dvh` / `h-dvh`** — never bare `100vh` on full-screen pages
+- **`pt-safe` / `pb-safe`** on page roots (viewportFit: cover in root layout)
+- **Flexbox / Grid** for primary flow — no absolute positioning for main content
+- **Flex direction inversion:** `flex-col md:flex-row` for toolbars, chats, side panels
+- **No horizontal overflow** on `body` at 320px
+- **Fluid spacing:** `clamp()`, `gap-[clamp(...)]`, `px-[clamp(...)]`
+
+## App shells
+
+Import from `@/components/AppShell` and `lib/responsive.ts`. Shells are **fully fluid** — no phone-frame caps.
+
+| Shell | Use case | Constraint |
+|-------|----------|------------|
+| `mobile` | Standard pages | `w-full px-4` edge-to-edge |
+| `wide` | Dashboards, grids, live hub | `w-full px-6` edge-to-edge |
+| `full` | Maximum bleed layouts | `w-full px-8` edge-to-edge |
+
+Use `PAGE_GRID` (`grid md:grid-cols-12`) for desktop multi-column layouts. Never hardcode phone-width page wrappers.
+
+## Navigation
+
+`BottomNav` morphs by breakpoint:
+
+- **Mobile/tablet (`< md`):** Fixed bottom horizontal bar — content uses `pb-32` (or `CONTENT_WITH_NAV`)
+- **Desktop (`>= md`):** Fixed left vertical sidebar (`w-20`) — content uses `md:pl-20 md:pb-0`
+
+## Typography (fluid)
+
+Use `clamp(min, preferred, max)` or fluid utility classes (`.text-fluid-hero`, `.text-fluid-section`, etc.).
+
+## Cards & grids
+
+- Use `.card-grid-responsive` or `CARD_GRID_DASHBOARD` from `lib/responsive.ts`
+- Reflow: **1 col** → **2 col** → **3 col** → **4+ col** as viewport grows
+
+## Buttons & touch
+
+- Minimum **44×44px** touch targets (`.touch-target`)
+
+## Animation & performance
+
+- Target **60fps** — `transform`, `opacity`, `requestAnimationFrame`
+- **`prefers-reduced-motion`:** disable or simplify animations
+
+## Forbidden
+
+- Phone-frame shells or 430px desktop clamps
+- Large empty black margins simulating a device bezel
+- Infinite vertical stacking on desktop when a grid or split column fits
+- Fixed pixel page widths (`w-[375px]`) for primary layout
+
+## Before shipping UI
+
+1. No horizontal scroll at 320px
+2. Safe areas respected on mobile
+3. Desktop fills available width intelligently (grid/split, not letterboxed phone)
+4. Tap targets ≥ 44px
+5. `prefers-reduced-motion` respected where animations run

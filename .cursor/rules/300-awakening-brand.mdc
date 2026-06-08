@@ -19,7 +19,7 @@ You are a senior frontend engineer enforcing the strict visual guidelines for Ia
 - **Forbidden Styles:** Never use serif fonts, playful typography, or warm primary tones (like reds, oranges, yellows, or standard greens).
 
 ## 📱 LAYOUT & STABILITY RULES
-- **Device Scaling:** Every layout component must be written with mobile-first responsiveness, bounded safely within a standardized mobile viewport max-width frame on desktop environments (`max-w-md` or `max-w-[420px]`).
+- **Fluid scaling:** Mobile-first responsive layouts that stretch edge-to-edge on desktop — see `master-architecture.mdc`. Never clamp main wrappers to phone widths on large screens.
 - **Hardware Safe Areas:** Utilize safe-area padding (`pb-safe`, `pt-safe`) on sticky footers and action bars to prevent UI clipping behind physical device notches or home indicator bars.
 - **Audio Integrity:** Background audio playback states managed by `AudioContext` must never be unmounted, restarted, or dual-instantiated when switching layout tabs.
 

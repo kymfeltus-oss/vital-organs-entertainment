@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 @theme {
   --color-brand-blue: #1e40af;
   --color-brand-pink: #b0267a;
@@ -26,4 +31,214 @@
   .border-brand-pink {
     border-color: var(--color-brand-pink);
   }
+  .glass-panel {
+    background: linear-gradient(
+      135deg,
+      rgba(17, 17, 17, 0.72) 0%,
+      rgba(11, 9, 10, 0.55) 100%
+    );
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  /* ── Responsive experience system ── */
+  .app-shell-root {
+    width: 100%;
+    min-height: 100dvh;
+  }
+
+  .app-shell {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: auto;
+    container-type: inline-size;
+    container-name: appshell;
+  }
+  .app-shell-wide {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: auto;
+    container-type: inline-size;
+    container-name: appshell;
+  }
+  .app-shell-full {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: auto;
+    container-type: inline-size;
+    container-name: appshell;
+  }
+
+  /* Fluid shells — full viewport, no phone-frame clamps */
+  @media (min-width: 768px) {
+    .app-shell,
+    .app-shell-wide,
+    .app-shell-full {
+      max-width: 100% !important;
+      width: 100%;
+      margin-block: 0;
+      min-height: 100dvh;
+      border-radius: 0;
+      border: none;
+      box-shadow: none;
+      padding: 1.5rem;
+    }
+  }
+
+  /* Mobile-native scale — full width */
+  @media (max-width: 767px) {
+    .w-logo {
+      width: min(150px, 38vw);
+      max-width: 160px;
+      height: auto;
+    }
+    .text-fluid-hero {
+      font-size: 1.25rem;
+      line-height: 1.15;
+    }
+    .text-fluid-section {
+      font-size: 0.875rem;
+    }
+    .text-fluid-body {
+      font-size: 0.875rem;
+    }
+    .text-fluid-label {
+      font-size: 0.625rem;
+    }
+    .text-fluid-countdown {
+      font-size: 1.25rem;
+    }
+    .h-fluid-hero {
+      min-height: 220px;
+      height: 230px;
+    }
+    .size-play-btn {
+      width: 3.75rem;
+      height: 3.75rem;
+    }
+    .px-fluid-page {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+  }
+
+  @container appshell (min-width: 0) {
+    .w-logo {
+      width: clamp(130px, 36cqi, 160px);
+      height: auto;
+    }
+    .text-fluid-hero {
+      font-size: clamp(1.125rem, 6cqi, 1.5rem);
+    }
+    .text-fluid-section {
+      font-size: clamp(0.8125rem, 3.8cqi, 1rem);
+    }
+    .text-fluid-body {
+      font-size: clamp(0.8125rem, 3.2cqi, 1rem);
+    }
+    .text-fluid-label {
+      font-size: clamp(0.5625rem, 2.5cqi, 0.6875rem);
+    }
+    .text-fluid-countdown {
+      font-size: clamp(1.0625rem, 5.2cqi, 1.375rem);
+    }
+    .h-fluid-hero {
+      min-height: clamp(210px, 54cqi, 240px);
+      height: clamp(220px, 54cqi, 240px);
+    }
+    .size-play-btn {
+      width: clamp(3.25rem, 15cqi, 4rem);
+      height: clamp(3.25rem, 15cqi, 4rem);
+    }
+    .px-fluid-page {
+      padding-left: clamp(0.875rem, 3.8cqi, 1.125rem);
+      padding-right: clamp(0.875rem, 3.8cqi, 1.125rem);
+    }
+  }
+
+  @supports not (container-type: inline-size) {
+    .w-logo {
+      width: min(150px, 38vw);
+      height: auto;
+    }
+    .text-fluid-hero {
+      font-size: 1.25rem;
+    }
+    .text-fluid-section {
+      font-size: 0.875rem;
+    }
+    .text-fluid-body {
+      font-size: 0.875rem;
+    }
+    .text-fluid-label {
+      font-size: 0.625rem;
+    }
+    .text-fluid-countdown {
+      font-size: 1.25rem;
+    }
+    .h-fluid-hero {
+      min-height: 220px;
+      height: 230px;
+    }
+    .size-play-btn {
+      width: 3.75rem;
+      height: 3.75rem;
+    }
+    .px-fluid-page {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+  }
+
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .card-grid-responsive {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: clamp(0.5rem, 2vw, 1rem);
+  }
+  @media (min-width: 480px) {
+    .card-grid-responsive {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 768px) {
+    .card-grid-responsive {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 1280px) {
+    .card-grid-responsive {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .motion-safe {
+      animation: none !important;
+      transition: none !important;
+    }
+    .live-waveform-bar {
+      animation: none !important;
+      height: 35%;
+    }
+  }
+}
+
+@keyframes live-waveform-pulse {
+  0%,
+  100% {
+    height: 18%;
+  }
+  50% {
+    height: 55%;
+  }
+}
+
+.live-waveform-bar {
+  height: 18%;
+  animation: live-waveform-pulse 1.2s ease-in-out infinite;
 }

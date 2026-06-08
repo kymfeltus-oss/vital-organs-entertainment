@@ -1,0 +1,24 @@
+---
+description: Automatically audit all generated code for Next.js compilation safety, framework compliance, and structural integrity before finishing.
+globs: app/**/*, components/**/*
+---
+
+# Pre-Delivery Quality Assurance Framework
+
+Before concluding any code generation task or presenting code modifications to the user for approval, you must act as a strict Quality Assurance Auditor and verify compliance against this checklist.
+
+## 1. Next.js App Router Compilation Guardrails
+- **The Suspense Check:** If you introduce or modify any client component that invokes navigation hooks (specifically `useSearchParams()`), you MUST explicitly wrap that component or its parent export within a genuine Next.js `<Suspense>` boundary. Failing to do so will break static generation production builds.
+- **Dynamic Routing Safety:** Verify that all navigation routing calls use correct Next.js hooks (`useRouter`, `usePathname`) and follow exact canonical app paths without triggering double-redirect loops.
+
+## 2. Code Cleanliness & State Verification
+- **Legacy Purge Validation:** Cross-reference your output against `architecture-safety.mdc`. Double-check that no stray, legacy, or fallback client-side storage keys (like raw `localStorage`) were left inside form components or event handlers.
+- **Placeholder Ban:** Ensure absolutely no mock arrays, hardcoded placeholder strings, or `TODO` shortcuts exist in the code delivered to the user.
+
+## 3. Post-Generation Self-Audit Output
+Whenever you complete a file modification or rewrite, append a brief, 3-bullet summary at the very end of your chat response confirming your self-audit results:
+1. **[Framework Safety]:** State whether the `<Suspense>` / navigation compilation guard passed.
+2. **[State Safety]:** Confirm that all storage and identity models comply with server-cookie mandates.
+3. **[Destinations]:** Confirm that all fallback routes map to canonical endpoints (e.g., `/dashboard/live`).
+
+If you detect a compliance failure during your internal review, immediately refactor the code silently BEFORE showing the final output to the user.

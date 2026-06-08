@@ -1,32 +1,89 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import {
+  getEventTicketTier,
+  getMerchCheckoutPaths,
+  getMerchPriceCents,
+  getMerchProduct,
+  isEventTicketTierId,
+  isValidMerchSize,
+  resolveMerchLineItemName,
+} from "@/lib/merch/catalog";
+import {
+  getAppUrl,
+  getStripeSecretKey,
+  resolveAuthenticatedBuyer,
+} from "@/lib/checkout/server";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 type MerchCheckoutBody = {
   productId?: string;
   selectedSize?: string | null;
-  customerEmail?: string;
 };
 
-type InventoryItem = {
-  name: string;
+type ResolvedCheckoutLineItem = {
+  lineItemName: string;
+  description: string;
   amountCents: number;
   requiresSize: boolean;
 };
 
-const CLOTHING_SIZES = new Set(["S", "M", "L", "XL", "2XL"]);
+function resolveCheckoutLineItem(
+  productId: string,
+  selectedSize: string,
+): ResolvedCheckoutLineItem | null {
+  if (isEventTicketTierId(productId)) {
+    const ticketTier = getEventTicketTier(productId);
 
-function getAppUrl(request: NextRequest): string {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL ??
-    request.headers.get("origin") ??
-    "http://localhost:3000"
-  );
+    if (!ticketTier?.hasAccess) {
+      return null;
+    }
+
+    const seedLabel =
+      ticketTier.seedBonus > 0
+        ? ` Includes ${ticketTier.seedBonus.toLocaleString("en-US")} Vital Seeds.`
+        : "";
+
+    return {
+      lineItemName: ticketTier.name,
+      description: `300 Awakening virtual concert stream access.${seedLabel}`,
+      amountCents: ticketTier.priceInCents,
+      requiresSize: false,
+    };
+  }
+
+  const product = getMerchProduct(productId);
+
+  if (!product) {
+    return null;
+  }
+
+  return {
+    lineItemName: resolveMerchLineItemName(product, selectedSize),
+    description: product.description,
+    amountCents: getMerchPriceCents(product),
+    requiresSize: product.requiresSize,
+  };
 }
 
+/**
+ * Merch + event ticket + live-pass checkout.
+ *
+ * Security model:
+ * - Buyer identity (email, user_id) is resolved ONLY from verified Supabase session cookies.
+ * - Request body accepts productId + selectedSize only — never customerEmail or identity fields.
+ * - Prices are read from lib/merch/catalog.ts (server source of truth).
+ * - Stripe session metadata is stamped server-side for tamper-proof webhook reconciliation.
+ *
+ * Webhook follow-up (app/api/webhooks/stripe/route.ts):
+ * - On checkout.session.completed, reconcile orders by stripe_session_id (Stripe-signed).
+ * - Read session.client_reference_id and session.metadata.user_id / metadata.email
+ *   for audit cross-checks — never trust any client-supplied email at webhook time.
+ * - attendees rows are provisioned via auth signup (handle_new_user trigger), not checkout.
+ */
 export async function POST(request: NextRequest) {
   try {
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    const stripeSecretKey = getStripeSecretKey();
 
     if (!stripeSecretKey) {
       return NextResponse.json(
@@ -35,94 +92,64 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const auth = await resolveAuthenticatedBuyer(request);
+
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    const { buyer, withSessionCookies } = auth;
+
     const body = (await request.json()) as MerchCheckoutBody;
     const productId = body.productId?.trim();
     const selectedSize = body.selectedSize?.trim() || "N/A";
-    const customerEmail = body.customerEmail?.trim();
 
     if (!productId) {
       return NextResponse.json({ error: "Product is required." }, { status: 400 });
     }
 
-    if (!customerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
-      return NextResponse.json(
-        { error: "A valid customer email is required." },
-        { status: 400 },
-      );
-    }
+    const lineItem = resolveCheckoutLineItem(productId, selectedSize);
 
-    const inventory: Record<string, InventoryItem> = {
-      "cd-preorder": {
-        name: "Awakening Live Recording CD Pre-order",
-        amountCents: 2000,
-        requiresSize: false,
-      },
-      "concert-tee": {
-        name: "300 Awakening Concert Tee",
-        amountCents: 2500,
-        requiresSize: true,
-      },
-      "choir-hoodie": {
-        name: "The Sound of Healing Hoodie",
-        amountCents: 5000,
-        requiresSize: true,
-      },
-      "live-pass": {
-        name: "Awakening Live Stream Virtual Access Ticket",
-        amountCents: 1000,
-        requiresSize: false,
-      },
-    };
-
-    const product = inventory[productId];
-
-    if (!product) {
+    if (!lineItem) {
       return NextResponse.json({ error: "Invalid product." }, { status: 400 });
     }
 
-    if (product.requiresSize && !CLOTHING_SIZES.has(selectedSize)) {
+    if (lineItem.requiresSize && !isValidMerchSize(selectedSize)) {
       return NextResponse.json(
         { error: "A valid size is required for this item." },
         { status: 400 },
       );
     }
 
-    const lineItemName =
-      product.requiresSize && selectedSize !== "N/A"
-        ? `${product.name} — Size ${selectedSize}`
-        : product.name;
-
-    const stripe = new Stripe(stripeSecretKey);
+    const { successPath, cancelPath } = getMerchCheckoutPaths(productId);
     const appUrl = getAppUrl(request);
-    const successPath =
-      productId === "live-pass"
-        ? "/dashboard/live?success=true"
-        : "/dashboard/merch?success=true";
-    const cancelPath =
-      productId === "live-pass"
-        ? "/dashboard/live?canceled=true"
-        : "/dashboard/merch?canceled=true";
+    const stripe = new Stripe(stripeSecretKey);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card", "link"],
-      customer_email: customerEmail,
+      client_reference_id: buyer.userId,
+      customer_email: buyer.email,
       line_items: [
         {
           quantity: 1,
           price_data: {
             currency: "usd",
-            unit_amount: product.amountCents,
+            unit_amount: lineItem.amountCents,
             product_data: {
-              name: lineItemName,
+              name: lineItem.lineItemName,
+              description: lineItem.description,
             },
           },
         },
       ],
       metadata: {
-        productId,
-        selectedSize,
-        checkout_type: "merch",
+        checkout_type: isEventTicketTierId(productId) ? "ticket" : "merch",
+        product_id: productId,
+        product_type: productId,
+        selected_size: selectedSize,
+        user_id: buyer.userId,
+        email: buyer.email,
       },
       success_url: `${appUrl}${successPath}`,
       cancel_url: `${appUrl}${cancelPath}`,
@@ -130,9 +157,10 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseAdmin();
     const { error: insertError } = await supabase.from("orders").insert({
-      customer_email: customerEmail,
-      product_id: productId,
-      selected_size: selectedSize,
+      user_id: buyer.userId,
+      email: buyer.email,
+      product_type: productId,
+      amount_total: lineItem.amountCents,
       status: "pending",
       stripe_session_id: session.id,
     });
@@ -152,7 +180,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ url: session.url });
+    return withSessionCookies(NextResponse.json({ url: session.url }));
   } catch (error) {
     console.error("Merch checkout session error:", error);
     return NextResponse.json(

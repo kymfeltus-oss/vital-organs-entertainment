@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import RootLayoutShell from "@/components/RootLayoutShell";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,8 +20,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-black text-white antialiased">
-        {children}
+      <body className="min-h-dvh max-w-[100vw] overflow-x-hidden bg-[#0B090A] text-[16px] text-white antialiased">
+        <RootLayoutShell>{children}</RootLayoutShell>
       </body>
     </html>
   );

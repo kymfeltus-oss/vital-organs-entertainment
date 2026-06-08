@@ -1,17 +1,7 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
-let supabaseClient: SupabaseClient | null = null;
-
+/** Browser Supabase client — session cookies managed by @supabase/ssr */
 export function getSupabase(): SupabaseClient {
-  if (supabaseClient) return supabaseClient;
-
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !anonKey) {
-    throw new Error("Supabase client credentials are not configured.");
-  }
-
-  supabaseClient = createClient(url, anonKey);
-  return supabaseClient;
+  return createBrowserSupabaseClient();
 }
