@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useState } from "react";
 import { Heart, Loader2 } from "lucide-react";
 import { getClientAppUrl } from "@/lib/client-api";
+import { buildAttendeeGateUrl } from "@/lib/auth/routing";
 
 const PRESET_AMOUNTS = [25, 50, 100, 250, 500, 1000] as const;
 
@@ -143,7 +144,7 @@ export default function ExperienceGivingPanel() {
           </p>
           {needsSignIn ? (
             <Link
-              href="/email-gate?next=/experience/live"
+              href={buildAttendeeGateUrl("/experience/live")}
               className="mt-2 inline-flex min-h-11 items-center justify-center rounded-full border border-[#1E40AF]/50 bg-[#1E40AF]/10 px-6 py-2 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] exp-text-blue transition hover:bg-[#1E40AF]/20"
             >
               Sign In

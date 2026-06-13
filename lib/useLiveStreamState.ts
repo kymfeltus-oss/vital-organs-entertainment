@@ -1,14 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchLiveAccessEvaluation } from "@/lib/access";
 import { LIVE_STREAM_STATE_BROADCAST_EVENT } from "@/lib/live/types";
 import {
   acquirePlatformChannel,
   commitPlatformChannelSubscribe,
+  registerPlatformListener,
   releasePlatformChannel,
+  unregisterPlatformListener,
 } from "@/lib/live/platform-channel";
 import { getSupabase } from "@/lib/supabase/client";
+
+const STREAM_STATE_LISTENER_ID = "live-stream-state-broadcast";
 
 type UseLiveStreamStateResult = {
   isLive: boolean;
@@ -20,6 +24,7 @@ export function useLiveStreamState(): UseLiveStreamStateResult {
   const [isLive, setIsLive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const syncRef = useRef<() => Promise<void>>(async () => {});
 
   const syncFromAccessApi = useCallback(async () => {
     try {
@@ -33,6 +38,8 @@ export function useLiveStreamState(): UseLiveStreamStateResult {
       setIsLoading(false);
     }
   }, []);
+
+  syncRef.current = syncFromAccessApi;
 
   useEffect(() => {
     let cancelled = false;
@@ -57,22 +64,20 @@ export function useLiveStreamState(): UseLiveStreamStateResult {
       }
     });
 
-    const channel = acquirePlatformChannel(supabase);
+    acquirePlatformChannel(supabase);
 
-    channel
-      .on(
-        "broadcast",
-        { event: LIVE_STREAM_STATE_BROADCAST_EVENT },
-        () => {
-          if (cancelled) return;
-          void syncFromAccessApi();
-        },
-      );
+    registerPlatformListener(STREAM_STATE_LISTENER_ID, (channel) =>
+      channel.on("broadcast", { event: LIVE_STREAM_STATE_BROADCAST_EVENT }, () => {
+        if (cancelled) return;
+        void syncRef.current();
+      }),
+    );
 
     commitPlatformChannelSubscribe();
 
     return () => {
       cancelled = true;
+      unregisterPlatformListener(STREAM_STATE_LISTENER_ID);
       releasePlatformChannel(supabase);
     };
   }, [syncFromAccessApi]);

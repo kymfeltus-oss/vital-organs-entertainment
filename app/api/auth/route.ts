@@ -87,7 +87,7 @@ export async function POST(request: Request) {
         password,
         options: {
           data: { is_guest: false },
-          emailRedirectTo: `${origin}/auth/callback?next=/experience/live`,
+          emailRedirectTo: `${origin}/auth/callback?next=/experience`,
         },
       });
 

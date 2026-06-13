@@ -1,9 +1,8 @@
 /**
- * Operator production console — desktop-only, ops-admin protected.
- * vMix, Restream, readiness, safety, timeline, and Go Live review live here only.
- * Attendee experience: /experience/live (no operator controls).
+ * Operator crew terminal — role-based module router (mock client-side roles).
+ * Attendee experience: /experience (hub) and /experience/live (no operator controls).
  */
-import LiveHubConsole from "@/components/live-hub/LiveHubConsole";
+import LiveHubRoleRouterClient from "@/components/ops/LiveHubRoleRouterClient";
 import { requireOpsAdminUser } from "@/lib/ops/assert-ops-admin";
 import { loadOpsSnapshot } from "@/lib/ops/snapshot";
 
@@ -12,7 +11,7 @@ export default async function LiveHubPage() {
   const snapshot = await loadOpsSnapshot();
 
   return (
-    <LiveHubConsole
+    <LiveHubRoleRouterClient
       adminEmail={user.email ?? "unknown"}
       initialSnapshot={snapshot}
     />

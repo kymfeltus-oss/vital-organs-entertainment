@@ -7,9 +7,13 @@ import { useParableSubsystem } from "@/lib/parable/useParableSubsystem";
 import {
   acquirePlatformChannel,
   commitPlatformChannelSubscribe,
+  registerPlatformListener,
   releasePlatformChannel,
+  unregisterPlatformListener,
 } from "@/lib/live/platform-channel";
 import { getSupabase } from "@/lib/supabase/client";
+
+const SEED_WALLET_LISTENER_ID = "live-seed-wallet";
 
 type UseLiveSeedWalletResult = {
   balance: number;
@@ -43,6 +47,7 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const localUserIdRef = useRef<string | null>(null);
+  const allowRealtime = seeds.shouldAllowRealtime();
 
   const refresh = useCallback(async () => {
     if (!seeds.shouldFetch()) {
@@ -93,7 +98,7 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
   }, [seeds]);
 
   useEffect(() => {
-    if (!seeds.shouldAllowRealtime()) {
+    if (!allowRealtime) {
       queueMicrotask(() => {
         void refresh();
       });
@@ -116,37 +121,39 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
       return;
     }
 
-    const channel = acquirePlatformChannel(supabase);
+    acquirePlatformChannel(supabase);
 
-    channel.on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "seed_wallets",
-      },
-      (payload) => {
-        if (cancelled) return;
+    registerPlatformListener(SEED_WALLET_LISTENER_ID, (channel) =>
+      channel.on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "seed_wallets",
+        },
+        (payload) => {
+          if (cancelled) return;
 
-        const row = (payload.new ?? payload.old) as {
-          user_id?: string;
-          balance?: number;
-          used_free_taps?: number;
-        };
+          const row = (payload.new ?? payload.old) as {
+            user_id?: string;
+            balance?: number;
+            used_free_taps?: number;
+          };
 
-        if (!localUserIdRef.current || row.user_id !== localUserIdRef.current) {
-          return;
-        }
+          if (!localUserIdRef.current || row.user_id !== localUserIdRef.current) {
+            return;
+          }
 
-        if (typeof row.balance === "number") {
-          setBalance(row.balance);
-          setIsLoading(false);
-        }
+          if (typeof row.balance === "number") {
+            setBalance(row.balance);
+            setIsLoading(false);
+          }
 
-        if (typeof row.used_free_taps === "number") {
-          setUsedFreeTaps(row.used_free_taps);
-        }
-      },
+          if (typeof row.used_free_taps === "number") {
+            setUsedFreeTaps(row.used_free_taps);
+          }
+        },
+      ),
     );
 
     commitPlatformChannelSubscribe();
@@ -165,9 +172,10 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
 
     return () => {
       cancelled = true;
+      unregisterPlatformListener(SEED_WALLET_LISTENER_ID);
       releasePlatformChannel(supabase);
     };
-  }, [refresh, seeds]);
+  }, [allowRealtime, refresh]);
 
   return {
     balance,

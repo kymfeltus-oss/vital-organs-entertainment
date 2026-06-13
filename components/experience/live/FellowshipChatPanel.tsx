@@ -12,6 +12,7 @@ import {
   FELLOWSHIP_SLOW_MODE_SECONDS,
 } from "@/lib/experience/fellowship-chat";
 import { useFellowshipChat } from "@/lib/experience/useFellowshipChat";
+import { buildAttendeeGateUrl } from "@/lib/auth/routing";
 
 const NEAR_BOTTOM_PX = 72;
 
@@ -200,7 +201,7 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
           <div className="experience-glass-panel rounded-xl px-3 py-3 text-center">
           <p className="font-body text-xs text-zinc-400">Sign in to join the conversation</p>
           <Link
-            href="/email-gate?next=/experience/live"
+            href={buildAttendeeGateUrl("/experience/live")}
             className="mt-2 inline-flex min-h-10 items-center justify-center rounded-full border border-[#1E40AF]/50 bg-[#1E40AF]/10 px-5 py-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.14em] exp-text-blue transition hover:bg-[#1E40AF]/20"
           >
             Sign In

@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { NextResponse } from "next/server";
+import { buildTeamGateUrl } from "@/lib/auth/routing";
 import { inspectOpsAdminAccess } from "@/lib/ops/admin-auth";
 import {
   evaluateOpsAuthDecision,
@@ -29,7 +30,7 @@ export async function requireOpsAdminUser(returnPath = "/ops") {
   );
 
   if (error || !user) {
-    redirect(`/email-gate?next=${encodeURIComponent(returnPath)}`);
+    redirect(buildTeamGateUrl(returnPath));
   }
 
   if (!inspection.allowed) {

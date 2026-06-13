@@ -116,6 +116,32 @@ export default function AttendeeEventLobbyClient({
 
   const showLiveSignal = eventPhase === "live" && streamIsLive && !isStreamStateLoading;
 
+  useEffect(() => {
+    const blocked = phase === "checking" || phase === "activating_pass";
+    // #region agent log
+    fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "baf5b9" },
+      body: JSON.stringify({
+        sessionId: "baf5b9",
+        runId: "initial",
+        hypothesisId: "A",
+        location: "AttendeeEventLobbyClient.tsx:phase",
+        message: blocked ? "Hero blocked by access gate" : "Hero branch rendering",
+        data: {
+          phase,
+          verificationAttempt,
+          blocked,
+          deferredReady,
+          headline: countdownConfig.headline,
+          performanceNowMs: performance.now(),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+  }, [phase, verificationAttempt, deferredReady, countdownConfig.headline]);
+
   if (phase === "checking" || phase === "activating_pass") {
     return <PassActivatingShell attempt={verificationAttempt} />;
   }

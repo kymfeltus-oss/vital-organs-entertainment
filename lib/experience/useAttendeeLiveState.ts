@@ -1,16 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchLiveAccessEvaluation } from "@/lib/access";
 import { LIVE_STREAM_STATE_BROADCAST_EVENT } from "@/lib/live/types";
 import {
   acquirePlatformChannel,
   commitPlatformChannelSubscribe,
+  registerPlatformListener,
   releasePlatformChannel,
+  unregisterPlatformListener,
 } from "@/lib/live/platform-channel";
 import { getSupabase } from "@/lib/supabase/client";
 
 const POLL_FALLBACK_MS = 30_000;
+const ATTENDEE_LIVE_LISTENER_ID = "attendee-live-broadcast";
 
 type AttendeeLiveState = {
   isLive: boolean;
@@ -22,6 +25,7 @@ export function useAttendeeLiveState(): AttendeeLiveState {
   const [isLive, setIsLive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [usePollingFallback, setUsePollingFallback] = useState(false);
+  const syncRef = useRef<() => Promise<void>>(async () => {});
 
   const syncLiveState = useCallback(async () => {
     try {
@@ -35,6 +39,8 @@ export function useAttendeeLiveState(): AttendeeLiveState {
       setIsLoading(false);
     }
   }, []);
+
+  syncRef.current = syncLiveState;
 
   useEffect(() => {
     let cancelled = false;
@@ -56,16 +62,23 @@ export function useAttendeeLiveState(): AttendeeLiveState {
         if (!cancelled) void syncLiveState();
       });
 
-      const channel = acquirePlatformChannel(supabase);
-      channel.on("broadcast", { event: LIVE_STREAM_STATE_BROADCAST_EVENT }, () => {
-        if (!cancelled) void syncLiveState();
-      });
+      acquirePlatformChannel(supabase);
+
+      registerPlatformListener(ATTENDEE_LIVE_LISTENER_ID, (channel) =>
+        channel.on("broadcast", { event: LIVE_STREAM_STATE_BROADCAST_EVENT }, () => {
+          if (!cancelled) void syncRef.current();
+        }),
+      );
+
       commitPlatformChannelSubscribe();
     }
 
     return () => {
       cancelled = true;
-      if (supabase) releasePlatformChannel(supabase);
+      if (supabase) {
+        unregisterPlatformListener(ATTENDEE_LIVE_LISTENER_ID);
+        releasePlatformChannel(supabase);
+      }
     };
   }, [syncLiveState]);
 

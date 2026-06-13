@@ -6,6 +6,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Heart, Loader2, LogOut, Newspaper, Radio, ShoppingBag } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { PERSONA_HUB_PATH } from "@/lib/auth/routing";
 
 type NavItemConfig = {
   label: string;
@@ -31,7 +32,7 @@ const NAV_ITEMS: readonly NavItemConfig[] = [
     label: "Vital Seed",
     href: "/dashboard/vital-seed",
     icon: Heart,
-    match: ["/dashboard/vital-seed", "/giving"],
+    match: ["/dashboard/vital-seed", "/giving", "/experience/giving"],
   },
   {
     label: "Updates",
@@ -146,7 +147,7 @@ export default function AppNavigation() {
 
       if (res.ok) {
         router.refresh();
-        router.push("/email-gate");
+        router.push(PERSONA_HUB_PATH);
       }
     } finally {
       setIsLoggingOut(false);

@@ -119,10 +119,30 @@ export function useLiveAccessVerification(): UseLiveAccessVerificationResult {
     async function runInitialVerification() {
       setPhase("checking");
       setVerificationAttempt(1);
+      const verifyStartedAt = performance.now();
 
       try {
         const next = await fetchLiveAccessEvaluation();
         if (cancelled) return;
+        // #region agent log
+        fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "baf5b9" },
+          body: JSON.stringify({
+            sessionId: "baf5b9",
+            runId: "initial",
+            hypothesisId: "A",
+            location: "useLiveAccessVerification.ts:verifyComplete",
+            message: "Live access verification finished",
+            data: {
+              durationMs: performance.now() - verifyStartedAt,
+              phase: resolvePhase(next),
+              canViewStream: next.canViewStream,
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
         applyEvaluation(next);
       } catch (error) {
         console.error("Live access verification error:", error);

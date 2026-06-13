@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import BroadcastConsoleShell from "@/components/broadcast/BroadcastConsoleShell";
+import { buildTeamGateUrl } from "@/lib/auth/routing";
 import { getUserFromSession } from "@/lib/auth/session";
 
 export const metadata = {
@@ -12,7 +13,7 @@ export default async function BroadcastDashboardPage() {
   const user = await getUserFromSession();
 
   if (!user) {
-    redirect("/email-gate?next=/dashboard/broadcast");
+    redirect(buildTeamGateUrl("/dashboard/broadcast"));
   }
 
   return <BroadcastConsoleShell />;

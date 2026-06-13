@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { CountdownParts } from "@/lib/live/event-lobby";
@@ -36,6 +37,27 @@ export default function DashboardHeroSection({
 
   const pillSrc = showLiveSignal ? "/ui/live-pill.png" : config.waiting_pill_url;
   const pillAlt = showLiveSignal ? "Live signal" : config.status_label;
+
+  useEffect(() => {
+    // #region agent log
+    fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "baf5b9" },
+      body: JSON.stringify({
+        sessionId: "baf5b9",
+        runId: "initial",
+        hypothesisId: "A",
+        location: "DashboardHeroSection.tsx:mount",
+        message: "Dashboard hero headline mounted",
+        data: {
+          headline: config.headline,
+          performanceNowMs: performance.now(),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+  }, [config.headline]);
 
   return (
     <section className="relative h-[475px] shrink-0 overflow-hidden rounded-[24px] border border-[#1E40AF]/55 bg-[#050406] shadow-[0_0_70px_rgba(30,64,175,0.2),inset_0_0_80px_rgba(0,0,0,0.65)]">

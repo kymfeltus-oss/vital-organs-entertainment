@@ -75,14 +75,26 @@ export function useProductionStore() {
     snapshotPollIntervalMs,
     pollingFrozen,
   } = useBroadcastHealth();
-  const [store, setStore] = useState<ProductionStore | null>(() => loadLastKnownSnapshot());
-  const [loading, setLoading] = useState(!store);
+  const [store, setStore] = useState<ProductionStore | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const uiOverridesRef = useRef<ProductionUiOverrides>({});
+  const lkgHydratedRef = useRef(false);
 
   const applyStore = useCallback((next: ProductionStore) => {
     setStore(mergeProductionStore(next, uiOverridesRef.current));
   }, []);
+
+  const hydrateFromLastKnownGood = useCallback(() => {
+    if (lkgHydratedRef.current) return;
+    lkgHydratedRef.current = true;
+
+    const cached = loadLastKnownSnapshot();
+    if (!cached) return;
+
+    applyStore(cached);
+    setLoading(false);
+  }, [applyStore]);
 
   const refresh = useCallback(async () => {
     if (shouldFreezePolling()) {
@@ -121,6 +133,25 @@ export function useProductionStore() {
   ]);
 
   useEffect(() => {
+    hydrateFromLastKnownGood();
+    // #region agent log
+    fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "baf5b9" },
+      body: JSON.stringify({
+        sessionId: "baf5b9",
+        runId: "post-fix",
+        hypothesisId: "HYDRATION",
+        location: "useProductionStore.ts:mount",
+        message: "Production store mounted after hydration",
+        data: {
+          hadCachedSnapshot: Boolean(loadLastKnownSnapshot()),
+          performanceNowMs: performance.now(),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     void refresh();
 
     if (shouldFreezePolling()) {
@@ -132,7 +163,7 @@ export function useProductionStore() {
       void refresh();
     }, intervalMs);
     return () => window.clearInterval(intervalId);
-  }, [refresh, resolveSnapshotPollInterval, shouldFreezePolling, snapshotPollIntervalMs, pollingFrozen]);
+  }, [hydrateFromLastKnownGood, refresh, resolveSnapshotPollInterval, shouldFreezePolling, snapshotPollIntervalMs, pollingFrozen]);
 
   const runGuardedCommand = useCallback(
     async (
