@@ -93,23 +93,18 @@ export default function VideoIntroExperience() {
       </div>
 
       <div
-        className={`pointer-events-none fixed inset-0 z-10 flex items-end justify-center px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-safe transition-opacity duration-500 ${
+        className={`fixed inset-x-0 bottom-0 z-10 flex justify-center px-4 pb-[max(2rem,env(safe-area-inset-bottom))] transition-opacity duration-500 ${
           isExiting ? "opacity-0" : "opacity-100"
         }`}
       >
-        <div className="glass-panel pointer-events-auto w-full max-w-md rounded-2xl border border-brand-border p-5 shadow-[0_0_48px_rgba(0,168,255,0.12)] sm:p-6">
-          <p className="mb-4 text-center font-ui text-[0.58rem] font-bold uppercase tracking-[0.28em] text-brand-blue">
-            300 Awakening
-          </p>
-          <button
-            type="button"
-            onClick={() => void handleEnterHub()}
-            disabled={isNavigating}
-            className="brand-gradient-border neon-blue-glow touch-target flex w-full min-h-11 items-center justify-center rounded-xl bg-brand-black px-6 py-3 font-ui text-[0.72rem] font-bold uppercase tracking-[0.18em] text-white transition hover:brightness-110 active:scale-[0.99] disabled:opacity-60"
-          >
-            Enter Hub
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => void handleEnterHub()}
+          disabled={isNavigating}
+          className="brand-gradient-border touch-target inline-flex min-h-11 items-center justify-center rounded-full bg-transparent px-10 py-3 font-ui text-[0.72rem] font-bold uppercase tracking-[0.18em] text-white shadow-[0_0_20px_rgba(0,168,255,0.28)] transition duration-300 hover:shadow-[0_0_32px_rgba(0,168,255,0.5),0_0_14px_rgba(255,0,140,0.22)] active:scale-[0.98] disabled:opacity-60 [background:linear-gradient(transparent,transparent)_padding-box,var(--gradient-brand)_border-box]"
+        >
+          Enter Hub
+        </button>
       </div>
     </div>
   );
