@@ -111,9 +111,9 @@ function ProgramItemRow({ item }: { item: EventProgramItem }) {
         </div>
 
         {isCurrent ? (
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-brand-pink/50 bg-brand-pink/15 px-2.5 py-1">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-pink" aria-hidden="true" />
-            <span className="font-ui text-[0.5rem] font-bold uppercase tracking-[0.12em] text-brand-pink">
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-brand-blue/55 bg-brand-blue/15 px-2.5 py-1 neon-blue-glow">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-blue" aria-hidden="true" />
+            <span className="font-ui text-[0.5rem] font-bold uppercase tracking-[0.12em] text-brand-blue">
               Now
             </span>
           </span>

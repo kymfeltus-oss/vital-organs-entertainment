@@ -5,20 +5,26 @@ import { useLiveStreamReactions } from "@/lib/experience/LiveStreamReactionsCont
 
 type LiveReactionBarProps = {
   authenticated: boolean;
+  compact?: boolean;
 };
 
-export default function LiveReactionBar({ authenticated }: LiveReactionBarProps) {
+export default function LiveReactionBar({
+  authenticated,
+  compact = false,
+}: LiveReactionBarProps) {
   const { enabled, isSending, sendReaction } = useLiveStreamReactions();
 
   if (!enabled) return null;
 
   return (
-    <div className="mb-2 shrink-0">
-      <p className="mb-1.5 font-ui text-[0.48rem] font-bold uppercase tracking-[0.14em] text-brand-muted">
-        Live Reactions
-      </p>
+    <div className={compact ? "shrink-0" : "mb-2 shrink-0"}>
+      {!compact ? (
+        <p className="mb-1.5 font-ui text-[0.48rem] font-bold uppercase tracking-[0.14em] text-zinc-500">
+          Reactions
+        </p>
+      ) : null}
       <div
-        className="flex min-w-0 gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex min-w-0 justify-between gap-1 sm:justify-start sm:gap-1.5"
         role="toolbar"
         aria-label="Send a live reaction"
       >
@@ -32,17 +38,12 @@ export default function LiveReactionBar({ authenticated }: LiveReactionBarProps)
             onClick={() => {
               void sendReaction(type);
             }}
-            className="touch-target flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-brand-border bg-black/60 text-xl transition hover:border-brand-blue/40 hover:bg-brand-blue/10 disabled:cursor-not-allowed disabled:opacity-45 sm:h-11 sm:w-11"
+            className="touch-target flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-brand-border/80 bg-black/50 text-lg transition hover:border-brand-blue/45 hover:bg-brand-blue/10 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 sm:h-10 sm:w-10"
           >
             <span aria-hidden="true">{emoji}</span>
           </button>
         ))}
       </div>
-      {!authenticated ? (
-        <p className="mt-1 font-body text-[0.65rem] text-brand-muted">
-          Sign in to send reactions.
-        </p>
-      ) : null}
     </div>
   );
 }

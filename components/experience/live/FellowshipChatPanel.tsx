@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { ChevronDown, Pin, Trash2, VolumeX } from "lucide-react";
+import { ChevronDown, Send, Shield } from "lucide-react";
+import FellowshipChatMessageRow from "@/components/experience/live/FellowshipChatMessageRow";
 import LiveReactionBar from "@/components/experience/live/LiveReactionBar";
 import { chatAuthorColorClass } from "@/lib/experience/chat-author-color";
+import { formatChatTimestamp } from "@/lib/experience/chat-message-variant";
 import {
   FELLOWSHIP_MAX_CONTENT_LENGTH,
   FELLOWSHIP_SLOW_MODE_SECONDS,
@@ -16,11 +18,6 @@ const NEAR_BOTTOM_PX = 72;
 type FellowshipChatPanelProps = {
   embedded?: boolean;
 };
-
-function calmChatError(raw: string | null): string | null {
-  if (!raw) return null;
-  return raw;
-}
 
 export default function FellowshipChatPanel({ embedded = false }: FellowshipChatPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -36,9 +33,9 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
     error,
     sendMessage,
     moderate,
+    clearError,
   } = useFellowshipChat();
 
-  const displayError = calmChatError(error);
   const canCompose = session.authenticated && session.canSend;
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
@@ -76,61 +73,48 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
     });
   };
 
-  const handleDelete = (messageId: string) => {
-    void moderate({ action: "delete", messageId });
-  };
-
-  const handleMute = (userId: string) => {
-    void moderate({ action: "mute", userId, durationMinutes: 30 });
-  };
-
-  const handlePin = (messageId: string) => {
-    void moderate({ action: "pin", messageId });
-  };
-
-  const handleUnpin = () => {
-    void moderate({ action: "unpin" });
-  };
-
   return (
     <div className={`flex min-h-0 flex-col ${embedded ? "h-full" : "min-h-56"}`}>
       {!embedded ? (
-        <>
-          <p className="font-ui text-[0.6rem] font-bold uppercase tracking-[0.16em] text-brand-muted">
-            Fellowship Chat
-          </p>
-          <p className="mt-1 font-body text-sm text-brand-muted">
-            Encourage one another during the 300 Awakening Live Experience.
-          </p>
-        </>
+        <p className="mb-2 shrink-0 font-headline text-lg uppercase tracking-[0.14em] text-white">
+          Fellowship Chat
+        </p>
       ) : (
-        <p className="mb-2 shrink-0 font-ui text-[0.58rem] font-bold uppercase tracking-[0.16em] text-brand-muted">
+        <p className="mb-2 shrink-0 font-ui text-[0.55rem] font-bold uppercase tracking-[0.18em] text-zinc-400">
           Fellowship Chat
         </p>
       )}
 
       {pinned ? (
-        <div className="mb-2 shrink-0 rounded-lg border border-brand-pink/45 bg-brand-pink/10 px-3 py-2 neon-pink-glow">
+        <div className="experience-chat-pin mb-2 shrink-0 rounded-xl px-3 py-2.5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="font-ui text-[0.5rem] font-bold uppercase tracking-[0.14em] text-brand-pink">
+              <p className="flex items-center gap-1.5 font-ui text-[0.48rem] font-bold uppercase tracking-[0.16em] text-brand-blue">
+                <Shield className="h-3 w-3" aria-hidden="true" />
                 Pinned Announcement
               </p>
-              <p className="mt-1 font-body text-sm leading-snug text-white/90">
+              <p className="mt-1.5 font-body text-sm leading-snug text-white">
                 <span
                   className={`font-ui text-[0.72rem] font-bold ${chatAuthorColorClass(pinned.userId)}`}
                 >
                   {pinned.author}
                 </span>
-                <span className="text-brand-muted"> · </span>
+                <span className="text-zinc-500"> · </span>
+                <time
+                  dateTime={pinned.createdAt}
+                  className="font-ui text-[0.48rem] text-zinc-500"
+                >
+                  {formatChatTimestamp(pinned.createdAt)}
+                </time>
+                <span className="text-zinc-400"> — </span>
                 {pinned.body}
               </p>
             </div>
             {session.isModerator ? (
               <button
                 type="button"
-                onClick={handleUnpin}
-                className="touch-target shrink-0 rounded border border-brand-border px-2 py-1 font-ui text-[0.45rem] font-bold uppercase tracking-[0.08em] text-brand-muted hover:text-white"
+                onClick={() => void moderate({ action: "unpin" })}
+                className="touch-target shrink-0 rounded border border-brand-border px-2 py-1 font-ui text-[0.45rem] font-bold uppercase tracking-[0.08em] text-zinc-400 hover:text-white"
               >
                 Unpin
               </button>
@@ -143,60 +127,27 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="h-full min-h-48 space-y-0 overflow-y-auto rounded-lg border border-brand-border bg-black/55 px-1.5 py-1.5 md:min-h-64"
+          className="experience-glass-panel h-full min-h-48 overflow-y-auto rounded-xl px-1 py-1.5 md:min-h-64"
           aria-label="Fellowship chat messages"
         >
           {isLoading ? (
-            <p className="px-2 py-2 font-body text-sm text-brand-muted">Loading Fellowship Chat…</p>
+            <p className="px-2 py-3 font-body text-sm text-zinc-400">Loading Fellowship Chat…</p>
           ) : messages.length === 0 ? (
-            <p className="px-2 py-2 font-body text-sm text-brand-muted">
+            <p className="px-2 py-3 font-body text-sm text-zinc-400">
               The room is quiet. Be the first to encourage someone.
             </p>
           ) : (
             messages.map((message) => (
-              <div
+              <FellowshipChatMessageRow
                 key={message.id}
-                className="group flex items-start gap-0.5 rounded px-1 py-0.5 hover:bg-white/3"
-              >
-                <p className="min-w-0 flex-1 wrap-break-word font-body text-[0.78rem] leading-snug sm:text-[0.8125rem]">
-                  <span
-                    className={`font-ui text-[0.7rem] font-bold sm:text-[0.72rem] ${chatAuthorColorClass(message.userId)}`}
-                  >
-                    {message.author}
-                  </span>
-                  <span className="text-brand-muted/80">: </span>
-                  <span className="text-white/92">{message.body}</span>
-                </p>
-
-                {session.isModerator ? (
-                  <div className="flex shrink-0 gap-0.5 opacity-80 group-hover:opacity-100">
-                    <button
-                      type="button"
-                      title="Pin announcement"
-                      onClick={() => handlePin(message.id)}
-                      className="touch-target rounded p-1 text-brand-muted hover:text-brand-blue"
-                    >
-                      <Pin className="h-3 w-3" aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Mute user"
-                      onClick={() => handleMute(message.userId)}
-                      className="touch-target rounded p-1 text-brand-muted hover:text-brand-pink"
-                    >
-                      <VolumeX className="h-3 w-3" aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Delete message"
-                      onClick={() => handleDelete(message.id)}
-                      className="touch-target rounded p-1 text-brand-muted hover:text-brand-pink"
-                    >
-                      <Trash2 className="h-3 w-3" aria-hidden="true" />
-                    </button>
-                  </div>
-                ) : null}
-              </div>
+                message={message}
+                isModerator={session.isModerator}
+                onPin={(id) => void moderate({ action: "pin", messageId: id })}
+                onMute={(userId) =>
+                  void moderate({ action: "mute", userId, durationMinutes: 30 })
+                }
+                onDelete={(id) => void moderate({ action: "delete", messageId: id })}
+              />
             ))
           )}
         </div>
@@ -205,7 +156,7 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
           <button
             type="button"
             onClick={() => scrollToBottom()}
-            className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-brand-blue/50 bg-brand-black/95 px-3 py-1.5 font-ui text-[0.55rem] font-bold uppercase tracking-[0.12em] text-brand-blue shadow-lg"
+            className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-brand-blue/50 bg-black/95 px-3 py-1.5 font-ui text-[0.55rem] font-bold uppercase tracking-[0.12em] text-brand-blue shadow-lg"
           >
             <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
             View Latest Messages
@@ -213,47 +164,67 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
         ) : null}
       </div>
 
-      {displayError ? (
-        <p className="mt-2 shrink-0 font-body text-xs text-brand-muted" role="status">
-          {displayError}
+      {error ? (
+        <p className="mt-2 shrink-0 font-body text-xs text-zinc-400" role="status">
+          {error}
+          <button
+            type="button"
+            onClick={clearError}
+            className="ml-2 font-ui text-[0.5rem] uppercase tracking-widest text-brand-blue"
+          >
+            Dismiss
+          </button>
         </p>
       ) : null}
 
-      <LiveReactionBar authenticated={session.authenticated} />
-
       {!session.authenticated ? (
-        <div className="mt-2 shrink-0 rounded-lg border border-brand-border bg-black/50 px-3 py-3 text-center">
-          <p className="font-body text-xs text-brand-muted">Sign in to join chat</p>
+        <div className="mt-2 shrink-0 space-y-2">
+          <LiveReactionBar authenticated={false} compact />
+          <div className="experience-glass-panel rounded-xl px-3 py-3 text-center">
+          <p className="font-body text-xs text-zinc-400">Sign in to join the conversation</p>
           <Link
             href="/email-gate?next=/experience/live"
             className="mt-2 inline-flex min-h-10 items-center justify-center rounded-full border border-brand-blue/50 bg-brand-blue/10 px-5 py-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.14em] text-brand-blue transition hover:bg-brand-blue/20"
           >
             Sign In
           </Link>
+          </div>
         </div>
       ) : !session.canSend ? (
-        <p className="mt-2 shrink-0 font-body text-xs text-brand-muted">
+        <p className="mt-2 shrink-0 font-body text-xs text-zinc-400">
           You are temporarily muted in Fellowship Chat.
         </p>
       ) : (
-        <form onSubmit={handleSubmit} className="mt-2 shrink-0">
-          <label className="sr-only" htmlFor="fellowship-chat-input">
-            Send a Fellowship Chat message
-          </label>
-          <input
-            id="fellowship-chat-input"
-            type="text"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="Send a message…"
-            disabled={isSending}
-            maxLength={FELLOWSHIP_MAX_CONTENT_LENGTH}
-            className="w-full rounded-lg border border-brand-border bg-black/70 px-3 py-2.5 font-body text-sm text-white outline-none placeholder:text-brand-muted focus:border-brand-blue/50 disabled:opacity-60"
-          />
-          <p className="mt-1 font-ui text-[0.45rem] uppercase tracking-widest text-brand-muted">
-            {draft.length}/{FELLOWSHIP_MAX_CONTENT_LENGTH} · Slow mode{" "}
-            {session.slowModeSeconds || FELLOWSHIP_SLOW_MODE_SECONDS}s
-          </p>
+        <form onSubmit={handleSubmit} className="mt-2 shrink-0 space-y-2">
+          <div className="experience-glass-composer flex items-center gap-2 rounded-xl px-2 py-1.5">
+            <label className="sr-only" htmlFor="fellowship-chat-input">
+              Join the conversation
+            </label>
+            <input
+              id="fellowship-chat-input"
+              type="text"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="Join the conversation..."
+              disabled={isSending}
+              maxLength={FELLOWSHIP_MAX_CONTENT_LENGTH}
+              className="min-w-0 flex-1 bg-transparent px-2 py-2 font-body text-sm text-white outline-none placeholder:text-zinc-500"
+            />
+            <button
+              type="submit"
+              disabled={!draft.trim() || isSending}
+              className="experience-send-btn touch-target flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition active:scale-95"
+              aria-label="Send message"
+            >
+              <Send className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+          <div className="flex items-end justify-between gap-2">
+            <LiveReactionBar authenticated={session.authenticated} compact />
+            <p className="shrink-0 pb-1 font-ui text-[0.45rem] uppercase tracking-widest text-zinc-500">
+              {draft.length}/{FELLOWSHIP_MAX_CONTENT_LENGTH}
+            </p>
+          </div>
         </form>
       )}
     </div>

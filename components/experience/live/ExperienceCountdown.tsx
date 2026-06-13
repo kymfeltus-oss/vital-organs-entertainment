@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import type { CountdownParts } from "@/lib/live/event-lobby";
+import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
 
 type ExperienceCountdownProps = {
   countdown: CountdownParts;
@@ -9,17 +11,8 @@ type ExperienceCountdownProps = {
   showTimer?: boolean;
 };
 
-function Unit({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="flex min-w-0 flex-1 flex-col items-center rounded-xl border border-brand-border bg-brand-panel/80 px-2 py-3 sm:px-3 sm:py-4">
-      <span className="font-headline text-[clamp(1.35rem,5vw,2.25rem)] tabular-nums leading-none text-white">
-        {String(value).padStart(2, "0")}
-      </span>
-      <span className="mt-2 font-ui text-[0.5rem] font-bold uppercase tracking-[0.18em] text-brand-muted sm:text-[0.55rem]">
-        {label}
-      </span>
-    </div>
-  );
+function pad(value: number): string {
+  return String(value).padStart(2, "0");
 }
 
 export default function ExperienceCountdown({
@@ -30,7 +23,7 @@ export default function ExperienceCountdown({
 }: ExperienceCountdownProps) {
   if (isLoading) {
     return (
-      <p className="font-body text-sm text-brand-muted" aria-live="polite">
+      <p className="font-body text-sm text-zinc-400" aria-live="polite">
         Loading event schedule…
       </p>
     );
@@ -48,12 +41,64 @@ export default function ExperienceCountdown({
     );
   }
 
+  const segments =
+    countdown.days > 0
+      ? [
+          { value: pad(countdown.days), label: "Days" },
+          { value: pad(countdown.hours), label: "Hrs" },
+          { value: pad(countdown.minutes), label: "Min" },
+          { value: pad(countdown.seconds), label: "Sec" },
+        ]
+      : [
+          { value: pad(countdown.hours), label: "Hrs" },
+          { value: pad(countdown.minutes), label: "Min" },
+          { value: pad(countdown.seconds), label: "Sec" },
+        ];
+
   return (
-    <div className="grid w-full grid-cols-4 gap-2 sm:gap-3">
-      <Unit value={countdown.days} label="Days" />
-      <Unit value={countdown.hours} label="Hours" />
-      <Unit value={countdown.minutes} label="Min" />
-      <Unit value={countdown.seconds} label="Sec" />
+    <div className="relative mx-auto w-full max-w-[min(100%,24rem)]">
+      <div className="relative aspect-[4.6/1] w-full">
+        <Image
+          src={EXPERIENCE_BRAND_ASSETS.countdownFrame}
+          alt=""
+          fill
+          priority
+          sizes="(max-width: 768px) 92vw, 24rem"
+          className="object-contain"
+        />
+        <div
+          className="absolute inset-[22%_8%_24%_8%] flex items-center justify-center"
+          aria-live="polite"
+          aria-label="Event countdown"
+        >
+          <div
+            className={`flex w-full items-center justify-center gap-1 sm:gap-2 ${
+              segments.length === 4 ? "px-1" : "px-4"
+            }`}
+          >
+            {segments.map((segment, index) => (
+              <span key={segment.label} className="flex items-center gap-1 sm:gap-2">
+                <span className="flex flex-col items-center">
+                  <span className="font-headline text-[clamp(1rem,4.5vw,1.65rem)] tabular-nums leading-none text-white">
+                    {segment.value}
+                  </span>
+                  <span className="mt-0.5 hidden font-ui text-[0.42rem] font-bold uppercase tracking-[0.14em] text-zinc-400 sm:inline">
+                    {segment.label}
+                  </span>
+                </span>
+                {index < segments.length - 1 ? (
+                  <span
+                    className="font-headline text-[clamp(0.85rem,3.5vw,1.25rem)] tabular-nums text-white/85"
+                    aria-hidden="true"
+                  >
+                    :
+                  </span>
+                ) : null}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -77,7 +77,7 @@ export default function ExperienceGivingPanel() {
 
   return (
     <div>
-      <p className="font-headline text-lg uppercase tracking-[0.12em] text-white">
+      <p className="font-headline text-xl uppercase tracking-[0.14em] text-white sm:text-2xl">
         Every Gift Has A Frequency
       </p>
       <p className="mt-2 font-body text-sm leading-relaxed text-brand-muted">
@@ -163,7 +163,7 @@ export default function ExperienceGivingPanel() {
         type="button"
         onClick={() => void handleGive()}
         disabled={!activeDollars || isSubmitting}
-        className="brand-pill-cta mt-4 flex w-full min-h-11 items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-60"
+        className="experience-send-btn mt-4 flex w-full min-h-12 items-center justify-center gap-2 rounded-xl font-ui text-[0.65rem] font-bold uppercase tracking-[0.16em] text-black transition active:scale-[0.99] disabled:cursor-not-allowed"
       >
         {isSubmitting ? (
           <>

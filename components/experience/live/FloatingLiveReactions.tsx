@@ -10,13 +10,13 @@ export default function FloatingLiveReactions() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 z-20 overflow-hidden"
+      className="pointer-events-none absolute inset-0 z-[3] overflow-hidden"
     >
       {floatingReactions.map((reaction) => (
         <span
           key={reaction.key}
-          className="live-reaction-burst absolute bottom-[16%] text-3xl drop-shadow-[0_0_16px_rgba(0,168,255,0.45)] sm:text-4xl md:text-5xl"
-          style={{ left: `${reaction.originX * 100}%` }}
+          className="live-reaction-burst absolute bottom-[14%] text-2xl drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)] sm:text-3xl md:text-4xl"
+          style={{ left: `${reaction.originX * 100}%`, filter: "saturate(1.05)" }}
         >
           {reaction.emoji}
         </span>

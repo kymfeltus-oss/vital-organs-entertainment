@@ -52,7 +52,7 @@ export default function ExperienceActionSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby="experience-action-title"
-        className="experience-action-sheet relative flex max-h-[min(88dvh,720px)] w-full flex-col rounded-t-2xl border border-brand-border bg-brand-panel shadow-2xl md:my-4 md:mr-4 md:max-h-[calc(100dvh-2rem)] md:w-[min(24rem,92vw)] md:rounded-2xl"
+        className="experience-action-sheet experience-drawer-sheet relative flex max-h-[min(88dvh,720px)] w-full flex-col rounded-t-2xl md:my-4 md:mr-4 md:max-h-[calc(100dvh-2rem)] md:w-[min(28rem,92vw)] md:rounded-2xl"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-brand-border px-4 py-3">
           <h2

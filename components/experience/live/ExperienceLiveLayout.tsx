@@ -77,7 +77,7 @@ export default function ExperienceLiveLayout({
 
   return (
     <div className="flex min-h-dvh w-full flex-col overflow-x-hidden bg-brand-black text-white md:h-dvh md:overflow-hidden">
-      <header className="relative z-20 shrink-0 border-b border-brand-border px-4 py-3 pt-safe md:px-6">
+      <header className="relative z-20 shrink-0 border-b border-brand-border/80 px-3 py-2 pt-safe md:px-6 md:py-3">
         <ExperienceBrandHeader compact liveBadge={variant === "live"} />
       </header>
 
@@ -119,7 +119,7 @@ export default function ExperienceLiveLayout({
         </section>
 
         {showInlineChat ? (
-          <aside className="flex min-h-[14rem] flex-1 flex-col border-t border-brand-border md:h-full md:min-h-0 md:border-t-0 md:border-l md:border-brand-blue/15 md:bg-brand-panel/25">
+          <aside className="flex min-h-[45dvh] flex-[1.15] flex-col border-t border-brand-border/80 md:h-full md:min-h-0 md:flex-1 md:border-t-0 md:border-l md:border-brand-blue/20 md:bg-brand-panel/30">
             <div className="hidden shrink-0 gap-2 border-b border-brand-border p-3 md:flex">
               {EXPERIENCE_ACTIONS.map(({ id, label, icon: Icon }) => {
                 const active = openAction === id;

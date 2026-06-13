@@ -1,7 +1,6 @@
 "use client";
 
 import Hls from "hls.js";
-import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   DEFAULT_ATTENDEE_EXPERIENCE,
@@ -16,6 +15,8 @@ type AttendeeStreamPlayerProps = {
   showPaywall: boolean;
   paywallOverlay?: ReactNode;
   onExperienceUnavailable?: (requested: AttendeeExperienceKey) => void;
+  /** Render inside StreamStageChrome wrapper (no outer frame). */
+  embedded?: boolean;
 };
 
 export default function AttendeeStreamPlayer({
@@ -24,6 +25,7 @@ export default function AttendeeStreamPlayer({
   showPaywall,
   paywallOverlay,
   onExperienceUnavailable,
+  embedded = false,
 }: AttendeeStreamPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -254,10 +256,16 @@ export default function AttendeeStreamPlayer({
   const showRecovery = isReconnecting || isBuffering || !isPlaying;
 
   return (
-    <div className="relative aspect-video w-full overflow-hidden rounded-none bg-black md:rounded-xl md:border md:border-brand-border neon-blue-glow">
+    <div
+      className={`relative aspect-video w-full overflow-hidden bg-black ${
+        embedded
+          ? ""
+          : "experience-stream-stage rounded-none md:rounded-xl md:border md:border-brand-border neon-blue-glow"
+      }`}
+    >
       <video
         ref={videoRef}
-        className={`absolute inset-0 h-full w-full bg-black object-contain ${
+        className={`absolute inset-0 z-0 h-full w-full bg-black object-cover ${
           isPlaying && !showRecovery ? "opacity-100" : "opacity-0"
         }`}
         controls={isPlaying && !showRecovery}
@@ -269,9 +277,13 @@ export default function AttendeeStreamPlayer({
       />
 
       {showRecovery && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 px-6 text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-brand-blue" aria-hidden="true" />
-          <p className="mt-4 max-w-sm font-ui text-[0.65rem] font-bold uppercase tracking-[0.16em] text-white">
+        <div className="absolute inset-0 z-[2] flex flex-col items-center justify-center bg-brand-panel/95 px-6 text-center">
+          <div className="flex h-8 items-end justify-center gap-1" aria-hidden="true">
+            <span className="live-waveform-bar w-1 rounded-full bg-brand-blue/70" style={{ animationDelay: "0ms" }} />
+            <span className="live-waveform-bar w-1 rounded-full bg-brand-blue/70" style={{ animationDelay: "150ms" }} />
+            <span className="live-waveform-bar w-1 rounded-full bg-brand-blue/70" style={{ animationDelay: "300ms" }} />
+          </div>
+          <p className="mt-4 max-w-sm font-ui text-[0.62rem] font-bold uppercase tracking-[0.16em] text-zinc-300">
             Reconnecting to live broadcast…
           </p>
         </div>

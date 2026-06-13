@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import AttendeeStreamPlayer from "@/components/experience/live/AttendeeStreamPlayer";
 import ExperienceSelector from "@/components/experience/live/ExperienceSelector";
 import FloatingLiveReactions from "@/components/experience/live/FloatingLiveReactions";
+import StreamStageChrome from "@/components/experience/live/StreamStageChrome";
 import {
   DEFAULT_ATTENDEE_EXPERIENCE,
   EXPERIENCE_UNAVAILABLE_COPY,
@@ -76,8 +77,21 @@ export default function LiveViewingExperience({
   );
 
   return (
-    <div className="relative flex w-full min-w-0 flex-col gap-3">
-      <FloatingLiveReactions />
+    <div className="relative flex w-full min-w-0 flex-col gap-2.5 md:gap-3">
+      <div className="experience-stream-stage relative w-full overflow-hidden rounded-none md:rounded-xl">
+        <FloatingLiveReactions />
+        <StreamStageChrome isLive />
+        <AttendeeStreamPlayer
+          key={selectedExperience}
+          experience={selectedExperience}
+          enabled
+          showPaywall={showPaywall}
+          paywallOverlay={paywallOverlay}
+          onExperienceUnavailable={handleExperienceUnavailable}
+          embedded
+        />
+      </div>
+
       {showSelector ? (
         <ExperienceSelector
           feeds={feeds}
@@ -87,19 +101,10 @@ export default function LiveViewingExperience({
       ) : null}
 
       {fallbackNotice ? (
-        <p className="font-body text-xs leading-relaxed text-brand-muted" role="status">
+        <p className="font-body text-xs leading-relaxed text-zinc-400" role="status">
           {fallbackNotice}
         </p>
       ) : null}
-
-      <AttendeeStreamPlayer
-        key={selectedExperience}
-        experience={selectedExperience}
-        enabled
-        showPaywall={showPaywall}
-        paywallOverlay={paywallOverlay}
-        onExperienceUnavailable={handleExperienceUnavailable}
-      />
     </div>
   );
 }
