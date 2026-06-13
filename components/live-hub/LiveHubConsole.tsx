@@ -21,6 +21,7 @@ import LiveHubLowerPanels from "@/components/live-hub/LiveHubLowerPanels";
 import LiveHubAudioHealthLog from "@/components/live-hub/LiveHubAudioHealthLog";
 import LiveHubStatusStrip from "@/components/live-hub/LiveHubStatusStrip";
 import LiveHubStreamPanels from "@/components/live-hub/LiveHubStreamPanels";
+import OperatorWebcamPreview from "@/components/live-hub/OperatorWebcamPreview";
 import {
   useLiveHubDesktop,
   useLiveHubDesktopReady,
@@ -777,6 +778,7 @@ export default function LiveHubConsole({
                   isSyncing={isSyncing}
                   uploadSpeedDevOverride={uploadSpeedDevOverride}
                 />
+                <OperatorWebcamPreview />
                 <LiveHubAudioHealthLog
                   healingLogs={healingLogs}
                   onSimulateSilence={IS_DEV_SANDBOX ? simulateAudioDrop : undefined}
