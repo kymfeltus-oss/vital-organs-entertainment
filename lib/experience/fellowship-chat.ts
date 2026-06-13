@@ -53,7 +53,7 @@ export function mergeFellowshipMessages(
   incoming: FellowshipChatMessage,
 ): FellowshipChatMessage[] {
   const withoutIncoming = current.filter((message) => message.id !== incoming.id);
-  const next = sortChatMessages([...withoutIncoming, incoming]);
+  const next = sortChatMessages([...withoutIncoming, incoming]) as FellowshipChatMessage[];
   return next.slice(-FELLOWSHIP_CHAT_HISTORY_LIMIT);
 }
 

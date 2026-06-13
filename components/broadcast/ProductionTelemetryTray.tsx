@@ -5,12 +5,11 @@ import {
   formatLastSuccessAgo,
   vmixStatusLabel,
 } from "@/lib/broadcast/telemetryViews";
-import { PRODUCTION_PIPELINE_LABEL, PRODUCTION_PIPELINE_ORDER } from "@/services/broadcast/pipeline";
+import { PRODUCTION_PIPELINE_LABEL, PRODUCTION_PIPELINE_ORDER, type ProductionPipelinePhase } from "@/services/broadcast/pipeline";
 import type {
   AdapterConnectionMeta,
   ProductionExecutionFlagsMeta,
   ProductionLogEntry,
-  ProductionPipelinePhase,
   ProductionPipelineTrace,
   VmixAdapterHealthMeta,
 } from "@/lib/broadcast/types";

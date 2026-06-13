@@ -66,10 +66,6 @@ function buildProductionState(
     supervisorOverride: false,
     supervisorReason: "",
     storageAvailableGb: 128,
-    internetStatus: bundle.streamHealth.internetStatus,
-    packetLossPercent: bundle.streamHealth.packetLossPercent,
-    streamBitrateKbps: bundle.streamHealth.bitrateKbps,
-    bitrateStable: bundle.streamHealth.bitrateStable,
   };
 }
 
@@ -131,7 +127,7 @@ export function hydrateProductionStore(
       streamHealth: bundle.streamHealth,
       audioHealth: bundle.audioHealth,
     },
-  };
+  } as unknown as ProductionStore;
 }
 
 export async function loadProductionStore(

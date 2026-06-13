@@ -5,6 +5,7 @@ import type { VmixState } from "@/lib/live-hub/vmix/types";
 import { isVmixReachable } from "@/lib/live-hub/vmix/types";
 import type { LiveHubSettings, ReadinessCheck, SafetyIssue } from "@/lib/live-hub/types";
 import { buildReadinessChecks, type ReadinessInputs } from "@/lib/live-hub/readiness";
+import { isNetworkOnline } from "@/lib/live-hub/network";
 
 export type GoLiveEvaluationInput = {
   vmix: VmixState | null;
@@ -296,7 +297,7 @@ export function buildSafetyIssuesFromInputs(inputs: ReadinessInputs): {
     opsSnapshot: inputs.opsSnapshot,
     checks,
     settings: { blockGoLiveWithoutRecording: false, blockGoLiveWithoutRestream: false },
-    networkOnline: inputs.networkOnline,
+    networkOnline: isNetworkOnline(inputs.networkTelemetry),
     operatorApproved: false,
     stripeApiLive: true,
     contentReady: true,

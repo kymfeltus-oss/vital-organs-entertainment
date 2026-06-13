@@ -47,7 +47,7 @@ function appendRollbackNote(baseError: string, rollbackOk: boolean): string {
  */
 export async function executeGoLiveSequence(): Promise<GoLiveExecutionResult> {
   const restreamResult = await activateRestreamChannelsForGoLive();
-  if (!restreamResult.ok) {
+  if (restreamResult.ok === false) {
     return {
       ok: false,
       step: "restream",
@@ -70,7 +70,7 @@ export async function executeGoLiveSequence(): Promise<GoLiveExecutionResult> {
   }
 
   const platformResult = await openPlatformLive();
-  if (!platformResult.ok) {
+  if (platformResult.ok === false) {
     await runVmixAdapterCommand({ type: "stop_streaming" });
     const rollback = await deactivateRestreamChannels(activatedChannelIds);
     return {
@@ -102,7 +102,7 @@ export async function executeStopStreamSequence(): Promise<StopStreamResult> {
   }
 
   const platformResult = await closePlatformLive();
-  if (!platformResult.ok) {
+  if (platformResult.ok === false) {
     return {
       ok: false,
       step: "platform",

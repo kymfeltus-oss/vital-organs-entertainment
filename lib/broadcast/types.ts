@@ -91,6 +91,8 @@ export type StreamTelemetry = {
   encoderOverloaded: boolean;
   pipelineAvailable: boolean;
   internetStatus: InternetStatus;
+  /** When false, uplink bitrate trend is unstable (Event Guardian). */
+  bitrateStable?: boolean;
   destinations: StreamDestinationTelemetry[];
 };
 

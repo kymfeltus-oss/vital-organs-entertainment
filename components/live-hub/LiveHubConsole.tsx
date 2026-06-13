@@ -293,7 +293,6 @@ export default function LiveHubConsole({
       const detail = formatInternetDetail(next);
       pushTimeline("readiness", "Network Test", detail);
       setActionMessage(`Network test complete — ${detail}`);
-      return next;
     } finally {
       setIsNetworkTesting(false);
     }

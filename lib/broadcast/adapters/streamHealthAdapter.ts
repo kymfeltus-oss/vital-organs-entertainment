@@ -3,7 +3,7 @@ import { getRestreamAdapterState } from "@/lib/live-hub/restream/adapter";
 import { isRestreamAdapterFailure } from "@/lib/live-hub/restream/types";
 import { createMockStreamHealthSnapshot } from "@/lib/broadcast/adapters/mockSnapshots";
 import type { StreamHealthSnapshot } from "@/lib/broadcast/adapters/types";
-import type { InternetStatus, StreamDestinationId } from "@/lib/broadcast/types";
+import type { InternetStatus, StreamPlatformId } from "@/lib/broadcast/types";
 
 const HEALTHY_BITRATE_KBPS = 5_000;
 const DEGRADED_BITRATE_KBPS = 4_500;
@@ -56,7 +56,7 @@ export async function getStreamHealthSnapshot(): Promise<StreamHealthSnapshot> {
     const ingestKbps = restream.connectionStatus === "connected" ? 5800 : 0;
     const connected = restream.connectionStatus === "connected";
 
-    const destinationMap: Record<string, StreamDestinationId> = {
+    const destinationMap: Record<string, StreamPlatformId> = {
       YouTube: "youtube",
       Facebook: "facebook",
       Restream: "restream",
@@ -68,7 +68,7 @@ export async function getStreamHealthSnapshot(): Promise<StreamHealthSnapshot> {
         (dest.platform === "HLS" ? "custom_rtmp" : "custom_rtmp");
 
       return {
-        id: id as StreamDestinationId,
+        id: id as StreamPlatformId,
         name: dest.name,
         connected: dest.healthy || connected,
         live: restream.streamStatus === "Live" || restream.streamStatus === "Ready",

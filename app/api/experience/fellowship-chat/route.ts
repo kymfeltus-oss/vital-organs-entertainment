@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     const slowMode = await assertFellowshipSlowMode(admin, buyer.userId);
-    if (!slowMode.ok) {
+    if (slowMode.ok === false) {
       return NextResponse.json({ error: slowMode.error }, { status: 429 });
     }
 

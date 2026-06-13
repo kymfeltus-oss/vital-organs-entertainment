@@ -42,3 +42,13 @@ export function isBroadcastDevMode(): boolean {
   if (explicit === "false") return false;
   return process.env.NODE_ENV === "development";
 }
+
+export function getObsWebSocketUrl(): string | null {
+  const configured = process.env.OBS_WEBSOCKET_URL?.trim();
+  return configured || null;
+}
+
+export function getObsWebSocketPassword(): string | null {
+  const configured = process.env.OBS_WEBSOCKET_PASSWORD?.trim();
+  return configured || null;
+}
