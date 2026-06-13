@@ -98,6 +98,34 @@ html {
       var(--gradient-brand) border-box;
   }
 
+  .intro-enter-hub {
+    appearance: none;
+    -webkit-appearance: none;
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    background:
+      linear-gradient(transparent, transparent) padding-box,
+      var(--gradient-brand) border-box;
+    box-shadow: 0 0 20px rgba(0, 168, 255, 0.28);
+    transition:
+      box-shadow 0.3s ease,
+      transform 0.2s ease;
+  }
+
+  .intro-enter-hub:hover {
+    box-shadow:
+      0 0 32px rgba(0, 168, 255, 0.5),
+      0 0 14px rgba(255, 0, 140, 0.22);
+  }
+
+  .intro-enter-hub:active {
+    transform: scale(0.98);
+  }
+
+  .intro-enter-hub:disabled {
+    opacity: 0.6;
+  }
+
   .brand-pill-cta {
     display: inline-flex;
     align-items: center;

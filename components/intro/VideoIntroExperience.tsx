@@ -101,7 +101,7 @@ export default function VideoIntroExperience() {
       ) : null}
 
       <div
-        className={`absolute bottom-[max(3rem,env(safe-area-inset-bottom))] left-1/2 z-10 -translate-x-1/2 transition-opacity duration-500 ${
+        className={`absolute inset-x-0 bottom-[max(3rem,env(safe-area-inset-bottom))] z-10 flex justify-center px-[5%] transition-opacity duration-500 ${
           isExiting ? "opacity-0" : "opacity-100"
         }`}
       >
@@ -109,7 +109,7 @@ export default function VideoIntroExperience() {
           type="button"
           onClick={() => void handleEnterHub()}
           disabled={isNavigating}
-          className="brand-gradient-border touch-target flex min-h-11 items-center justify-center whitespace-nowrap rounded-full bg-transparent px-10 py-3 font-ui text-[0.72rem] font-bold uppercase tracking-[0.14em] text-white shadow-[0_0_20px_rgba(0,168,255,0.28)] transition duration-300 hover:shadow-[0_0_32px_rgba(0,168,255,0.5),0_0_14px_rgba(255,0,140,0.22)] active:scale-[0.98] disabled:opacity-60 [background:linear-gradient(transparent,transparent)_padding-box,var(--gradient-brand)_border-box]"
+          className="intro-enter-hub mx-auto flex w-[90%] max-w-[450px] min-h-[50px] shrink-0 items-center justify-center whitespace-nowrap py-4 px-8 font-ui text-sm font-bold uppercase tracking-[0.2em] text-white sm:text-base md:text-lg"
         >
           Enter Hub
         </button>
