@@ -1,5 +1,9 @@
 import VideoIntroExperience from "@/components/intro/VideoIntroExperience";
 
 export default function IntroPage() {
-  return <VideoIntroExperience />;
+  return (
+    <div className="fixed inset-0 h-dvh w-full overflow-hidden bg-brand-black">
+      <VideoIntroExperience />
+    </div>
+  );
 }
