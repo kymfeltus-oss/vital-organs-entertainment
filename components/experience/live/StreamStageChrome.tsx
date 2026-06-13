@@ -36,14 +36,14 @@ export default function StreamStageChrome({ isLive = true }: StreamStageChromePr
           </span>
         </span>
         <span className="experience-glass-chip inline-flex items-center gap-1.5 rounded-md px-2 py-1">
-          <Users className="h-3 w-3 text-brand-blue" aria-hidden="true" />
+          <Users className="h-3 w-3 exp-text-blue" aria-hidden="true" />
           <span className="font-ui text-[0.5rem] font-bold tabular-nums tracking-[0.08em] text-zinc-300">
             {viewerCount.toLocaleString()}
           </span>
         </span>
       </div>
       <span className="experience-glass-chip inline-flex items-center gap-1.5 rounded-md px-2 py-1">
-        <Radio className="h-3 w-3 text-brand-blue" aria-hidden="true" />
+        <Radio className="h-3 w-3 exp-text-blue" aria-hidden="true" />
         <span className="font-ui text-[0.5rem] font-bold uppercase tracking-[0.12em] text-zinc-300">
           Crystal HD
         </span>

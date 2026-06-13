@@ -63,7 +63,7 @@ export default function FellowshipChatMessageRow({
             type="button"
             title="Pin announcement"
             onClick={() => onPin(message.id)}
-            className="touch-target rounded p-1 text-zinc-500 hover:text-brand-blue"
+            className="touch-target rounded p-1 text-zinc-500 hover:exp-text-blue"
           >
             <Pin className="h-3 w-3" aria-hidden="true" />
           </button>
@@ -71,7 +71,7 @@ export default function FellowshipChatMessageRow({
             type="button"
             title="Mute user"
             onClick={() => onMute(message.userId)}
-            className="touch-target rounded p-1 text-zinc-500 hover:text-brand-pink"
+            className="touch-target rounded p-1 text-zinc-500 hover:exp-text-magenta"
           >
             <VolumeX className="h-3 w-3" aria-hidden="true" />
           </button>
@@ -79,7 +79,7 @@ export default function FellowshipChatMessageRow({
             type="button"
             title="Delete message"
             onClick={() => onDelete(message.id)}
-            className="touch-target rounded p-1 text-zinc-500 hover:text-brand-pink"
+            className="touch-target rounded p-1 text-zinc-500 hover:exp-text-magenta"
           >
             <Trash2 className="h-3 w-3" aria-hidden="true" />
           </button>

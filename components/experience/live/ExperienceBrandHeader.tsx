@@ -32,12 +32,12 @@ export default function ExperienceBrandHeader({
           />
         </div>
         <div className="min-w-0 md:hidden">
-          <p className="truncate font-ui text-[0.48rem] font-bold uppercase tracking-[0.2em] text-brand-blue">
+          <p className="truncate font-ui text-[0.48rem] font-bold uppercase tracking-[0.2em] exp-text-blue">
             Live Experience
           </p>
         </div>
         <div className="hidden min-w-0 md:block">
-          <p className="font-ui text-[0.52rem] font-bold uppercase tracking-[0.24em] text-brand-blue">
+          <p className="font-ui text-[0.52rem] font-bold uppercase tracking-[0.24em] exp-text-blue">
             Vital Organs Entertainment
           </p>
           <h1 className="mt-0.5 truncate font-headline text-base uppercase tracking-[0.14em] text-white">

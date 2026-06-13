@@ -17,7 +17,7 @@ const FellowshipChatPanel = dynamic(
   {
     ssr: false,
     loading: () => (
-      <p className="px-2 py-4 font-body text-sm text-brand-muted">Opening Fellowship Chat…</p>
+      <p className="px-2 py-4 font-body text-sm text-zinc-400">Opening Fellowship Chat…</p>
     ),
   },
 );
@@ -76,22 +76,26 @@ export default function ExperienceLiveLayout({
   const showInlineChat = !isMobileLandscape;
 
   return (
-    <div className="flex min-h-dvh w-full flex-col overflow-x-hidden bg-brand-black text-white md:h-dvh md:overflow-hidden">
-      <header className="relative z-20 shrink-0 border-b border-brand-border/80 px-3 py-2 pt-safe md:px-6 md:py-3">
+    <div className="experience-live-root flex min-h-dvh w-full max-w-[100vw] flex-col overflow-x-hidden md:h-dvh md:overflow-hidden">
+      <header className="relative z-20 shrink-0 border-b border-white/8 px-3 py-2 pt-safe md:px-6 md:py-3">
         <ExperienceBrandHeader compact liveBadge={variant === "live"} />
       </header>
 
       <div
-        className={`relative flex min-h-0 flex-1 flex-col md:grid md:grid-cols-[minmax(0,1.85fr)_minmax(18rem,1fr)] md:overflow-hidden ${
+        className={`relative flex min-h-0 flex-1 flex-col md:grid md:grid-cols-[minmax(0,1.9fr)_minmax(20rem,1fr)] md:overflow-hidden ${
           isMobileLandscape ? "overflow-hidden" : ""
         }`}
       >
         <section
-          className={`relative shrink-0 md:flex md:min-h-0 md:flex-col md:overflow-hidden md:p-4 md:pr-3 ${
+          className={`relative w-full min-w-0 shrink-0 md:flex md:min-h-0 md:flex-col md:overflow-hidden md:p-4 md:pr-3 ${
             isMobileLandscape ? "min-h-0 flex-1" : ""
           }`}
         >
-          <div className={`w-full ${isMobileLandscape ? "h-full" : "md:min-h-0 md:flex-1"}`}>
+          <div
+            className={`experience-live-stage-mobile w-full min-w-0 ${
+              isMobileLandscape ? "h-full" : "md:min-h-0 md:flex-1"
+            }`}
+          >
             {stage}
           </div>
 
@@ -103,8 +107,8 @@ export default function ExperienceLiveLayout({
               aria-controls="experience-chat-overlay"
               className={`touch-target fixed right-3 z-30 flex min-h-11 items-center gap-2 rounded-full border px-3 py-2 font-ui text-[0.55rem] font-bold uppercase tracking-[0.12em] shadow-lg backdrop-blur-md transition ${
                 chatOverlayOpen
-                  ? "border-brand-pink/50 bg-brand-pink/15 text-brand-pink"
-                  : "border-brand-blue/50 bg-black/75 text-brand-blue"
+                  ? "border-[#B0267A]/50 bg-[#B0267A]/15 text-[#B0267A]"
+                  : "border-[#1E40AF]/50 bg-[#111111]/90 exp-text-blue"
               }`}
               style={{ top: "calc(3.25rem + env(safe-area-inset-top))" }}
             >
@@ -119,8 +123,8 @@ export default function ExperienceLiveLayout({
         </section>
 
         {showInlineChat ? (
-          <aside className="flex min-h-[45dvh] flex-[1.15] flex-col border-t border-brand-border/80 md:h-full md:min-h-0 md:flex-1 md:border-t-0 md:border-l md:border-brand-blue/20 md:bg-brand-panel/30">
-            <div className="hidden shrink-0 gap-2 border-b border-brand-border p-3 md:flex">
+          <aside className="experience-chat-column flex min-h-[50dvh] min-w-0 flex-[1.2] flex-col md:h-full md:min-h-0 md:flex-1">
+            <div className="hidden shrink-0 gap-2 border-b border-white/8 p-3 md:flex">
               {EXPERIENCE_ACTIONS.map(({ id, label, icon: Icon }) => {
                 const active = openAction === id;
                 return (
@@ -130,8 +134,8 @@ export default function ExperienceLiveLayout({
                     onClick={() => toggleAction(id)}
                     className={`touch-target flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 font-ui text-[0.52rem] font-bold uppercase tracking-[0.1em] transition ${
                       active
-                        ? "border-brand-blue/50 bg-brand-blue/10 text-brand-blue"
-                        : "border-brand-border bg-black/40 text-brand-muted hover:border-white/15 hover:text-white"
+                        ? "experience-dock-active border-[#1E40AF]/50"
+                        : "border-white/8 bg-[#111111]/80 text-zinc-400 hover:border-[#1E40AF]/35 hover:text-white"
                     }`}
                   >
                     <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -141,7 +145,7 @@ export default function ExperienceLiveLayout({
               })}
             </div>
 
-            <div className="flex min-h-0 flex-1 flex-col px-3 pt-3 pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:pb-3">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col px-2.5 pt-2.5 pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:px-3 md:pt-3 md:pb-3">
               <FellowshipChatPanel embedded />
             </div>
           </aside>
@@ -150,26 +154,26 @@ export default function ExperienceLiveLayout({
         {isMobileLandscape && chatOverlayOpen ? (
           <aside
             id="experience-chat-overlay"
-            className="fixed inset-x-0 bottom-0 z-40 flex max-h-[min(72dvh,100%)] flex-col border-t border-brand-border/80 bg-black/82 backdrop-blur-lg"
+            className="experience-glass-panel fixed inset-x-0 bottom-0 z-40 flex max-h-[min(72dvh,100%)] min-w-0 flex-col"
             style={{
               top: "calc(3.25rem + env(safe-area-inset-top))",
               paddingBottom: "calc(4.75rem + env(safe-area-inset-bottom, 0px))",
             }}
           >
-            <div className="flex shrink-0 items-center justify-between border-b border-brand-border/60 px-3 py-2">
-              <p className="font-ui text-[0.58rem] font-bold uppercase tracking-[0.14em] text-brand-muted">
+            <div className="flex shrink-0 items-center justify-between border-b border-white/8 px-3 py-2">
+              <p className="font-ui text-[0.58rem] font-bold uppercase tracking-[0.14em] text-zinc-400">
                 Fellowship Chat
               </p>
               <button
                 type="button"
                 onClick={() => setChatOverlayOpen(false)}
-                className="touch-target rounded-lg border border-brand-border p-2 text-brand-muted hover:text-white"
+                className="touch-target rounded-lg border border-white/8 p-2 text-zinc-400 hover:text-white"
                 aria-label="Close chat overlay"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
-            <div className="flex min-h-0 flex-1 flex-col px-3 py-2">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col px-2.5 py-2">
               <FellowshipChatPanel embedded />
             </div>
           </aside>

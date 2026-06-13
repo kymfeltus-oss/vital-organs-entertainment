@@ -79,10 +79,10 @@ function ProgramItemRow({ item }: { item: EventProgramItem }) {
     <li
       className={`rounded-xl border px-3 py-3 transition sm:px-4 ${
         isCurrent
-          ? "border-brand-blue/50 bg-brand-blue/10"
+          ? "border-[#1E40AF]/50 bg-[#1E40AF]/10"
           : isCompleted
-            ? "border-brand-border/40 bg-black/20 opacity-60"
-            : "border-brand-border bg-brand-panel/40"
+            ? "border-white/8 bg-black/20 opacity-60"
+            : "border-white/8 bg-[#111111]/40"
       }`}
       aria-current={isCurrent ? "step" : undefined}
     >
@@ -111,9 +111,9 @@ function ProgramItemRow({ item }: { item: EventProgramItem }) {
         </div>
 
         {isCurrent ? (
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-brand-blue/55 bg-brand-blue/15 px-2.5 py-1 neon-blue-glow">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-blue" aria-hidden="true" />
-            <span className="font-ui text-[0.5rem] font-bold uppercase tracking-[0.12em] text-brand-blue">
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#1E40AF]/55 bg-[#1E40AF]/15 px-2.5 py-1 shadow-[0_0_20px_rgba(30,64,175,0.35)]">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#1E40AF]" aria-hidden="true" />
+            <span className="font-ui text-[0.5rem] font-bold uppercase tracking-[0.12em] exp-text-blue">
               Now
             </span>
           </span>
@@ -152,7 +152,7 @@ export default function EventProgramPanel({
       </p>
 
       {isFallback ? (
-        <p className="mt-3 rounded-lg border border-brand-border/60 bg-black/30 px-3 py-2 font-body text-xs leading-relaxed text-brand-muted">
+        <p className="mt-3 rounded-lg border border-white/8 bg-black/30 px-3 py-2 font-body text-xs leading-relaxed text-zinc-400">
           Sample program shown for preview. Live schedule will update automatically when connected
           to production.
         </p>

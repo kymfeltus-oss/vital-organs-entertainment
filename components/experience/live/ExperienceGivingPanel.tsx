@@ -88,7 +88,7 @@ export default function ExperienceGivingPanel() {
       </p>
 
       <div className="mt-4 flex items-center justify-center">
-        <Heart className="h-8 w-8 text-brand-pink" strokeWidth={1.2} aria-hidden="true" />
+        <Heart className="h-8 w-8 exp-text-magenta" strokeWidth={1.2} aria-hidden="true" />
       </div>
 
       <p className="mt-4 text-center font-ui text-[0.58rem] font-bold uppercase tracking-[0.16em] text-brand-muted">
@@ -109,8 +109,8 @@ export default function ExperienceGivingPanel() {
               }}
               className={`touch-target rounded-xl border px-2 py-3 font-ui text-sm font-bold transition ${
                 isActive
-                  ? "border-brand-pink bg-brand-pink/10 text-white neon-pink-glow"
-                  : "border-brand-border bg-black/40 text-white/80 hover:border-brand-blue/40"
+                  ? "border-[#B0267A] bg-[#B0267A]/10 text-white shadow-[0_0_24px_rgba(176,38,122,0.35)]"
+                  : "border-white/8 bg-black/40 text-white/80 hover:border-[#1E40AF]/40"
               }`}
             >
               ${amount}
@@ -132,19 +132,19 @@ export default function ExperienceGivingPanel() {
             setError(null);
           }}
           placeholder="$ Enter Amount"
-          className="w-full rounded-xl border border-brand-border bg-black/60 px-4 py-3 text-center font-body text-sm text-white outline-none placeholder:text-brand-muted focus:border-brand-blue/50"
+          className="w-full rounded-xl border border-white/8 bg-black/60 px-4 py-3 text-center font-body text-sm text-white outline-none placeholder:text-zinc-500 focus:border-[#1E40AF]/50"
         />
       </label>
 
       {error ? (
         <div className="mt-3">
-          <p className="font-body text-xs text-brand-pink" role="status">
+          <p className="font-body text-xs exp-text-magenta" role="status">
             {error}
           </p>
           {needsSignIn ? (
             <Link
               href="/email-gate?next=/experience/live"
-              className="mt-2 inline-flex min-h-11 items-center justify-center rounded-full border border-brand-blue/50 bg-brand-blue/10 px-6 py-2 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-brand-blue transition hover:bg-brand-blue/20"
+              className="mt-2 inline-flex min-h-11 items-center justify-center rounded-full border border-[#1E40AF]/50 bg-[#1E40AF]/10 px-6 py-2 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] exp-text-blue transition hover:bg-[#1E40AF]/20"
             >
               Sign In
             </Link>
@@ -153,7 +153,7 @@ export default function ExperienceGivingPanel() {
       ) : null}
 
       {checkoutOpened ? (
-        <p className="mt-3 rounded-lg border border-brand-blue/30 bg-brand-blue/10 px-3 py-2 font-body text-xs leading-relaxed text-brand-muted">
+        <p className="mt-3 rounded-lg border border-[#1E40AF]/30 bg-[#1E40AF]/10 px-3 py-2 font-body text-xs leading-relaxed text-zinc-400">
           Secure checkout is open in another tab. Complete your gift there, then return here to
           keep watching live.
         </p>

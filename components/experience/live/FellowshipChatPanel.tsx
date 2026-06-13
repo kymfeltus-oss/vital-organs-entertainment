@@ -89,7 +89,7 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
         <div className="experience-chat-pin mb-2 shrink-0 rounded-xl px-3 py-2.5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="flex items-center gap-1.5 font-ui text-[0.48rem] font-bold uppercase tracking-[0.16em] text-brand-blue">
+              <p className="flex items-center gap-1.5 font-ui text-[0.48rem] font-bold uppercase tracking-[0.16em] exp-text-blue">
                 <Shield className="h-3 w-3" aria-hidden="true" />
                 Pinned Announcement
               </p>
@@ -114,7 +114,7 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
               <button
                 type="button"
                 onClick={() => void moderate({ action: "unpin" })}
-                className="touch-target shrink-0 rounded border border-brand-border px-2 py-1 font-ui text-[0.45rem] font-bold uppercase tracking-[0.08em] text-zinc-400 hover:text-white"
+                className="touch-target shrink-0 rounded border border-white/8 px-2 py-1 font-ui text-[0.45rem] font-bold uppercase tracking-[0.08em] text-zinc-400 hover:text-white"
               >
                 Unpin
               </button>
@@ -156,7 +156,7 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
           <button
             type="button"
             onClick={() => scrollToBottom()}
-            className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-brand-blue/50 bg-black/95 px-3 py-1.5 font-ui text-[0.55rem] font-bold uppercase tracking-[0.12em] text-brand-blue shadow-lg"
+            className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-[#1E40AF]/50 bg-[#0B090A]/95 px-3 py-1.5 font-ui text-[0.55rem] font-bold uppercase tracking-[0.12em] exp-text-blue shadow-lg"
           >
             <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
             View Latest Messages
@@ -170,7 +170,7 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
           <button
             type="button"
             onClick={clearError}
-            className="ml-2 font-ui text-[0.5rem] uppercase tracking-widest text-brand-blue"
+            className="ml-2 font-ui text-[0.5rem] uppercase tracking-widest exp-text-blue"
           >
             Dismiss
           </button>
@@ -184,7 +184,7 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
           <p className="font-body text-xs text-zinc-400">Sign in to join the conversation</p>
           <Link
             href="/email-gate?next=/experience/live"
-            className="mt-2 inline-flex min-h-10 items-center justify-center rounded-full border border-brand-blue/50 bg-brand-blue/10 px-5 py-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.14em] text-brand-blue transition hover:bg-brand-blue/20"
+            className="mt-2 inline-flex min-h-10 items-center justify-center rounded-full border border-[#1E40AF]/50 bg-[#1E40AF]/10 px-5 py-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.14em] exp-text-blue transition hover:bg-[#1E40AF]/20"
           >
             Sign In
           </Link>

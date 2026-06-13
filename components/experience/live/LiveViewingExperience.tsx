@@ -77,8 +77,8 @@ export default function LiveViewingExperience({
   );
 
   return (
-    <div className="relative flex w-full min-w-0 flex-col gap-2.5 md:gap-3">
-      <div className="experience-stream-stage relative w-full overflow-hidden rounded-none md:rounded-xl">
+    <div className="relative flex w-full min-w-0 max-w-full flex-col gap-2 md:gap-3">
+      <div className="experience-stream-stage relative w-full min-w-0 overflow-hidden rounded-none md:rounded-xl">
         <FloatingLiveReactions />
         <StreamStageChrome isLive />
         <AttendeeStreamPlayer

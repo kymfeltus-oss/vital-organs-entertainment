@@ -257,10 +257,10 @@ export default function AttendeeStreamPlayer({
 
   return (
     <div
-      className={`relative aspect-video w-full overflow-hidden bg-black ${
+      className={`relative aspect-video w-full overflow-hidden bg-[#0B090A] ${
         embedded
           ? ""
-          : "experience-stream-stage rounded-none md:rounded-xl md:border md:border-brand-border neon-blue-glow"
+          : "experience-stream-stage rounded-none md:rounded-xl md:border md:border-white/8"
       }`}
     >
       <video
@@ -277,11 +277,11 @@ export default function AttendeeStreamPlayer({
       />
 
       {showRecovery && (
-        <div className="absolute inset-0 z-[2] flex flex-col items-center justify-center bg-brand-panel/95 px-6 text-center">
+        <div className="absolute inset-0 z-[2] flex flex-col items-center justify-center experience-recovery-overlay px-6 text-center">
           <div className="flex h-8 items-end justify-center gap-1" aria-hidden="true">
-            <span className="live-waveform-bar w-1 rounded-full bg-brand-blue/70" style={{ animationDelay: "0ms" }} />
-            <span className="live-waveform-bar w-1 rounded-full bg-brand-blue/70" style={{ animationDelay: "150ms" }} />
-            <span className="live-waveform-bar w-1 rounded-full bg-brand-blue/70" style={{ animationDelay: "300ms" }} />
+            <span className="live-waveform-bar w-1 rounded-full bg-[#1E40AF]/70" style={{ animationDelay: "0ms" }} />
+            <span className="live-waveform-bar w-1 rounded-full bg-[#1E40AF]/70" style={{ animationDelay: "150ms" }} />
+            <span className="live-waveform-bar w-1 rounded-full bg-[#1E40AF]/70" style={{ animationDelay: "300ms" }} />
           </div>
           <p className="mt-4 max-w-sm font-ui text-[0.62rem] font-bold uppercase tracking-[0.16em] text-zinc-300">
             Reconnecting to live broadcast…

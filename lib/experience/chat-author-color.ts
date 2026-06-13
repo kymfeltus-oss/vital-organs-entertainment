@@ -1,10 +1,10 @@
 const CHAT_AUTHOR_COLORS = [
-  "text-brand-blue",
-  "text-brand-pink",
-  "text-brand-purple",
+  "exp-chat-name-blue",
+  "exp-chat-name-magenta",
+  "exp-chat-name-cyan",
 ] as const;
 
-/** Stable brand accent per attendee for Twitch-style chat names. */
+/** Stable mockup accent per attendee for Twitch-style chat names. */
 export function chatAuthorColorClass(seed: string): string {
   if (!seed) return CHAT_AUTHOR_COLORS[0];
 

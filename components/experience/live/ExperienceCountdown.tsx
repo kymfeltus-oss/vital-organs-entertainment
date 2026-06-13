@@ -35,7 +35,7 @@ export default function ExperienceCountdown({
 
   if (countdown.isComplete) {
     return (
-      <p className="font-ui text-[0.65rem] font-bold uppercase tracking-[0.18em] text-brand-blue">
+      <p className="font-ui text-[0.65rem] font-bold uppercase tracking-[0.18em] exp-text-blue">
         {statusLabel || "Event starts soon"}
       </p>
     );

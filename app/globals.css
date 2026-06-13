@@ -380,20 +380,63 @@ html {
   background: linear-gradient(
     105deg,
     transparent 0%,
-    rgba(0, 168, 255, 0.08) 35%,
-    rgba(0, 168, 255, 0.45) 50%,
-    rgba(255, 0, 140, 0.2) 65%,
+    rgba(30, 64, 175, 0.1) 35%,
+    rgba(30, 64, 175, 0.5) 50%,
+    rgba(176, 38, 122, 0.22) 65%,
     transparent 100%
   );
   animation: experience-go-live-sweep 1.35s ease-out forwards;
 }
 
+/* /experience/live mockup theme — scoped attendee livestream palette */
+.experience-live-root {
+  --exp-bg: #0b090a;
+  --exp-panel: #111111;
+  --exp-blue: #1e40af;
+  --exp-magenta: #b0267a;
+  --exp-border: rgba(255, 255, 255, 0.08);
+  background-color: var(--exp-bg);
+  color: #ffffff;
+}
+
+.experience-live-root .exp-text-blue {
+  color: var(--exp-blue);
+}
+
+.experience-live-root .exp-text-magenta {
+  color: var(--exp-magenta);
+}
+
+.experience-live-root .exp-chat-name-blue {
+  color: #3b82f6;
+}
+
+.experience-live-root .exp-chat-name-magenta {
+  color: var(--exp-magenta);
+}
+
+.experience-live-root .exp-chat-name-cyan {
+  color: #67e8f9;
+}
+
+.experience-live-stage-mobile {
+  width: 100%;
+  max-height: min(52dvh, 28rem);
+}
+
+@media (min-width: 768px) {
+  .experience-live-stage-mobile {
+    max-height: none;
+  }
+}
+
 .experience-stream-stage {
   position: relative;
+  background: var(--exp-bg);
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.06),
-    0 24px 80px rgba(0, 0, 0, 0.65),
-    0 0 48px rgba(0, 168, 255, 0.12);
+    0 20px 64px rgba(0, 0, 0, 0.72),
+    0 0 40px rgba(30, 64, 175, 0.22);
 }
 
 .experience-stream-stage::after {
@@ -403,45 +446,68 @@ html {
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(0, 0, 0, 0.35) 0%,
-    transparent 28%,
-    transparent 72%,
-    rgba(0, 0, 0, 0.55) 100%
+    rgba(11, 9, 10, 0.45) 0%,
+    transparent 30%,
+    transparent 68%,
+    rgba(11, 9, 10, 0.65) 100%
   );
   z-index: 1;
 }
 
 .experience-live-badge {
-  background: rgba(0, 0, 0, 0.55);
-  border: 1px solid rgba(239, 68, 68, 0.45);
+  background: rgba(11, 9, 10, 0.72);
+  border: 1px solid rgba(239, 68, 68, 0.5);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
 .experience-glass-chip {
-  background: rgba(9, 11, 19, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(17, 17, 17, 0.82);
+  border: 1px solid var(--exp-border);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
 .experience-glass-panel {
-  background: rgba(9, 11, 19, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(17, 17, 17, 0.92);
+  border: 1px solid var(--exp-border);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
 
 .experience-glass-composer {
-  background: rgba(9, 11, 19, 0.92);
+  background: rgba(17, 17, 17, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
 
+.experience-chat-column {
+  background: linear-gradient(
+    180deg,
+    rgba(30, 64, 175, 0.1) 0%,
+    var(--exp-panel) 14%,
+    var(--exp-panel) 100%
+  );
+  border-top: 1px solid rgba(30, 64, 175, 0.28);
+}
+
+@media (min-width: 768px) {
+  .experience-chat-column {
+    border-top: none;
+    border-left: 1px solid rgba(30, 64, 175, 0.28);
+    background: linear-gradient(
+      90deg,
+      rgba(30, 64, 175, 0.08) 0%,
+      var(--exp-panel) 12%,
+      var(--exp-panel) 100%
+    );
+  }
+}
+
 .experience-tab {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--exp-border);
+  background: rgba(17, 17, 17, 0.88);
   transition:
     border-color 180ms ease,
     box-shadow 180ms ease,
@@ -450,82 +516,131 @@ html {
 }
 
 .experience-tab:hover {
-  border-color: rgba(0, 168, 255, 0.35);
-  color: #fff;
+  border-color: rgba(30, 64, 175, 0.45);
+  color: #ffffff;
+}
+
+.experience-tab:active {
+  border-color: rgba(176, 38, 122, 0.45);
 }
 
 .experience-tab-active {
-  border-color: rgba(0, 168, 255, 0.65);
-  background: rgba(0, 168, 255, 0.12);
-  color: #00a8ff;
+  border-color: rgba(30, 64, 175, 0.75);
+  background: rgba(30, 64, 175, 0.18);
+  color: #93c5fd;
   box-shadow:
-    0 0 24px rgba(0, 168, 255, 0.35),
-    inset 0 0 0 1px rgba(0, 168, 255, 0.15);
+    0 0 22px rgba(30, 64, 175, 0.45),
+    inset 0 0 0 1px rgba(30, 64, 175, 0.2);
 }
 
 .experience-chat-pin {
   background: linear-gradient(
     135deg,
-    rgba(0, 168, 255, 0.14) 0%,
-    rgba(9, 11, 19, 0.92) 100%
+    rgba(30, 64, 175, 0.28) 0%,
+    rgba(176, 38, 122, 0.12) 48%,
+    rgba(17, 17, 17, 0.94) 100%
   );
-  border: 1px solid rgba(0, 168, 255, 0.35);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(30, 64, 175, 0.55);
+  box-shadow:
+    0 0 28px rgba(30, 64, 175, 0.28),
+    inset 0 0 0 1px rgba(176, 38, 122, 0.15);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .experience-chat-giving {
   margin-inline: 0.125rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(34, 197, 94, 0.25);
+  border: 1px solid rgba(74, 222, 128, 0.35);
   background: linear-gradient(
     90deg,
-    rgba(34, 197, 94, 0.08) 0%,
-    rgba(9, 11, 19, 0.5) 100%
+    rgba(74, 222, 128, 0.14) 0%,
+    rgba(17, 17, 17, 0.72) 100%
   );
-  box-shadow: 0 0 20px rgba(34, 197, 94, 0.12);
+  box-shadow:
+    0 0 22px rgba(74, 222, 128, 0.18),
+    inset 0 0 0 1px rgba(176, 38, 122, 0.08);
 }
 
 .experience-chat-prayer {
-  border-left: 2px solid rgba(0, 168, 255, 0.55);
+  border-left: 2px solid rgba(30, 64, 175, 0.65);
   padding-left: 0.5rem;
-  background: rgba(0, 168, 255, 0.04);
+  background: rgba(30, 64, 175, 0.07);
 }
 
 .experience-chat-broadcast {
-  border: 1px solid rgba(0, 168, 255, 0.45);
-  background: rgba(0, 168, 255, 0.06);
-  box-shadow: 0 0 18px rgba(0, 168, 255, 0.12);
+  border: 1px solid rgba(30, 64, 175, 0.55);
+  background: rgba(30, 64, 175, 0.1);
+  box-shadow: 0 0 18px rgba(30, 64, 175, 0.2);
+}
+
+.experience-reaction-tray button {
+  border: 1px solid var(--exp-border);
+  background: rgba(17, 17, 17, 0.88);
+}
+
+.experience-reaction-tray button:hover:not(:disabled) {
+  border-color: rgba(30, 64, 175, 0.5);
+  background: rgba(30, 64, 175, 0.12);
+}
+
+.experience-dock-bar {
+  background: rgba(11, 9, 10, 0.94);
+  border-top: 1px solid var(--exp-border);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.55);
 }
 
 .experience-dock-give {
-  transform: translateY(-0.35rem);
+  transform: translateY(-0.4rem);
   border: 1px solid transparent;
   background:
-    linear-gradient(#000, #000) padding-box,
-    linear-gradient(135deg, #00a8ff 0%, #ff008c 100%) border-box;
+    linear-gradient(var(--exp-panel), var(--exp-panel)) padding-box,
+    linear-gradient(135deg, var(--exp-blue) 0%, var(--exp-magenta) 100%) border-box;
   box-shadow:
-    0 0 28px rgba(0, 168, 255, 0.35),
-    0 8px 24px rgba(0, 0, 0, 0.45);
+    0 0 26px rgba(30, 64, 175, 0.4),
+    0 8px 22px rgba(0, 0, 0, 0.5);
+}
+
+.experience-dock-active {
+  color: #93c5fd;
+  background: rgba(30, 64, 175, 0.16);
 }
 
 .experience-drawer-sheet {
-  background: rgba(9, 11, 19, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(17, 17, 17, 0.98);
+  border: 1px solid var(--exp-border);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 -24px 80px rgba(0, 0, 0, 0.65);
+  box-shadow: 0 -24px 80px rgba(0, 0, 0, 0.72);
 }
 
 .experience-send-btn {
-  background: #00a8ff;
-  color: #000;
-  box-shadow: 0 0 20px rgba(0, 168, 255, 0.45);
+  background: var(--exp-blue);
+  color: #ffffff;
+  box-shadow: 0 0 18px rgba(30, 64, 175, 0.5);
 }
 
 .experience-send-btn:disabled {
   opacity: 0.45;
   box-shadow: none;
+}
+
+.experience-recovery-overlay {
+  background: rgba(17, 17, 17, 0.96);
+}
+
+.experience-waiting-hero {
+  background: var(--exp-bg);
+}
+
+.experience-emblem-glow-blue {
+  background: rgba(30, 64, 175, 0.22);
+}
+
+.experience-emblem-glow-magenta {
+  background: rgba(176, 38, 122, 0.14);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -63,9 +63,9 @@ export default function LiveExperienceClient({
 
   if (phase === "locked") {
     return (
-      <main className="flex min-h-dvh w-full flex-col items-center justify-center bg-brand-black px-4 pt-safe pb-safe text-white">
-        <div className="w-full max-w-lg rounded-2xl border border-brand-border bg-brand-panel p-8 text-center">
-          <p className="font-ui text-[0.6rem] font-bold uppercase tracking-[0.24em] text-brand-blue">
+      <main className="experience-live-root flex min-h-dvh w-full flex-col items-center justify-center px-4 pt-safe pb-safe text-white">
+        <div className="w-full max-w-lg rounded-2xl border border-white/8 bg-[#111111] p-8 text-center">
+          <p className="font-ui text-[0.6rem] font-bold uppercase tracking-[0.24em] exp-text-blue">
             Vital Organs Entertainment
           </p>
           <h1 className="mt-4 font-headline text-2xl uppercase tracking-[0.12em]">
@@ -76,7 +76,7 @@ export default function LiveExperienceClient({
           </p>
           <Link
             href="/dashboard/merch"
-            className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full border border-brand-blue/50 bg-brand-blue/10 px-8 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-brand-blue transition hover:bg-brand-blue/20"
+            className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full border border-[#1E40AF]/50 bg-[#1E40AF]/10 px-8 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] exp-text-blue transition hover:bg-[#1E40AF]/20"
           >
             Get Your Pass
           </Link>

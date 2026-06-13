@@ -15,7 +15,7 @@ type WaitingRoomProps = {
 
 function WaitingRoomMusicPromo() {
   return (
-    <div className="mt-4 flex w-full max-w-sm items-center gap-3 rounded-xl border border-brand-border/70 bg-black/45 p-2.5 text-left sm:mt-5">
+    <div className="mt-4 hidden w-full max-w-sm items-center gap-3 rounded-xl border border-white/8 bg-[#111111]/80 p-2.5 text-left md:flex">
       <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg sm:h-16 sm:w-16">
         <Image
           src={EXPERIENCE_BRAND_ASSETS.hallelujahCover}
@@ -26,7 +26,7 @@ function WaitingRoomMusicPromo() {
         />
       </div>
       <div className="min-w-0">
-        <p className="font-ui text-[0.48rem] font-bold uppercase tracking-[0.16em] text-brand-blue">
+        <p className="font-ui text-[0.48rem] font-bold uppercase tracking-[0.16em] exp-text-blue">
           Featured Music
         </p>
         <p className="mt-1 font-card-title text-sm uppercase tracking-[0.06em] text-white">
@@ -50,31 +50,29 @@ export default function WaitingRoom({
     : countdownConfig.status_label || "Waiting for live signal";
 
   return (
-    <div className="experience-stream-stage relative w-full overflow-hidden rounded-none min-h-[min(72vw,22rem)] sm:min-h-[min(58vw,24rem)] md:aspect-video md:min-h-0 md:rounded-xl">
-      <div className="pointer-events-none absolute inset-0 z-0">
-        {countdownConfig.hero_background_url ? (
+    <div className="experience-stream-stage experience-waiting-hero relative w-full min-w-0 overflow-hidden rounded-none min-h-[min(68vw,20rem)] sm:min-h-[min(58vw,22rem)] md:aspect-video md:min-h-0 md:rounded-xl">
+      {countdownConfig.hero_background_url ? (
+        <div className="pointer-events-none absolute inset-0 z-0">
           <Image
             src={countdownConfig.hero_background_url}
             alt=""
             fill
-            className="object-cover opacity-35"
+            className="object-cover opacity-25"
             sizes="(max-width: 768px) 100vw, 65vw"
             priority
           />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-brand-panel via-brand-black to-black" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-black/60 to-black/92" />
-      </div>
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0B090A]/40 via-[#0B090A]/75 to-[#0B090A]" />
+        </div>
+      ) : null}
 
-      <div className="relative z-[2] flex min-h-[inherit] flex-col items-center justify-center px-4 py-5 text-center sm:px-8 sm:py-6">
-        <div className="relative mx-auto h-[clamp(5.25rem,28vw,8.5rem)] w-[clamp(5.25rem,28vw,8.5rem)] shrink-0">
+      <div className="relative z-[2] flex min-h-[inherit] flex-col items-center justify-center px-3 py-4 text-center sm:px-6 sm:py-5">
+        <div className="relative mx-auto h-[clamp(5.5rem,32vw,9rem)] w-[clamp(5.5rem,32vw,9rem)] shrink-0">
           <div
-            className="pointer-events-none absolute -inset-3 rounded-full bg-brand-blue/20 blur-2xl"
+            className="experience-emblem-glow-blue pointer-events-none absolute -inset-4 rounded-full blur-2xl"
             aria-hidden="true"
           />
           <div
-            className="pointer-events-none absolute -inset-1 rounded-full bg-brand-pink/10 blur-xl"
+            className="experience-emblem-glow-magenta pointer-events-none absolute -inset-2 rounded-full blur-xl"
             aria-hidden="true"
           />
           <Image
@@ -82,45 +80,33 @@ export default function WaitingRoom({
             alt="300 Awakening"
             fill
             priority
-            sizes="(max-width: 768px) 28vw, 136px"
+            sizes="(max-width: 768px) 32vw, 144px"
             className="object-contain"
           />
         </div>
 
-        {countdownConfig.eyebrow ? (
-          <p className="mt-4 font-ui text-[0.56rem] font-bold uppercase tracking-[0.26em] text-brand-blue sm:mt-5">
-            {countdownConfig.eyebrow}
-          </p>
-        ) : (
-          <p className="mt-4 font-ui text-[0.56rem] font-bold uppercase tracking-[0.26em] text-brand-blue sm:mt-5">
-            Vital Organs Entertainment
-          </p>
-        )}
+        <p className="mt-3 font-ui text-[0.54rem] font-bold uppercase tracking-[0.24em] exp-text-blue sm:mt-4">
+          {countdownConfig.eyebrow || "Vital Organs Entertainment"}
+        </p>
 
-        {countdownConfig.headline ? (
-          <h2 className="mt-2 font-headline text-xl uppercase tracking-[0.14em] text-white sm:text-2xl md:text-3xl">
-            {countdownConfig.headline}
-          </h2>
-        ) : (
-          <h2 className="mt-2 font-headline text-xl uppercase tracking-[0.14em] text-white sm:text-2xl">
-            300 Awakening
-          </h2>
-        )}
+        <h2 className="mt-1 hidden font-headline text-xl uppercase tracking-[0.14em] text-white sm:block sm:text-2xl">
+          {countdownConfig.headline || "300 Awakening"}
+        </h2>
 
         {countdownConfig.subtitle ? (
-          <p className="mt-2 max-w-lg font-body text-sm leading-relaxed text-zinc-300 sm:text-base">
+          <p className="mt-2 hidden max-w-lg font-body text-sm leading-relaxed text-zinc-300 sm:block">
             {countdownConfig.subtitle}
           </p>
         ) : null}
 
-        <div className="experience-glass-chip mt-4 inline-flex items-center rounded-full px-4 py-2">
-          <span className="font-ui text-[0.56rem] font-bold uppercase tracking-[0.14em] text-zinc-300">
+        <div className="experience-glass-chip mt-3 inline-flex items-center rounded-full px-4 py-1.5 sm:mt-4">
+          <span className="font-ui text-[0.54rem] font-bold uppercase tracking-[0.14em] text-zinc-300">
             {statusText}
           </span>
         </div>
 
         {showCountdownTimer || countdownLoading ? (
-          <div className="mt-5 w-full max-w-lg px-1 sm:mt-6">
+          <div className="mt-4 w-full max-w-lg min-w-0 px-1 sm:mt-5">
             <ExperienceCountdown
               countdown={countdown}
               statusLabel={countdownConfig.status_label}
@@ -130,15 +116,10 @@ export default function WaitingRoom({
           </div>
         ) : null}
 
-        {countdownConfig.helper_text ? (
-          <p className="mt-3 max-w-md font-body text-xs leading-relaxed text-zinc-400 sm:text-sm">
-            {countdownConfig.helper_text}
-          </p>
-        ) : (
-          <p className="mt-3 max-w-md font-body text-xs leading-relaxed text-zinc-400 sm:text-sm">
-            Fellowship Chat is open — the live stream begins when we go live.
-          </p>
-        )}
+        <p className="mt-2 max-w-md font-body text-[0.7rem] leading-relaxed text-zinc-400 sm:text-xs">
+          {countdownConfig.helper_text ||
+            "Fellowship Chat is open — the live stream begins when we go live."}
+        </p>
 
         <WaitingRoomMusicPromo />
       </div>
