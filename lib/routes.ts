@@ -5,6 +5,7 @@ export const NAV_HIDDEN_ROUTES = [
   "/test-suite",
   "/ops",
   "/experience/live",
+  "/dashboard/live",
 ] as const;
 
 /** Exact paths only — event lobby uses its own sidebar + mobile nav */

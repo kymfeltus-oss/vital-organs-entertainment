@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function LivePage() {
-  redirect("/dashboard/live");
+  redirect("/experience/live");
 }

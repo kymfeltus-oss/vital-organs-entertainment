@@ -251,18 +251,32 @@ export default function AttendeeStreamPlayer({
     };
   }, [shouldPlay]);
 
-  if (!shouldPlay) return null;
+  if (!enabled && !showPaywall) return null;
+
+  const playerShellClass = `experience-player-fit relative aspect-[21/9] w-full overflow-hidden bg-[#0B090A] ${
+    embedded
+      ? ""
+      : "experience-stream-stage rounded-none md:rounded-xl md:border md:border-white/8"
+  }`;
+
+  if (showPaywall) {
+    return (
+      <div className={playerShellClass}>
+        {paywallOverlay ?? (
+          <div className="absolute inset-0 flex items-center justify-center px-6 text-center">
+            <p className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.16em] text-zinc-300">
+              Live pass required to watch the stream
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   const showRecovery = isReconnecting || isBuffering || !isPlaying;
 
   return (
-    <div
-      className={`experience-player-fit relative aspect-[21/9] w-full overflow-hidden bg-[#0B090A] ${
-        embedded
-          ? ""
-          : "experience-stream-stage rounded-none md:rounded-xl md:border md:border-white/8"
-      }`}
-    >
+    <div className={playerShellClass}>
       <video
         ref={videoRef}
         className={`absolute inset-0 z-0 h-full w-full bg-black object-cover ${

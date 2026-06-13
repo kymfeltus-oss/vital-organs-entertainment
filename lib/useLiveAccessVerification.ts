@@ -34,11 +34,15 @@ function resolvePhase(evaluation: LiveAccessEvaluation): LiveAccessPhase {
 }
 
 function clearCheckoutSuccessParam(): void {
-  window.history.replaceState({}, "", "/dashboard/live");
+  const url = new URL(window.location.href);
+  url.pathname = "/experience/live";
+  url.searchParams.delete("success");
+  const query = url.searchParams.toString();
+  window.history.replaceState({}, "", query ? `${url.pathname}?${query}` : url.pathname);
 }
 
 /**
- * Server-backed live access gate for /dashboard/live.
+ * Server-backed live access gate for /experience/live.
  * Post-checkout returns (`?success=true`) enter activating_pass and poll
  * /api/access/live until the Stripe webhook fulfills the ticket order.
  */

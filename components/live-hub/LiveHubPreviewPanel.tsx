@@ -259,7 +259,7 @@ export default function LiveHubPreviewPanel({
 
       <div className="mt-3 flex flex-wrap gap-2">
         <Link
-          href="/dashboard/live"
+          href="/experience/live"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-full border border-[#1E40AF]/50 bg-[#1E40AF]/10 px-3 py-2 text-[0.55rem] font-bold uppercase tracking-[0.12em] text-[#93c5fd] transition hover:border-[#1E40AF] hover:bg-[#1E40AF]/20"

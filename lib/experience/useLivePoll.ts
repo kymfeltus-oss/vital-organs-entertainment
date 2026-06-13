@@ -13,6 +13,8 @@ import {
   teardownRealtimeChannel,
 } from "@/lib/live/realtime-subscribe";
 import { getClientAppUrl } from "@/lib/client-api";
+import { parableFetch } from "@/lib/parable/resilient-fetch";
+import { useParableSubsystem } from "@/lib/parable/useParableSubsystem";
 import { getSupabase } from "@/lib/supabase/client";
 
 const LIVE_POLL_CHANNEL = "live-audience-poll";
@@ -36,6 +38,7 @@ type UseLivePollResult = {
 const EMPTY_TOTALS = { countA: 0, countB: 0 };
 
 export function useLivePoll(): UseLivePollResult {
+  const polls = useParableSubsystem("polls");
   const instanceId = useId().replace(/:/g, "");
   const channelRef = useRef<Awaited<ReturnType<typeof createRealtimeChannel>> | null>(null);
   const activePollIdRef = useRef<string | null>(null);
@@ -53,11 +56,20 @@ export function useLivePoll(): UseLivePollResult {
   const [usePollingFallback, setUsePollingFallback] = useState(false);
 
   const syncPoll = useCallback(async () => {
+    if (!polls.shouldFetch()) {
+      setIsLoading(false);
+      setError("Polls paused to protect live stream.");
+      return;
+    }
+
     try {
-      const response = await fetch(`${getClientAppUrl()}/api/experience/polls`, {
-        cache: "no-store",
-        credentials: "include",
-      });
+      const { response, latencyMs } = await parableFetch(
+        `${getClientAppUrl()}/api/experience/polls`,
+        {
+          cache: "no-store",
+          credentials: "include",
+        },
+      );
 
       if (!response.ok) {
         throw new Error("poll feed unavailable");
@@ -71,28 +83,34 @@ export function useLivePoll(): UseLivePollResult {
       setSession(payload.session);
       setUsePollingFallback(false);
       setError(null);
+      polls.reportSuccess(latencyMs);
     } catch (syncError) {
       console.error("Live poll sync failed:", syncError);
-      setUsePollingFallback(true);
+      polls.reportFailure();
+      setUsePollingFallback(false);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [polls]);
 
   useEffect(() => {
     void syncPoll();
   }, [syncPoll]);
 
   useEffect(() => {
-    if (usePollingFallback) {
-      const intervalId = window.setInterval(() => {
-        void syncPoll();
-      }, POLL_FALLBACK_MS);
-      return () => window.clearInterval(intervalId);
-    }
-  }, [syncPoll, usePollingFallback]);
+    if (!usePollingFallback || polls.isIsolated || polls.safeMode) return;
+    const intervalId = window.setInterval(() => {
+      void syncPoll();
+    }, POLL_FALLBACK_MS);
+    return () => window.clearInterval(intervalId);
+  }, [polls.isIsolated, polls.safeMode, syncPoll, usePollingFallback]);
 
   useEffect(() => {
+    if (!polls.shouldAllowRealtime()) {
+      setUsePollingFallback(true);
+      return;
+    }
+
     let cancelled = false;
     let supabase: ReturnType<typeof getSupabase>;
     let setupPromise: Promise<void> = Promise.resolve();
@@ -164,7 +182,7 @@ export function useLivePoll(): UseLivePollResult {
         await teardownRealtimeChannel(supabase, channel);
       })();
     };
-  }, [instanceId, syncPoll]);
+  }, [polls, instanceId, syncPoll]);
 
   const submitVote = useCallback(
     async (choice: LivePollChoice): Promise<boolean> => {

@@ -10,7 +10,7 @@ import {
   getTicketTierShortLabel,
   type EventTicketTier,
 } from "@/lib/merch/catalog";
-import { getAppUrl } from "@/lib/useLiveEmoteFanout";
+import { getAppUrl } from "@/lib/client-api";
 
 type TicketTierSelectionGridProps = {
   className?: string;

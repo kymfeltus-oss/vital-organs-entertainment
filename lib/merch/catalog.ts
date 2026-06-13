@@ -275,15 +275,15 @@ export function getMerchCheckoutPaths(productId: string): {
 } {
   if (productId === LIVE_PASS_PRODUCT_ID || isEventTicketTierId(productId)) {
     return {
-      successPath: "/dashboard/live?success=true",
-      cancelPath: "/dashboard/live?canceled=true",
+      successPath: "/experience/live?success=true",
+      cancelPath: "/experience/live?canceled=true",
     };
   }
 
   if (isSeedPackProductId(productId)) {
     return {
-      successPath: "/dashboard/live?seeds=success",
-      cancelPath: "/dashboard/live?seeds=canceled",
+      successPath: "/experience/live?seeds=success",
+      cancelPath: "/experience/live?seeds=canceled",
     };
   }
 

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getClientAppUrl } from "@/lib/client-api";
+import { parableFetch } from "@/lib/parable/resilient-fetch";
+import { useParableSubsystem } from "@/lib/parable/useParableSubsystem";
 import {
   acquirePlatformChannel,
   commitPlatformChannelSubscribe,
@@ -35,6 +37,7 @@ function reportSeedWalletFailure(
 }
 
 export function useLiveSeedWallet(): UseLiveSeedWalletResult {
+  const seeds = useParableSubsystem("seeds");
   const [balance, setBalance] = useState(0);
   const [usedFreeTaps, setUsedFreeTaps] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,13 +45,22 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
   const localUserIdRef = useRef<string | null>(null);
 
   const refresh = useCallback(async () => {
+    if (!seeds.shouldFetch()) {
+      setIsLoading(false);
+      setError("Seed wallet paused to protect live stream.");
+      return;
+    }
+
     setError(null);
 
     try {
-      const response = await fetch(`${getClientAppUrl()}/api/live/seeds`, {
-        method: "GET",
-        credentials: "include",
-      });
+      const { response, latencyMs } = await parableFetch(
+        `${getClientAppUrl()}/api/live/seeds`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
 
       const data = (await response.json()) as {
         balance?: number;
@@ -64,6 +76,7 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
       }
 
       if (!response.ok) {
+        seeds.reportFailure(data.error ?? "Unable to load seed balance.");
         setError(data.error ?? "Unable to load seed balance.");
         setIsLoading(false);
         return;
@@ -71,15 +84,24 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
 
       setBalance(typeof data.balance === "number" ? data.balance : 0);
       setUsedFreeTaps(typeof data.usedFreeTaps === "number" ? data.usedFreeTaps : 0);
+      seeds.reportSuccess(latencyMs);
       setIsLoading(false);
     } catch (refreshError) {
       console.error("Seed wallet refresh failed:", refreshError);
+      seeds.reportFailure("Unable to load seed balance.");
       setError("Unable to load seed balance.");
       setIsLoading(false);
     }
-  }, []);
+  }, [seeds]);
 
   useEffect(() => {
+    if (!seeds.shouldAllowRealtime()) {
+      queueMicrotask(() => {
+        void refresh();
+      });
+      return;
+    }
+
     let cancelled = false;
     let supabase: ReturnType<typeof getSupabase>;
 
@@ -147,7 +169,7 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
       cancelled = true;
       releasePlatformChannel(supabase);
     };
-  }, [refresh]);
+  }, [refresh, seeds]);
 
   return {
     balance,

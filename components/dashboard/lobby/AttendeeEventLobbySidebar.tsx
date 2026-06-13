@@ -19,7 +19,7 @@ import { useHarvestMetrics } from "@/lib/useHarvestMetrics";
 
 const SIDEBAR_NAV = [
   { label: "Home", href: "/dashboard", icon: Home },
-  { label: "Live", href: "/dashboard/live", icon: Radio },
+  { label: "Live", href: "/experience/live", icon: Radio },
   { label: "Giving", href: "/giving", icon: Heart },
   { label: "Music", href: "/music", icon: Music },
   { label: "Updates", href: "/updates", icon: Calendar },

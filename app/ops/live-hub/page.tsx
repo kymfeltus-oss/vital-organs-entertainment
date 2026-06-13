@@ -1,7 +1,7 @@
 /**
  * Operator production console — desktop-only, ops-admin protected.
  * vMix, Restream, readiness, safety, timeline, and Go Live review live here only.
- * Attendee experience: /dashboard/live (no operator controls).
+ * Attendee experience: /experience/live (no operator controls).
  */
 import LiveHubConsole from "@/components/live-hub/LiveHubConsole";
 import { requireOpsAdminUser } from "@/lib/ops/assert-ops-admin";

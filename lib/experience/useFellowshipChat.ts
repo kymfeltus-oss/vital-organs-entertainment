@@ -16,6 +16,8 @@ import {
   teardownRealtimeChannel,
 } from "@/lib/live/realtime-subscribe";
 import { getClientAppUrl } from "@/lib/client-api";
+import { parableFetch } from "@/lib/parable/resilient-fetch";
+import { useParableSubsystem } from "@/lib/parable/useParableSubsystem";
 import { getSupabase } from "@/lib/supabase/client";
 
 const FELLOWSHIP_CHAT_CHANNEL = "fellowship-chat";
@@ -45,6 +47,7 @@ const DEFAULT_SESSION: FellowshipChatSession = {
 };
 
 export function useFellowshipChat(): UseFellowshipChatResult {
+  const fellowship = useParableSubsystem("fellowship_chat");
   const instanceId = useId().replace(/:/g, "");
   const channelRef = useRef<Awaited<ReturnType<typeof createRealtimeChannel>> | null>(null);
 
@@ -57,11 +60,20 @@ export function useFellowshipChat(): UseFellowshipChatResult {
   const [usePollingFallback, setUsePollingFallback] = useState(false);
 
   const syncFeed = useCallback(async () => {
+    if (!fellowship.shouldFetch()) {
+      setIsLoading(false);
+      setError("Fellowship Chat paused to protect live stream.");
+      return;
+    }
+
     try {
-      const response = await fetch(`${getClientAppUrl()}/api/experience/fellowship-chat`, {
-        cache: "no-store",
-        credentials: "include",
-      });
+      const { response, latencyMs } = await parableFetch(
+        `${getClientAppUrl()}/api/experience/fellowship-chat`,
+        {
+          cache: "no-store",
+          credentials: "include",
+        },
+      );
 
       if (!response.ok) {
         throw new Error("feed unavailable");
@@ -73,28 +85,35 @@ export function useFellowshipChat(): UseFellowshipChatResult {
       setSession(payload.session);
       setUsePollingFallback(false);
       setError(null);
+      fellowship.reportSuccess(latencyMs);
     } catch (syncError) {
       console.error("Fellowship chat sync failed:", syncError);
-      setUsePollingFallback(true);
+      fellowship.reportFailure();
+      setUsePollingFallback(false);
       setError("Fellowship Chat is temporarily unavailable.");
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fellowship]);
 
   useEffect(() => {
     void syncFeed();
   }, [syncFeed]);
 
   useEffect(() => {
-    if (!usePollingFallback) return;
+    if (!usePollingFallback || fellowship.isIsolated || fellowship.safeMode) return;
     const intervalId = window.setInterval(() => {
       void syncFeed();
     }, POLL_FALLBACK_MS);
     return () => window.clearInterval(intervalId);
-  }, [syncFeed, usePollingFallback]);
+  }, [fellowship.isIsolated, fellowship.safeMode, syncFeed, usePollingFallback]);
 
   useEffect(() => {
+    if (!fellowship.shouldAllowRealtime()) {
+      setUsePollingFallback(true);
+      return;
+    }
+
     let cancelled = false;
     let supabase: ReturnType<typeof getSupabase>;
     let setupPromise: Promise<void> = Promise.resolve();
@@ -162,7 +181,7 @@ export function useFellowshipChat(): UseFellowshipChatResult {
         await teardownRealtimeChannel(supabase, channel);
       })();
     };
-  }, [instanceId, syncFeed]);
+  }, [fellowship, instanceId, syncFeed]);
 
   const sendMessage = useCallback(
     async (rawContent: string): Promise<boolean> => {

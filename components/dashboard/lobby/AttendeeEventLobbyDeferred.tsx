@@ -35,7 +35,7 @@ export type LobbyCtaState = {
 
 const MOBILE_NAV = [
   { label: "Home", href: "/dashboard", icon: Home },
-  { label: "Live", href: "/dashboard/live", icon: Radio },
+  { label: "Live", href: "/experience/live", icon: Radio },
   { label: "Giving", href: "/giving", icon: Sparkles },
   { label: "Music", href: "/music", icon: Music },
   { label: "More", href: "/updates", icon: Calendar },
@@ -74,7 +74,7 @@ function FeatureCards({ href: ctaHref, disabled: ctaDisabled, label: ctaLabel }:
         description="Experience the live recording in real time"
         button={
           <FeatureCardButton
-            href={ctaHref ?? "/dashboard/live"}
+            href={ctaHref ?? "/experience/live"}
             label="Enter Live Experience"
             borderClass="border-[#1E40AF]/75 text-[#93C5FD]"
             disabled={ctaDisabled}

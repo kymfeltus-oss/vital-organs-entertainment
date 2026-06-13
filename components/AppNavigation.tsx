@@ -17,9 +17,9 @@ type NavItemConfig = {
 const NAV_ITEMS: readonly NavItemConfig[] = [
   {
     label: "Live",
-    href: "/dashboard/live",
+    href: "/experience/live",
     icon: Radio,
-    match: ["/dashboard/live", "/dashboard", "/live", "/experience"],
+    match: ["/dashboard/live", "/experience/live", "/dashboard", "/live", "/experience"],
   },
   {
     label: "Merch",

@@ -4,14 +4,20 @@ import dynamic from "next/dynamic";
 import { MessageSquare, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import ExperienceActionSheet from "@/components/experience/live/ExperienceActionSheet";
-import ExperienceBottomBar from "@/components/experience/live/ExperienceBottomBar";
 import ExperienceBrandHeader from "@/components/experience/live/ExperienceBrandHeader";
+import ExperienceMobileHero from "@/components/experience/live/ExperienceMobileHero";
+import ExperienceMobileLiveBand from "@/components/experience/live/ExperienceMobileLiveBand";
+import ExperienceMobileNav from "@/components/experience/live/ExperienceMobileNav";
+import ExperienceSelector from "@/components/experience/live/ExperienceSelector";
+import FeatureErrorBoundary from "@/components/parable/FeatureErrorBoundary";
 import {
   EXPERIENCE_ACTIONS,
   type ExperienceActionId,
 } from "@/components/experience/live/experience-actions";
-import { DEVICE_FIT_VIEWPORT } from "@/lib/responsive";
+import { useLiveExperienceStream } from "@/lib/experience/LiveExperienceStreamContext";
 import { useMobileLandscape } from "@/lib/experience/useMobileLandscape";
+import type { CountdownParts } from "@/lib/live/event-lobby";
+import { DEVICE_FIT_VIEWPORT } from "@/lib/responsive";
 
 const FellowshipChatPanel = dynamic(
   () => import("@/components/experience/live/FellowshipChatPanel"),
@@ -21,6 +27,11 @@ const FellowshipChatPanel = dynamic(
       <p className="px-2 py-4 font-body text-sm text-zinc-400">Opening Fellowship Chat…</p>
     ),
   },
+);
+
+const LivePollPanel = dynamic(
+  () => import("@/components/experience/live/LivePollPanel"),
+  { ssr: false },
 );
 
 const ExperiencePrayerPanel = dynamic(
@@ -41,20 +52,86 @@ const EventProgramPanel = dynamic(
 type ExperienceLiveLayoutProps = {
   variant: "waiting" | "live";
   stage: ReactNode;
+  mobilePortraitLayout: boolean;
+  streamIsLive: boolean;
+  isStreamStateLoading: boolean;
+  statusLabel: string;
+  heroBackgroundUrl?: string | null;
+  countdown: CountdownParts;
+  countdownLoading: boolean;
+  showCountdownTimer: boolean;
+  showPaywall: boolean;
+  paywallOverlay?: ReactNode;
   openAction: ExperienceActionId;
   onOpenAction: (action: Exclude<ExperienceActionId, null>) => void;
   onCloseAction: () => void;
 };
 
 function ActionPanelContent({ action }: { action: Exclude<ExperienceActionId, null> }) {
-  if (action === "prayer") return <ExperiencePrayerPanel />;
-  if (action === "give") return <ExperienceGivingPanel />;
-  return <EventProgramPanel />;
+  if (action === "prayer") {
+    return (
+      <FeatureErrorBoundary featureLabel="Prayer">
+        <ExperiencePrayerPanel />
+      </FeatureErrorBoundary>
+    );
+  }
+  if (action === "give") {
+    return (
+      <FeatureErrorBoundary featureLabel="Giving">
+        <ExperienceGivingPanel />
+      </FeatureErrorBoundary>
+    );
+  }
+  return (
+    <FeatureErrorBoundary featureLabel="Event program">
+      <EventProgramPanel />
+    </FeatureErrorBoundary>
+  );
+}
+
+function ExperienceMobileLiveInteractive() {
+  const {
+    feeds,
+    showSelector,
+    selectedExperience,
+    setSelectedExperience,
+    fallbackNotice,
+  } = useLiveExperienceStream();
+
+  return (
+    <div className="shrink-0 space-y-2 border-b border-white/5 px-2 py-2 md:hidden">
+      {showSelector ? (
+        <ExperienceSelector
+          feeds={feeds}
+          selectedKey={selectedExperience}
+          onSelect={setSelectedExperience}
+        />
+      ) : null}
+      <FeatureErrorBoundary featureLabel="Polls">
+        <LivePollPanel />
+      </FeatureErrorBoundary>
+      {fallbackNotice ? (
+        <p className="font-body text-xs leading-relaxed text-zinc-400" role="status">
+          {fallbackNotice}
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 export default function ExperienceLiveLayout({
   variant,
   stage,
+  mobilePortraitLayout,
+  streamIsLive,
+  isStreamStateLoading,
+  statusLabel,
+  heroBackgroundUrl,
+  countdown,
+  countdownLoading,
+  showCountdownTimer,
+  showPaywall,
+  paywallOverlay,
   openAction,
   onOpenAction,
   onCloseAction,
@@ -75,24 +152,53 @@ export default function ExperienceLiveLayout({
   };
 
   const showInlineChat = !isMobileLandscape;
+  const showMobileCinematicBand = mobilePortraitLayout;
+  const hideStageOnMobilePortrait = mobilePortraitLayout;
 
   return (
     <div className={`experience-live-root ${DEVICE_FIT_VIEWPORT} flex flex-col`}>
-      <header className="relative z-20 shrink-0 border-b border-white/8 px-3 py-2 pt-safe md:px-6 md:py-3">
+      <header
+        className={`relative z-20 shrink-0 border-b border-white/8 px-3 py-2 pt-safe md:px-6 md:py-3 ${
+          showMobileCinematicBand ? "hidden md:block" : ""
+        }`}
+      >
         <ExperienceBrandHeader compact liveBadge={variant === "live"} />
       </header>
+
+      {showMobileCinematicBand ? (
+        <div className="shrink-0 md:hidden">
+          {variant === "live" ? (
+            <ExperienceMobileLiveBand
+              showPaywall={showPaywall}
+              paywallOverlay={paywallOverlay}
+            />
+          ) : (
+            <ExperienceMobileHero
+              streamIsLive={streamIsLive}
+              isStreamStateLoading={isStreamStateLoading}
+              statusLabel={statusLabel}
+              heroBackgroundUrl={heroBackgroundUrl}
+              countdown={countdown}
+              countdownLoading={countdownLoading}
+              showCountdownTimer={showCountdownTimer}
+            />
+          )}
+        </div>
+      ) : null}
 
       <div
         className={`relative min-h-0 flex-1 overflow-hidden ${
           isMobileLandscape
             ? "flex flex-col"
-            : "experience-live-device-stack max-md:grid max-md:grid-rows-[minmax(0,0.4fr)_minmax(0,1fr)]"
+            : hideStageOnMobilePortrait
+              ? "max-md:grid max-md:grid-rows-[minmax(0,1fr)]"
+              : "experience-live-device-stack max-md:grid max-md:grid-rows-[minmax(0,0.4fr)_minmax(0,1fr)]"
         } md:grid md:grid-cols-[minmax(0,1.9fr)_minmax(20rem,1fr)]`}
       >
         <section
           className={`relative w-full min-w-0 min-h-0 overflow-hidden md:flex md:min-h-0 md:flex-col md:overflow-hidden md:p-4 md:pr-3 ${
             isMobileLandscape ? "min-h-0 flex-1" : ""
-          }`}
+          } ${hideStageOnMobilePortrait ? "max-md:hidden" : ""}`}
         >
           <div
             className={`experience-live-stage-mobile w-full min-w-0 ${
@@ -148,9 +254,21 @@ export default function ExperienceLiveLayout({
               })}
             </div>
 
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-0 pt-0 pb-0 md:px-3 md:pt-3 md:pb-3">
-              <FellowshipChatPanel embedded />
-            </div>
+            {mobilePortraitLayout && variant === "live" ? (
+              <ExperienceMobileLiveInteractive />
+            ) : null}
+
+            {openAction ? (
+              <div className="hidden min-h-0 flex-1 flex-col overflow-hidden md:flex md:px-3 md:pb-3 md:pt-3">
+                <ActionPanelContent action={openAction} />
+              </div>
+            ) : (
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-0 pt-0 pb-0 md:px-3 md:pt-3 md:pb-3">
+                <FeatureErrorBoundary featureLabel="Fellowship Chat">
+                  <FellowshipChatPanel embedded />
+                </FeatureErrorBoundary>
+              </div>
+            )}
           </aside>
         ) : null}
 
@@ -177,17 +295,21 @@ export default function ExperienceLiveLayout({
               </button>
             </div>
             <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-2.5 py-2">
-              <FellowshipChatPanel embedded />
+              <FeatureErrorBoundary featureLabel="Fellowship Chat">
+                <FellowshipChatPanel embedded />
+              </FeatureErrorBoundary>
             </div>
           </aside>
         ) : null}
       </div>
 
-      <ExperienceBottomBar activeAction={openAction} onAction={toggleAction} />
+      <ExperienceMobileNav activeAction={openAction} onActionTrigger={toggleAction} />
 
-      <ExperienceActionSheet action={openAction} onClose={onCloseAction}>
-        {openAction ? <ActionPanelContent action={openAction} /> : null}
-      </ExperienceActionSheet>
+      <div className="md:hidden">
+        <ExperienceActionSheet action={openAction} onClose={onCloseAction}>
+          {openAction ? <ActionPanelContent action={openAction} /> : null}
+        </ExperienceActionSheet>
+      </div>
     </div>
   );
 }

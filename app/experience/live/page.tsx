@@ -18,10 +18,8 @@ export default async function ExperienceLivePage() {
   const initialCountdownConfig = await loadActiveCountdownConfig();
 
   return (
-    <div className="experience-live-root min-h-dvh w-full bg-[#0B090A]">
-      <Suspense fallback={<LightweightLiveLoading />}>
-        <LiveExperienceClient initialCountdownConfig={initialCountdownConfig} />
-      </Suspense>
-    </div>
+    <Suspense fallback={<LightweightLiveLoading />}>
+      <LiveExperienceClient initialCountdownConfig={initialCountdownConfig} />
+    </Suspense>
   );
 }

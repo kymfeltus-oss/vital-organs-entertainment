@@ -76,7 +76,9 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
   return (
     <div
       className={`flex flex-col overflow-hidden ${
-        embedded ? "h-full min-h-0 bg-[#111111] md:bg-transparent" : "min-h-56"
+        embedded
+          ? "h-full min-h-0 max-md:mx-2 max-md:rounded-xl max-md:border max-md:border-white/[0.08] bg-[#111111] md:bg-transparent md:mx-0 md:rounded-none md:border-0"
+          : "min-h-56"
       }`}
     >
       {!embedded ? (
@@ -87,7 +89,7 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
         <>
           <div className="flex h-10 shrink-0 items-center border-b border-white/5 bg-black/20 px-4 md:hidden">
             <span className="font-ui text-[0.65rem] font-bold uppercase tracking-[0.15em] text-zinc-400">
-              Fellowship Chat
+              Live Fellowship Chat
             </span>
           </div>
           <p className="mb-2 hidden shrink-0 font-ui text-[0.55rem] font-bold uppercase tracking-[0.18em] text-zinc-400 md:block">
@@ -235,10 +237,13 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
             <button
               type="submit"
               disabled={!draft.trim() || isSending}
-              className="experience-send-btn touch-target flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition active:scale-95"
+              className="experience-send-btn touch-target flex h-10 shrink-0 items-center justify-center rounded-lg px-3 transition active:scale-95 md:w-10 md:px-0"
               aria-label="Send message"
             >
-              <Send className="h-4 w-4" aria-hidden="true" />
+              <span className="font-ui text-[0.58rem] font-black uppercase tracking-wider md:hidden">
+                Chat
+              </span>
+              <Send className="hidden h-4 w-4 md:block" aria-hidden="true" />
             </button>
           </div>
           <div className="flex items-end justify-between gap-2">

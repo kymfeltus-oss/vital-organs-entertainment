@@ -9,12 +9,20 @@ import GoingLiveTransition from "@/components/experience/live/GoingLiveTransitio
 import LiveViewingExperience from "@/components/experience/live/LiveViewingExperience";
 import WaitingRoom from "@/components/experience/live/WaitingRoom";
 import PassActivatingShell from "@/components/live/PassActivatingShell";
+import { LiveExperienceStreamProvider } from "@/lib/experience/LiveExperienceStreamContext";
 import { LiveStreamReactionsProvider } from "@/lib/experience/LiveStreamReactionsContext";
+import { shouldShowCountdownTimer } from "@/lib/experience/countdown-display";
 import { useAttendeeLiveState } from "@/lib/experience/useAttendeeLiveState";
 import { useEventCountdown } from "@/lib/experience/useEventCountdown";
+import { useMobilePortraitLayout } from "@/lib/experience/useMobilePortraitLayout";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
+import {
+  BroadcastHealthProvider,
+  useBroadcastHealth,
+} from "@/lib/parable/BroadcastHealthContext";
 import { useCountdownConfig } from "@/lib/useCountdownConfig";
 import { useLiveAccessVerification } from "@/lib/useLiveAccessVerification";
+import { useLiveSeedWallet } from "@/lib/useLiveSeedWallet";
 
 const StreamPaywallOverlay = dynamic(
   () => import("@/components/live/StreamPaywallOverlay"),
@@ -30,12 +38,25 @@ type LiveExperienceClientProps = {
 export default function LiveExperienceClient({
   initialCountdownConfig,
 }: LiveExperienceClientProps) {
+  return (
+    <BroadcastHealthProvider surface="experience">
+      <LiveExperienceClientInner initialCountdownConfig={initialCountdownConfig} />
+    </BroadcastHealthProvider>
+  );
+}
+
+function LiveExperienceClientInner({
+  initialCountdownConfig,
+}: LiveExperienceClientProps) {
+  const health = useBroadcastHealth();
   const { phase, verificationAttempt } = useLiveAccessVerification();
   const { isLive: streamIsLive, isLoading: isStreamStateLoading } = useAttendeeLiveState();
   const { config: countdownConfig, isLoading: countdownLoading } = useCountdownConfig({
     initialConfig: initialCountdownConfig,
   });
   const countdown = useEventCountdown(countdownConfig.start_time);
+  const mobilePortraitLayout = useMobilePortraitLayout();
+  const { refresh: refreshSeedBalance } = useLiveSeedWallet();
 
   const [openAction, setOpenAction] = useState<ExperienceActionId>(null);
   const [goingLive, setGoingLive] = useState(false);
@@ -56,6 +77,19 @@ export default function LiveExperienceClient({
       setGoingLive(false);
     }
   }, [isStreamStateLoading, streamIsLive]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("seeds") !== "success") return;
+
+    void refreshSeedBalance();
+
+    const url = new URL(window.location.href);
+    url.pathname = "/experience/live";
+    url.searchParams.delete("seeds");
+    const query = url.searchParams.toString();
+    window.history.replaceState({}, "", query ? `${url.pathname}?${query}` : url.pathname);
+  }, [refreshSeedBalance]);
 
   if (phase === "checking" || phase === "activating_pass") {
     return <PassActivatingShell attempt={verificationAttempt} />;
@@ -87,13 +121,22 @@ export default function LiveExperienceClient({
 
   const showLiveView = streamIsLive && !goingLive;
   const showPaywall = phase === "guest_hub";
+  const paywallOverlay = showPaywall ? <StreamPaywallOverlay /> : undefined;
+  const statusLabel =
+    countdownConfig.status_label?.trim() || "Waiting for live signal";
+  const showCountdownTimer = shouldShowCountdownTimer(
+    countdownConfig,
+    countdownLoading && !initialCountdownConfig,
+  );
 
   const stage = showLiveView ? (
-    <LiveViewingExperience
-      showPaywall={showPaywall}
-      paywallOverlay={showPaywall ? <StreamPaywallOverlay /> : undefined}
-    />
-  ) : (
+    mobilePortraitLayout ? null : (
+      <LiveViewingExperience
+        showPaywall={showPaywall}
+        paywallOverlay={paywallOverlay}
+      />
+    )
+  ) : mobilePortraitLayout ? null : (
     <WaitingRoom
       countdown={countdown}
       countdownConfig={countdownConfig}
@@ -101,15 +144,35 @@ export default function LiveExperienceClient({
     />
   );
 
+  const layout = (
+    <ExperienceLiveLayout
+      variant={showLiveView ? "live" : "waiting"}
+      stage={stage}
+      mobilePortraitLayout={mobilePortraitLayout}
+      streamIsLive={streamIsLive}
+      isStreamStateLoading={isStreamStateLoading}
+      statusLabel={statusLabel}
+      heroBackgroundUrl={countdownConfig.hero_background_url}
+      countdown={countdown}
+      countdownLoading={countdownLoading && !initialCountdownConfig}
+      showCountdownTimer={showCountdownTimer}
+      showPaywall={showPaywall}
+      paywallOverlay={paywallOverlay}
+      openAction={openAction}
+      onOpenAction={setOpenAction}
+      onCloseAction={() => setOpenAction(null)}
+    />
+  );
+
   return (
-    <LiveStreamReactionsProvider enabled={showLiveView}>
-      <ExperienceLiveLayout
-        variant={showLiveView ? "live" : "waiting"}
-        stage={stage}
-        openAction={openAction}
-        onOpenAction={setOpenAction}
-        onCloseAction={() => setOpenAction(null)}
-      />
+    <LiveStreamReactionsProvider enabled={showLiveView && !health.safeMode}>
+      {showLiveView ? (
+        <LiveExperienceStreamProvider enabled={showLiveView}>
+          {layout}
+        </LiveExperienceStreamProvider>
+      ) : (
+        layout
+      )}
 
       <GoingLiveTransition visible={goingLive} />
     </LiveStreamReactionsProvider>

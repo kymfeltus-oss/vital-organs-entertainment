@@ -138,13 +138,13 @@ export default function TestSuitePage() {
               Go to `/email-gate`
             </Link>
             <Link
-              href="/dashboard/live"
+              href="/experience/live"
               className="rounded border border-white/5 bg-white/5 p-2 hover:bg-white/10"
             >
-              Go to `/dashboard/live`
+              Go to `/experience/live`
             </Link>
             <Link
-              href="/dashboard/live?success=true"
+              href="/experience/live?success=true"
               className="rounded border border-white/5 bg-white/5 p-2 hover:bg-white/10"
             >
               Test Stripe Hook Retry (`?success=true`)

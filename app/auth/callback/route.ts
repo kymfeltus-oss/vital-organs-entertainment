@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
 
-const DEFAULT_NEXT_PATH = "/dashboard/live";
+const DEFAULT_NEXT_PATH = "/experience/live";
 
 function resolveRequestOrigin(request: NextRequest): string {
   const forwardedProto = request.headers

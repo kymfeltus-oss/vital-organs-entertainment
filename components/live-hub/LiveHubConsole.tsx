@@ -787,7 +787,7 @@ export default function LiveHubConsole({
                   onRunRehearsal={() => void runVmixAction("refresh_state")}
                   onTestStream={openPreviewForTest}
                   onShareStream={() => {
-                    const url = `${window.location.origin}/dashboard/live`;
+                    const url = `${window.location.origin}/experience/live`;
                     void navigator.clipboard?.writeText(url);
                     pushTimeline("readiness", "Share Link Copied", url);
                   }}

@@ -12,6 +12,7 @@ import ReadinessGate from "@/components/broadcast/ReadinessGate";
 import StreamStatusPanel from "@/components/broadcast/StreamStatusPanel";
 import { useProductionStore } from "@/hooks/useProductionStore";
 import { PARABLE_SHELL } from "@/lib/broadcast/parable-tokens";
+import { useBroadcastHealth } from "@/lib/parable/BroadcastHealthContext";
 import {
   canGoLive,
   deriveReadinessChecks,
@@ -36,6 +37,7 @@ export default function BroadcastConsole() {
     recordMitigation,
     refresh,
   } = useProductionStore();
+  const health = useBroadcastHealth();
 
   const [toast, setToast] = useState<string | null>(null);
 
@@ -101,17 +103,37 @@ export default function BroadcastConsole() {
 
   const handleGoLive = useCallback(async () => {
     if (!goLiveAllowed) return;
+
+    if (health.requiresCommandConfirmation("go_live")) {
+      const confirmed = window.confirm(
+        "Go live under PARABLE Safe Mode?\n\nConfirm to execute the sacred media path.",
+      );
+      if (!confirmed) return;
+      try {
+        const result = await goLive(true);
+        showToast(result.message);
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : "Go live failed.");
+      }
+      return;
+    }
+
     try {
-      const result = await goLive();
+      const result = await goLive(false);
       showToast(result.message);
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Go live failed.");
     }
-  }, [goLive, goLiveAllowed, showToast]);
+  }, [goLive, goLiveAllowed, health, showToast]);
 
   const handleEndLive = useCallback(async () => {
+    const confirmed = window.confirm(
+      "Stop live broadcast?\n\nThis ends the sacred media path. Confirm to proceed.",
+    );
+    if (!confirmed) return;
+
     try {
-      const result = await endLive();
+      const result = await endLive(true);
       showToast(result.message);
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Stop live failed.");
@@ -139,6 +161,7 @@ export default function BroadcastConsole() {
   const vmixHealth = resolveVmixHealth(store);
   const executionFlags = resolveExecutionFlags(store);
   const vmixAdapter = resolveVmixAdapter(store);
+  const latestHealthAlert = health.alerts[0]?.message ?? null;
 
   return (
     <div className={`flex min-h-dvh min-w-[1280px] flex-col overflow-x-auto ${PARABLE_SHELL.page}`}>
@@ -154,6 +177,11 @@ export default function BroadcastConsole() {
         executionFlags={executionFlags}
         pipelineTrace={store.meta.pipelineTrace}
         productionLog={store.productionLog}
+        healthSeverity={health.severity}
+        healthAlert={latestHealthAlert}
+        safeMode={health.safeMode}
+        usingCachedSnapshot={health.usingCachedSnapshot}
+        onSafeModeToggle={() => health.setSafeModeManual(!health.safeModeManual)}
       />
 
       {toast ? (

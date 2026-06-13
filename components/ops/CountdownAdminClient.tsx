@@ -66,7 +66,7 @@ export default function CountdownAdminClient({
     if (previewPhase === "waiting") {
       return { label: form.cta_label_waiting, disabled: true, href: undefined };
     }
-    return { label: form.cta_label_live, disabled: false, href: "/dashboard/live" };
+    return { label: form.cta_label_live, disabled: false, href: "/experience/live" };
   }, [form.cta_label_live, form.cta_label_waiting, previewPhase]);
 
   const updateField = useCallback(

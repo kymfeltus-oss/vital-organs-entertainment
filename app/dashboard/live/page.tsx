@@ -1,19 +1,31 @@
-import { Suspense } from "react";
-import LiveRoomClient from "@/components/live/LiveRoomClient";
-import LightweightLiveLoading from "@/components/live/LightweightLiveLoading";
+import { redirect } from "next/navigation";
+
+type DashboardLivePageProps = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+function buildQueryString(params: Record<string, string | string[] | undefined>): string {
+  const query = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined) continue;
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        query.append(key, entry);
+      }
+      continue;
+    }
+    query.set(key, value);
+  }
+
+  const serialized = query.toString();
+  return serialized ? `?${serialized}` : "";
+}
 
 /**
- * Attendee live room — public/user-facing after email gate. Mobile-friendly.
- * No vMix, Restream, ops readiness, or Go Live controls belong here.
- * Operator production console: /ops/live-hub (ops-admin, desktop-only).
- *
- * Performance: measure LCP with `npm run build && npm run start`, not `next dev`.
- * Dev HMR/WebSocket overhead inflates hydration metrics. Test without browser extensions.
+ * Legacy attendee live entry — forwards to the cinematic /experience/live viewport.
  */
-export default function LiveRoomPage() {
-  return (
-    <Suspense fallback={<LightweightLiveLoading />}>
-      <LiveRoomClient />
-    </Suspense>
-  );
+export default async function LiveRoomPage({ searchParams }: DashboardLivePageProps) {
+  const params = await searchParams;
+  redirect(`/experience/live${buildQueryString(params)}`);
 }

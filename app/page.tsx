@@ -12,7 +12,7 @@ const PLAYBACK_RATE = 0.9;
 
 function resolveNextPath(rawNext: string | null): string {
   if (!rawNext || !rawNext.startsWith("/") || rawNext.startsWith("//")) {
-    return "/dashboard/live";
+    return "/experience/live";
   }
   return rawNext;
 }

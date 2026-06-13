@@ -8,7 +8,7 @@ type AuthTab = "login" | "signup" | "guest";
 
 function resolveNextPath(rawNext: string | null): string {
   if (!rawNext || !rawNext.startsWith("/") || rawNext.startsWith("//")) {
-    return "/dashboard/live";
+    return "/experience/live";
   }
   return rawNext;
 }

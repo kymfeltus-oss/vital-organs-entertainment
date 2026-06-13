@@ -18,6 +18,7 @@ import { useDeferredMount } from "@/lib/useDeferredMount";
 import { useHybridLiveActivity } from "@/lib/useHybridLiveActivity";
 import { useLiveAccessVerification } from "@/lib/useLiveAccessVerification";
 import { useLiveStreamState } from "@/lib/useLiveStreamState";
+import { useLobbyCta } from "@/components/dashboard/lobby/useLobbyCta";
 import { DEVICE_FIT_PAGE, DEVICE_FIT_SCROLL, LOBBY_GRID } from "@/lib/responsive";
 
 const AttendeeEventLobbySidebar = dynamic(
@@ -42,10 +43,6 @@ const AttendeeEventLobbyBottomNav = dynamic(() =>
     (mod) => mod.AttendeeEventLobbyBottomNav,
   ),
 );
-
-function isValidHlsUrl(url?: string | null): boolean {
-  return Boolean(url && (url.includes(".m3u8") || url.includes(".m3u8?")));
-}
 
 function useEventCountdown(targetIso: string): CountdownParts {
   const [parts, setParts] = useState<CountdownParts>(() => computeCountdown(targetIso));
@@ -75,43 +72,6 @@ function useEventPhase(startTime: string, endTime: string): EventCountdownPhase 
   return phase;
 }
 
-function useLobbyCta(config: EventCountdownConfig, eventPhase: EventCountdownPhase) {
-  const { phase, evaluation } = useLiveAccessVerification();
-  const { isLive: streamIsLive } = useLiveStreamState();
-  const hasValidSource = isValidHlsUrl(evaluation?.playbackUrl);
-  const isLocked = phase === "locked" || phase === "guest_hub";
-
-  return useMemo(() => {
-    if (eventPhase === "ended") {
-      return { label: "EXPERIENCE ENDED", href: undefined, disabled: true };
-    }
-    if (phase === "checking" || phase === "activating_pass") {
-      return { label: "ACTIVATING YOUR PASS", href: undefined, disabled: true };
-    }
-    if (isLocked) {
-      return { label: "GET YOUR PASS", href: "/dashboard/merch", disabled: false };
-    }
-    if (eventPhase === "waiting") {
-      return { label: config.cta_label_waiting, href: undefined, disabled: true };
-    }
-    if (!streamIsLive) {
-      return { label: config.cta_label_waiting, href: undefined, disabled: true };
-    }
-    if (!hasValidSource) {
-      return { label: "LIVE SIGNAL NOT READY", href: undefined, disabled: true };
-    }
-    return { label: config.cta_label_live, href: "/dashboard/live", disabled: false };
-  }, [
-    config.cta_label_live,
-    config.cta_label_waiting,
-    eventPhase,
-    hasValidSource,
-    isLocked,
-    phase,
-    streamIsLive,
-  ]);
-}
-
 type AttendeeEventLobbyClientProps = {
   initialCountdownConfig: EventCountdownConfig;
 };
@@ -128,7 +88,7 @@ export default function AttendeeEventLobbyClient({
   });
   const eventPhase = useEventPhase(countdownConfig.start_time, countdownConfig.end_time);
   const countdown = useEventCountdown(countdownConfig.start_time);
-  const cta = useLobbyCta(countdownConfig, eventPhase);
+  const cta = useLobbyCta(countdownConfig, eventPhase, phase, streamIsLive);
 
   const movementActivity = useMemo(() => {
     if (!deferredReady) return [];
