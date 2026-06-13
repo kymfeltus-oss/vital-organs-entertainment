@@ -10,6 +10,7 @@ import {
   type EventCountdownConfig,
 } from "@/lib/live/countdown-config";
 import { computeCountdown } from "@/lib/live/event-lobby";
+import { DEVICE_FIT_PAGE } from "@/lib/responsive";
 
 type CountdownAdminClientProps = {
   adminEmail: string;
@@ -110,7 +111,7 @@ export default function CountdownAdminClient({
   };
 
   return (
-    <div className="min-h-screen bg-[#050406] text-white">
+    <div className={`${DEVICE_FIT_PAGE} bg-[#050406] text-white`}>
       <header className="border-b border-white/10 bg-[#0B090A]/90 px-6 py-4">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-3">
           <div>

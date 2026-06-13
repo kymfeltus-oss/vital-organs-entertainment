@@ -49,7 +49,7 @@ export default function RootLayout({
       lang="en"
       className={`${bebasNeue.variable} ${montserrat.variable} ${inter.variable} ${oswald.variable}`}
     >
-      <body className="font-body min-h-dvh max-w-[100vw] overflow-x-hidden bg-brand-black text-[16px] text-white antialiased">
+      <body className="font-body device-fit-page min-h-dvh max-w-[100vw] overflow-x-hidden bg-brand-black text-[16px] text-white antialiased">
         <RootLayoutShell>{children}</RootLayoutShell>
       </body>
     </html>

@@ -10,6 +10,7 @@ import {
   computeHarvestProgressPercent,
 } from "@/lib/live/harvest-metrics";
 import type { OpsSnapshot, OpsStreamAction } from "@/lib/ops/types";
+import { DEVICE_FIT_VIEWPORT } from "@/lib/responsive";
 
 const METRICS_POLL_INTERVAL_MS = 8_000;
 
@@ -188,7 +189,7 @@ export default function OpsCommandCenter({
   );
 
   return (
-    <div className="flex h-screen w-full flex-col overflow-hidden bg-[#0B090A] p-6 text-white">
+    <div className={`flex ${DEVICE_FIT_VIEWPORT} flex-col bg-[#0B090A] p-[clamp(1rem,2vw,1.5rem)] text-white`}>
       <header className="mb-5 flex shrink-0 items-start justify-between gap-4 border-b border-white/10 pb-4">
         <div>
           <p className="text-[0.62rem] font-bold uppercase tracking-[0.32em] text-[#1E40AF]">

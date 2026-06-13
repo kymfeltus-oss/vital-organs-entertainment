@@ -25,6 +25,22 @@ export const SHELL_MAX_CLASS: Record<ShellVariant, string> = {
 export const PAGE_GRID =
   "grid w-full grid-cols-1 gap-4 md:grid-cols-12 md:gap-6";
 
+/** Locks immersive shells to the dynamic viewport (mobile browser chrome safe) */
+export const DEVICE_FIT_VIEWPORT =
+  "h-dvh max-h-dvh min-h-0 w-full max-w-[100vw] overflow-hidden";
+
+/** Standard page root — full device width, at least one viewport tall */
+export const DEVICE_FIT_PAGE =
+  "min-h-dvh w-full max-w-[100vw] overflow-x-hidden";
+
+/** Scrollable main column inside a full-height device-fit grid */
+export const DEVICE_FIT_SCROLL =
+  "min-h-0 h-dvh max-h-dvh overflow-y-auto overflow-x-hidden";
+
+/** Event lobby grid — fluid side rails from tablet landscape up */
+export const LOBBY_GRID =
+  "grid min-h-dvh grid-cols-1 lg:grid-cols-[minmax(14rem,260px)_minmax(0,1fr)_minmax(16rem,360px)]";
+
 /** Content offset when global navigation is present (root layout) */
 export const CONTENT_WITH_NAV = "pb-16 md:pb-0 md:pl-64";
 

@@ -50,7 +50,7 @@ export default function WaitingRoom({
     : countdownConfig.status_label || "Waiting for live signal";
 
   return (
-    <div className="experience-stream-stage experience-waiting-hero relative w-full min-w-0 overflow-hidden rounded-none min-h-[min(68vw,20rem)] sm:min-h-[min(58vw,22rem)] md:aspect-video md:min-h-0 md:rounded-xl">
+    <div className="experience-live-stage-fit experience-stream-stage experience-waiting-hero relative w-full min-w-0 overflow-hidden rounded-none min-h-[min(68vw,20rem)] sm:min-h-[min(58vw,22rem)] md:aspect-video md:min-h-0 md:rounded-xl">
       {countdownConfig.hero_background_url ? (
         <div className="pointer-events-none absolute inset-0 z-0">
           <Image

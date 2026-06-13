@@ -132,7 +132,7 @@ function SidebarNavIcon({
 
 export function SidebarSkeleton() {
   return (
-    <aside className="hidden h-screen w-[260px] shrink-0 animate-pulse border-r border-white/6 bg-[#050406] lg:flex" />
+    <aside className="hidden h-dvh min-h-0 w-full max-w-[260px] shrink-0 animate-pulse border-r border-white/6 bg-[#050406] lg:flex" />
   );
 }
 
@@ -140,7 +140,7 @@ export default function AttendeeEventLobbySidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden h-screen w-[260px] shrink-0 flex-col border-r border-white/6 bg-[#050406] px-4 py-5 lg:flex">
+    <aside className="hidden h-dvh min-h-0 w-full max-w-[260px] shrink-0 flex-col border-r border-white/6 bg-[#050406] px-4 py-5 lg:flex">
       <div className="shrink-0 px-0.5">
         <Image
           src="/branding/300-awakening-logo.png"

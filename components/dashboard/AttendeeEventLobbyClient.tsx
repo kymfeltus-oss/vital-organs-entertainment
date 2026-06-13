@@ -18,6 +18,7 @@ import { useDeferredMount } from "@/lib/useDeferredMount";
 import { useHybridLiveActivity } from "@/lib/useHybridLiveActivity";
 import { useLiveAccessVerification } from "@/lib/useLiveAccessVerification";
 import { useLiveStreamState } from "@/lib/useLiveStreamState";
+import { DEVICE_FIT_PAGE, DEVICE_FIT_SCROLL, LOBBY_GRID } from "@/lib/responsive";
 
 const AttendeeEventLobbySidebar = dynamic(
   () => import("@/components/dashboard/lobby/AttendeeEventLobbySidebar"),
@@ -160,11 +161,11 @@ export default function AttendeeEventLobbyClient({
   }
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[#050406] text-white">
-      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_360px]">
+    <div className={`${DEVICE_FIT_PAGE} overflow-hidden bg-[#050406] text-white`}>
+      <div className={LOBBY_GRID}>
         {deferredReady ? <AttendeeEventLobbySidebar /> : <SidebarSkeleton />}
 
-        <main className="h-screen overflow-y-auto px-5 pt-5 pb-32">
+        <main className={`${DEVICE_FIT_SCROLL} px-[clamp(1rem,3vw,1.5rem)] pt-5 pb-32 lg:pb-5`}>
           <div className="mb-4 lg:hidden">
             <Image
               src="/branding/300-awakening-logo.png"

@@ -240,7 +240,7 @@ export function AttendeeEventLobbyRightRail({
   chatActivity: LiveActivityItem[];
 }) {
   return (
-    <aside className="hidden h-screen flex-col overflow-y-auto border-l border-white/10 bg-[#050406] px-4 pb-[100px] pt-5 lg:flex">
+    <aside className="hidden h-dvh min-h-0 w-full max-w-[360px] shrink-0 flex-col overflow-y-auto border-l border-white/10 bg-[#050406] px-4 pb-[100px] pt-5 lg:flex">
       <div className="mb-4 flex h-[42px] items-center justify-end gap-3">
         <button
           type="button"
