@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { evaluateLiveAccessFromFlags, parseAccessContext } from "@/lib/access";
+import { isAdminPrepAccessOverrideEmail } from "@/lib/access/admin-prep-override";
 import { isLiveAccessDevBypassEnabled } from "@/lib/access/live-dev-bypass";
 import { LIVE_STREAM_ACCESS_PRODUCT_IDS } from "@/lib/merch/catalog";
 import { LIVE_STREAM_STATE_ID } from "@/lib/live/types";
@@ -58,8 +59,12 @@ export async function GET() {
     }
 
     const devBypass = isLiveAccessDevBypassEnabled();
+    // Temporary event preparation access override.
+    const adminPrepOverride = isAdminPrepAccessOverrideEmail(context.email);
     const hasPaidPass =
-      devBypass || (Array.isArray(orders) && orders.length > 0);
+      devBypass ||
+      adminPrepOverride ||
+      (Array.isArray(orders) && orders.length > 0);
     const evaluation = evaluateLiveAccessFromFlags(
       context.email,
       context.isGuest,
