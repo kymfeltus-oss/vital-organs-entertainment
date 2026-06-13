@@ -4,11 +4,12 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { Loader2, MonitorPlay, RefreshCw } from "lucide-react";
+import LiveHubNetworkSettingsModal from "@/components/live-hub/LiveHubNetworkSettingsModal";
 import LiveHubGoLiveModal from "@/components/live-hub/LiveHubGoLiveModal";
+import LiveHubGoLiveButton from "@/components/live-hub/LiveHubGoLiveButton";
 import LiveHubDesktopGate from "@/components/live-hub/LiveHubDesktopGate";
 import LiveHubPreviewPanel from "@/components/live-hub/LiveHubPreviewPanel";
 import LiveHubSidebar from "@/components/live-hub/LiveHubSidebar";
@@ -17,6 +18,7 @@ import LiveHubReadinessPanel from "@/components/live-hub/LiveHubReadinessPanel";
 import LiveHubChatPanel from "@/components/live-hub/LiveHubChatPanel";
 import LiveHubEventTimelinePanel from "@/components/live-hub/LiveHubEventTimelinePanel";
 import LiveHubLowerPanels from "@/components/live-hub/LiveHubLowerPanels";
+import LiveHubAudioHealthLog from "@/components/live-hub/LiveHubAudioHealthLog";
 import LiveHubStatusStrip from "@/components/live-hub/LiveHubStatusStrip";
 import LiveHubStreamPanels from "@/components/live-hub/LiveHubStreamPanels";
 import {
@@ -27,9 +29,19 @@ import type { HubNavSection } from "@/lib/live-hub/console-layout";
 import {
   buildReadinessChecks,
   deriveChecklistPhases,
-  estimateUploadSpeedMbps,
+  measureUploadSpeedMbps,
 } from "@/lib/live-hub/readiness";
+import {
+  createInitialNetworkTelemetry,
+  formatInternetDetail,
+  isNetworkOnline,
+  probeNetworkTelemetry,
+  subscribeNetworkInformation,
+  type NetworkTelemetry,
+} from "@/lib/live-hub/network";
 import { evaluateGoLiveDecision } from "@/lib/live-hub/safety";
+import { useLiveHubMixer } from "@/hooks/use-live-hub-mixer";
+import { useLiveHubNetworkSettings } from "@/hooks/useLiveHubNetworkSettings";
 import {
   fetchRestreamState,
   sendRestreamCommand,
@@ -44,6 +56,7 @@ import {
 import {
   DEFAULT_LIVE_HUB_SETTINGS,
   type ChecklistPhaseId,
+  type ReadinessCheckId,
 } from "@/lib/live-hub/types";
 import { fetchVmixState } from "@/lib/live-hub/vmix/client";
 import type { VmixAdapterResult, VmixCommandType, VmixState } from "@/lib/live-hub/vmix/types";
@@ -52,6 +65,9 @@ import type { OpsSnapshot } from "@/lib/ops/types";
 import { useLiveRoomChat } from "@/lib/useLiveRoomChat";
 
 const POLL_INTERVAL_MS = 10_000;
+const IS_DEV_SANDBOX = process.env.NODE_ENV === "development";
+/** Dev-only Shift+click simulate value — held until a normal upload re-test clears override. */
+const DEV_UPLOAD_SPEED_OVERRIDE_MBPS = 20;
 
 type LiveHubConsoleProps = {
   adminEmail: string;
@@ -64,7 +80,9 @@ export default function LiveHubConsole({
 }: LiveHubConsoleProps) {
   const desktopReady = useLiveHubDesktopReady();
   const isDesktop = useLiveHubDesktop();
-  const previewRef = useRef<HTMLDivElement>(null);
+  const { masterVolumeLevel: localMicLevel, healingLogs, simulateAudioDrop } =
+    useLiveHubMixer(IS_DEV_SANDBOX);
+  const [networkSettings, patchNetworkSettings] = useLiveHubNetworkSettings();
 
   const [activeSection, setActiveSection] = useState<HubNavSection>("pre-live");
   const [snapshot, setSnapshot] = useState(initialSnapshot);
@@ -72,8 +90,18 @@ export default function LiveHubConsole({
   const [restreamState, setRestreamState] = useState<RestreamState | null>(null);
   const [vmixError, setVmixError] = useState<string | null>(null);
   const [restreamError, setRestreamError] = useState<string | null>(null);
-  const [networkOnline, setNetworkOnline] = useState(true);
-  const [uploadSpeedMbps] = useState<number | null>(() => estimateUploadSpeedMbps());
+  const [networkTelemetry, setNetworkTelemetry] = useState<NetworkTelemetry>(() =>
+    createInitialNetworkTelemetry(),
+  );
+  const [stripeApiLive, setStripeApiLive] = useState<boolean | null>(null);
+  const [uploadSpeedMbps, setUploadSpeedMbps] = useState<number | null>(() =>
+    measureUploadSpeedMbps(),
+  );
+  /** Bumped on every upload re-test so UI refreshes even when Mbps value is unchanged. */
+  const [uploadRecheckNonce, setUploadRecheckNonce] = useState(0);
+  /** Dev-only: Shift+click simulate — polling must not overwrite until normal re-test. */
+  const [uploadSpeedDevOverride, setUploadSpeedDevOverride] = useState(false);
+  const [recheckingId, setRecheckingId] = useState<ReadinessCheckId | null>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [manualChecklist, setManualChecklist] = useState<
     Partial<Record<ChecklistPhaseId, boolean>>
@@ -82,6 +110,11 @@ export default function LiveHubConsole({
   const [isGoLiveOpen, setIsGoLiveOpen] = useState(false);
   const [operatorApproved, setOperatorApproved] = useState(false);
   const [isGoLiveSubmitting, setIsGoLiveSubmitting] = useState(false);
+  const [isStopSubmitting, setIsStopSubmitting] = useState(false);
+  const [isStopConfirmOpen, setIsStopConfirmOpen] = useState(false);
+  const [liveStartedAt, setLiveStartedAt] = useState<number | null>(() =>
+    initialSnapshot.stream.isLive ? Date.now() : null,
+  );
   const [pendingVmixAction, setPendingVmixAction] = useState<VmixCommandType | null>(null);
   const [confirmAction, setConfirmAction] = useState<{
     type: VmixCommandType;
@@ -89,6 +122,10 @@ export default function LiveHubConsole({
   } | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [previewRefreshSignal, setPreviewRefreshSignal] = useState(0);
+  const [isPreviewVisible, setIsPreviewVisible] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isNetworkSettingsOpen, setIsNetworkSettingsOpen] = useState(false);
+  const [isNetworkTesting, setIsNetworkTesting] = useState(false);
 
   const {
     messages: chatMessages,
@@ -119,16 +156,17 @@ export default function LiveHubConsole({
     setSnapshot(next);
   }, []);
 
-  const refreshVmix = useCallback(async () => {
+  const refreshVmix = useCallback(async (): Promise<boolean> => {
     const result = await fetchVmixState();
     if (isVmixAdapterFailure(result)) {
       setVmixError(result.error);
-      pushTimeline("vmix", "vMix Refresh Failed", result.error);
-      return;
+      setVmixState(null);
+      return false;
     }
     setVmixState(result.state);
     setVmixError(null);
-  }, [pushTimeline]);
+    return true;
+  }, []);
 
   const refreshRestream = useCallback(async () => {
     const result = await fetchRestreamState();
@@ -141,10 +179,64 @@ export default function LiveHubConsole({
     setRestreamError(null);
   }, [pushTimeline]);
 
+  const refreshNetworkProbe = useCallback(async (): Promise<NetworkTelemetry> => {
+    const next = await probeNetworkTelemetry();
+    setNetworkTelemetry(next);
+    return next;
+  }, []);
+
+  const refreshStripeHealth = useCallback(async () => {
+    try {
+      const response = await fetch("/api/ops/live-hub/stripe", {
+        credentials: "include",
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        setStripeApiLive(false);
+        return;
+      }
+      const payload = (await response.json()) as { live?: boolean };
+      setStripeApiLive(payload.live === true);
+    } catch {
+      setStripeApiLive(false);
+    }
+  }, []);
+
+  const refreshUploadSpeed = useCallback(() => {
+    if (uploadSpeedDevOverride) return;
+    setUploadSpeedMbps(measureUploadSpeedMbps());
+    setUploadRecheckNonce((current) => current + 1);
+  }, [uploadSpeedDevOverride]);
+
   const refreshAll = useCallback(async () => {
-    await Promise.all([refreshSnapshot(), refreshVmix(), refreshRestream()]);
-    setPreviewRefreshSignal((current) => current + 1);
-  }, [refreshRestream, refreshSnapshot, refreshVmix]);
+    setIsSyncing(true);
+    try {
+      refreshUploadSpeed();
+      await Promise.all([
+        refreshNetworkProbe(),
+        refreshSnapshot(),
+        refreshVmix(),
+        refreshRestream(),
+        refreshStripeHealth(),
+      ]);
+      setPreviewRefreshSignal((current) => current + 1);
+      setActionMessage(
+        uploadSpeedDevOverride
+          ? `Systems synced at ${new Date().toLocaleTimeString()} — upload dev override held at ${DEV_UPLOAD_SPEED_OVERRIDE_MBPS.toFixed(1)} Mbps.`
+          : `Systems synced at ${new Date().toLocaleTimeString()} — metrics, vMix, Restream, Stripe, and upload estimate refreshed.`,
+      );
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [
+    refreshNetworkProbe,
+    refreshRestream,
+    refreshSnapshot,
+    refreshStripeHealth,
+    refreshUploadSpeed,
+    refreshVmix,
+    uploadSpeedDevOverride,
+  ]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -161,25 +253,73 @@ export default function LiveHubConsole({
   }, [refreshAll]);
 
   useEffect(() => {
-    const syncNetwork = () => setNetworkOnline(navigator.onLine);
-    syncNetwork();
-    window.addEventListener("online", syncNetwork);
-    window.addEventListener("offline", syncNetwork);
-    return () => {
-      window.removeEventListener("online", syncNetwork);
-      window.removeEventListener("offline", syncNetwork);
+    const handleConnectivityChange = () => {
+      void refreshNetworkProbe();
     };
-  }, []);
+
+    void refreshNetworkProbe();
+    window.addEventListener("online", handleConnectivityChange);
+    window.addEventListener("offline", handleConnectivityChange);
+    const unsubscribeLink = subscribeNetworkInformation(handleConnectivityChange);
+
+    return () => {
+      window.removeEventListener("online", handleConnectivityChange);
+      window.removeEventListener("offline", handleConnectivityChange);
+      unsubscribeLink();
+    };
+  }, [refreshNetworkProbe]);
+
+  useEffect(() => {
+    const intervalMs = networkSettings.probeIntervalSec * 1000;
+    const intervalId = window.setInterval(() => {
+      void refreshNetworkProbe();
+    }, intervalMs);
+
+    return () => window.clearInterval(intervalId);
+  }, [networkSettings.probeIntervalSec, refreshNetworkProbe]);
+
+  const networkOnline = useMemo(
+    () =>
+      isNetworkOnline(networkTelemetry, {
+        requireServerProbe: networkSettings.requireServerProbe,
+      }),
+    [networkSettings.requireServerProbe, networkTelemetry],
+  );
+
+  const runNetworkTest = useCallback(async () => {
+    setIsNetworkTesting(true);
+    try {
+      const next = await refreshNetworkProbe();
+      const detail = formatInternetDetail(next);
+      pushTimeline("readiness", "Network Test", detail);
+      setActionMessage(`Network test complete — ${detail}`);
+      return next;
+    } finally {
+      setIsNetworkTesting(false);
+    }
+  }, [pushTimeline, refreshNetworkProbe]);
 
   const readinessInputs = useMemo(
     () => ({
       vmix: vmixState,
       restream: restreamState,
       opsSnapshot: snapshot,
-      networkOnline,
+      networkTelemetry,
+      networkSettings,
       uploadSpeedMbps,
+      uploadRecheckNonce,
+      uploadSpeedDevOverride,
     }),
-    [networkOnline, restreamState, snapshot, uploadSpeedMbps, vmixState],
+    [
+      networkTelemetry,
+      networkSettings,
+      restreamState,
+      snapshot,
+      uploadRecheckNonce,
+      uploadSpeedDevOverride,
+      uploadSpeedMbps,
+      vmixState,
+    ],
   );
 
   const readinessChecks = useMemo(
@@ -207,14 +347,22 @@ export default function LiveHubConsole({
         settings: hubSettings,
         networkOnline,
         operatorApproved,
+        stripeApiLive,
+        contentReady: manualChecklist.content ?? false,
+        teamAligned: manualChecklist.team ?? false,
+        localMicLevel,
       }),
     [
       hubSettings,
+      localMicLevel,
+      manualChecklist.content,
+      manualChecklist.team,
       networkOnline,
       operatorApproved,
       readinessChecks,
       restreamState,
       snapshot,
+      stripeApiLive,
       vmixState,
     ],
   );
@@ -292,6 +440,16 @@ export default function LiveHubConsole({
     await runVmixAction(action.type, { confirmed: true });
   }, [confirmAction, pushTimeline, runVmixAction]);
 
+  useEffect(() => {
+    if (snapshot.stream.isLive && liveStartedAt === null) {
+      setLiveStartedAt(Date.now());
+      return;
+    }
+    if (!snapshot.stream.isLive && liveStartedAt !== null) {
+      setLiveStartedAt(null);
+    }
+  }, [liveStartedAt, snapshot.stream.isLive]);
+
   const handleGoLiveConfirm = useCallback(async () => {
     if (goLiveDecision.blocked || !operatorApproved) {
       pushTimeline("blocked", "Go Live Blocked", "Critical issues unresolved.");
@@ -302,7 +460,7 @@ export default function LiveHubConsole({
     pushTimeline("go_live", "Go Live Attempt", `Operator ${adminEmail} initiated.`);
 
     try {
-      const response = await fetch("/api/ops/stream-action", {
+      const response = await fetch("/api/ops/live-hub/go-live", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -310,17 +468,28 @@ export default function LiveHubConsole({
         cache: "no-store",
       });
 
-      const data = (await response.json()) as { success?: boolean; error?: string };
+      const data = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        step?: string;
+      };
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.error ?? "Go Live failed.");
+      if (!response.ok || !data.ok) {
+        const stepLabel = data.step ? ` (${data.step})` : "";
+        throw new Error(data.error ?? `Go Live failed${stepLabel}.`);
       }
 
-      pushTimeline("go_live", "Platform Live", "Attendee experience opened.");
+      setLiveStartedAt(Date.now());
+      setActiveSection("stream-setup");
+      pushTimeline(
+        "go_live",
+        "Broadcast Live",
+        "Restream lanes armed, vMix streaming started, attendee platform opened.",
+      );
       setActionMessage("Platform is live on primary lane.");
       setIsGoLiveOpen(false);
       setOperatorApproved(false);
-      await refreshSnapshot();
+      await Promise.all([refreshSnapshot(), refreshVmix(), refreshRestream()]);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Go Live failed.";
       pushTimeline("blocked", "Go Live Failed", message);
@@ -333,7 +502,68 @@ export default function LiveHubConsole({
     goLiveDecision.blocked,
     operatorApproved,
     pushTimeline,
+    refreshRestream,
     refreshSnapshot,
+    refreshVmix,
+  ]);
+
+  const openStopConfirm = useCallback(() => {
+    pushTimeline(
+      "go_live",
+      "Stop Stream Requested",
+      `Operator ${adminEmail} opened end-broadcast confirmation.`,
+    );
+    setIsStopConfirmOpen(true);
+  }, [adminEmail, pushTimeline]);
+
+  const handleStopStream = useCallback(async () => {
+    setIsStopConfirmOpen(false);
+    setIsStopSubmitting(true);
+    pushTimeline("go_live", "Stop Stream", `Operator ${adminEmail} confirmed end broadcast.`);
+
+    try {
+      const response = await fetch("/api/ops/live-hub/go-live", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "stop_stream" }),
+        cache: "no-store",
+      });
+
+      const data = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        step?: string;
+      };
+
+      if (!response.ok || !data.ok) {
+        const stepLabel = data.step ? ` (${data.step})` : "";
+        throw new Error(data.error ?? `Stop stream failed${stepLabel}.`);
+      }
+
+      setLiveStartedAt(null);
+      setActiveSection("pre-live");
+      pushTimeline(
+        "go_live",
+        "Broadcast Ended",
+        "vMix streaming stopped and attendee platform closed.",
+      );
+      setActionMessage("Stream stopped — post-event summary ready in Pre-Live Check.");
+      await Promise.all([refreshSnapshot(), refreshVmix(), refreshRestream()]);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Stop stream failed.";
+      pushTimeline("blocked", "Stop Stream Failed", message);
+      setActionMessage(message);
+    } finally {
+      setIsStopSubmitting(false);
+    }
+  }, [
+    adminEmail,
+    pushTimeline,
+    refreshRestream,
+    refreshSnapshot,
+    refreshVmix,
   ]);
 
   const toggleManualPhase = (phaseId: ChecklistPhaseId) => {
@@ -348,14 +578,101 @@ export default function LiveHubConsole({
     });
   };
 
+  const recheckReadinessCheck = useCallback(
+    async (
+      checkId: ReadinessCheckId,
+      options?: { devSimulatePass?: boolean },
+    ) => {
+      if (checkId !== "internet" && checkId !== "upload_speed" && checkId !== "encoder_vmix") {
+        return;
+      }
+
+      setRecheckingId(checkId);
+      try {
+        if (checkId === "internet") {
+          const next = await refreshNetworkProbe();
+          const detail = formatInternetDetail(next);
+          const connected = isNetworkOnline(next, {
+            requireServerProbe: networkSettings.requireServerProbe,
+          });
+          setActionMessage(
+            connected
+              ? `Internet connection verified — ${detail}`
+              : `Internet connection blocked — ${detail}`,
+          );
+          pushTimeline("readiness", "Internet Connection Rechecked", detail);
+          return;
+        }
+
+        if (checkId === "encoder_vmix") {
+          const connected = await refreshVmix();
+          if (connected) {
+            setActionMessage("Encoder re-check passed — Encoder & Software is ready.");
+            pushTimeline("vmix", "Encoder Re-check", "vMix reachable — encoder ready.");
+          } else {
+            setActionMessage("Encoder re-check failed — Encoder & Software is blocked.");
+            pushTimeline(
+              "vmix",
+              "Encoder Re-check",
+              `Blocked — vMix unreachable or invalid response.`,
+            );
+          }
+          return;
+        }
+
+        if (IS_DEV_SANDBOX && options?.devSimulatePass) {
+          setUploadSpeedDevOverride(true);
+          setUploadSpeedMbps(DEV_UPLOAD_SPEED_OVERRIDE_MBPS);
+          setUploadRecheckNonce((current) => current + 1);
+          setActionMessage(
+            `Upload speed dev override locked at ${DEV_UPLOAD_SPEED_OVERRIDE_MBPS.toFixed(1)} Mbps — background sync will not revert it. Normal click clears override.`,
+          );
+          pushTimeline(
+            "readiness",
+            "Upload Speed Simulated (Dev)",
+            `${DEV_UPLOAD_SPEED_OVERRIDE_MBPS.toFixed(1)} Mbps — override active until normal re-test`,
+          );
+          return;
+        }
+
+        setUploadSpeedDevOverride(false);
+        const next = measureUploadSpeedMbps();
+        setUploadSpeedMbps(next);
+        setUploadRecheckNonce((current) => current + 1);
+        const detail = next
+          ? `${next.toFixed(1)} Mbps estimated upload`
+          : "Network Information API unavailable";
+        setActionMessage(`Upload speed re-tested: ${detail}. Dev override cleared.`);
+        pushTimeline("readiness", "Upload Speed Rechecked", detail);
+      } finally {
+        setRecheckingId(null);
+      }
+    },
+    [networkSettings.requireServerProbe, pushTimeline, refreshNetworkProbe, refreshVmix],
+  );
+
   const openGoLiveModal = () => {
     setOperatorApproved(false);
     setIsGoLiveOpen(true);
     pushTimeline("go_live", "Review Opened", "Go Live review modal opened.");
   };
 
-  const scrollToPreview = () => {
-    previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const togglePreview = () => {
+    setIsPreviewVisible((current) => {
+      const next = !current;
+      pushTimeline(
+        "readiness",
+        next ? "Preview Opened" : "Preview Hidden",
+        "Viewer signal monitor toggled.",
+      );
+      return next;
+    });
+  };
+
+  const openPreviewForTest = () => {
+    setIsPreviewVisible(true);
+    void refreshAll();
+    pushTimeline("readiness", "Stream Test", "Preview opened and systems synced.");
   };
 
   if (!desktopReady) {
@@ -378,8 +695,8 @@ export default function LiveHubConsole({
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex shrink-0 items-center justify-between gap-4 border-b border-white/10 bg-[#0B090A] px-6 py-4">
-          <div>
+        <header className="flex shrink-0 flex-col gap-3 border-b border-white/10 bg-[#0B090A] px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0 shrink">
             <p className="text-[0.55rem] font-bold uppercase tracking-[0.28em] text-[#1E40AF]">
               300 Awakening
             </p>
@@ -387,33 +704,46 @@ export default function LiveHubConsole({
               Live Experience
             </h1>
             <p className="mt-1 text-xs text-zinc-500">
-              You are 1 step away from going live · Operator {adminEmail}
+              {snapshot.stream.isLive
+                ? `Broadcast live · Operator ${adminEmail}`
+                : `You are 1 step away from going live · Operator ${adminEmail}`}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
             <button
               type="button"
               onClick={() => void refreshAll()}
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-[0.58rem] font-bold uppercase tracking-[0.14em] text-zinc-300 transition hover:border-[#1E40AF]/50 hover:text-white"
+              disabled={isSyncing}
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-[0.58rem] font-bold uppercase tracking-[0.14em] text-zinc-300 transition enabled:hover:border-[#1E40AF]/50 enabled:hover:text-white disabled:cursor-wait disabled:opacity-60"
             >
-              <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-              Sync All
+              <RefreshCw
+                className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`}
+                aria-hidden="true"
+              />
+              {isSyncing ? "Syncing…" : "Sync All"}
             </button>
             <button
               type="button"
-              onClick={scrollToPreview}
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-[0.58rem] font-bold uppercase tracking-[0.14em] text-zinc-300 transition hover:border-[#1E40AF]/50 hover:text-white"
+              onClick={togglePreview}
+              aria-pressed={isPreviewVisible}
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[0.58rem] font-bold uppercase tracking-[0.14em] transition ${
+                isPreviewVisible
+                  ? "border-brand-blue/50 bg-brand-blue/10 text-white"
+                  : "border-white/15 text-zinc-300 hover:border-brand-blue/50 hover:text-white"
+              }`}
             >
               <MonitorPlay className="h-3.5 w-3.5" aria-hidden="true" />
-              Live Preview
+              {isPreviewVisible ? "Hide Preview" : "Live Preview"}
             </button>
-            <button
-              type="button"
+            <LiveHubGoLiveButton
+              blocked={goLiveDecision.blocked}
+              criticalIssueCount={goLiveDecision.criticalIssues.length}
               onClick={openGoLiveModal}
-              className="rounded-full border border-[#1E40AF]/80 bg-gradient-to-r from-[#1E40AF]/30 to-[#B0267A]/25 px-8 py-3 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-white shadow-[0_0_28px_rgba(30,64,175,0.35)] transition hover:brightness-110"
-            >
-              Go Live
-            </button>
+              isLive={snapshot.stream.isLive}
+              onStop={openStopConfirm}
+              isStopping={isStopSubmitting}
+              variant="header"
+            />
           </div>
         </header>
 
@@ -430,22 +760,57 @@ export default function LiveHubConsole({
                 <LiveHubChecklistHero
                   phases={checklistPhases}
                   onTogglePhase={toggleManualPhase}
+                  goLiveBlocked={goLiveDecision.blocked}
+                  criticalIssueCount={goLiveDecision.criticalIssues.length}
+                  onGoLive={openGoLiveModal}
+                  isLive={snapshot.stream.isLive}
+                  onStop={openStopConfirm}
+                  isStopping={isStopSubmitting}
                 />
-                <LiveHubReadinessPanel checks={readinessChecks} />
+                <LiveHubReadinessPanel
+                  checks={readinessChecks}
+                  onRecheckCheck={(checkId, options) =>
+                    void recheckReadinessCheck(checkId, options)
+                  }
+                  onOpenNetworkSettings={() => setIsNetworkSettingsOpen(true)}
+                  recheckingId={recheckingId}
+                  devSimulateHint={IS_DEV_SANDBOX}
+                  isSyncing={isSyncing}
+                  uploadSpeedDevOverride={uploadSpeedDevOverride}
+                />
+                <LiveHubAudioHealthLog
+                  healingLogs={healingLogs}
+                  onSimulateSilence={IS_DEV_SANDBOX ? simulateAudioDrop : undefined}
+                />
                 <LiveHubLowerPanels
                   goLiveDecision={goLiveDecision}
                   backupConfigured={snapshot.stream.backupConfigured}
                   onRunRehearsal={() => void runVmixAction("refresh_state")}
-                  onTestStream={() => {
-                    scrollToPreview();
-                    void refreshAll();
-                  }}
+                  onTestStream={openPreviewForTest}
                   onShareStream={() => {
                     const url = `${window.location.origin}/dashboard/live`;
                     void navigator.clipboard?.writeText(url);
                     pushTimeline("readiness", "Share Link Copied", url);
                   }}
                 />
+                <div className="sticky bottom-0 z-20 -mx-1 border-t border-brand-border bg-brand-black/95 px-1 py-3 backdrop-blur-sm">
+                  <LiveHubGoLiveButton
+                    blocked={goLiveDecision.blocked}
+                    criticalIssueCount={goLiveDecision.criticalIssues.length}
+                    onClick={openGoLiveModal}
+                    isLive={snapshot.stream.isLive}
+                    onStop={openStopConfirm}
+                    isStopping={isStopSubmitting}
+                    variant="sticky"
+                  />
+                  <p className="mt-2 text-center text-[0.5rem] uppercase tracking-[0.12em] text-brand-muted">
+                    {snapshot.stream.isLive
+                      ? "Broadcast on air — stop stream when the event concludes"
+                      : goLiveDecision.blocked
+                        ? "Resolve blockers in the review modal before broadcast"
+                        : "All critical checks passing — open review to confirm"}
+                  </p>
+                </div>
               </>
             ) : (
               <LiveHubStreamPanels
@@ -457,6 +822,12 @@ export default function LiveHubConsole({
                 restreamError={restreamError}
                 pendingVmixAction={pendingVmixAction}
                 checklistPhases={checklistPhases}
+                networkSettings={networkSettings}
+                onNetworkSettingsChange={patchNetworkSettings}
+                networkTelemetry={networkTelemetry}
+                networkOnline={networkOnline}
+                onNetworkTest={runNetworkTest}
+                isNetworkTesting={isNetworkTesting}
                 onVmixAction={(type, options) => void runVmixAction(type, options)}
                 onRestreamRefresh={() => {
                   void sendRestreamCommand({ type: "refresh_status" }).then((result) => {
@@ -479,7 +850,14 @@ export default function LiveHubConsole({
           </div>
 
           <aside className="col-span-4 flex min-h-0 flex-col gap-4 overflow-auto">
-            <div ref={previewRef}>
+            <div
+              className={`shrink-0 overflow-hidden transition-all duration-300 ease-in-out motion-reduce:transition-none ${
+                isPreviewVisible
+                  ? "max-h-[min(52vh,520px)] opacity-100"
+                  : "max-h-0 opacity-0 pointer-events-none"
+              }`}
+              aria-hidden={!isPreviewVisible}
+            >
               <LiveHubPreviewPanel
                 refreshSignal={previewRefreshSignal}
                 vmixState={vmixState}
@@ -500,7 +878,16 @@ export default function LiveHubConsole({
           </aside>
         </div>
 
-        <LiveHubStatusStrip networkOnline={networkOnline} />
+        <LiveHubStatusStrip
+          networkOnline={networkOnline}
+          networkDetail={
+            networkTelemetry.lastProbedAt
+              ? formatInternetDetail(networkTelemetry)
+              : null
+          }
+          isLive={snapshot.stream.isLive}
+          liveStartedAt={liveStartedAt}
+        />
       </div>
 
       <LiveHubGoLiveModal
@@ -516,6 +903,57 @@ export default function LiveHubConsole({
         onClose={() => setIsGoLiveOpen(false)}
         onConfirm={() => void handleGoLiveConfirm()}
       />
+
+      <LiveHubNetworkSettingsModal
+        open={isNetworkSettingsOpen}
+        onClose={() => setIsNetworkSettingsOpen(false)}
+        settings={networkSettings}
+        onChange={patchNetworkSettings}
+        telemetry={networkTelemetry}
+        networkOnline={networkOnline}
+        onTestConnection={runNetworkTest}
+        isTesting={isNetworkTesting}
+      />
+
+      {isStopConfirmOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-black/85 p-6 backdrop-blur-sm">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="stop-stream-modal-title"
+            className="w-full max-w-md rounded-2xl border border-brand-pink/40 bg-brand-panel p-5"
+          >
+            <h3
+              id="stop-stream-modal-title"
+              className="font-headline text-sm uppercase tracking-widest text-white"
+            >
+              End Broadcast?
+            </h3>
+            <p className="mt-3 text-sm text-brand-muted">
+              This stops vMix streaming and closes the attendee live experience. Confirm
+              only when the event is finished.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsStopConfirmOpen(false)}
+                disabled={isStopSubmitting}
+                className="touch-target rounded-full border border-brand-border px-4 py-2 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-zinc-300 transition hover:text-white disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleStopStream()}
+                disabled={isStopSubmitting}
+                className="touch-target rounded-full border border-brand-pink/60 bg-brand-pink/15 px-4 py-2 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-white neon-pink-glow disabled:opacity-50"
+              >
+                {isStopSubmitting ? "Stopping…" : "Confirm Stop"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {confirmAction ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B090A]/85 p-6 backdrop-blur-sm">

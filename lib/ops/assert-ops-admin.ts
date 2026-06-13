@@ -24,6 +24,7 @@ export async function requireOpsAdminUser(returnPath = "/ops") {
       allowlistCount: inspection.allowlistCount,
       allowlistMatch: inspection.allowlistMatch,
       metadataOpsAdmin: inspection.metadataOpsAdmin,
+      devBypassActive: inspection.devBypassActive,
     }),
   );
 
@@ -55,6 +56,7 @@ export async function requireOpsAdminApiUser() {
       allowlistCount: inspection.allowlistCount,
       allowlistMatch: inspection.allowlistMatch,
       metadataOpsAdmin: inspection.metadataOpsAdmin,
+      devBypassActive: inspection.devBypassActive,
     }),
   );
 

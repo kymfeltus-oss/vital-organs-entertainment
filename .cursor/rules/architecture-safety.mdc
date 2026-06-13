@@ -22,7 +22,7 @@ You are an elite, production-obsessed Software Architect. Before generating any 
 ## 3. Route & Shell Consistency
 - Do not create parallel route paths (e.g., duplicate marketing page stubs vs dashboard hubs). 
 - All new visual files must strictly inherit and render within the `RootLayoutShell` layout system. 
-- You are forbidden from using legacy color tokens (#00B8FF or purple glows) from the old PageShell design system. 
+- You are forbidden from using deprecated color tokens from the old PageShell design system (#00B8FF, #1E40AF, #B0267A, #0B090A, #111111). Use approved tokens from `lib/design-tokens.ts` (#00A8FF, #FF008C, #000000, #090B13). 
 
 ## 4. Mandatory Pre-Diff Execution Simulation
 Before displaying your code modifications to the user for approval:

@@ -1,5 +1,11 @@
 /** Shared responsive layout tokens for 300 Awakening */
 
+/** Effect tier utility classes — pair with globals.css `.effects-heavy` / `.effects-lite` */
+export const EFFECTS_TIER = {
+  heavy: "effects-heavy",
+  lite: "effects-lite",
+} as const;
+
 export const SHELL = {
   mobile: "app-shell",
   wide: "app-shell-wide",

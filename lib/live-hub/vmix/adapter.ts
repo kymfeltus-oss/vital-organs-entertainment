@@ -81,6 +81,11 @@ function applyMockCommand(command: VmixCommand): VmixState {
   }
 }
 
+/** vMix Web API must expose `<version>` or `<inputs>` in its XML state document. */
+function isValidVmixResponse(xml: string): boolean {
+  return /<version\b/i.test(xml) || /<inputs\b/i.test(xml);
+}
+
 function parseVmixXml(xml: string): Partial<VmixState> {
   const activeMatch = xml.match(/<active>([^<]*)<\/active>/i);
   const previewMatch = xml.match(/<preview>([^<]*)<\/preview>/i);
@@ -116,6 +121,15 @@ async function fetchLiveVmixState(baseUrl: string): Promise<VmixAdapterResult> {
     }
 
     const xml = await response.text();
+
+    if (!isValidVmixResponse(xml)) {
+      return {
+        ok: false,
+        error: "vMix response missing version or inputs — not a valid vMix instance.",
+        code: "VMIX_INVALID_RESPONSE",
+      };
+    }
+
     const parsed = parseVmixXml(xml);
     const now = new Date().toISOString();
 

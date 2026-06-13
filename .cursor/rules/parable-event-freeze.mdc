@@ -1,0 +1,52 @@
+---
+description: PARABLE event freeze — reliability over innovation until after the live event
+globs: services/broadcast/**/*,components/broadcast/**/*,lib/broadcast/**/*,app/api/broadcast/**/*,app/dashboard/broadcast/**/*,app/ops/live-hub/**/*,components/live-hub/**/*,lib/live-hub/**/*
+alwaysApply: false
+---
+
+# PARABLE Event Freeze (Active)
+
+Read `docs/EVENT_FREEZE_RULES.md` and `services/broadcast/ARCHITECTURE.md` before editing broadcast or live production code.
+
+## Mandate
+
+**Reliability beats innovation until after the event.** No additional feature work is authorized before the event. Do not ship new capabilities, refactors, or experimental automation during the freeze.
+
+## Allowed
+
+- Critical bug fixes
+- Stability fixes
+- Performance fixes (minimal blast radius)
+- Label clarity (no behavior change)
+- Rehearsal-blocking fixes
+- Readiness / safety / logging visibility fixes
+
+## Blocked
+
+- New product features
+- Architecture refactors
+- Experimental automation
+- AI / video processing
+- New dashboard sections unless strictly required for event safety
+
+## Sacred Media Path (do not touch without absolute necessity)
+
+```
+Sources → Preview → Program → Recording → Streaming → Go Live → Stop Live → Distribution
+```
+
+Protected flows: adapter ingest, preview/program buses, transitions, `go_live` / `stop_live`, streaming, recording, distribution. Prefer fixes outside this chain.
+
+## Change approval filter (all must pass)
+
+1. Does it improve operator experience?
+2. Does it improve reliability?
+3. Does it add minimal CPU/GPU/network load?
+4. Can it fail without affecting the live stream?
+5. Does it stay outside the Sacred Media Path unless absolutely necessary?
+
+If any answer is **no**, defer the change until after the event.
+
+## Verification
+
+After service-layer edits: `npm run test:broadcast`. Do not bypass `ReadinessEngine.canLaunchWithOverride()` or introduce UI-local broadcast state.

@@ -10,13 +10,27 @@ import type {
   ReadinessCheck,
   ReadinessCheckId,
 } from "@/lib/live-hub/types";
+import {
+  evaluateConnectionPreference,
+  type LiveHubNetworkSettings,
+} from "@/lib/live-hub/network-settings";
+import {
+  formatInternetDetail,
+  isNetworkOnline,
+  type NetworkTelemetry,
+} from "@/lib/live-hub/network";
 
 export type ReadinessInputs = {
   vmix: VmixState | null;
   restream: RestreamState | null;
   opsSnapshot: OpsSnapshot;
-  networkOnline: boolean;
+  networkTelemetry: NetworkTelemetry;
+  networkSettings: LiveHubNetworkSettings;
   uploadSpeedMbps: number | null;
+  /** Changes on each client re-test; forces fresh lastUpdatedAt even when Mbps is unchanged. */
+  uploadRecheckNonce?: number;
+  /** Dev-only sticky simulate — detail suffix when Shift+click override is active. */
+  uploadSpeedDevOverride?: boolean;
 };
 
 const CHECK_LABELS: Record<ReadinessCheckId, string> = {
@@ -36,17 +50,59 @@ function nowIso(): string {
 }
 
 function resolveInternet(inputs: ReadinessInputs): ReadinessCheck {
-  const status = inputs.networkOnline ? "pass" : "fail";
+  const telemetry = inputs.networkTelemetry;
+  const settings = inputs.networkSettings;
+
+  if (telemetry.lastProbedAt === null) {
+    return {
+      id: "internet",
+      label: CHECK_LABELS.internet,
+      status: "pending",
+      detail: "Click to test — or open Network settings",
+      lastUpdatedAt: null,
+    };
+  }
+
+  const preferenceIssue = evaluateConnectionPreference(
+    telemetry,
+    settings.connectionPreference,
+  );
+
+  let status: ReadinessCheck["status"] = isNetworkOnline(telemetry, {
+    requireServerProbe: settings.requireServerProbe,
+  })
+    ? preferenceIssue?.status === "warn"
+      ? "warn"
+      : "pass"
+    : "fail";
+
+  let detail = formatInternetDetail(telemetry);
+
+  if (settings.broadcastWifiSsid.trim()) {
+    detail = `${detail} · SSID: ${settings.broadcastWifiSsid.trim()}`;
+  }
+
+  if (preferenceIssue && status !== "fail") {
+    detail = `${detail} · ${preferenceIssue.detail}`;
+    if (preferenceIssue.status === "warn" && status === "pass") {
+      status = "warn";
+    }
+  }
+
   return {
     id: "internet",
     label: CHECK_LABELS.internet,
     status,
-    detail: inputs.networkOnline ? "Network online" : "Network offline",
-    lastUpdatedAt: nowIso(),
+    detail,
+    lastUpdatedAt: telemetry.lastProbedAt,
   };
 }
 
 function resolveUploadSpeed(inputs: ReadinessInputs): ReadinessCheck {
+  void inputs.uploadRecheckNonce;
+
+  const overrideSuffix = inputs.uploadSpeedDevOverride ? " — dev override" : "";
+
   if (inputs.uploadSpeedMbps === null) {
     return {
       id: "upload_speed",
@@ -62,7 +118,7 @@ function resolveUploadSpeed(inputs: ReadinessInputs): ReadinessCheck {
       id: "upload_speed",
       label: CHECK_LABELS.upload_speed,
       status: "pass",
-      detail: `${inputs.uploadSpeedMbps.toFixed(1)} Mbps upload`,
+      detail: `${inputs.uploadSpeedMbps.toFixed(1)} Mbps upload${overrideSuffix}`,
       lastUpdatedAt: nowIso(),
     };
   }
@@ -72,7 +128,7 @@ function resolveUploadSpeed(inputs: ReadinessInputs): ReadinessCheck {
       id: "upload_speed",
       label: CHECK_LABELS.upload_speed,
       status: "warn",
-      detail: `${inputs.uploadSpeedMbps.toFixed(1)} Mbps upload — marginal for HD`,
+      detail: `${inputs.uploadSpeedMbps.toFixed(1)} Mbps upload — marginal for HD${overrideSuffix}`,
       lastUpdatedAt: nowIso(),
     };
   }
@@ -81,7 +137,7 @@ function resolveUploadSpeed(inputs: ReadinessInputs): ReadinessCheck {
     id: "upload_speed",
     label: CHECK_LABELS.upload_speed,
     status: "fail",
-    detail: `${inputs.uploadSpeedMbps.toFixed(1)} Mbps upload — insufficient`,
+    detail: `${inputs.uploadSpeedMbps.toFixed(1)} Mbps upload — insufficient${overrideSuffix}`,
     lastUpdatedAt: nowIso(),
   };
 }
@@ -362,4 +418,9 @@ export function estimateUploadSpeedMbps(): number | null {
 
   if (!connection?.downlink) return null;
   return Math.max(1, connection.downlink * 0.4);
+}
+
+/** Re-read Network Information API downlink estimate (client-only). */
+export function measureUploadSpeedMbps(): number | null {
+  return estimateUploadSpeedMbps();
 }

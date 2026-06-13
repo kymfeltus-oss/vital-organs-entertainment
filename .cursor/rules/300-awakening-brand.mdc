@@ -5,22 +5,62 @@ alwaysApply: true
 
 # 300 AWAKENING APP BRAND CONSTRAINTS
 
-You are a senior frontend engineer enforcing the strict visual guidelines for Ian Craig's '300 Awakening' mobile application. You are forbidden from using generic styling templates, standard Tailwind color schemes, or basic font choices.
+You are a senior frontend engineer enforcing the strict visual guidelines for Ian Craig's '300 Awakening' application. You are forbidden from using generic styling templates, standard Tailwind color schemes, or off-brand accent colors.
 
 ## 🎨 THEME & COLOR PALETTE (STRICT)
-- **Primary Background:** Solid Matte Black only (`bg-black` or `bg-[#0B090A]`). Never use default whites, light grays, or standard dark modes.
-- **Electric Blue Accent:** `text-[#1E40AF]` / `border-[#1E40AF]` / `bg-[#1E40AF]` (Used for high-contrast audio waveforms, primary action highlights, and selection indicators).
-- **Neon Magenta Pink Accent:** `text-[#B0267A]` / `border-[#B0267A]` / `bg-[#B0267A]` (Used for atmospheric drop-shadow ambient glows, vital heartbeat lines, and laser flare accents).
-- **Secondary Card Containers:** Dark Matte Charcoal Gray only (`bg-[#111111]` or `bg-zinc-900/80`).
 
-## ✍️ TYPOGRAPHY & TEXT RULES
-- **Headers & Headings:** Must always be uppercase sans-serif with tracked-out wide spacing (`tracking-widest` or `tracking-wide font-bold uppercase`).
-- **Body Copy:** Must be highly readable, cleanly spaced white or zinc-400 text elements.
-- **Forbidden Styles:** Never use serif fonts, playful typography, or warm primary tones (like reds, oranges, yellows, or standard greens).
+Source of truth: `lib/design-tokens.ts` and `@theme` tokens in `app/globals.css`.
 
-## 📱 LAYOUT & STABILITY RULES
-- **Fluid scaling:** Mobile-first responsive layouts that stretch edge-to-edge on desktop — see `master-architecture.mdc`. Never clamp main wrappers to phone widths on large screens.
-- **Hardware Safe Areas:** Utilize safe-area padding (`pb-safe`, `pt-safe`) on sticky footers and action bars to prevent UI clipping behind physical device notches or home indicator bars.
-- **Audio Integrity:** Background audio playback states managed by `AudioContext` must never be unmounted, restarted, or dual-instantiated when switching layout tabs.
+- **OLED Black Background:** `#000000` — use `bg-brand-black` or `bg-black`. Never use light grays or default Tailwind dark modes.
+- **Dark Panel / Cards:** `#090B13` — use `bg-brand-panel` or `.glass-panel`.
+- **Electric Blue Accent:** `#00A8FF` — use `text-brand-blue`, `border-brand-blue`, `bg-brand-blue`, or `.neon-blue-glow`. This is the approved neon electric blue.
+- **Neon Magenta Pink Accent:** `#FF008C` — use `text-brand-pink`, `border-brand-pink`, `bg-brand-pink`, or `.neon-pink-glow`.
+- **Electric Purple (gradients / rings):** `#8A2BE2` — use `text-brand-purple` or gradient stops.
+- **Brand Indigo (gradient mid-stop):** `#5B42FF` — gradient use only; prefer `--gradient-brand`.
+- **Borders:** `rgba(255,255,255,0.08)` — use `border-brand-border`.
+- **Muted text:** `rgba(255,255,255,0.68)` — use `text-brand-muted`.
 
-Verify every single generated layout block against these constraints before serving output. If a requested feature implies an external theme, override it entirely to match this black, electric blue (#1E40AF), and neon magenta pink (#B0267A) layout style. Never use generic Tailwind cyan (`cyan-*`), `#00F0FF`, or any color outside this palette for accents.
+Primary brand gradient:
+
+```css
+linear-gradient(90deg, #00A8FF 0%, #5B42FF 50%, #FF008C 100%)
+```
+
+Use `.brand-gradient-border` or `BRAND_GRADIENTS.brand` — never invent alternate accent gradients.
+
+### Deprecated (do not use in new code)
+
+- `#1E40AF`, `#B0267A`, `#0B090A`, `#050406`, `#111111`
+- Legacy PageShell cyan `#00B8FF`
+- Generic Tailwind `cyan-*` scale and `#00F0FF` (use `#00A8FF` instead)
+
+## ✍️ TYPOGRAPHY
+
+Fonts are loaded in `app/layout.tsx` via `next/font`:
+
+| Role | Font | Utility |
+|------|------|---------|
+| Major headlines | Bebas Neue | `.font-headline` |
+| UI labels / buttons | Montserrat | `.font-ui` |
+| Body copy | Inter | `.font-body` (default on body) |
+| Card / event titles | Oswald | `.font-card-title` |
+
+- Headlines: uppercase, wide tracking (`tracking-widest` / `tracking-[0.18em]`).
+- Body: readable white or `text-brand-muted`.
+- Use `clamp()` for headline sizes — never fixed desktop-only px on primary layouts.
+- **Forbidden:** serif fonts, playful type, warm primary tones (orange, yellow, green, red) except analytics indicators.
+
+## 📱 LAYOUT & STABILITY
+
+- **Fluid scaling:** Mobile-first, edge-to-edge on desktop — see `master-architecture.mdc`. No phone-frame clamps on main wrappers.
+- **No fixed canvas:** Never design for a locked 1440×900 artboard; support 320px–4K.
+- **Safe areas:** `pb-safe`, `pt-safe` on sticky footers and action bars.
+- **Audio integrity:** `AudioContext` must not unmount/restart/dual-instantiate on tab switches.
+
+## 🎛️ EFFECT TIERS (Phase 1+)
+
+- Desktop: `.effects-heavy` (blur, glow permitted).
+- Mobile / reduced motion: `.effects-lite` or `@media (prefers-reduced-motion: reduce)`.
+- Do not stack heavy blur, dual glow, particles, and `mix-blend-mode: screen` on mobile without an lite tier fallback.
+
+Verify every layout block against these constraints. Override external themes to match OLED black, `#00A8FF`, `#FF008C`, and premium glass panel styling.

@@ -16,7 +16,16 @@ export type OpsAdminAccessInspection = {
   allowlistCount: number;
   allowlistMatch: boolean;
   metadataOpsAdmin: boolean;
+  devBypassActive: boolean;
 };
+
+/** Local dev only — explicit opt-in via OPS_ADMIN_DEV_BYPASS=true (never production). */
+export function isOpsAdminDevBypassEnabled(): boolean {
+  return (
+    process.env.NODE_ENV === "development" &&
+    process.env.OPS_ADMIN_DEV_BYPASS?.trim().toLowerCase() === "true"
+  );
+}
 
 export function inspectOpsAdminAccess(
   user: User | null | undefined,
@@ -27,10 +36,15 @@ export function inspectOpsAdminAccess(
   const allowlistMatch = normalizedEmail
     ? allowlist.includes(normalizedEmail)
     : false;
+  const devBypassActive =
+    isOpsAdminDevBypassEnabled() &&
+    Boolean(user) &&
+    !metadataOpsAdmin &&
+    !allowlistMatch;
 
   const allowed =
     Boolean(user) &&
-    (metadataOpsAdmin || (Boolean(normalizedEmail) && allowlistMatch));
+    (devBypassActive || metadataOpsAdmin || (Boolean(normalizedEmail) && allowlistMatch));
 
   return {
     allowed,
@@ -38,6 +52,7 @@ export function inspectOpsAdminAccess(
     allowlistCount: allowlist.length,
     allowlistMatch,
     metadataOpsAdmin,
+    devBypassActive,
   };
 }
 

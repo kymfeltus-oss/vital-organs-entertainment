@@ -1,7 +1,6 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import AttendeeEventLobbyClient from "@/components/dashboard/AttendeeEventLobbyClient";
-import LightweightLiveLoading from "@/components/live/LightweightLiveLoading";
+import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
 import { getUserFromSession } from "@/lib/auth/session";
 
 export default async function DashboardPage() {
@@ -11,9 +10,9 @@ export default async function DashboardPage() {
     redirect("/email-gate?next=/dashboard");
   }
 
+  const initialCountdownConfig = await loadActiveCountdownConfig();
+
   return (
-    <Suspense fallback={<LightweightLiveLoading />}>
-      <AttendeeEventLobbyClient />
-    </Suspense>
+    <AttendeeEventLobbyClient initialCountdownConfig={initialCountdownConfig} />
   );
 }

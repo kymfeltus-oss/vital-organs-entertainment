@@ -1,6 +1,7 @@
 export type OpsAuthDecisionReason =
   | "ALLOWED_METADATA"
   | "ALLOWED_ALLOWLIST"
+  | "ALLOWED_DEV_BYPASS"
   | "H1_NO_SESSION"
   | "H1_AUTH_ERROR"
   | "H2_ALLOWLIST_EMPTY"
@@ -14,6 +15,7 @@ export type OpsAuthDiagnosticPayload = {
   allowlistCount: number;
   allowlistMatch: boolean;
   metadataOpsAdmin: boolean;
+  devBypassActive: boolean;
   decisionReason: OpsAuthDecisionReason;
   willNotFound: boolean;
 };
@@ -41,6 +43,7 @@ export function evaluateOpsAuthDecision(input: {
   allowlistCount: number;
   allowlistMatch: boolean;
   metadataOpsAdmin: boolean;
+  devBypassActive: boolean;
 }): OpsAuthDiagnosticPayload {
   let decisionReason: OpsAuthDecisionReason;
   let willNotFound = false;
@@ -51,6 +54,8 @@ export function evaluateOpsAuthDecision(input: {
   } else if (!input.hasUser) {
     decisionReason = "H1_NO_SESSION";
     willNotFound = true;
+  } else if (input.devBypassActive) {
+    decisionReason = "ALLOWED_DEV_BYPASS";
   } else if (input.metadataOpsAdmin) {
     decisionReason = "ALLOWED_METADATA";
   } else if (!input.normalizedEmail) {
@@ -73,6 +78,7 @@ export function evaluateOpsAuthDecision(input: {
     allowlistCount: input.allowlistCount,
     allowlistMatch: input.allowlistMatch,
     metadataOpsAdmin: input.metadataOpsAdmin,
+    devBypassActive: input.devBypassActive,
     decisionReason,
     willNotFound,
   };

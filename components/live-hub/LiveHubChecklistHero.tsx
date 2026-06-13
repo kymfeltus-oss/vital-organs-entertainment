@@ -2,15 +2,28 @@
 
 import { CHECKLIST_STEPS } from "@/lib/live-hub/console-layout";
 import type { ChecklistPhase } from "@/lib/live-hub/types";
+import LiveHubGoLiveButton from "@/components/live-hub/LiveHubGoLiveButton";
 
 type LiveHubChecklistHeroProps = {
   phases: ChecklistPhase[];
   onTogglePhase: (phaseId: ChecklistPhase["id"]) => void;
+  goLiveBlocked: boolean;
+  criticalIssueCount: number;
+  onGoLive: () => void;
+  isLive?: boolean;
+  onStop?: () => void;
+  isStopping?: boolean;
 };
 
 export default function LiveHubChecklistHero({
   phases,
   onTogglePhase,
+  goLiveBlocked,
+  criticalIssueCount,
+  onGoLive,
+  isLive = false,
+  onStop,
+  isStopping = false,
 }: LiveHubChecklistHeroProps) {
   const phaseMap = Object.fromEntries(phases.map((phase) => [phase.id, phase]));
 
@@ -31,14 +44,28 @@ export default function LiveHubChecklistHero({
       </div>
 
       <div className="relative px-6 py-5 md:px-8 md:py-6">
-        <p className="text-[0.58rem] font-bold uppercase tracking-[0.32em] text-[#93c5fd]">
-          Pre-Live Checklist
-        </p>
-        <p className="mt-2 text-sm font-bold uppercase tracking-[0.18em] text-white md:text-base">
-          Every Detail. Every Moment. Eternally Impactful.
-        </p>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-[0.58rem] font-bold uppercase tracking-[0.32em] text-[#93c5fd]">
+              Pre-Live Checklist
+            </p>
+            <p className="mt-2 text-sm font-bold uppercase tracking-[0.18em] text-white md:text-base">
+              Every Detail. Every Moment. Eternally Impactful.
+            </p>
+          </div>
 
-        <div className="mt-6 grid grid-cols-5 gap-2">
+          <LiveHubGoLiveButton
+            blocked={goLiveBlocked}
+            criticalIssueCount={criticalIssueCount}
+            onClick={onGoLive}
+            isLive={isLive}
+            onStop={onStop}
+            isStopping={isStopping}
+            variant="hero"
+          />
+        </div>
+
+        <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
           {CHECKLIST_STEPS.map((step, index) => {
             const phase = phaseMap[step.id];
             const complete = phase?.complete ?? false;
@@ -47,6 +74,7 @@ export default function LiveHubChecklistHero({
                 key={step.id}
                 type="button"
                 onClick={() => onTogglePhase(step.id)}
+                title={step.description}
                 className={`relative rounded-xl border px-2 py-3 text-center transition ${
                   complete
                     ? "border-[#1E40AF]/55 bg-[#1E40AF]/15 text-[#93c5fd] shadow-[0_0_16px_rgba(30,64,175,0.2)]"
@@ -59,6 +87,7 @@ export default function LiveHubChecklistHero({
                 <span className="mt-1 block text-[0.58rem] font-bold uppercase tracking-[0.1em]">
                   {step.label}
                 </span>
+                <span className="sr-only">{step.description}</span>
               </button>
             );
           })}

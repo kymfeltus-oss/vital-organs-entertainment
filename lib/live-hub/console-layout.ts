@@ -12,7 +12,7 @@ export const LIVE_HUB_NAV = [
   { id: "stream-setup" as const, label: "Stream Setup" },
   { id: "content" as const, label: "Content & Media" },
   { id: "team" as const, label: "Team & Roles" },
-  { id: "advanced" as const, label: "Advanced Settings" },
+  { id: "advanced" as const, label: "Network Settings" },
 ];
 
 export const LIVE_TOOLS_NAV = [
@@ -31,12 +31,35 @@ export const RESOURCES_NAV = [
 export const CHECKLIST_STEPS: {
   id: ChecklistPhaseId;
   label: string;
+  description: string;
 }[] = [
-  { id: "system", label: "System Check" },
-  { id: "content", label: "Content Check" },
-  { id: "team", label: "Team Check" },
-  { id: "final_review", label: "Final Review" },
-  { id: "go_live", label: "Go Live" },
+  {
+    id: "system",
+    label: "System Check",
+    description: "Automated telemetry: network, encoder, audio, and stream lanes.",
+  },
+  {
+    id: "content",
+    label: "Content Check",
+    description:
+      "Confirm lower-third graphics and presentation files are synced. Required before Go Live.",
+  },
+  {
+    id: "team",
+    label: "Team Check",
+    description:
+      "Confirm choir, musicians, and stage managers are aligned. Required before Go Live.",
+  },
+  {
+    id: "final_review",
+    label: "Final Review",
+    description: "Completes automatically once system, content, and team checks pass.",
+  },
+  {
+    id: "go_live",
+    label: "Go Live",
+    description: "Final operator approval happens in the Go Live review modal.",
+  },
 ];
 
 export type ScheduleSegment = {

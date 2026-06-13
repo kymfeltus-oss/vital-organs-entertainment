@@ -25,7 +25,14 @@ export type UseHybridLiveActivityResult = {
   refresh: () => Promise<void>;
 };
 
-export function useHybridLiveActivity(): UseHybridLiveActivityResult {
+type UseHybridLiveActivityOptions = {
+  enabled?: boolean;
+};
+
+export function useHybridLiveActivity(
+  options: UseHybridLiveActivityOptions = {},
+): UseHybridLiveActivityResult {
+  const enabled = options.enabled ?? true;
   const [pool, setPool] = useState<LiveActivityItem[]>(() =>
     getHybridActivity([]),
   );
@@ -68,16 +75,28 @@ export function useHybridLiveActivity(): UseHybridLiveActivityResult {
   }, []);
 
   useEffect(() => {
-    mountedRef.current = true;
-    const frameId = requestAnimationFrame(() => {
-      void refresh();
-    });
+    if (!enabled) return;
 
+    mountedRef.current = true;
+
+    const startRefresh = () => {
+      void refresh();
+    };
+
+    if (typeof window.requestIdleCallback === "function") {
+      const idleId = window.requestIdleCallback(startRefresh, { timeout: 2_000 });
+      return () => {
+        mountedRef.current = false;
+        window.cancelIdleCallback(idleId);
+      };
+    }
+
+    const frameId = requestAnimationFrame(startRefresh);
     return () => {
       mountedRef.current = false;
       cancelAnimationFrame(frameId);
     };
-  }, [refresh]);
+  }, [enabled, refresh]);
 
   useEffect(() => {
     if (pool.length <= HYBRID_ACTIVITY_VISIBLE_MAX) return;

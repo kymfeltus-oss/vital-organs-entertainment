@@ -1,6 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
+import LiveHubNetworkSettingsPanel from "@/components/live-hub/LiveHubNetworkSettingsPanel";
+import type { LiveHubNetworkSettings } from "@/lib/live-hub/network-settings";
+import type { NetworkTelemetry } from "@/lib/live-hub/network";
 import { RESTREAM_DASHBOARD_URL } from "@/lib/live-hub/restream/client";
 import type { RestreamState } from "@/lib/live-hub/restream/types";
 import { VMIX_OPERATOR_GUIDANCE } from "@/lib/live-hub/readiness";
@@ -18,6 +21,12 @@ type LiveHubStreamPanelsProps = {
   restreamError: string | null;
   pendingVmixAction: VmixCommandType | null;
   checklistPhases: ChecklistPhase[];
+  networkSettings: LiveHubNetworkSettings;
+  onNetworkSettingsChange: (patch: Partial<LiveHubNetworkSettings>) => void;
+  networkTelemetry: NetworkTelemetry;
+  networkOnline: boolean;
+  onNetworkTest: () => void | Promise<void>;
+  isNetworkTesting?: boolean;
   onVmixAction: (
     type: VmixCommandType,
     options?: { confirmed?: boolean; readinessReviewed?: boolean },
@@ -46,34 +55,53 @@ export default function LiveHubStreamPanels({
   restreamError,
   pendingVmixAction,
   checklistPhases,
+  networkSettings,
+  onNetworkSettingsChange,
+  networkTelemetry,
+  networkOnline,
+  onNetworkTest,
+  isNetworkTesting = false,
   onVmixAction,
   onRestreamRefresh,
   onRestreamSyncMetadata,
 }: LiveHubStreamPanelsProps) {
-  if (section === "content" || section === "team" || section === "advanced") {
+  if (section === "advanced") {
+    return (
+      <PanelShell title="Network & Connectivity">
+        <LiveHubNetworkSettingsPanel
+          settings={networkSettings}
+          onChange={onNetworkSettingsChange}
+          telemetry={networkTelemetry}
+          networkOnline={networkOnline}
+          onTestConnection={onNetworkTest}
+          isTesting={isNetworkTesting}
+        />
+      </PanelShell>
+    );
+  }
+
+  if (section === "content" || section === "team") {
     const copy =
       section === "content"
         ? "Manage lower thirds, bumper reels, and worship assets from this panel in a future release."
-        : section === "team"
-          ? "Assign TD, audio, chat moderation, and prayer team roles here in a future release."
-          : "Recording enforcement, Restream blocking, and telemetry thresholds will be configurable here.";
+        : "Assign TD, audio, chat moderation, and prayer team roles here in a future release.";
 
     return (
       <PanelShell
-        title={
-          section === "content"
-            ? "Content & Media"
-            : section === "team"
-              ? "Team & Roles"
-              : "Advanced Settings"
-        }
+        title={section === "content" ? "Content & Media" : "Team & Roles"}
       >
         <p className="text-sm text-zinc-400">{copy}</p>
       </PanelShell>
     );
   }
 
-  const finalReviewComplete = checklistPhases.find((phase) => phase.id === "final_review")?.complete;
+  if (section !== "stream-setup") {
+    return null;
+  }
+
+  const finalReviewComplete = checklistPhases.find(
+    (phase) => phase.id === "final_review",
+  )?.complete;
 
   return (
     <div className="space-y-4">

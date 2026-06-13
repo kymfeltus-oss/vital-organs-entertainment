@@ -5,11 +5,31 @@ html {
   text-size-adjust: 100%;
 }
 
+:root {
+  --gradient-brand: linear-gradient(90deg, #00a8ff 0%, #5b42ff 50%, #ff008c 100%);
+  --gradient-brand-soft: linear-gradient(
+    90deg,
+    rgba(0, 168, 255, 0.25) 0%,
+    rgba(255, 0, 140, 0.25) 100%
+  );
+  --font-headline: var(--font-bebas-neue), sans-serif;
+  --font-ui: var(--font-montserrat), sans-serif;
+  --font-body: var(--font-inter), sans-serif;
+  --font-card-title: var(--font-oswald), sans-serif;
+}
+
 @theme {
-  --color-brand-blue: #1e40af;
-  --color-brand-pink: #b0267a;
-  --color-brand-black: #0b090a;
-  --color-brand-charcoal: #111111;
+  --color-brand-black: #000000;
+  --color-brand-panel: #090b13;
+  --color-brand-blue: #00a8ff;
+  --color-brand-pink: #ff008c;
+  --color-brand-purple: #8a2be2;
+  --color-brand-indigo: #5b42ff;
+  --color-brand-white: #ffffff;
+  --color-brand-muted: rgba(255, 255, 255, 0.68);
+  --color-brand-border: rgba(255, 255, 255, 0.08);
+  /* Legacy alias — maps to brand-panel for existing class usage */
+  --color-brand-charcoal: #090b13;
 }
 
 @layer utilities {
@@ -19,11 +39,30 @@ html {
   .pt-safe {
     padding-top: max(1.5rem, env(safe-area-inset-top));
   }
+  .font-headline {
+    font-family: var(--font-headline);
+  }
+  .font-ui {
+    font-family: var(--font-ui);
+  }
+  .font-body {
+    font-family: var(--font-body);
+  }
+  .font-card-title {
+    font-family: var(--font-card-title);
+  }
+
   .text-brand-blue {
     color: var(--color-brand-blue);
   }
   .text-brand-pink {
     color: var(--color-brand-pink);
+  }
+  .text-brand-purple {
+    color: var(--color-brand-purple);
+  }
+  .text-brand-muted {
+    color: var(--color-brand-muted);
   }
   .border-brand-blue {
     border-color: var(--color-brand-blue);
@@ -31,14 +70,75 @@ html {
   .border-brand-pink {
     border-color: var(--color-brand-pink);
   }
+  .border-brand-border {
+    border-color: var(--color-brand-border);
+  }
+  .bg-brand-panel {
+    background-color: var(--color-brand-panel);
+  }
+
   .glass-panel {
-    background: linear-gradient(
-      135deg,
-      rgba(17, 17, 17, 0.72) 0%,
-      rgba(11, 9, 10, 0.55) 100%
-    );
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: rgba(9, 11, 19, 0.92);
+    border: 1px solid var(--color-brand-border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .neon-blue-glow {
+    box-shadow: 0 0 40px rgba(0, 168, 255, 0.4);
+  }
+  .neon-pink-glow {
+    box-shadow: 0 0 40px rgba(255, 0, 140, 0.4);
+  }
+
+  .brand-gradient-border {
+    border: 1px solid transparent;
+    background:
+      linear-gradient(rgba(9, 11, 19, 0.92), rgba(9, 11, 19, 0.92)) padding-box,
+      var(--gradient-brand) border-box;
+  }
+
+  .brand-pill-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding-inline: 1.5rem;
+    border-radius: 999px;
+    font-family: var(--font-ui);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-brand-white);
+    border: 1px solid transparent;
+    background:
+      linear-gradient(#000000, #000000) padding-box,
+      var(--gradient-brand) border-box;
+    box-shadow: 0 0 35px rgba(255, 0, 140, 0.45), 0 0 35px rgba(0, 168, 255, 0.45);
+  }
+
+  .effects-heavy {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .effects-lite {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  @media (max-width: 767px) {
+    .effects-heavy {
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .neon-blue-glow,
+    .neon-pink-glow {
+      box-shadow: none;
+    }
+    .brand-pill-cta {
+      box-shadow: none;
+    }
   }
 
   /* ── Responsive experience system ── */
@@ -224,6 +324,17 @@ html {
     .live-waveform-bar {
       animation: none !important;
       height: 35%;
+    }
+    .effects-heavy,
+    .effects-lite {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      filter: none !important;
+    }
+    .neon-blue-glow,
+    .neon-pink-glow,
+    .brand-pill-cta {
+      box-shadow: none !important;
     }
   }
 }

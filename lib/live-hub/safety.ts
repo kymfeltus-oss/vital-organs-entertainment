@@ -14,7 +14,35 @@ export type GoLiveEvaluationInput = {
   settings: LiveHubSettings;
   networkOnline: boolean;
   operatorApproved: boolean;
+  /** Stripe API connectivity — null means the health check has not responded yet. */
+  stripeApiLive: boolean | null;
+  /** Manual operator checklist toggles (content / team phases). */
+  contentReady: boolean;
+  teamAligned: boolean;
+  /** Normalized local operator mic level from Web Audio analyser (0–1). */
+  localMicLevel: number;
 };
+
+/** Minimum normalized mic level treated as an active local audio feed. */
+export const LOCAL_MIC_ACTIVE_THRESHOLD = 0.01;
+
+/** Prefer vMix master telemetry; fall back to local mic when vMix is silent. */
+export function resolveCombinedAudioLevel(
+  vmixMasterLevel: number | null | undefined,
+  localMicLevel: number,
+): number {
+  const vmixLevel = vmixMasterLevel ?? 0;
+  if (vmixLevel > 0) return vmixLevel;
+  return localMicLevel;
+}
+
+export function isLocalMicAudioActive(localMicLevel: number): boolean {
+  return localMicLevel > LOCAL_MIC_ACTIVE_THRESHOLD;
+}
+
+export function isVmixAudioActive(vmix: VmixState | null): boolean {
+  return (vmix?.audioMasterLevel ?? 0) > 0;
+}
 
 export type GoLiveDecision = {
   blocked: boolean;
@@ -38,6 +66,13 @@ export function evaluateGoLiveDecision(input: GoLiveEvaluationInput): GoLiveDeci
   if (!input.networkOnline) {
     criticalIssues.push(
       criticalIssue("network_offline", "Network Offline", "Internet connection is required."),
+    );
+  }
+
+  const internetCheck = input.checks.find((check) => check.id === "internet");
+  if (internetCheck?.status === "warn" && input.networkOnline) {
+    warnings.push(
+      warningIssue("network_degraded", "Network Preference", internetCheck.detail),
     );
   }
 
@@ -81,9 +116,94 @@ export function evaluateGoLiveDecision(input: GoLiveEvaluationInput): GoLiveDeci
   }
 
   const audioCheck = input.checks.find((check) => check.id === "audio_input");
-  if (audioCheck?.status === "fail") {
+  const vmixAudioActive = isVmixAudioActive(input.vmix);
+  const localMicActive = isLocalMicAudioActive(input.localMicLevel);
+
+  if (audioCheck?.status === "fail" && !vmixAudioActive && !localMicActive) {
     criticalIssues.push(
       criticalIssue("no_audio", "Audio Missing", audioCheck.detail),
+    );
+  } else if (audioCheck?.status === "fail" && !vmixAudioActive && localMicActive) {
+    warnings.push(
+      warningIssue(
+        "audio_local_fallback",
+        "Audio via Operator Mic",
+        `vMix master silent; local mic registers ${(input.localMicLevel * 100).toFixed(0)}% signal.`,
+      ),
+    );
+  }
+
+  const uploadCheck = input.checks.find((check) => check.id === "upload_speed");
+  if (uploadCheck?.status === "fail") {
+    criticalIssues.push(
+      criticalIssue("upload_insufficient", "Upload Speed Insufficient", uploadCheck.detail),
+    );
+  } else if (uploadCheck?.status === "warn") {
+    warnings.push(
+      warningIssue("upload_degraded", "Upload Speed Degraded", uploadCheck.detail),
+    );
+  }
+
+  const cameraCheck = input.checks.find((check) => check.id === "camera_feeds");
+  if (cameraCheck && cameraCheck.status !== "pass") {
+    criticalIssues.push(
+      criticalIssue(
+        "video_layers_missing",
+        "Video Layers Missing",
+        "Program and preview inputs must both be loaded before Go Live.",
+      ),
+    );
+  }
+
+  // Stripe gate with development sandbox bypass: NODE_ENV is inlined at build
+  // time, so production builds always enforce the hard block.
+  const isDevSandbox = process.env.NODE_ENV === "development";
+
+  if (input.stripeApiLive !== true) {
+    if (isDevSandbox) {
+      warnings.push(
+        warningIssue(
+          "stripe_sandbox_bypass",
+          "Stripe Sandbox Bypass",
+          "Stripe is offline or unverified, but development sandbox mode is active (bypass enabled).",
+        ),
+      );
+    } else if (input.stripeApiLive === false) {
+      criticalIssues.push(
+        criticalIssue(
+          "stripe_disconnected",
+          "Stripe Gateway Disconnected",
+          "Financial collection cannot run — verify the Stripe API connection.",
+        ),
+      );
+    } else {
+      warnings.push(
+        warningIssue(
+          "stripe_unverified",
+          "Stripe Unverified",
+          "Stripe connectivity has not been confirmed yet.",
+        ),
+      );
+    }
+  }
+
+  if (!input.contentReady) {
+    criticalIssues.push(
+      criticalIssue(
+        "content_unchecked",
+        "Content Not Confirmed",
+        "Operator has not checked off Content Readiness.",
+      ),
+    );
+  }
+
+  if (!input.teamAligned) {
+    criticalIssues.push(
+      criticalIssue(
+        "team_unchecked",
+        "Team Not Aligned",
+        "Operator has not checked off Team Alignment.",
+      ),
     );
   }
 
@@ -109,11 +229,19 @@ export function evaluateGoLiveDecision(input: GoLiveEvaluationInput): GoLiveDeci
         "Restream must be connected per hub settings.",
       ),
     );
-  } else if (!isRestreamHealthy(input.restream)) {
+  } else if (input.restream?.connectionStatus === "degraded") {
     warnings.push(
       warningIssue(
         "restream_degraded",
         "Restream Degraded",
+        `Ingest or destination lane below threshold — ${input.restream.streamStatus}.`,
+      ),
+    );
+  } else if (!isRestreamHealthy(input.restream)) {
+    warnings.push(
+      warningIssue(
+        "restream_disconnected",
+        "Restream Disconnected",
         input.restream?.connectionStatus ?? "Restream status unknown",
       ),
     );
@@ -170,6 +298,10 @@ export function buildSafetyIssuesFromInputs(inputs: ReadinessInputs): {
     settings: { blockGoLiveWithoutRecording: false, blockGoLiveWithoutRestream: false },
     networkOnline: inputs.networkOnline,
     operatorApproved: false,
+    stripeApiLive: true,
+    contentReady: true,
+    teamAligned: true,
+    localMicLevel: 0,
   });
 
   return {
