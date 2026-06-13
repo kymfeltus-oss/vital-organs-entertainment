@@ -1,5 +1,11 @@
 /** Routes where global navigation is hidden (full-bleed cinematic / gate flows) */
-export const NAV_HIDDEN_ROUTES = ["/", "/email-gate", "/test-suite", "/ops"] as const;
+export const NAV_HIDDEN_ROUTES = [
+  "/",
+  "/email-gate",
+  "/test-suite",
+  "/ops",
+  "/experience/live",
+] as const;
 
 /** Exact paths only — event lobby uses its own sidebar + mobile nav */
 export const NAV_HIDDEN_EXACT_ROUTES = ["/dashboard"] as const;

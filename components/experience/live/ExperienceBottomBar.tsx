@@ -18,8 +18,7 @@ export default function ExperienceBottomBar({
 
   return (
     <nav
-      className="experience-dock-bar fixed inset-x-0 bottom-0 z-30 md:hidden"
-      style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+      className="experience-dock-bar relative w-full shrink-0 z-20 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden"
       aria-label="Live experience actions"
     >
       <div className="grid grid-cols-3 items-end gap-0.5 px-2 pt-1.5">

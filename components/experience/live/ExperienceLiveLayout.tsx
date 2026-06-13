@@ -143,7 +143,7 @@ export default function ExperienceLiveLayout({
               })}
             </div>
 
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-2.5 pt-2.5 pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:px-3 md:pt-3 md:pb-3">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-0 pt-0 pb-0 md:px-3 md:pt-3 md:pb-3">
               <FellowshipChatPanel embedded />
             </div>
           </aside>
@@ -155,7 +155,7 @@ export default function ExperienceLiveLayout({
             className="experience-glass-panel fixed inset-x-0 bottom-0 z-40 flex max-h-[min(72dvh,100%)] min-w-0 flex-col"
             style={{
               top: "calc(3.25rem + env(safe-area-inset-top))",
-              paddingBottom: "calc(4.75rem + env(safe-area-inset-bottom, 0px))",
+              paddingBottom: "env(safe-area-inset-bottom, 0px)",
             }}
           >
             <div className="flex shrink-0 items-center justify-between border-b border-white/8 px-3 py-2">
