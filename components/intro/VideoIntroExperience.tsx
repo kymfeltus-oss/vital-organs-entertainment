@@ -7,8 +7,8 @@ import { buildPersonaHubUrl, DEFAULT_ATTENDEE_NEXT } from "@/lib/auth/routing";
 
 const INTRO_VIDEO_DESKTOP = "/intro-video.mp4";
 const INTRO_VIDEO_MOBILE = "/intro-video%20mobile.mp4";
-/** Drop soundtrack at public/intro-music.mp3 — video tracks stay silent. */
-const INTRO_MUSIC_SRC = "/intro-music.mp3";
+/** Soundtrack at public/intro-music.m4a — video tracks stay silent. */
+const INTRO_MUSIC_SRC = "/intro-music.m4a";
 const MOBILE_INTRO_MEDIA_QUERY = "(max-width: 767px)";
 const EXIT_MS = 520;
 
@@ -172,7 +172,6 @@ export default function VideoIntroExperience() {
           autoPlay
           loop
           muted
-          defaultMuted
           playsInline
           controls={false}
           preload="auto"
