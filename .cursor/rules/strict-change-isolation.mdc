@@ -1,0 +1,28 @@
+---
+description: Strict change isolation — only edit files explicitly named in the active task; confirm before touching dependencies.
+alwaysApply: true
+---
+
+# Critical Architectural Safeguard (Strict Change Isolation)
+
+Before generating any code edits, file rewrites, or visual diffs:
+
+## Scope lock
+
+- Do **NOT** modify, delete, or rewrite code inside **any** file, script, custom hook, or configuration component unless you are **explicitly and directly instructed** to do so in the active prompt.
+- Do **NOT** perform unsolicited refactoring, styling changes, or "cleanup passes" on unreferenced or background files.
+- Stay **100% focused** on the localized scope of the active task. Do **not** touch adjacent, working system architectures.
+
+## Dependency gate
+
+- If a change requires modifying a dependency or importing an element from a **separate file**, you must **explicitly flag this to the operator and ask for confirmation BEFORE** editing that secondary file.
+
+## Examples
+
+| Situation | Required behavior |
+|-----------|---------------------|
+| Task targets `VideoIntroExperience.tsx` only | Do not edit `globals.css`, `middleware.ts`, or hooks unless the prompt names them |
+| Fix needs a shared utility change | Stop, explain why, list the secondary file(s), wait for confirmation |
+| "While I'm here" cleanup in unrelated files | **Forbidden** |
+
+Use code with caution.

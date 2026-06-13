@@ -50,7 +50,7 @@ export default function VideoIntroExperience() {
     };
   }, []);
 
-  const handleEnterHub = useCallback(async () => {
+  const handleContinue = useCallback(async () => {
     if (isNavigating) return;
     setIsNavigating(true);
 
@@ -75,11 +75,14 @@ export default function VideoIntroExperience() {
   }, [isNavigating, router]);
 
   return (
-    <div
-      className={`fixed inset-0 z-50 h-dvh w-full overflow-hidden bg-brand-black transition-opacity duration-500 ease-out ${
+    <button
+      type="button"
+      onClick={() => void handleContinue()}
+      disabled={isNavigating}
+      aria-label="Continue to 300 Awakening experience"
+      className={`fixed inset-0 z-50 block h-dvh w-full cursor-pointer overflow-hidden border-0 bg-brand-black p-0 transition-opacity duration-500 ease-out ${
         isExiting ? "opacity-0" : "opacity-100"
       }`}
-      aria-label="300 Awakening intro"
     >
       <video
         ref={videoRef}
@@ -91,29 +94,14 @@ export default function VideoIntroExperience() {
         controls={false}
         preload="auto"
         aria-hidden="true"
-        className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ${
+        className={`pointer-events-none absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ${
           videoReady ? "opacity-100" : "opacity-0"
         }`}
       />
 
       {!videoReady ? (
-        <div className="absolute inset-0 bg-brand-black" aria-hidden="true" />
+        <span className="pointer-events-none absolute inset-0 block bg-brand-black" aria-hidden="true" />
       ) : null}
-
-      <div
-        className={`absolute inset-x-0 bottom-[max(3rem,env(safe-area-inset-bottom))] z-10 flex justify-center px-[5%] transition-opacity duration-500 ${
-          isExiting ? "opacity-0" : "opacity-100"
-        }`}
-      >
-        <button
-          type="button"
-          onClick={() => void handleEnterHub()}
-          disabled={isNavigating}
-          className="intro-enter-hub mx-auto flex w-[90%] max-w-[450px] min-h-[50px] shrink-0 items-center justify-center whitespace-nowrap py-4 px-8 font-ui text-sm font-bold uppercase tracking-[0.2em] text-white sm:text-base md:text-lg"
-        >
-          Enter Hub
-        </button>
-      </div>
-    </div>
+    </button>
   );
 }
