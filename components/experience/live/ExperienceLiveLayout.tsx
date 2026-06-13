@@ -76,24 +76,22 @@ export default function ExperienceLiveLayout({
   const showInlineChat = !isMobileLandscape;
 
   return (
-    <div className="experience-live-root flex min-h-dvh w-full max-w-[100vw] flex-col overflow-x-hidden md:h-dvh md:overflow-hidden">
+    <div className="experience-live-root flex h-dvh max-h-dvh min-h-0 w-full max-w-[100vw] flex-col overflow-hidden">
       <header className="relative z-20 shrink-0 border-b border-white/8 px-3 py-2 pt-safe md:px-6 md:py-3">
         <ExperienceBrandHeader compact liveBadge={variant === "live"} />
       </header>
 
       <div
-        className={`relative flex min-h-0 flex-1 flex-col md:grid md:grid-cols-[minmax(0,1.9fr)_minmax(20rem,1fr)] md:overflow-hidden ${
-          isMobileLandscape ? "overflow-hidden" : ""
-        }`}
+        className="relative flex min-h-0 flex-1 flex-col overflow-hidden md:grid md:grid-cols-[minmax(0,1.9fr)_minmax(20rem,1fr)]"
       >
         <section
-          className={`relative w-full min-w-0 shrink-0 md:flex md:min-h-0 md:flex-col md:overflow-hidden md:p-4 md:pr-3 ${
-            isMobileLandscape ? "min-h-0 flex-1" : ""
+          className={`relative w-full min-w-0 md:flex md:min-h-0 md:flex-col md:overflow-hidden md:p-4 md:pr-3 ${
+            isMobileLandscape ? "min-h-0 flex-1" : "shrink-0"
           }`}
         >
           <div
-            className={`experience-live-stage-mobile w-full min-w-0 ${
-              isMobileLandscape ? "h-full" : "md:min-h-0 md:flex-1"
+            className={`experience-live-stage-mobile w-full min-w-0 shrink-0 ${
+              isMobileLandscape ? "h-full min-h-0 flex-1" : "md:min-h-0 md:flex-1"
             }`}
           >
             {stage}
@@ -123,7 +121,7 @@ export default function ExperienceLiveLayout({
         </section>
 
         {showInlineChat ? (
-          <aside className="experience-chat-column flex min-h-[50dvh] min-w-0 flex-[1.2] flex-col md:h-full md:min-h-0 md:flex-1">
+          <aside className="experience-chat-column flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:h-full md:flex-1">
             <div className="hidden shrink-0 gap-2 border-b border-white/8 p-3 md:flex">
               {EXPERIENCE_ACTIONS.map(({ id, label, icon: Icon }) => {
                 const active = openAction === id;
@@ -145,7 +143,7 @@ export default function ExperienceLiveLayout({
               })}
             </div>
 
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col px-2.5 pt-2.5 pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:px-3 md:pt-3 md:pb-3">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-2.5 pt-2.5 pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:px-3 md:pt-3 md:pb-3">
               <FellowshipChatPanel embedded />
             </div>
           </aside>
@@ -173,7 +171,7 @@ export default function ExperienceLiveLayout({
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col px-2.5 py-2">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-2.5 py-2">
               <FellowshipChatPanel embedded />
             </div>
           </aside>

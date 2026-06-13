@@ -74,7 +74,11 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
   };
 
   return (
-    <div className={`flex min-h-0 flex-col ${embedded ? "h-full" : "min-h-56"}`}>
+    <div
+      className={`flex flex-col overflow-hidden ${
+        embedded ? "h-full min-h-0" : "min-h-56"
+      }`}
+    >
       {!embedded ? (
         <p className="mb-2 shrink-0 font-headline text-lg uppercase tracking-[0.14em] text-white">
           Fellowship Chat
@@ -127,7 +131,9 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="experience-glass-panel h-full min-h-48 overflow-y-auto rounded-xl px-1 py-1.5 md:min-h-64"
+          className={`experience-glass-panel min-w-0 flex-1 overflow-y-auto overflow-x-hidden wrap-break-word rounded-xl px-1 py-1.5 ${
+            embedded ? "min-h-0" : "h-full min-h-48 md:min-h-64"
+          }`}
           aria-label="Fellowship chat messages"
         >
           {isLoading ? (

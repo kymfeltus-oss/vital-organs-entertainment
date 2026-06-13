@@ -421,13 +421,15 @@ html {
 
 .experience-live-stage-mobile {
   width: 100%;
-  max-height: min(52dvh, 28rem);
+  /* Live player is 21:9 — height follows width; legacy 16:9 cap caused clipping */
+  max-height: none;
 }
 
-@media (min-width: 768px) {
-  .experience-live-stage-mobile {
-    max-height: none;
-  }
+/* Full-width slot under player for selector, polls, and live metrics */
+.experience-live-interactive {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .experience-stream-stage {

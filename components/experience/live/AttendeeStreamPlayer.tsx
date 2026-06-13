@@ -257,7 +257,7 @@ export default function AttendeeStreamPlayer({
 
   return (
     <div
-      className={`relative aspect-video w-full overflow-hidden bg-[#0B090A] ${
+      className={`relative aspect-[21/9] w-full overflow-hidden bg-[#0B090A] ${
         embedded
           ? ""
           : "experience-stream-stage rounded-none md:rounded-xl md:border md:border-white/8"

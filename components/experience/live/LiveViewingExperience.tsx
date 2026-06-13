@@ -78,7 +78,7 @@ export default function LiveViewingExperience({
 
   return (
     <div className="relative flex w-full min-w-0 max-w-full flex-col gap-2 md:gap-3">
-      <div className="experience-stream-stage relative w-full min-w-0 overflow-hidden rounded-none md:rounded-xl">
+      <div className="experience-stream-stage relative w-full min-w-0 shrink-0 overflow-hidden rounded-none md:rounded-xl">
         <FloatingLiveReactions />
         <StreamStageChrome isLive />
         <AttendeeStreamPlayer
@@ -92,19 +92,21 @@ export default function LiveViewingExperience({
         />
       </div>
 
-      {showSelector ? (
-        <ExperienceSelector
-          feeds={feeds}
-          selectedKey={selectedExperience}
-          onSelect={handleSelect}
-        />
-      ) : null}
+      <div className="experience-live-interactive flex w-full min-w-0 max-w-full shrink-0 flex-col gap-2 md:gap-3">
+        {showSelector ? (
+          <ExperienceSelector
+            feeds={feeds}
+            selectedKey={selectedExperience}
+            onSelect={handleSelect}
+          />
+        ) : null}
 
-      {fallbackNotice ? (
-        <p className="font-body text-xs leading-relaxed text-zinc-400" role="status">
-          {fallbackNotice}
-        </p>
-      ) : null}
+        {fallbackNotice ? (
+          <p className="font-body text-xs leading-relaxed text-zinc-400" role="status">
+            {fallbackNotice}
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }
