@@ -9,6 +9,7 @@ import GoingLiveTransition from "@/components/experience/live/GoingLiveTransitio
 import LiveViewingExperience from "@/components/experience/live/LiveViewingExperience";
 import WaitingRoom from "@/components/experience/live/WaitingRoom";
 import PassActivatingShell from "@/components/live/PassActivatingShell";
+import { LiveStreamReactionsProvider } from "@/lib/experience/LiveStreamReactionsContext";
 import { useAttendeeLiveState } from "@/lib/experience/useAttendeeLiveState";
 import { useEventCountdown } from "@/lib/experience/useEventCountdown";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
@@ -101,7 +102,7 @@ export default function LiveExperienceClient({
   );
 
   return (
-    <>
+    <LiveStreamReactionsProvider enabled={showLiveView}>
       <ExperienceLiveLayout
         variant={showLiveView ? "live" : "waiting"}
         stage={stage}
@@ -111,6 +112,6 @@ export default function LiveExperienceClient({
       />
 
       <GoingLiveTransition visible={goingLive} />
-    </>
+    </LiveStreamReactionsProvider>
   );
 }

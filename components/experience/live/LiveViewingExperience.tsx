@@ -1,7 +1,15 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import AttendeeStreamPlayer from "@/components/experience/live/AttendeeStreamPlayer";
+import ExperienceSelector from "@/components/experience/live/ExperienceSelector";
+import FloatingLiveReactions from "@/components/experience/live/FloatingLiveReactions";
+import {
+  DEFAULT_ATTENDEE_EXPERIENCE,
+  EXPERIENCE_UNAVAILABLE_COPY,
+  type AttendeeExperienceKey,
+} from "@/lib/experience/stream-experiences";
+import { useAttendeeStreamExperiences } from "@/lib/experience/useAttendeeStreamExperiences";
 
 type LiveViewingExperienceProps = {
   showPaywall: boolean;
@@ -12,11 +20,86 @@ export default function LiveViewingExperience({
   showPaywall,
   paywallOverlay,
 }: LiveViewingExperienceProps) {
+  const { feeds, showSelector } = useAttendeeStreamExperiences(true);
+  const [selectedExperience, setSelectedExperience] =
+    useState<AttendeeExperienceKey>(DEFAULT_ATTENDEE_EXPERIENCE);
+  const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
+  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearFallbackNotice = useCallback(() => {
+    if (fallbackTimerRef.current) {
+      clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = null;
+    }
+    setFallbackNotice(null);
+  }, []);
+
+  const showFallbackNotice = useCallback(() => {
+    setFallbackNotice(EXPERIENCE_UNAVAILABLE_COPY);
+    if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+    fallbackTimerRef.current = setTimeout(() => {
+      setFallbackNotice(null);
+      fallbackTimerRef.current = null;
+    }, 6_000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (feeds.length === 0) return;
+    const stillAvailable = feeds.some((feed) => feed.key === selectedExperience);
+    if (!stillAvailable) {
+      setSelectedExperience(DEFAULT_ATTENDEE_EXPERIENCE);
+      showFallbackNotice();
+    }
+  }, [feeds, selectedExperience, showFallbackNotice]);
+
+  const handleSelect = useCallback(
+    (key: AttendeeExperienceKey) => {
+      clearFallbackNotice();
+      setSelectedExperience(key);
+    },
+    [clearFallbackNotice],
+  );
+
+  const handleExperienceUnavailable = useCallback(
+    (requested: AttendeeExperienceKey) => {
+      if (requested === DEFAULT_ATTENDEE_EXPERIENCE) return;
+      setSelectedExperience(DEFAULT_ATTENDEE_EXPERIENCE);
+      showFallbackNotice();
+    },
+    [showFallbackNotice],
+  );
+
   return (
-    <AttendeeStreamPlayer
-      enabled
-      showPaywall={showPaywall}
-      paywallOverlay={paywallOverlay}
-    />
+    <div className="relative flex w-full min-w-0 flex-col gap-3">
+      <FloatingLiveReactions />
+      {showSelector ? (
+        <ExperienceSelector
+          feeds={feeds}
+          selectedKey={selectedExperience}
+          onSelect={handleSelect}
+        />
+      ) : null}
+
+      {fallbackNotice ? (
+        <p className="font-body text-xs leading-relaxed text-brand-muted" role="status">
+          {fallbackNotice}
+        </p>
+      ) : null}
+
+      <AttendeeStreamPlayer
+        key={selectedExperience}
+        experience={selectedExperience}
+        enabled
+        showPaywall={showPaywall}
+        paywallOverlay={paywallOverlay}
+        onExperienceUnavailable={handleExperienceUnavailable}
+      />
+    </div>
   );
 }

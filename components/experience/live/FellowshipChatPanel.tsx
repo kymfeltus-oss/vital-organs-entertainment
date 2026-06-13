@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ChevronDown, Pin, Trash2, VolumeX } from "lucide-react";
+import LiveReactionBar from "@/components/experience/live/LiveReactionBar";
+import { chatAuthorColorClass } from "@/lib/experience/chat-author-color";
 import {
   FELLOWSHIP_MAX_CONTENT_LENGTH,
   FELLOWSHIP_SLOW_MODE_SECONDS,
@@ -91,7 +93,7 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
   };
 
   return (
-    <div className={`flex min-h-0 flex-col ${embedded ? "h-full" : "min-h-[14rem]"}`}>
+    <div className={`flex min-h-0 flex-col ${embedded ? "h-full" : "min-h-56"}`}>
       {!embedded ? (
         <>
           <p className="font-ui text-[0.6rem] font-bold uppercase tracking-[0.16em] text-brand-muted">
@@ -108,14 +110,18 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
       )}
 
       {pinned ? (
-        <div className="mb-2 shrink-0 rounded-lg border border-brand-pink/40 bg-brand-pink/10 px-3 py-2">
+        <div className="mb-2 shrink-0 rounded-lg border border-brand-pink/45 bg-brand-pink/10 px-3 py-2 neon-pink-glow">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="font-ui text-[0.5rem] font-bold uppercase tracking-[0.14em] text-brand-pink">
-                Pinned
+                Pinned Announcement
               </p>
               <p className="mt-1 font-body text-sm leading-snug text-white/90">
-                <span className="font-ui font-bold text-brand-blue">{pinned.author}</span>
+                <span
+                  className={`font-ui text-[0.72rem] font-bold ${chatAuthorColorClass(pinned.userId)}`}
+                >
+                  {pinned.author}
+                </span>
                 <span className="text-brand-muted"> · </span>
                 {pinned.body}
               </p>
@@ -137,31 +143,33 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="h-full min-h-[12rem] space-y-0.5 overflow-y-auto rounded-lg border border-brand-border bg-black/50 px-2 py-2 md:min-h-[16rem]"
+          className="h-full min-h-48 space-y-0 overflow-y-auto rounded-lg border border-brand-border bg-black/55 px-1.5 py-1.5 md:min-h-64"
           aria-label="Fellowship chat messages"
         >
           {isLoading ? (
-            <p className="px-2 py-3 font-body text-sm text-brand-muted">Loading Fellowship Chat…</p>
+            <p className="px-2 py-2 font-body text-sm text-brand-muted">Loading Fellowship Chat…</p>
           ) : messages.length === 0 ? (
-            <p className="px-2 py-3 font-body text-sm text-brand-muted">
+            <p className="px-2 py-2 font-body text-sm text-brand-muted">
               The room is quiet. Be the first to encourage someone.
             </p>
           ) : (
             messages.map((message) => (
               <div
                 key={message.id}
-                className="group flex items-start gap-1 rounded px-1.5 py-1 hover:bg-white/[0.03]"
+                className="group flex items-start gap-0.5 rounded px-1 py-0.5 hover:bg-white/3"
               >
-                <p className="min-w-0 flex-1 break-words font-body text-[0.8125rem] leading-snug">
-                  <span className="font-ui text-[0.72rem] font-bold text-brand-blue">
+                <p className="min-w-0 flex-1 wrap-break-word font-body text-[0.78rem] leading-snug sm:text-[0.8125rem]">
+                  <span
+                    className={`font-ui text-[0.7rem] font-bold sm:text-[0.72rem] ${chatAuthorColorClass(message.userId)}`}
+                  >
                     {message.author}
                   </span>
-                  <span className="text-brand-muted">: </span>
-                  <span className="text-white/90">{message.body}</span>
+                  <span className="text-brand-muted/80">: </span>
+                  <span className="text-white/92">{message.body}</span>
                 </p>
 
                 {session.isModerator ? (
-                  <div className="flex shrink-0 gap-0.5">
+                  <div className="flex shrink-0 gap-0.5 opacity-80 group-hover:opacity-100">
                     <button
                       type="button"
                       title="Pin announcement"
@@ -200,7 +208,7 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
             className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-brand-blue/50 bg-brand-black/95 px-3 py-1.5 font-ui text-[0.55rem] font-bold uppercase tracking-[0.12em] text-brand-blue shadow-lg"
           >
             <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
-            View latest messages
+            View Latest Messages
           </button>
         ) : null}
       </div>
@@ -210,6 +218,8 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
           {displayError}
         </p>
       ) : null}
+
+      <LiveReactionBar authenticated={session.authenticated} />
 
       {!session.authenticated ? (
         <div className="mt-2 shrink-0 rounded-lg border border-brand-border bg-black/50 px-3 py-3 text-center">
@@ -240,7 +250,7 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
             maxLength={FELLOWSHIP_MAX_CONTENT_LENGTH}
             className="w-full rounded-lg border border-brand-border bg-black/70 px-3 py-2.5 font-body text-sm text-white outline-none placeholder:text-brand-muted focus:border-brand-blue/50 disabled:opacity-60"
           />
-          <p className="mt-1 font-ui text-[0.45rem] uppercase tracking-[0.1em] text-brand-muted">
+          <p className="mt-1 font-ui text-[0.45rem] uppercase tracking-widest text-brand-muted">
             {draft.length}/{FELLOWSHIP_MAX_CONTENT_LENGTH} · Slow mode{" "}
             {session.slowModeSeconds || FELLOWSHIP_SLOW_MODE_SECONDS}s
           </p>

@@ -5,8 +5,9 @@ import { HandHeart } from "lucide-react";
 export default function ExperiencePrayerPanel() {
   return (
     <div className="flex flex-col gap-4">
+      <p className="font-headline text-lg uppercase tracking-[0.12em] text-white">Prayer</p>
       <p className="font-body text-sm leading-relaxed text-brand-muted">
-        Prayer requests open in a dedicated page.
+        Prayer requests stay inside the live experience — no need to leave the stream.
       </p>
       <div className="rounded-xl border border-brand-border bg-black/40 p-4">
         <HandHeart className="h-7 w-7 text-brand-pink" strokeWidth={1.5} aria-hidden="true" />

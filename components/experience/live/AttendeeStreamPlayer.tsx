@@ -3,31 +3,49 @@
 import Hls from "hls.js";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  DEFAULT_ATTENDEE_EXPERIENCE,
+  type AttendeeExperienceKey,
+} from "@/lib/experience/stream-experiences";
 
 const RECONNECT_DELAY_MS = 3_500;
 
 type AttendeeStreamPlayerProps = {
+  experience?: AttendeeExperienceKey;
   enabled: boolean;
   showPaywall: boolean;
   paywallOverlay?: ReactNode;
+  onExperienceUnavailable?: (requested: AttendeeExperienceKey) => void;
 };
 
 export default function AttendeeStreamPlayer({
+  experience = DEFAULT_ATTENDEE_EXPERIENCE,
   enabled,
   showPaywall,
   paywallOverlay,
+  onExperienceUnavailable,
 }: AttendeeStreamPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);
   const playbackUrlRef = useRef("");
+  const experienceRef = useRef(experience);
+  const onUnavailableRef = useRef(onExperienceUnavailable);
 
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
   const shouldPlay = enabled && !showPaywall;
+
+  useEffect(() => {
+    experienceRef.current = experience;
+  }, [experience]);
+
+  useEffect(() => {
+    onUnavailableRef.current = onExperienceUnavailable;
+  }, [onExperienceUnavailable]);
 
   const clearReconnectTimer = useCallback(() => {
     if (reconnectTimerRef.current) {
@@ -51,6 +69,12 @@ export default function AttendeeStreamPlayer({
   const scheduleReconnectRef = useRef<() => void>(() => undefined);
   const loadStreamRef = useRef<() => Promise<string | null>>(async () => null);
   const bindSourceRef = useRef<(url: string) => void>(() => undefined);
+
+  const notifyExperienceUnavailable = useCallback(() => {
+    const requested = experienceRef.current;
+    if (requested === DEFAULT_ATTENDEE_EXPERIENCE) return;
+    onUnavailableRef.current?.(requested);
+  }, []);
 
   const scheduleReconnect = useCallback(() => {
     if (!shouldPlay || !isMountedRef.current) return;
@@ -111,14 +135,26 @@ export default function AttendeeStreamPlayer({
   const loadStream = useCallback(async (): Promise<string | null> => {
     if (!shouldPlay) return null;
 
+    const requestedExperience = experienceRef.current;
+
     try {
-      const response = await fetch("/api/stream/manifest?experience=main_stage", {
-        method: "GET",
-        credentials: "include",
-        cache: "no-store",
-      });
+      const response = await fetch(
+        `/api/stream/manifest?experience=${encodeURIComponent(requestedExperience)}`,
+        {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        },
+      );
 
       if (!response.ok) {
+        if (
+          requestedExperience !== DEFAULT_ATTENDEE_EXPERIENCE &&
+          (response.status === 503 || response.status === 400)
+        ) {
+          notifyExperienceUnavailable();
+          return null;
+        }
         scheduleReconnectRef.current();
         return null;
       }
@@ -130,6 +166,10 @@ export default function AttendeeStreamPlayer({
 
       const playbackUrl = data.playbackUrl?.trim() ?? "";
       if (!data.success || !playbackUrl) {
+        if (requestedExperience !== DEFAULT_ATTENDEE_EXPERIENCE) {
+          notifyExperienceUnavailable();
+          return null;
+        }
         scheduleReconnectRef.current();
         return null;
       }
@@ -140,7 +180,7 @@ export default function AttendeeStreamPlayer({
       scheduleReconnectRef.current();
       return null;
     }
-  }, [shouldPlay]);
+  }, [notifyExperienceUnavailable, shouldPlay]);
 
   useEffect(() => {
     scheduleReconnectRef.current = scheduleReconnect;
@@ -166,7 +206,9 @@ export default function AttendeeStreamPlayer({
       return;
     }
 
+    setIsReconnecting(false);
     setIsBuffering(true);
+    setIsPlaying(false);
     void loadStream().then((url) => {
       if (url) bindSource(url);
     });
@@ -175,7 +217,14 @@ export default function AttendeeStreamPlayer({
       clearReconnectTimer();
       destroyPlayer();
     };
-  }, [bindSource, clearReconnectTimer, destroyPlayer, loadStream, shouldPlay]);
+  }, [
+    bindSource,
+    clearReconnectTimer,
+    destroyPlayer,
+    experience,
+    loadStream,
+    shouldPlay,
+  ]);
 
   useEffect(() => {
     const video = videoRef.current;

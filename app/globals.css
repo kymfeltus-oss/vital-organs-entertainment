@@ -400,3 +400,32 @@ html {
   height: 18%;
   animation: live-waveform-pulse 1.2s ease-in-out infinite;
 }
+
+@keyframes live-reaction-float {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 70%) scale(0.55);
+  }
+  12% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -130%) scale(1.05);
+  }
+}
+
+.live-reaction-burst {
+  animation: live-reaction-float 1.5s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-reaction-burst {
+    animation: none;
+    opacity: 0;
+  }
+}
