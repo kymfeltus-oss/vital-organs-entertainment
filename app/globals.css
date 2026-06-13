@@ -339,6 +339,53 @@ html {
   }
 }
 
+@keyframes experience-go-live-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.experience-go-live-overlay {
+  animation: experience-go-live-in 320ms ease-out forwards;
+}
+
+@keyframes experience-action-sheet-in {
+  from {
+    transform: translateY(100%);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes experience-action-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.experience-action-sheet {
+  animation: experience-action-sheet-in 280ms ease-out forwards;
+}
+
+@media (min-width: 768px) {
+  .experience-action-sheet {
+    animation: experience-action-backdrop-in 200ms ease-out forwards;
+  }
+}
+
+.experience-action-backdrop {
+  animation: experience-action-backdrop-in 200ms ease-out forwards;
+}
+
 @keyframes live-waveform-pulse {
   0%,
   100% {

@@ -60,24 +60,17 @@ export default function ProductionTelemetryTray({
           PARABLE Engine v{architectureVersion}
         </span>
 
-        {rehearsalMode ? (
-          <span
-            className={`rounded border px-1.5 py-px font-ui text-[0.45rem] font-bold uppercase tracking-[0.06em] ${PARABLE_STATUS.yellow.border} ${PARABLE_STATUS.yellow.bg} ${PARABLE_STATUS.yellow.text}`}
-          >
-            Rehearsal Mode
-          </span>
-        ) : null}
-
         <button
           type="button"
           onClick={() => onRehearsalModeChange(!rehearsalMode)}
+          aria-pressed={rehearsalMode}
           className={`rounded border px-1.5 py-px font-ui text-[0.42rem] font-bold uppercase tracking-[0.06em] ${
             rehearsalMode
-              ? `${PARABLE_STATUS.yellow.border} ${PARABLE_STATUS.yellow.text}`
-              : "border-white/12 text-white/45 hover:border-white/25"
+              ? `${PARABLE_STATUS.yellow.border} ${PARABLE_STATUS.yellow.bg} ${PARABLE_STATUS.yellow.text}`
+              : "border-white/12 bg-[#0B090A] text-white/35 opacity-70 hover:border-white/20 hover:opacity-90"
           }`}
         >
-          {rehearsalMode ? "Rehearsal On" : "Rehearsal Off"}
+          Rehearsal Mode
         </button>
 
         <span

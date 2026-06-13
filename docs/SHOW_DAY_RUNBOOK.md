@@ -83,11 +83,11 @@ Use Rehearsal Mode to practice without sending a real stream to the audience.
 
 ### 1. Turn on Rehearsal Mode
 
-- In the top telemetry tray, click **Rehearsal Off** to switch to **Rehearsal On**.
+- In the top telemetry tray, click **Rehearsal Mode** to turn it on (yellow). Click again to turn it off (grayed out).
 
 ### 2. Confirm visible Rehearsal Mode indicator
 
-- You should see a **Rehearsal Mode** badge in the telemetry tray.
+- The **Rehearsal Mode** button in the telemetry tray should appear yellow when on.
 - The Readiness Gate button should read **Simulate Go Live** (not **Go Live**).
 
 ### 3. Run Simulate Go Live
@@ -121,7 +121,7 @@ Practice slowly. One action, then wait for the result.
 ### 7. Confirm real streaming did not start
 
 - After ending rehearsal, confirm with your Production Lead that no real outbound stream went live.
-- Turn **Rehearsal Off** before the actual show unless your lead says otherwise.
+- Turn **Rehearsal Mode** off (grayed out) before the actual show unless your lead says otherwise.
 
 ---
 

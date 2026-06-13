@@ -1,0 +1,179 @@
+"use client";
+
+import Link from "next/link";
+import { useCallback, useState } from "react";
+import { Heart, Loader2 } from "lucide-react";
+import { getClientAppUrl } from "@/lib/client-api";
+
+const PRESET_AMOUNTS = [25, 50, 100, 250, 500, 1000] as const;
+
+function sanitizeAmountInput(value: string): string {
+  return value.replace(/[^\d.]/g, "").replace(/(\..*)\./g, "$1");
+}
+
+export default function ExperienceGivingPanel() {
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(50);
+  const [customValue, setCustomValue] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [needsSignIn, setNeedsSignIn] = useState(false);
+  const [checkoutOpened, setCheckoutOpened] = useState(false);
+
+  const activeDollars = customValue ? Number.parseFloat(customValue) : selectedAmount;
+
+  const handleGive = useCallback(async () => {
+    const dollars = activeDollars;
+
+    if (!dollars || !Number.isFinite(dollars) || dollars <= 0) {
+      setError("Please select or enter a valid giving amount.");
+      return;
+    }
+
+    const amountInCents = Math.round(dollars * 100);
+
+    if (amountInCents < 50) {
+      setError("Minimum transaction value not met.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+    setNeedsSignIn(false);
+
+    try {
+      const response = await fetch(`${getClientAppUrl()}/api/checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ amountInCents }),
+      });
+
+      const data = (await response.json()) as { url?: string; error?: string };
+
+      if (response.status === 401) {
+        setNeedsSignIn(true);
+        setError("Sign in before sowing a seed.");
+        return;
+      }
+
+      if (!response.ok || !data.url) {
+        setError(data.error ?? "Unable to start checkout. Please try again.");
+        return;
+      }
+
+      const checkoutWindow = window.open(data.url, "_blank", "noopener,noreferrer");
+      if (!checkoutWindow) {
+        setError("Allow pop-ups to open secure checkout, or try again.");
+        return;
+      }
+
+      setCheckoutOpened(true);
+    } catch {
+      setError("Unable to reach checkout. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [activeDollars]);
+
+  return (
+    <div>
+      <p className="font-headline text-lg uppercase tracking-[0.12em] text-white">
+        Every Gift Has A Frequency
+      </p>
+      <p className="mt-2 font-body text-sm leading-relaxed text-brand-muted">
+        Support the mission through Vital Seed.
+      </p>
+      <p className="mt-2 font-body text-xs leading-relaxed text-brand-muted">
+        Secure checkout opens in a new tab — your live stream stays on this page.
+      </p>
+
+      <div className="mt-4 flex items-center justify-center">
+        <Heart className="h-8 w-8 text-brand-pink" strokeWidth={1.2} aria-hidden="true" />
+      </div>
+
+      <p className="mt-4 text-center font-ui text-[0.58rem] font-bold uppercase tracking-[0.16em] text-brand-muted">
+        Choose Your Seed
+      </p>
+
+      <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
+        {PRESET_AMOUNTS.map((amount) => {
+          const isActive = selectedAmount === amount && !customValue;
+          return (
+            <button
+              key={amount}
+              type="button"
+              onClick={() => {
+                setSelectedAmount(amount);
+                setCustomValue("");
+                setError(null);
+              }}
+              className={`touch-target rounded-xl border px-2 py-3 font-ui text-sm font-bold transition ${
+                isActive
+                  ? "border-brand-pink bg-brand-pink/10 text-white neon-pink-glow"
+                  : "border-brand-border bg-black/40 text-white/80 hover:border-brand-blue/40"
+              }`}
+            >
+              ${amount}
+            </button>
+          );
+        })}
+      </div>
+
+      <label className="mt-4 block">
+        <span className="sr-only">Custom amount</span>
+        <input
+          type="text"
+          inputMode="decimal"
+          value={customValue}
+          onChange={(event) => {
+            const sanitized = sanitizeAmountInput(event.target.value);
+            setCustomValue(sanitized);
+            if (sanitized) setSelectedAmount(null);
+            setError(null);
+          }}
+          placeholder="$ Enter Amount"
+          className="w-full rounded-xl border border-brand-border bg-black/60 px-4 py-3 text-center font-body text-sm text-white outline-none placeholder:text-brand-muted focus:border-brand-blue/50"
+        />
+      </label>
+
+      {error ? (
+        <div className="mt-3">
+          <p className="font-body text-xs text-brand-pink" role="status">
+            {error}
+          </p>
+          {needsSignIn ? (
+            <Link
+              href="/email-gate?next=/experience/live"
+              className="mt-2 inline-flex min-h-11 items-center justify-center rounded-full border border-brand-blue/50 bg-brand-blue/10 px-6 py-2 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-brand-blue transition hover:bg-brand-blue/20"
+            >
+              Sign In
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
+
+      {checkoutOpened ? (
+        <p className="mt-3 rounded-lg border border-brand-blue/30 bg-brand-blue/10 px-3 py-2 font-body text-xs leading-relaxed text-brand-muted">
+          Secure checkout is open in another tab. Complete your gift there, then return here to
+          keep watching live.
+        </p>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={() => void handleGive()}
+        disabled={!activeDollars || isSubmitting}
+        className="brand-pill-cta mt-4 flex w-full min-h-11 items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {isSubmitting ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            <span>Opening Checkout…</span>
+          </>
+        ) : (
+          "Sow A Seed"
+        )}
+      </button>
+    </div>
+  );
+}
