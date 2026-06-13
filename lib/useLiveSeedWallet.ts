@@ -54,12 +54,13 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
     setError(null);
 
     try {
-      const { response, latencyMs } = await parableFetch(
+      const { response } = await parableFetch(
         `${getClientAppUrl()}/api/live/seeds`,
         {
           method: "GET",
           credentials: "include",
         },
+        { subsystem: "seeds" },
       );
 
       const data = (await response.json()) as {
@@ -76,7 +77,6 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
       }
 
       if (!response.ok) {
-        seeds.reportFailure(data.error ?? "Unable to load seed balance.");
         setError(data.error ?? "Unable to load seed balance.");
         setIsLoading(false);
         return;
@@ -84,11 +84,9 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
 
       setBalance(typeof data.balance === "number" ? data.balance : 0);
       setUsedFreeTaps(typeof data.usedFreeTaps === "number" ? data.usedFreeTaps : 0);
-      seeds.reportSuccess(latencyMs);
       setIsLoading(false);
     } catch (refreshError) {
       console.error("Seed wallet refresh failed:", refreshError);
-      seeds.reportFailure("Unable to load seed balance.");
       setError("Unable to load seed balance.");
       setIsLoading(false);
     }

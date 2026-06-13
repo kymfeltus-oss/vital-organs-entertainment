@@ -63,12 +63,13 @@ export function useLivePoll(): UseLivePollResult {
     }
 
     try {
-      const { response, latencyMs } = await parableFetch(
+      const { response } = await parableFetch(
         `${getClientAppUrl()}/api/experience/polls`,
         {
           cache: "no-store",
           credentials: "include",
         },
+        { subsystem: "polls" },
       );
 
       if (!response.ok) {
@@ -83,10 +84,8 @@ export function useLivePoll(): UseLivePollResult {
       setSession(payload.session);
       setUsePollingFallback(false);
       setError(null);
-      polls.reportSuccess(latencyMs);
     } catch (syncError) {
       console.error("Live poll sync failed:", syncError);
-      polls.reportFailure();
       setUsePollingFallback(false);
     } finally {
       setIsLoading(false);

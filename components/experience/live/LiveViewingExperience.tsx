@@ -6,6 +6,7 @@ import AttendeeStreamPlayer from "@/components/experience/live/AttendeeStreamPla
 import ExperienceSelector from "@/components/experience/live/ExperienceSelector";
 import FloatingLiveReactions from "@/components/experience/live/FloatingLiveReactions";
 import StreamStageChrome from "@/components/experience/live/StreamStageChrome";
+import FeatureErrorBoundary from "@/components/parable/FeatureErrorBoundary";
 import { useLiveExperienceStream } from "@/lib/experience/LiveExperienceStreamContext";
 
 const LivePollPanel = dynamic(
@@ -68,7 +69,9 @@ export default function LiveViewingExperience({
             </div>
           ) : null}
 
-          <LivePollPanel />
+          <FeatureErrorBoundary featureLabel="Polls">
+            <LivePollPanel />
+          </FeatureErrorBoundary>
 
           {fallbackNotice ? (
             <p className="font-body text-xs leading-relaxed text-zinc-400" role="status">

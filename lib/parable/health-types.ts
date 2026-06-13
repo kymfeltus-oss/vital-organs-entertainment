@@ -2,6 +2,9 @@ import type { ProductionStore } from "@/lib/broadcast/types";
 
 export type HealthSeverity = "GREEN" | "YELLOW" | "ORANGE" | "RED" | "BLACK";
 
+/** Alias used by telemetry layer and operator dashboards. */
+export type SeverityLevel = HealthSeverity;
+
 export type ParableSurface = "broadcast" | "experience";
 
 export type SubsystemId =
@@ -13,6 +16,21 @@ export type SubsystemId =
   | "polls"
   | "seeds"
   | "giving";
+
+const SUBSYSTEM_IDS = new Set<SubsystemId>([
+  "snapshot",
+  "command",
+  "stream",
+  "countdown",
+  "fellowship_chat",
+  "polls",
+  "seeds",
+  "giving",
+]);
+
+export function isSubsystemId(value: string | undefined): value is SubsystemId {
+  return value !== undefined && SUBSYSTEM_IDS.has(value as SubsystemId);
+}
 
 export type SubsystemHealth = {
   id: SubsystemId;

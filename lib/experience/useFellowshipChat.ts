@@ -67,12 +67,13 @@ export function useFellowshipChat(): UseFellowshipChatResult {
     }
 
     try {
-      const { response, latencyMs } = await parableFetch(
+      const { response } = await parableFetch(
         `${getClientAppUrl()}/api/experience/fellowship-chat`,
         {
           cache: "no-store",
           credentials: "include",
         },
+        { subsystem: "fellowship_chat" },
       );
 
       if (!response.ok) {
@@ -85,10 +86,8 @@ export function useFellowshipChat(): UseFellowshipChatResult {
       setSession(payload.session);
       setUsePollingFallback(false);
       setError(null);
-      fellowship.reportSuccess(latencyMs);
     } catch (syncError) {
       console.error("Fellowship chat sync failed:", syncError);
-      fellowship.reportFailure();
       setUsePollingFallback(false);
       setError("Fellowship Chat is temporarily unavailable.");
     } finally {

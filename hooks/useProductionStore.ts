@@ -72,6 +72,8 @@ export function useProductionStore() {
     resolveSnapshotPollInterval,
     guardCommand,
     recordCommandOutcome,
+    snapshotPollIntervalMs,
+    pollingFrozen,
   } = useBroadcastHealth();
   const [store, setStore] = useState<ProductionStore | null>(() => loadLastKnownSnapshot());
   const [loading, setLoading] = useState(!store);
@@ -120,15 +122,17 @@ export function useProductionStore() {
 
   useEffect(() => {
     void refresh();
-  }, [refresh]);
 
-  useEffect(() => {
+    if (shouldFreezePolling()) {
+      return;
+    }
+
     const intervalMs = resolveSnapshotPollInterval() || BROADCAST_SNAPSHOT_POLL_MS;
     const intervalId = window.setInterval(() => {
       void refresh();
     }, intervalMs);
     return () => window.clearInterval(intervalId);
-  }, [refresh, resolveSnapshotPollInterval]);
+  }, [refresh, resolveSnapshotPollInterval, shouldFreezePolling, snapshotPollIntervalMs, pollingFrozen]);
 
   const runGuardedCommand = useCallback(
     async (

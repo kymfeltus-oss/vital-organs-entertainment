@@ -5,6 +5,8 @@ import {
   formatLastSuccessAgo,
   vmixStatusLabel,
 } from "@/lib/broadcast/telemetryViews";
+import { useBroadcastHealth } from "@/lib/parable/BroadcastHealthContext";
+import type { HealthSeverity } from "@/lib/parable/health-types";
 import { PRODUCTION_PIPELINE_LABEL, PRODUCTION_PIPELINE_ORDER, type ProductionPipelinePhase } from "@/services/broadcast/pipeline";
 import type {
   AdapterConnectionMeta,
@@ -13,7 +15,6 @@ import type {
   ProductionPipelineTrace,
   VmixAdapterHealthMeta,
 } from "@/lib/broadcast/types";
-import type { HealthSeverity } from "@/lib/parable/health-types";
 
 type ProductionTelemetryTrayProps = {
   architectureVersion: string;
@@ -72,9 +73,23 @@ export default function ProductionTelemetryTray({
   usingCachedSnapshot = false,
   onSafeModeToggle,
 }: ProductionTelemetryTrayProps) {
+  const {
+    surface,
+    severity: liveSeverity,
+    safeMode: liveSafeMode,
+    alerts,
+    isMocked,
+    mockSimulateSeverity,
+    setSafeModeManual,
+  } = useBroadcastHealth();
+
+  const displaySeverity = healthSeverity ?? liveSeverity;
+  const displaySafeMode = safeMode || liveSafeMode;
+  const showDrillSimulator = surface === "broadcast";
+
   const latestLog = productionLog[0];
   const vmixUi = vmixTone(vmixHealth.status);
-  const healthUi = healthTone(healthSeverity);
+  const healthUi = healthTone(displaySeverity);
   const activePhase = activePipelinePhase(latestLog);
   const connected = vmixHealth.status === "connected";
 
@@ -101,22 +116,23 @@ export default function ProductionTelemetryTray({
         {onSafeModeToggle ? (
           <button
             type="button"
-            onClick={onSafeModeToggle}
-            aria-pressed={safeMode}
+            onClick={() => setSafeModeManual(!displaySafeMode)}
+            aria-pressed={displaySafeMode}
             className={`rounded border px-1.5 py-px font-ui text-[0.42rem] font-bold uppercase tracking-[0.06em] ${
-              safeMode
+              displaySafeMode
                 ? `${PARABLE_STATUS.red.border} ${PARABLE_STATUS.red.bg} ${PARABLE_STATUS.red.text}`
                 : "border-white/12 bg-[#0B090A] text-white/35 opacity-70 hover:border-white/20 hover:opacity-90"
             }`}
           >
-            Safe Mode
+            {displaySafeMode ? "Safe Mode Active" : "Safe Mode"}
           </button>
         ) : null}
 
         <span
           className={`rounded border px-1.5 py-px font-ui text-[0.45rem] font-bold uppercase tracking-[0.06em] ${healthUi.border} ${healthUi.bg} ${healthUi.text}`}
         >
-          Health: {healthSeverity}
+          Health: {displaySeverity}
+          {isMocked ? " (Sim)" : ""}
         </span>
 
         {usingCachedSnapshot ? (
@@ -218,6 +234,85 @@ export default function ProductionTelemetryTray({
           </p>
         ) : null}
       </div>
+
+      {showDrillSimulator ? (
+        <div className="border-t border-dashed border-white/12 px-2 py-1.5">
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <span className="font-ui text-[0.4rem] font-bold uppercase tracking-[0.14em] text-white/45">
+              Drill &amp; failure simulator
+            </span>
+            {isMocked ? (
+              <button
+                type="button"
+                onClick={() => mockSimulateSeverity(null)}
+                className="font-ui text-[0.38rem] font-bold uppercase tracking-[0.1em] text-brand-blue hover:underline"
+              >
+                Reset live feeds
+              </button>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap gap-1">
+            <DrillButton
+              label="Mock Green"
+              tone={PARABLE_STATUS.green}
+              onClick={() => mockSimulateSeverity("GREEN")}
+            />
+            <DrillButton
+              label="Inject Yellow"
+              tone={PARABLE_STATUS.yellow}
+              onClick={() => mockSimulateSeverity("YELLOW")}
+            />
+            <DrillButton
+              label="Inject Orange"
+              tone={PARABLE_STATUS.orange}
+              onClick={() => mockSimulateSeverity("ORANGE")}
+            />
+            <DrillButton
+              label="Simulate Red"
+              tone={PARABLE_STATUS.red}
+              onClick={() => mockSimulateSeverity("RED")}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {alerts.length > 0 ? (
+        <div
+          className="max-h-16 overflow-y-auto border-t border-white/10 bg-[#0B090A] px-2 py-1"
+          role="log"
+          aria-live="polite"
+          aria-label="PARABLE system alerts"
+        >
+          {alerts.slice(0, 6).map((alert) => (
+            <p
+              key={alert.id}
+              className={`border-b border-white/5 py-0.5 font-ui text-[0.4rem] leading-relaxed last:border-0 ${PARABLE_STATUS.orange.text}`}
+            >
+              {alert.message}
+            </p>
+          ))}
+        </div>
+      ) : null}
     </header>
+  );
+}
+
+function DrillButton({
+  label,
+  tone,
+  onClick,
+}: {
+  label: string;
+  tone: (typeof PARABLE_STATUS)[keyof typeof PARABLE_STATUS];
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`touch-target rounded border px-1.5 py-0.5 font-ui text-[0.38rem] font-bold uppercase tracking-[0.08em] ${tone.border} ${tone.bg} ${tone.text} hover:opacity-90`}
+    >
+      {label}
+    </button>
   );
 }

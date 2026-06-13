@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -12,6 +13,11 @@ import {
 import type { ProductionStore } from "@/lib/broadcast/types";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import { ParableCommandGuard } from "@/lib/parable/command-guard";
+import {
+  registerParableHealthUpdater,
+  unregisterParableHealthUpdater,
+} from "@/lib/telemetry/healthBridge";
+import type { SystemHealthMetrics } from "@/lib/telemetry/parableFetch";
 import {
   ALERT_DEDUPE_MS,
   MAX_ALERTS,
@@ -42,7 +48,7 @@ import type {
   SubsystemHealth,
   SubsystemId,
 } from "@/lib/parable/health-types";
-import { createInitialSubsystems } from "@/lib/parable/health-types";
+import { createInitialSubsystems, isSubsystemId } from "@/lib/parable/health-types";
 
 type SubsystemOutcome = "success" | "failure";
 
@@ -78,6 +84,9 @@ type BroadcastHealthContextValue = BroadcastHealthSnapshot & {
   persistCountdownConfig: (config: EventCountdownConfig) => void;
   getCommandLog: () => CommandLogEntry[];
   resolveSnapshotPollInterval: () => number;
+  updateSystemHealth: (metrics: SystemHealthMetrics) => void;
+  isMocked: boolean;
+  mockSimulateSeverity: (level: HealthSeverity | null) => void;
 };
 
 const noopGuard = new ParableCommandGuard();
@@ -113,6 +122,9 @@ const FALLBACK_VALUE: BroadcastHealthContextValue = {
   persistCountdownConfig: (config) => saveLastKnownCountdown(config),
   getCommandLog: () => [],
   resolveSnapshotPollInterval: () => SNAPSHOT_POLL_NORMAL_MS,
+  updateSystemHealth: () => {},
+  isMocked: false,
+  mockSimulateSeverity: () => {},
 };
 
 const BroadcastHealthContext = createContext<BroadcastHealthContextValue>(FALLBACK_VALUE);
@@ -160,6 +172,14 @@ export function BroadcastHealthProvider({
   const [pollingFrozen, setPollingFrozen] = useState(false);
   const [usingCachedSnapshot, setUsingCachedSnapshot] = useState(false);
   const [snapshotSeverity, setSnapshotSeverity] = useState<HealthSeverity>("GREEN");
+  const [mockedSeverity, setMockedSeverity] = useState<HealthSeverity | null>(null);
+  const mockedSeverityRef = useRef<HealthSeverity | null>(null);
+
+  useEffect(() => {
+    mockedSeverityRef.current = mockedSeverity;
+  }, [mockedSeverity]);
+
+  const isMocked = mockedSeverity !== null;
 
   const pushAlert = useCallback(
     (message: string, severity: HealthSeverity = "YELLOW", subsystem?: SubsystemId) => {
@@ -187,6 +207,8 @@ export function BroadcastHealthProvider({
 
   const applySnapshotSeverity = useCallback(
     (latencyMs: number | null, consecutiveFailures: number, fatal = false) => {
+      if (mockedSeverityRef.current !== null) return;
+
       const nextSeverity = severityFromSnapshotMetrics(
         latencyMs,
         consecutiveFailures,
@@ -231,6 +253,8 @@ export function BroadcastHealthProvider({
 
   const reportSnapshotSuccess = useCallback(
     (store: ProductionStore, latencyMs: number) => {
+      if (mockedSeverityRef.current !== null) return;
+
       snapshotFailureStreakRef.current = 0;
       setUsingCachedSnapshot(false);
       setLastSnapshotSuccessAt(Date.now());
@@ -269,6 +293,8 @@ export function BroadcastHealthProvider({
 
   const reportSnapshotFailure = useCallback(
     (error: unknown) => {
+      if (mockedSeverityRef.current !== null) return;
+
       snapshotFailureStreakRef.current += 1;
       setUsingCachedSnapshot(true);
       pushAlert("Using cached broadcast state.", "ORANGE", "snapshot");
@@ -348,14 +374,28 @@ export function BroadcastHealthProvider({
 
   const safeMode = safeModeManual || autoSafeMode;
 
-  const severity = useMemo(() => {
+  const calculatedSeverity = useMemo(() => {
     const subsystemSeverity = aggregateSeverity(Object.values(subsystems));
     return maxSeverity(subsystemSeverity, snapshotSeverity);
   }, [snapshotSeverity, subsystems]);
 
-  const shouldFreezePolling = useCallback(() => safeMode || pollingFrozen, [pollingFrozen, safeMode]);
+  const severity = mockedSeverity ?? calculatedSeverity;
 
-  const shouldAllowRealtime = useCallback(() => !safeMode, [safeMode]);
+  const shouldFreezePolling = useCallback(() => {
+    if (mockedSeverity === "ORANGE" || mockedSeverity === "RED" || mockedSeverity === "BLACK") {
+      return true;
+    }
+    if (mockedSeverity === "GREEN" || mockedSeverity === "YELLOW") {
+      return false;
+    }
+    return safeMode || pollingFrozen;
+  }, [mockedSeverity, pollingFrozen, safeMode]);
+
+  const shouldAllowRealtime = useCallback(() => {
+    if (mockedSeverity === "RED" || mockedSeverity === "BLACK") return false;
+    if (mockedSeverity === "ORANGE") return false;
+    return !safeMode;
+  }, [mockedSeverity, safeMode]);
 
   const guardCommand = useCallback(
     (action: string, extras?: Record<string, unknown>, confirmed = false) =>
@@ -392,9 +432,149 @@ export function BroadcastHealthProvider({
   }, [reportSubsystemOutcome]);
 
   const resolveSnapshotPollInterval = useCallback(() => {
+    if (mockedSeverity === "YELLOW") return SNAPSHOT_POLL_SLOW_MS;
+    if (
+      mockedSeverity === "ORANGE" ||
+      mockedSeverity === "RED" ||
+      mockedSeverity === "BLACK"
+    ) {
+      return SNAPSHOT_POLL_CRITICAL_MS;
+    }
+    if (mockedSeverity === "GREEN") return SNAPSHOT_POLL_NORMAL_MS;
     if (shouldFreezePolling()) return SNAPSHOT_POLL_CRITICAL_MS;
     return snapshotPollIntervalMs;
-  }, [shouldFreezePolling, snapshotPollIntervalMs]);
+  }, [mockedSeverity, shouldFreezePolling, snapshotPollIntervalMs]);
+
+  const mockSimulateSeverity = useCallback(
+    (level: HealthSeverity | null) => {
+      const drillSubsystems: SubsystemId[] = [
+        "fellowship_chat",
+        "polls",
+        "seeds",
+        "countdown",
+        "giving",
+      ];
+
+      if (level === null) {
+        setMockedSeverity(null);
+        setPollingFrozen(false);
+        setUsingCachedSnapshot(false);
+        setSnapshotPollIntervalMs(SNAPSHOT_POLL_NORMAL_MS);
+        setAutoSafeMode(false);
+        for (const id of drillSubsystems) {
+          restoreSubsystem(id);
+        }
+        pushAlert("Drill simulator reset — live health metrics restored.", "GREEN");
+        return;
+      }
+
+      setMockedSeverity(level);
+      setSnapshotSeverity(level);
+
+      switch (level) {
+        case "GREEN":
+          setSnapshotPollIntervalMs(SNAPSHOT_POLL_NORMAL_MS);
+          setPollingFrozen(false);
+          setUsingCachedSnapshot(false);
+          setAutoSafeMode(false);
+          for (const id of drillSubsystems) {
+            restoreSubsystem(id);
+          }
+          pushAlert("Drill: GREEN stable — normal polling restored.", "GREEN", "snapshot");
+          break;
+        case "YELLOW":
+          setSnapshotPollIntervalMs(SNAPSHOT_POLL_SLOW_MS);
+          setPollingFrozen(false);
+          setUsingCachedSnapshot(false);
+          setAutoSafeMode(false);
+          for (const id of drillSubsystems) {
+            restoreSubsystem(id);
+          }
+          pushAlert("Drill: YELLOW latency — snapshot polling slowed to 5s.", "YELLOW", "snapshot");
+          break;
+        case "ORANGE":
+          setSnapshotPollIntervalMs(SNAPSHOT_POLL_CRITICAL_MS);
+          setPollingFrozen(true);
+          setUsingCachedSnapshot(true);
+          setAutoSafeMode(false);
+          for (const id of drillSubsystems) {
+            restoreSubsystem(id);
+          }
+          pushAlert(
+            "Drill: ORANGE lag — polling frozen, serving cached broadcast state.",
+            "ORANGE",
+            "snapshot",
+          );
+          break;
+        case "RED":
+        case "BLACK":
+          setSnapshotPollIntervalMs(SNAPSHOT_POLL_CRITICAL_MS);
+          setPollingFrozen(true);
+          setUsingCachedSnapshot(true);
+          setAutoSafeMode(true);
+          for (const id of drillSubsystems) {
+            isolateSubsystem(
+              id,
+              `${telemetrySubsystemLabel(id)} isolated by drill simulator.`,
+            );
+          }
+          pushAlert(
+            `Drill: ${level} failure — Safe Mode engaged, subsystems isolated.`,
+            level,
+            "snapshot",
+          );
+          break;
+        default:
+          break;
+      }
+    },
+    [isolateSubsystem, pushAlert, restoreSubsystem],
+  );
+
+  const updateSystemHealth = useCallback(
+    (metrics: SystemHealthMetrics) => {
+      if (mockedSeverityRef.current !== null) return;
+
+      const latencyMs = Math.round(metrics.latency);
+      const subsystem = isSubsystemId(metrics.subsystem) ? metrics.subsystem : undefined;
+      if (!subsystem) return;
+
+      if (subsystem === "snapshot") {
+        if (metrics.failed) {
+          setSubsystems((current) =>
+            updateSubsystem(current, "snapshot", {
+              latencyMs,
+              message: "Snapshot request failed.",
+            }),
+          );
+          return;
+        }
+
+        applySnapshotSeverity(latencyMs, snapshotFailureStreakRef.current, false);
+        reportSubsystemOutcome("snapshot", "success", latencyMs);
+        return;
+      }
+
+      if (metrics.failed) {
+        reportSubsystemOutcome(subsystem, "failure", latencyMs);
+        if (subsystem !== "command" && subsystem !== "stream") {
+          isolateSubsystem(
+            subsystem,
+            `${telemetrySubsystemLabel(subsystem)} paused to protect live stream.`,
+          );
+        }
+        return;
+      }
+
+      reportSubsystemOutcome(subsystem, "success", latencyMs);
+    },
+    [applySnapshotSeverity, isolateSubsystem, reportSubsystemOutcome],
+  );
+
+  useEffect(() => {
+    registerParableHealthUpdater(updateSystemHealth);
+    return () => unregisterParableHealthUpdater();
+  }, [updateSystemHealth]);
 
   const value = useMemo<BroadcastHealthContextValue>(
     () => ({
@@ -437,13 +617,18 @@ export function BroadcastHealthProvider({
       persistCountdownConfig,
       getCommandLog: () => commandGuardRef.current.getLog(),
       resolveSnapshotPollInterval,
+      updateSystemHealth,
+      isMocked,
+      mockSimulateSeverity,
     }),
     [
       alerts,
       guardCommand,
       isolateSubsystem,
+      isMocked,
       isSubsystemIsolated,
       lastSnapshotSuccessAt,
+      mockSimulateSeverity,
       persistCountdownConfig,
       pollingFrozen,
       pushAlert,
@@ -462,6 +647,7 @@ export function BroadcastHealthProvider({
       snapshotPollIntervalMs,
       subsystems,
       surface,
+      updateSystemHealth,
       usingCachedSnapshot,
     ],
   );
@@ -478,3 +664,21 @@ export function useBroadcastHealth(): BroadcastHealthContextValue {
 }
 
 export type { BroadcastHealthContextValue };
+export type { HealthSeverity as SeverityLevel } from "@/lib/parable/health-types";
+
+function telemetrySubsystemLabel(id: SubsystemId): string {
+  switch (id) {
+    case "fellowship_chat":
+      return "Chat";
+    case "polls":
+      return "Polls";
+    case "seeds":
+      return "Seeds";
+    case "countdown":
+      return "Countdown";
+    case "giving":
+      return "Giving";
+    default:
+      return "Feature";
+  }
+}

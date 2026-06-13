@@ -18,8 +18,8 @@ type UseCountdownConfigOptions = {
 };
 
 export function useCountdownConfig(options: UseCountdownConfigOptions = {}) {
-  const countdown = useParableSubsystem("countdown");
-  const health = useBroadcastHealth();
+  const { shouldFetch } = useParableSubsystem("countdown");
+  const { persistCountdownConfig } = useBroadcastHealth();
   const [config, setConfig] = useState<EventCountdownConfig>(() => {
     if (options.initialConfig) return options.initialConfig;
     return loadLastKnownCountdown() ?? DEFAULT_COUNTDOWN_CONFIG;
@@ -31,7 +31,7 @@ export function useCountdownConfig(options: UseCountdownConfigOptions = {}) {
     let cancelled = false;
 
     async function load() {
-      if (!countdown.shouldFetch()) {
+      if (!shouldFetch()) {
         const cached = loadLastKnownCountdown();
         if (cached && !cancelled) {
           setConfig(cached);
@@ -42,9 +42,11 @@ export function useCountdownConfig(options: UseCountdownConfigOptions = {}) {
       }
 
       try {
-        const { response, latencyMs } = await parableFetch("/api/countdown", {
-          cache: "no-store",
-        });
+        const { response } = await parableFetch(
+          "/api/countdown",
+          { cache: "no-store" },
+          { subsystem: "countdown" },
+        );
 
         if (!response.ok) throw new Error("fetch failed");
         const data = (await response.json()) as EventCountdownConfig;
@@ -53,8 +55,7 @@ export function useCountdownConfig(options: UseCountdownConfigOptions = {}) {
         setConfig(data);
         setUsingLocalFallback(false);
         saveLastKnownCountdown(data);
-        health.persistCountdownConfig(data);
-        countdown.reportSuccess(latencyMs);
+        persistCountdownConfig(data);
       } catch {
         if (cancelled) return;
 
@@ -62,11 +63,9 @@ export function useCountdownConfig(options: UseCountdownConfigOptions = {}) {
         if (cached) {
           setConfig(cached);
           setUsingLocalFallback(true);
-          countdown.reportFailure("Countdown API unavailable — using cached target time.");
         } else if (!options.initialConfig) {
           setConfig(DEFAULT_COUNTDOWN_CONFIG);
           setUsingLocalFallback(true);
-          countdown.reportFailure("Countdown API unavailable — using default schedule.");
         }
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -87,7 +86,7 @@ export function useCountdownConfig(options: UseCountdownConfigOptions = {}) {
     return () => {
       cancelled = true;
     };
-  }, [countdown, health, options.initialConfig]);
+  }, [options.initialConfig, persistCountdownConfig, shouldFetch]);
 
   return { config, isLoading, usingLocalFallback };
 }
