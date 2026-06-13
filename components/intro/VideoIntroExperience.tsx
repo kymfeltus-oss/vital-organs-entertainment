@@ -28,23 +28,39 @@ function pickIntroVideoSrc(): string {
     : INTRO_VIDEO_DESKTOP;
 }
 
+function isMobileIntroViewport(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia(MOBILE_INTRO_MEDIA_QUERY).matches;
+}
+
 export default function VideoIntroExperience() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const musicRef = useRef<HTMLAudioElement>(null);
-  const musicUnlockedRef = useRef(false);
+  const musicEngagedRef = useRef(false);
+  const skipContinueOnceRef = useRef(false);
+  const isMobileIntroRef = useRef(false);
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [isExiting, setIsExiting] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
 
   useEffect(() => {
+    isMobileIntroRef.current = isMobileIntroViewport();
+
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
     return () => {
       document.body.style.overflow = previousOverflow;
     };
+  }, []);
+
+  useEffect(() => {
+    const audio = musicRef.current;
+    if (!audio) return;
+    audio.volume = 1;
+    audio.load();
   }, []);
 
   useEffect(() => {
@@ -101,25 +117,47 @@ export default function VideoIntroExperience() {
     if (!audio) return;
     audio.pause();
     audio.currentTime = 0;
+    musicEngagedRef.current = false;
   }, []);
 
-  const tryStartIntroMusic = useCallback(() => {
-    if (musicUnlockedRef.current) return;
-
+  const engageIntroMusic = useCallback(() => {
     const audio = musicRef.current;
-    if (!audio) return;
+    if (!audio) return false;
 
-    void audio.play().then(() => {
-      musicUnlockedRef.current = true;
-    }).catch(() => {
-      /* Browsers may block audio until user gesture — unlocked on tap. */
-    });
+    if (!audio.paused && audio.currentTime > 0) {
+      musicEngagedRef.current = true;
+      return true;
+    }
+
+    audio.volume = 1;
+
+    try {
+      const playAttempt = audio.play();
+      musicEngagedRef.current = true;
+      if (playAttempt) {
+        void playAttempt.catch(() => {
+          musicEngagedRef.current = false;
+        });
+      }
+      return true;
+    } catch {
+      musicEngagedRef.current = false;
+      return false;
+    }
   }, []);
 
   useEffect(() => {
-    if (!videoReady) return;
-    tryStartIntroMusic();
-  }, [tryStartIntroMusic, videoReady]);
+    if (!videoReady || isMobileIntroRef.current) return;
+    engageIntroMusic();
+  }, [engageIntroMusic, videoReady]);
+
+  const handleIntroTouchStart = useCallback(() => {
+    if (!isMobileIntroRef.current || musicEngagedRef.current) return;
+
+    engageIntroMusic();
+    // iOS requires a user gesture for audio; first tap starts music only.
+    skipContinueOnceRef.current = true;
+  }, [engageIntroMusic]);
 
   useEffect(() => {
     return () => {
@@ -129,9 +167,18 @@ export default function VideoIntroExperience() {
 
   const handleContinue = useCallback(async () => {
     if (isNavigating) return;
-    setIsNavigating(true);
 
-    stopIntroMusic();
+    if (skipContinueOnceRef.current) {
+      skipContinueOnceRef.current = false;
+      return;
+    }
+
+    if (isMobileIntroRef.current && !musicEngagedRef.current) {
+      engageIntroMusic();
+      return;
+    }
+
+    setIsNavigating(true);
 
     const reducedMotion =
       typeof window !== "undefined" &&
@@ -151,13 +198,13 @@ export default function VideoIntroExperience() {
     window.setTimeout(() => {
       router.push(destination);
     }, EXIT_MS);
-  }, [isNavigating, router, stopIntroMusic]);
+  }, [engageIntroMusic, isNavigating, router]);
 
   return (
     <button
       type="button"
       onClick={() => void handleContinue()}
-      onPointerDown={() => tryStartIntroMusic()}
+      onTouchStart={handleIntroTouchStart}
       disabled={isNavigating}
       aria-label="Continue to 300 Awakening experience"
       className={`fixed inset-0 z-50 block h-dvh w-full cursor-pointer overflow-hidden border-0 bg-brand-black p-0 transition-opacity duration-500 ease-out ${
@@ -188,7 +235,7 @@ export default function VideoIntroExperience() {
         loop
         preload="auto"
         aria-hidden="true"
-        className="pointer-events-none absolute h-0 w-0 opacity-0"
+        className="sr-only"
       />
 
       {!videoReady ? (
