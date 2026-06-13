@@ -106,7 +106,7 @@ export default function FellowshipChatPanel({ embedded = false }: FellowshipChat
               </p>
               <p className="mt-1.5 font-body text-sm leading-snug text-white">
                 <span
-                  className={`font-ui text-[0.72rem] font-bold ${chatAuthorColorClass(pinned.userId)}`}
+                  className={`shrink-0 font-ui text-[0.72rem] font-black tracking-wide filter drop-shadow-[0_0_8px_rgba(255,255,255,0.12)] ${chatAuthorColorClass(pinned.userId)}`}
                 >
                   {pinned.author}
                 </span>

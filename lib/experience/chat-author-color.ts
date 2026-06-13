@@ -1,17 +1,18 @@
 const CHAT_AUTHOR_COLORS = [
-  "exp-chat-name-blue",
-  "exp-chat-name-magenta",
-  "exp-chat-name-cyan",
+  "exp-chat-name-blue", // #3B82F6
+  "exp-chat-name-frost", // #60A5FA
+  "exp-chat-name-pink", // #EC4899
+  "exp-chat-name-blossom", // #F472B6
+  "exp-chat-name-purple", // #A855F7
+  "exp-chat-name-orchid", // #C084FC
+  "exp-chat-name-rose", // #F43F5E
 ] as const;
 
-/** Stable mockup accent per attendee for Twitch-style chat names. */
 export function chatAuthorColorClass(seed: string): string {
-  if (!seed) return CHAT_AUTHOR_COLORS[0];
-
   let hash = 0;
-  for (let index = 0; index < seed.length; index += 1) {
-    hash = (hash + seed.charCodeAt(index) * (index + 3)) % CHAT_AUTHOR_COLORS.length;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
   }
-
-  return CHAT_AUTHOR_COLORS[hash] ?? CHAT_AUTHOR_COLORS[0];
+  const index = Math.abs(hash) % CHAT_AUTHOR_COLORS.length;
+  return CHAT_AUTHOR_COLORS[index];
 }

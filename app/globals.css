@@ -142,6 +142,30 @@ html {
   }
 
   /* ── Responsive experience system ── */
+  .device-fit-page {
+    min-height: 100dvh;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  .device-fit-viewport {
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
+    width: 100%;
+    max-width: 100vw;
+    overflow: hidden;
+  }
+
+  .device-fit-scroll {
+    min-height: 0;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
   .app-shell-root {
     width: 100%;
     min-height: 100dvh;
@@ -411,18 +435,124 @@ html {
   color: #3b82f6;
 }
 
-.experience-live-root .exp-chat-name-magenta {
-  color: var(--exp-magenta);
+.experience-live-root .exp-chat-name-frost {
+  color: #60a5fa;
 }
 
-.experience-live-root .exp-chat-name-cyan {
-  color: #67e8f9;
+.experience-live-root .exp-chat-name-pink {
+  color: #ec4899;
+}
+
+.experience-live-root .exp-chat-name-blossom {
+  color: #f472b6;
+}
+
+.experience-live-root .exp-chat-name-purple {
+  color: #a855f7;
+}
+
+.experience-live-root .exp-chat-name-orchid {
+  color: #c084fc;
+}
+
+.experience-live-root .exp-chat-name-rose {
+  color: #f43f5e;
 }
 
 .experience-live-stage-mobile {
   width: 100%;
   /* Live player is 21:9 — height follows width; legacy 16:9 cap caused clipping */
   max-height: none;
+}
+
+/* Device-fit: mobile portrait — stage, chat, and dock share one dvh stack */
+@media (max-width: 767px) and (orientation: portrait) {
+  .experience-live-device-stack {
+    display: grid;
+    grid-template-rows: minmax(0, 0.4fr) minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .experience-live-stage-mobile {
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .experience-live-stage-fit {
+    min-height: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .experience-live-stage-fit .experience-stream-stage {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .experience-player-fit {
+    aspect-ratio: auto !important;
+    flex: 1;
+    min-height: 0;
+    height: auto;
+  }
+
+  .experience-live-selector-slot {
+    display: none;
+  }
+
+  .experience-live-poll-panel {
+    flex-shrink: 0;
+  }
+
+  .experience-waiting-hero {
+    min-height: 0 !important;
+    flex: 1;
+    height: 100%;
+  }
+}
+
+/* Device-fit: tablet/desktop — stage and chat columns fill grid height */
+@media (min-width: 768px) {
+  .experience-live-device-stack {
+    min-height: 0;
+  }
+
+  .experience-live-stage-mobile {
+    min-height: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .experience-live-stage-fit {
+    min-height: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+@supports not (height: 100dvh) {
+  .device-fit-viewport {
+    height: 100vh;
+    max-height: 100vh;
+  }
+
+  .device-fit-page {
+    min-height: 100vh;
+  }
+
+  .device-fit-scroll {
+    height: 100vh;
+    max-height: 100vh;
+  }
 }
 
 /* Full-width slot under player for selector, polls, and live metrics */

@@ -37,14 +37,14 @@ export default function FellowshipChatMessageRow({
 
   return (
     <div
-      className={`group flex items-start gap-1 rounded-md px-1.5 py-1 transition hover:bg-white/3 ${VARIANT_CLASS[variant]}`}
+      className={`group flex items-start gap-2 rounded-md px-1.5 py-0.5 transition hover:bg-white/3 ${VARIANT_CLASS[variant]}`}
     >
-      <p className="min-w-0 flex-1 wrap-break-word font-body text-[0.78rem] leading-snug sm:text-[0.8125rem]">
+      <p className="min-w-0 flex-1 wrap-break-word font-body text-[0.78rem] leading-relaxed sm:text-[0.8125rem]">
         <span className="inline-flex flex-wrap items-baseline gap-x-1.5 gap-y-0">
           <span
-            className={`font-ui text-[0.7rem] font-bold sm:text-[0.72rem] ${chatAuthorColorClass(message.userId)}`}
+            className={`shrink-0 font-ui text-[0.7rem] font-black tracking-wide filter drop-shadow-[0_0_8px_rgba(255,255,255,0.12)] sm:text-[0.72rem] ${chatAuthorColorClass(message.userId)}`}
           >
-            {message.author}
+            {message.author}:
           </span>
           <time
             dateTime={message.createdAt}
@@ -53,8 +53,7 @@ export default function FellowshipChatMessageRow({
             {formatChatTimestamp(message.createdAt)}
           </time>
         </span>
-        <span className="text-zinc-400">: </span>
-        <span className="text-white">{message.body}</span>
+        <span className="font-medium text-white">{message.body}</span>
       </p>
 
       {isModerator ? (
