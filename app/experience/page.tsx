@@ -1,8 +1,22 @@
-import ExperienceHubClient from "@/components/experience/ExperienceHubClient";
-import { loadExperienceHubStatus } from "@/lib/experience/load-experience-hub-status";
+import ExperienceHubDashboard from "@/components/experience/hub/ExperienceHubDashboard";
+import { ACTUAL_ASSET_MAP } from "@/lib/experience/hub-design-tokens";
+import { loadExperienceHubPayload } from "@/lib/experience/load-experience-hub-payload";
+
+export const revalidate = 0;
 
 export default async function ExperienceHubPage() {
-  const initialStatus = await loadExperienceHubStatus();
+  const initialPayload = await loadExperienceHubPayload();
 
-  return <ExperienceHubClient initialStatus={initialStatus} />;
+  return (
+    <>
+      <link
+        rel="preload"
+        as="image"
+        href={ACTUAL_ASSET_MAP.masterStageBackground}
+        type="image/webp"
+        fetchPriority="high"
+      />
+      <ExperienceHubDashboard initialPayload={initialPayload} />
+    </>
+  );
 }

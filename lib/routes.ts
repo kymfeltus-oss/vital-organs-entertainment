@@ -9,7 +9,7 @@ export const NAV_HIDDEN_ROUTES = [
 ] as const;
 
 /** Exact paths only — event lobby uses its own sidebar + mobile nav */
-export const NAV_HIDDEN_EXACT_ROUTES = ["/dashboard"] as const;
+export const NAV_HIDDEN_EXACT_ROUTES = ["/dashboard", "/experience"] as const;
 
 export type NavHiddenRoute = (typeof NAV_HIDDEN_ROUTES)[number];
 

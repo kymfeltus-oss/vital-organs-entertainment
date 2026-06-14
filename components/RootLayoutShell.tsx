@@ -13,6 +13,8 @@ type RootLayoutShellProps = {
 export default function RootLayoutShell({ children }: RootLayoutShellProps) {
   const pathname = usePathname();
   const hideNav = isNavHiddenRoute(pathname);
+  const experienceSurface =
+    pathname === "/experience" || pathname.startsWith("/experience/");
 
   useEffect(() => {
     const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
@@ -75,7 +77,7 @@ export default function RootLayoutShell({ children }: RootLayoutShellProps) {
   }, [pathname]);
 
   return (
-    <div className="min-h-dvh w-full bg-[#0B090A]">
+    <div className={`min-h-dvh w-full ${experienceSurface ? "bg-transparent" : "bg-[#0B090A]"}`}>
       {!hideNav && <AppNavigation />}
       <div className={hideNav ? "min-h-dvh w-full" : `min-h-dvh w-full ${CONTENT_WITH_NAV}`}>
         {children}

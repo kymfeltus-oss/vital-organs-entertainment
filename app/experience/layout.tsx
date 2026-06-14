@@ -10,5 +10,5 @@ export default function ExperienceLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <div className="min-h-dvh w-full bg-brand-black">{children}</div>;
+  return children;
 }
