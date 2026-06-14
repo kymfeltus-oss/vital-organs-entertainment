@@ -1,22 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@500;600;700&display=swap");
-
-/** Legacy dashboards only — /experience hub scene does not render this layer. */
-.awakening-grain {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 180px 180px;
-  mix-blend-mode: normal;
-  opacity: 0.02;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .awakening-grain {
-    opacity: 0.02;
-  }
-}
-
 /**
  * Experience hub master stage — dvh-safe for Capacitor / mobile WebView.
- * Portrait: cover + lower focal point (audience + stage). Landscape: artboard fill.
+ * Portrait: mobile template fill. Desktop / landscape: bottom-anchored artboard.
  */
 .master-stage-scene-box {
   position: absolute;
@@ -49,22 +33,19 @@
 
 @media (max-width: 767px) and (orientation: portrait) {
   .master-stage-scene-box {
-    left: 50%;
-    bottom: 0;
-    width: max(100vw, calc(100dvh * 853 / 1844));
-    height: max(100dvh, calc(100vw * 1844 / 853));
-    transform: translateX(-50%);
-    aspect-ratio: 853 / 1844;
+    inset: 0;
+    left: 0;
+    bottom: auto;
+    width: 100vw;
+    height: 100dvh;
     max-height: 100dvh;
+    transform: none;
+    aspect-ratio: auto;
   }
 
   .master-stage-plate {
     object-fit: fill;
     object-position: center top;
-  }
-
-  .experience-hub-vignette {
-    background: radial-gradient(ellipse at center, transparent 58%, rgba(0, 0, 0, 0.68) 100%);
   }
 }
 

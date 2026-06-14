@@ -4,7 +4,7 @@ import { ACTUAL_ASSET_MAP } from "@/lib/experience/hub-design-tokens";
 
 /**
  * Responsive master stage — dedicated mobile portrait template + desktop artboard.
- * Mobile: 853×1844 plate. Desktop: 1535×1024 plate. Layout rules in awakening.css.
+ * Mobile: 853×1844 PNG plate. Desktop: 1535×1024 plate. Layout rules in awakening.css.
  */
 export default function MasterStageBackground() {
   return (
@@ -14,7 +14,7 @@ export default function MasterStageBackground() {
           <source
             media="(max-width: 767px) and (orientation: portrait)"
             srcSet={ACTUAL_ASSET_MAP.masterStageBackgroundMobile}
-            type="image/webp"
+            type="image/png"
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

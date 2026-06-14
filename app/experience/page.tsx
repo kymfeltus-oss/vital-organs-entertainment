@@ -1,14 +1,12 @@
-import ExperienceHubDashboard from "@/components/experience/hub/ExperienceHubDashboard";
+import ExperienceHubScene from "@/components/experience/hub/ExperienceHubScene";
 import { ACTUAL_ASSET_MAP } from "@/lib/experience/hub-design-tokens";
-import { loadExperienceHubPayload } from "@/lib/experience/load-experience-hub-payload";
+import "@/styles/awakening.css";
 
 export const revalidate = 0;
 
-export default async function ExperienceHubPage() {
-  const initialPayload = await loadExperienceHubPayload();
-
+export default function ExperienceHubPage() {
   return (
-    <>
+    <main className="relative isolate min-h-dvh h-dvh w-full overflow-hidden bg-[#020207]">
       <link
         rel="preload"
         as="image"
@@ -21,11 +19,11 @@ export default async function ExperienceHubPage() {
         rel="preload"
         as="image"
         href={ACTUAL_ASSET_MAP.masterStageBackgroundMobile}
-        type="image/webp"
+        type="image/png"
         fetchPriority="high"
         media="(max-width: 767px) and (orientation: portrait)"
       />
-      <ExperienceHubDashboard initialPayload={initialPayload} />
-    </>
+      <ExperienceHubScene />
+    </main>
   );
 }
