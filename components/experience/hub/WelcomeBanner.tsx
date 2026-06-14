@@ -51,7 +51,9 @@ export default function WelcomeBanner({
       {...(reduceMotion
         ? {}
         : {
-            animate: MOTION_VARIANTS.welcomePulse.animate,
+            animate: {
+              boxShadow: [...MOTION_VARIANTS.welcomePulse.animate.boxShadow],
+            },
             transition: MOTION_VARIANTS.welcomePulse.transition,
           })}
     >

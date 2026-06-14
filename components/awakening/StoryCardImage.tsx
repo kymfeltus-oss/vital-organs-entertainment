@@ -15,7 +15,7 @@ export default function StoryCardImage({
   className = "object-cover object-center",
   sizes = "(max-width: 1024px) 100vw, 540px",
 }: StoryCardImageProps) {
-  const [src, setSrc] = useState(AWAKENING_ASSETS.story.primary);
+  const [src, setSrc] = useState<string>(AWAKENING_ASSETS.story.primary);
 
   return (
     <Image
