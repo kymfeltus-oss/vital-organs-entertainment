@@ -39,17 +39,28 @@
   user-select: none;
 }
 
+.master-stage-scene-box picture {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 @media (max-width: 767px) and (orientation: portrait) {
   .master-stage-scene-box {
-    width: 100vw;
-    height: 100dvh;
+    left: 50%;
+    bottom: 0;
+    width: max(100vw, calc(100dvh * 853 / 1844));
+    height: max(100dvh, calc(100vw * 1844 / 853));
+    transform: translateX(-50%);
+    aspect-ratio: 853 / 1844;
     max-height: 100dvh;
-    aspect-ratio: auto;
   }
 
   .master-stage-plate {
-    object-fit: cover;
-    object-position: center 58%;
+    object-fit: fill;
+    object-position: center top;
   }
 
   .experience-hub-vignette {

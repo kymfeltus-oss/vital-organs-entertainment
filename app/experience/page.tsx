@@ -15,6 +15,15 @@ export default async function ExperienceHubPage() {
         href={ACTUAL_ASSET_MAP.masterStageBackground}
         type="image/webp"
         fetchPriority="high"
+        media="(min-width: 768px), (max-width: 767px) and (orientation: landscape)"
+      />
+      <link
+        rel="preload"
+        as="image"
+        href={ACTUAL_ASSET_MAP.masterStageBackgroundMobile}
+        type="image/webp"
+        fetchPriority="high"
+        media="(max-width: 767px) and (orientation: portrait)"
       />
       <ExperienceHubDashboard initialPayload={initialPayload} />
     </>

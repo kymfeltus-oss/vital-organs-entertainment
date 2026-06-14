@@ -60,11 +60,18 @@ export const EXPERIENCE_SCENE_Z = {
   audio: 80,
 } as const;
 
-/** Canonical artboard — master stage plate pixel size (Image 157). */
+/** Desktop master stage plate (1535×1024 landscape). */
 export const MASTER_STAGE_ART = {
   width: 1535,
   height: 1024,
   aspect: 1535 / 1024,
+} as const;
+
+/** Mobile portrait template plate (853×1844). */
+export const MASTER_STAGE_MOBILE_ART = {
+  width: 853,
+  height: 1844,
+  aspect: 853 / 1844,
 } as const;
 
 /**
@@ -85,10 +92,11 @@ export const MASTER_STAGE_COMPOSITION = {
 
 /** Capacitor / mobile viewport framing — CSS in styles/awakening.css */
 export const MASTER_STAGE_MOBILE = {
+  art: MASTER_STAGE_MOBILE_ART,
   portrait: {
     maxWidthPx: 767,
-    plateObjectFit: "cover" as const,
-    plateObjectPosition: "center 58%",
+    plateObjectFit: "fill" as const,
+    plateObjectPosition: "center top",
   },
   landscape: {
     maxWidthPx: 767,
@@ -105,8 +113,10 @@ export const COMPOSITE_STAGE_ART = MASTER_STAGE_ART;
 export const ACTUAL_ASSET_MAP = {
   logo: "/assets/branding/300-awakening-logo.png",
   logoFallback: "/branding/300-awakening-logo.png",
-  /** Single master stage plate for /experience — audience, singers, crosses, lighting. */
+  /** Desktop master stage plate for /experience (1535×1024). */
   masterStageBackground: "/assets/experience/master-stage-background.webp",
+  /** Mobile portrait template base layer (853×1844). */
+  masterStageBackgroundMobile: "/assets/experience/master-stage-background-mobile.webp",
   backgroundStage: "/assets/experience/master-stage-background.webp",
   /** @deprecated Legacy composite — use masterStageBackground. */
   compositeStage: "/assets/backgrounds/300-awakening-stage-performers.webp",
