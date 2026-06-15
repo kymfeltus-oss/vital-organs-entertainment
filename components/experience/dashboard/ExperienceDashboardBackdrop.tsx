@@ -1,14 +1,20 @@
 "use client";
 
 import { AWAKENING_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
+import { cn } from "@/lib/utils";
 
 type ExperienceDashboardBackdropProps = {
   variant: "mobile" | "desktop";
 };
 
 export default function ExperienceDashboardBackdrop({
-  variant: _variant,
+  variant,
 }: ExperienceDashboardBackdropProps) {
+  const isMobile = variant === "mobile";
+  const src = isMobile
+    ? AWAKENING_ASSETS.backgrounds.concertMobile
+    : AWAKENING_ASSETS.backgrounds.concert;
+
   return (
     <div
       aria-hidden
@@ -16,9 +22,12 @@ export default function ExperienceDashboardBackdrop({
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={AWAKENING_ASSETS.backgrounds.concert}
+        src={src}
         alt=""
-        className="h-full w-full object-contain object-center"
+        className={cn(
+          "h-full w-full",
+          isMobile ? "object-cover object-top" : "object-contain object-center",
+        )}
       />
     </div>
   );

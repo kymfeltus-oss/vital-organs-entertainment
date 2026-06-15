@@ -3,6 +3,7 @@
 export const AWAKENING_ASSETS = {
   backgrounds: {
     concert: "/awakening/dashboard-concert-bg.png",
+    concertMobile: "/awakening/dashboard-concert-bg-mobile.png",
   },
   branding: {
     mark: "/awakening/branding/300-awakening-mark.png",
@@ -18,7 +19,10 @@ export const AWAKENING_ASSETS = {
   },
 } as const;
 
-export const AWAKENING_PRELOAD_ASSETS = [AWAKENING_ASSETS.backgrounds.concert] as const;
+export const AWAKENING_PRELOAD_ASSETS = [
+  AWAKENING_ASSETS.backgrounds.concert,
+  AWAKENING_ASSETS.backgrounds.concertMobile,
+] as const;
 
 export type ExperienceNavItem = {
   id: string;
