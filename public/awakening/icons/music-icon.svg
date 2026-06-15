@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="musicGradient" x1="18" y1="22" x2="112" y2="110" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00A8FF"></stop>
+      <stop offset="50%" stop-color="#8A2BE2"></stop>
+      <stop offset="100%" stop-color="#FF008C"></stop>
+    </linearGradient>
+
+    <filter id="musicGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="4" result="blur"></feGaussianBlur>
+      <feMerge>
+        <feMergeNode in="blur"></feMergeNode>
+        <feMergeNode in="SourceGraphic"></feMergeNode>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g filter="url(#musicGlow)" stroke="url(#musicGradient)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M30 67C30 43.8 45.2 28 64 28s34 15.8 34 39"></path>
+    <path d="M30 69v18c0 8.2 6.8 15 15 15h6V66h-6c-8.2 0-15 6.8-15 15"></path>
+    <path d="M98 69v18c0 8.2-6.8 15-15 15h-6V66h6c8.2 0 15 6.8 15 15"></path>
+    <path d="M48 104c4.8 6.2 10.4 9 16 9s11.2-2.8 16-9"></path>
+  </g>
+</svg>

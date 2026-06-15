@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="exclusiveGradient" x1="18" y1="18" x2="110" y2="110" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00A8FF"></stop>
+      <stop offset="50%" stop-color="#8A2BE2"></stop>
+      <stop offset="100%" stop-color="#FF008C"></stop>
+    </linearGradient>
+
+    <filter id="exclusiveGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="4" result="blur"></feGaussianBlur>
+      <feMerge>
+        <feMergeNode in="blur"></feMergeNode>
+        <feMergeNode in="SourceGraphic"></feMergeNode>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g filter="url(#exclusiveGlow)" stroke="url(#exclusiveGradient)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- Shield -->
+    <path d="
+      M64 18
+      L96 30
+      V58
+      C96 82 82 102 64 112
+      C46 102 32 82 32 58
+      V30
+      Z
+    "></path>
+
+    <!-- Star -->
+    <path d="
+      M64 42
+      L69 54
+      L82 55
+      L72 64
+      L75 77
+      L64 70
+      L53 77
+      L56 64
+      L46 55
+      L59 54
+      Z
+    "></path>
+
+  </g>
+</svg>
