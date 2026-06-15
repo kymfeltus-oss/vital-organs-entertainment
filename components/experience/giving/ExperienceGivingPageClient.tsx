@@ -1,4 +1,4 @@
-import VitalSeedGivingPage from "@/components/vital-seed/giving/VitalSeedGivingPage";
+import VitalSeedGivingPage from "@/components/vital-seed/VitalSeedGivingPage";
 
 export default function ExperienceGivingPageClient() {
   return <VitalSeedGivingPage />;
