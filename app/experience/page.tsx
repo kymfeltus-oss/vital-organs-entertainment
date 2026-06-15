@@ -1,29 +1,24 @@
-import ExperienceHubScene from "@/components/experience/hub/ExperienceHubScene";
-import { ACTUAL_ASSET_MAP } from "@/lib/experience/hub-design-tokens";
-import "@/styles/awakening.css";
+import ExperienceAttendeeDashboard from "@/components/experience/dashboard/ExperienceAttendeeDashboard";
+import { getUserFromSession } from "@/lib/auth/session";
+import {
+  awakeningHeaderDisplayName,
+  firstNameFromEmail,
+} from "@/lib/experience/user-profile-display";
+import { AWAKENING_PRELOAD_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
 
 export const revalidate = 0;
 
-export default function ExperienceHubPage() {
+export default async function ExperienceHubPage() {
+  const user = await getUserFromSession();
+  const firstName = firstNameFromEmail(user?.email);
+  const displayName = awakeningHeaderDisplayName(firstName);
+
   return (
-    <main className="relative isolate min-h-dvh h-dvh w-full overflow-hidden bg-[#020207]">
-      <link
-        rel="preload"
-        as="image"
-        href={ACTUAL_ASSET_MAP.masterStageBackground}
-        type="image/webp"
-        fetchPriority="high"
-        media="(min-width: 768px), (max-width: 767px) and (orientation: landscape)"
-      />
-      <link
-        rel="preload"
-        as="image"
-        href={ACTUAL_ASSET_MAP.masterStageBackgroundMobile}
-        type="image/png"
-        fetchPriority="high"
-        media="(max-width: 767px) and (orientation: portrait)"
-      />
-      <ExperienceHubScene />
-    </main>
+    <>
+      {AWAKENING_PRELOAD_ASSETS.map((href) => (
+        <link key={href} rel="preload" as="image" href={href} fetchPriority="high" />
+      ))}
+      <ExperienceAttendeeDashboard displayName={displayName} />
+    </>
   );
 }

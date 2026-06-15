@@ -11,6 +11,7 @@ const bebasNeue = Bebas_Neue({
 });
 
 const montserrat = Montserrat({
+  weight: ["400", "600"],
   subsets: ["latin"],
   variable: "--font-montserrat",
   display: "swap",

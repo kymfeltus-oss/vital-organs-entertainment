@@ -10,6 +10,15 @@ export function firstNameFromEmail(email: string | null | undefined): string {
   return first.charAt(0).toUpperCase() + first.slice(1);
 }
 
+/** Uppercase header label — falls back to GUEST for anonymous users. */
+export function awakeningHeaderDisplayName(firstName: string): string {
+  const trimmed = firstName.trim();
+  if (!trimmed || trimmed.toLowerCase() === "guest") {
+    return "GUEST";
+  }
+  return trimmed.toUpperCase();
+}
+
 export function initialsFromIdentity(
   email: string | null | undefined,
   displayName?: string | null,
