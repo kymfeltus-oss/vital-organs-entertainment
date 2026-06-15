@@ -42,11 +42,13 @@ export default function ExperienceDashboardHero({
       )}
       aria-label="Experience dashboard hero"
     >
-      <ExperienceDashboardHeroMeasurer
-        variant={variant}
-        headlineBlockRef={headlineBlockRef}
-        ctaRef={ctaRef}
-      />
+      {!isMobile ? (
+        <ExperienceDashboardHeroMeasurer
+          variant={variant}
+          headlineBlockRef={headlineBlockRef}
+          ctaRef={ctaRef}
+        />
+      ) : null}
 
       <div
         className={cn(
@@ -91,9 +93,14 @@ export default function ExperienceDashboardHero({
         </div>
       </div>
 
+      {isMobile ? <div className="dashboard-hero-mobile-topbar-spacer" aria-hidden /> : null}
+
       <div
         ref={headlineBlockRef}
-        className="dashboard-hero-headline-block pointer-events-auto text-center"
+        className={cn(
+          "dashboard-hero-headline-block pointer-events-auto text-center",
+          isMobile && "dashboard-hero-headline-block--mobile-scroll",
+        )}
       >
         <div className="dashboard-hero-copy-stack">
           <div className="dashboard-hero-headline-anchor relative mx-auto px-2">

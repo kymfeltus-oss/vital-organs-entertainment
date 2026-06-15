@@ -1585,12 +1585,12 @@ html {
 }
 
 .experience-dashboard-backdrop-img--mobile {
-  /* Portrait plate (853×1844) — fill viewport without squeezing desktop art */
+  /* Portrait plate (853×1844) — nudge art down so the 300 logo clears the welcome header */
   width: 100%;
   height: 100dvh;
   max-height: 100dvh;
   object-fit: cover;
-  object-position: center top;
+  object-position: center var(--dash-mobile-backdrop-y, 16%);
 }
 
 .dashboard-hero--pic1 {
@@ -1782,11 +1782,30 @@ html {
     );
     --dash-subtitle-size: clamp(0.4375rem, 2vw, 0.5625rem);
     --dash-mobile-cta-max: min(42vw, 8.75rem);
+    --dash-mobile-backdrop-y: 16%;
+    --dash-mobile-topbar-top: max(3.75rem, calc(env(safe-area-inset-top) + 3rem));
+    --dash-mobile-topbar-spacer: calc(var(--dash-mobile-topbar-top) + var(--dash-welcome-h) + 0.4rem);
   }
 
   .dashboard-hero--mobile .dashboard-hero-topbar {
-    top: max(3.75rem, calc(env(safe-area-inset-top) + 3rem));
+    position: fixed;
+    top: var(--dash-mobile-topbar-top);
+    left: 0;
+    right: 0;
+    z-index: 60;
     padding-inline: 0.75rem;
+    padding-bottom: 0.35rem;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.82) 0%,
+      rgba(0, 0, 0, 0.52) 58%,
+      transparent 100%
+    );
+  }
+
+  .dashboard-hero-mobile-topbar-spacer {
+    height: var(--dash-mobile-topbar-spacer);
+    flex-shrink: 0;
   }
 
   .dashboard-hero--mobile .dashboard-hero-controls--mobile {
@@ -1817,6 +1836,23 @@ html {
   .dashboard-hero--mobile .dashboard-hero-tagline {
     margin-top: 0.25rem;
     letter-spacing: 0.22em;
+  }
+
+  .dashboard-hero-headline-block--mobile-scroll {
+    position: relative;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    visibility: visible;
+    width: 100%;
+    max-width: 100%;
+    padding-inline: 0.5rem;
+    margin-top: clamp(0.25rem, 1.5vh, 0.75rem);
+    will-change: auto;
+  }
+
+  .dashboard-hero-headline-block--mobile-scroll::before {
+    height: clamp(8rem, 24vh, 12rem);
   }
 
   .dashboard-hero-headline-block {
