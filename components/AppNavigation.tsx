@@ -162,31 +162,10 @@ export default function AppNavigation() {
   }));
 
   return (
-    <>
-      <div className="fixed inset-x-0 bottom-0 z-50 md:hidden">
-        <nav
-          aria-label="Primary mobile"
-          className="border-t border-[#1E40AF]/40 bg-[#0B090A]/95 pb-safe backdrop-blur-xl"
-        >
-          <div className="flex items-center justify-around px-2 pt-2">
-            {items.map(({ item, isActive }) => (
-              <NavLink key={item.href} item={item} isActive={isActive} variant="bottom" />
-            ))}
-          </div>
-          <div className="border-t border-white/5 px-4 py-2">
-            <SignOutButton
-              variant="bottom"
-              isLoggingOut={isLoggingOut}
-              onLogout={() => void handleLogout()}
-            />
-          </div>
-        </nav>
-      </div>
-
-      <nav
-        aria-label="Primary desktop"
-        className="fixed top-0 left-0 z-50 hidden h-dvh w-64 flex-col border-r border-[#1E40AF]/30 bg-[#0B090A]/95 pt-safe backdrop-blur-xl md:flex"
-      >
+    <nav
+      aria-label="Primary desktop"
+      className="fixed top-0 left-0 z-50 hidden h-dvh w-64 flex-col border-r border-[#1E40AF]/30 bg-[#0B090A]/95 pt-safe backdrop-blur-xl md:flex"
+    >
         <div className="border-b border-white/10 px-6 py-6">
           <p className="text-[0.65rem] font-bold uppercase tracking-[0.35em] text-[#1E40AF]">
             300 Awakening
@@ -208,6 +187,5 @@ export default function AppNavigation() {
           />
         </div>
       </nav>
-    </>
   );
 }

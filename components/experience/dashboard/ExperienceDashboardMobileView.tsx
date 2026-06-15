@@ -14,14 +14,17 @@ export default function ExperienceDashboardMobileView({
   onProfileChange,
 }: ExperienceDashboardMobileViewProps) {
   return (
-    <div className="relative flex h-dvh min-h-dvh w-full max-w-[100vw] flex-col overflow-hidden bg-brand-black md:hidden">
+    <div
+      data-dashboard-shell="mobile"
+      className="relative flex h-dvh min-h-dvh w-full max-w-[100vw] flex-col overflow-hidden bg-brand-black md:hidden"
+    >
       <ExperienceDashboardBackdrop variant="mobile" />
 
       <div
         data-dashboard-scroll="mobile"
-        className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden pb-safe"
+        className="relative z-10 flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto pb-safe"
       >
-        <div className="relative h-full min-h-0 w-full flex-1">
+        <div className="relative min-h-dvh w-full flex-1">
           <ExperienceDashboardContent
             profile={profile}
             onProfileChange={onProfileChange}

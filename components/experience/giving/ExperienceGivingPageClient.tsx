@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import ExperienceGivingContentOverlay from "@/components/experience/giving/ExperienceGivingContentOverlay";
@@ -13,6 +13,32 @@ import {
   amountToCents,
   parseAmountDollars,
 } from "@/lib/vital-seed/custom-amount";
+import { VITAL_GIVING_DESKTOP_ART } from "@/lib/experience/giving-layout-slots";
+
+function logGivingLayout(
+  hypothesisId: string,
+  message: string,
+  data: Record<string, number | string>,
+) {
+  // #region agent log
+  fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "baf5b9",
+    },
+    body: JSON.stringify({
+      sessionId: "baf5b9",
+      runId: "artboard-fix",
+      hypothesisId,
+      location: "ExperienceGivingPageClient.tsx",
+      message,
+      data,
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+}
 
 function ExperienceGivingPageContent() {
   const searchParams = useSearchParams();
@@ -21,6 +47,39 @@ function ExperienceGivingPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showThankYou, setShowThankYou] = useState(successParam);
+  const artboardRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const artboard = artboardRef.current;
+    const image = imageRef.current;
+    if (!artboard || !image) return;
+
+    const measure = () => {
+      const board = artboard.getBoundingClientRect();
+      const img = image.getBoundingClientRect();
+      const imgAspect = img.width / Math.max(img.height, 1);
+      const boardAspect = board.width / Math.max(board.height, 1);
+      const expectedAspect = VITAL_GIVING_DESKTOP_ART.width / VITAL_GIVING_DESKTOP_ART.height;
+
+      logGivingLayout("A", "artboard-vs-image-bounds", {
+        boardW: Math.round(board.width),
+        boardH: Math.round(board.height),
+        imgW: Math.round(img.width),
+        imgH: Math.round(img.height),
+        boardAspect: Number(boardAspect.toFixed(4)),
+        imgAspect: Number(imgAspect.toFixed(4)),
+        expectedAspect: Number(expectedAspect.toFixed(4)),
+        widthDelta: Math.round(Math.abs(board.width - img.width)),
+        heightDelta: Math.round(Math.abs(board.height - img.height)),
+      });
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(artboard);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!successParam) return;
@@ -100,9 +159,10 @@ function ExperienceGivingPageContent() {
         </picture>
 
         {/* Desktop — single artboard wrapper matches rendered image */}
-        <div className="vital-giving-artboard hidden md:block">
+        <div ref={artboardRef} className="vital-giving-artboard hidden md:block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
+            ref={imageRef}
             src={VITAL_SEED_PAGE_BACKGROUND}
             alt=""
             className="vital-giving-artboard__img"

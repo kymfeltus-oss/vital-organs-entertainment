@@ -7,6 +7,7 @@ import AwakeningMenuButton from "@/components/AwakeningMenuButton";
 import ProfileOrbEditor from "@/components/profile/ProfileOrbEditor";
 import ExperienceDashboardCardRow from "@/components/experience/dashboard/ExperienceDashboardCardRow";
 import ExperienceDashboardHeroMeasurer from "@/components/experience/dashboard/ExperienceDashboardHeroMeasurer";
+import ExperienceDashboardMobileCardHits from "@/components/experience/dashboard/ExperienceDashboardMobileCardHits";
 import { AWAKENING_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
 import { normalizeBackdropVariant } from "@/lib/experience/dashboard-beam-position";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
@@ -34,8 +35,10 @@ export default function ExperienceDashboardHero({
   return (
     <section
       className={cn(
-        "dashboard-hero dashboard-hero--pic1 pointer-events-none absolute inset-0 z-10 mx-auto w-full overflow-hidden bg-transparent",
-        isMobile ? "px-3" : "px-8",
+        "dashboard-hero dashboard-hero--pic1 pointer-events-none z-10 mx-auto w-full bg-transparent",
+        isMobile
+          ? "dashboard-hero--mobile relative min-h-dvh px-2"
+          : "absolute inset-0 overflow-hidden px-8",
       )}
       aria-label="Experience dashboard hero"
     >
@@ -54,16 +57,16 @@ export default function ExperienceDashboardHero({
         </div>
 
         <div
-          className="dashboard-hero-controls absolute z-50 flex items-center gap-2.5"
+          className="dashboard-hero-controls absolute z-50 flex items-center gap-1.5"
           style={{
-            top: "max(0.35rem, env(safe-area-inset-top))",
-            right: "max(0.75rem, env(safe-area-inset-right))",
+            top: "max(0.25rem, env(safe-area-inset-top))",
+            right: "max(0.5rem, env(safe-area-inset-right))",
           }}
         >
           <ProfileOrbEditor
             profile={profile}
             onProfileChange={onProfileChange}
-            size="sm"
+            size={isMobile ? 36 : "sm"}
           />
           <AwakeningMenuButton />
         </div>
@@ -86,7 +89,10 @@ export default function ExperienceDashboardHero({
 
           <div
             ref={ctaRef}
-            className="dashboard-hero-cta-images mx-auto flex w-full flex-col items-center gap-2 px-2 sm:flex-row sm:items-center sm:justify-center sm:gap-3"
+            className={cn(
+              "dashboard-hero-cta-images mx-auto flex w-full flex-col items-center px-2",
+              isMobile ? "gap-1.5" : "gap-2 sm:flex-row sm:items-center sm:justify-center sm:gap-3",
+            )}
           >
             <Link
               href={AWAKENING_ASSETS.routes.enterExperience}
@@ -119,9 +125,11 @@ export default function ExperienceDashboardHero({
             </Link>
           </div>
 
-          <ExperienceDashboardCardRow />
+          {!isMobile ? <ExperienceDashboardCardRow /> : null}
         </div>
       </div>
+
+      {isMobile ? <ExperienceDashboardMobileCardHits /> : null}
     </section>
   );
 }

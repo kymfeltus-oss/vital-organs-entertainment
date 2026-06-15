@@ -307,7 +307,7 @@ export function AttendeeEventLobbyBottomNav() {
   return (
     <nav
       aria-label="Dashboard"
-      className="fixed bottom-0 left-0 right-0 z-50 flex h-[76px] items-center border-t border-white/10 bg-[#050406]/96 backdrop-blur-[18px] lg:left-[260px]"
+      className="fixed bottom-0 left-0 right-0 z-50 hidden h-[76px] items-center border-t border-white/10 bg-[#050406]/96 backdrop-blur-[18px] md:flex lg:left-[260px]"
     >
       <div className="flex w-full items-center justify-around px-2">
         {MOBILE_NAV.map((item) => {

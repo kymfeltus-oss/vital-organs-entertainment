@@ -43,10 +43,10 @@ function getBackdropConfig(variant: string | undefined | null) {
 /** Concert lineup backdrop height as a fraction of the viewport (smaller = smaller people). */
 export const BACKDROP_HEIGHT_SCALE = 1;
 
-export const HERO_STACK_LAYOUT_VERSION = 38;
+export const HERO_STACK_LAYOUT_VERSION = 39;
 
 export const HERO_STACK_LIFT_PX: Record<BackdropVariant, number> = {
-  mobile: 188,
+  mobile: 148,
   desktop: 228,
 };
 

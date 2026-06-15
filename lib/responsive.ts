@@ -41,8 +41,8 @@ export const DEVICE_FIT_SCROLL =
 export const LOBBY_GRID =
   "grid min-h-dvh grid-cols-1 lg:grid-cols-[minmax(14rem,260px)_minmax(0,1fr)_minmax(16rem,360px)]";
 
-/** Content offset when global navigation is present (root layout) */
-export const CONTENT_WITH_NAV = "pb-16 md:pb-0 md:pl-64";
+/** Content offset when global navigation is present (desktop sidebar only) */
+export const CONTENT_WITH_NAV = "md:pl-64";
 
 /** Left sidebar width on desktop (matches navigation w-64) */
 export const NAV_SIDEBAR_WIDTH = "16rem";

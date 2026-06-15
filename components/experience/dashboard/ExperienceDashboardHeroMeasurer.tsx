@@ -110,7 +110,8 @@ export default function ExperienceDashboardHeroMeasurer({
         backdropImg.clientHeight > 0;
 
       const ctasReady = areCtaImagesReady(ctaEl);
-      const cardsReady = isCardRowReady(blockEl);
+      const cardsReady =
+        backdropVariant === "mobile" ? true : isCardRowReady(blockEl);
       const fontsReady = areFontsReady();
 
       if (!backdropReady || !ctasReady || !cardsReady || !fontsReady) return false;
@@ -128,8 +129,8 @@ export default function ExperienceDashboardHeroMeasurer({
         ctaEl.getBoundingClientRect().height;
 
       const desiredTop = dashboardHeroStackTopPx(anchorTop, backdropVariant);
-      const minBlockTop = backdropVariant === "mobile" ? 108 : 124;
-      const bottomInset = backdropVariant === "mobile" ? 36 : 20;
+      const minBlockTop = backdropVariant === "mobile" ? 76 : 124;
+      const bottomInset = backdropVariant === "mobile" ? 28 : 20;
       let blockTop = desiredTop;
       let liftedTop = desiredTop;
 
