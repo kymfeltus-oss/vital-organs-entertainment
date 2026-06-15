@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateGuestEmail, generateGuestPassword } from "@/lib/access";
+import { syncUserProfileIdentity } from "@/lib/auth/sync-attendee-profile";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
@@ -9,7 +10,14 @@ type AuthRequestBody = {
   action?: AuthAction;
   email?: string;
   password?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
 };
+
+function normalizeNamePart(value: string | undefined): string {
+  return value?.trim().replace(/\s+/g, " ") ?? "";
+}
 
 function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
@@ -63,6 +71,8 @@ export async function POST(request: Request) {
         );
       }
 
+      await syncUserProfileIdentity(data.user);
+
       return NextResponse.json({
         success: true,
         email: data.user.email,
@@ -73,10 +83,19 @@ export async function POST(request: Request) {
     if (action === "signup") {
       const email = body.email?.trim().toLowerCase();
       const password = body.password;
+      const firstName = normalizeNamePart(body.firstName);
+      const lastName = normalizeNamePart(body.lastName);
 
       if (!email || !password || password.length < 8 || !isValidEmail(email)) {
         return NextResponse.json(
           { error: "Valid email and an 8+ character password are required." },
+          { status: 400 },
+        );
+      }
+
+      if (!firstName || !lastName) {
+        return NextResponse.json(
+          { error: "First and last name are required to create an account." },
           { status: 400 },
         );
       }
@@ -86,7 +105,11 @@ export async function POST(request: Request) {
         email,
         password,
         options: {
-          data: { is_guest: false },
+          data: {
+            is_guest: false,
+            first_name: firstName,
+            last_name: lastName,
+          },
           emailRedirectTo: `${origin}/auth/callback?next=/experience`,
         },
       });
@@ -98,11 +121,14 @@ export async function POST(request: Request) {
         );
       }
 
+      let activeUser = data.user;
+
       if (!data.session) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const { data: signInData, error: signInError } =
+          await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
 
         if (signInError) {
           return NextResponse.json(
@@ -113,6 +139,12 @@ export async function POST(request: Request) {
             { status: 202 },
           );
         }
+
+        activeUser = signInData.user ?? activeUser;
+      }
+
+      if (activeUser) {
+        await syncUserProfileIdentity(activeUser);
       }
 
       return NextResponse.json({
@@ -124,14 +156,24 @@ export async function POST(request: Request) {
 
     const guestEmail = generateGuestEmail();
     const guestPassword = generateGuestPassword();
+    const contactEmail = body.email?.trim().toLowerCase();
+    const contactPhone = body.phone?.trim();
     const admin = getSupabaseAdmin();
+
+    const guestMetadata: Record<string, unknown> = { is_guest: true };
+    if (contactEmail && isValidEmail(contactEmail)) {
+      guestMetadata.contact_email = contactEmail;
+    }
+    if (contactPhone) {
+      guestMetadata.contact_phone = contactPhone;
+    }
 
     const { data: createdUser, error: createError } =
       await admin.auth.admin.createUser({
         email: guestEmail,
         password: guestPassword,
         email_confirm: true,
-        user_metadata: { is_guest: true },
+        user_metadata: guestMetadata,
       });
 
     if (createError || !createdUser.user) {
@@ -156,7 +198,7 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         success: true,
-        email: guestEmail,
+        email: contactEmail && isValidEmail(contactEmail) ? contactEmail : guestEmail,
         isGuest: true,
       });
   } catch (error) {

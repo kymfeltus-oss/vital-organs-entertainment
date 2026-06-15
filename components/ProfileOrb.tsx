@@ -15,6 +15,8 @@ const SIZE_PX: Record<ProfileOrbSize, number> = {
 export type ProfileOrbProps = {
   /** One or two uppercase initials shown in the orb center. */
   initials: string;
+  /** Optional uploaded profile photo rendered inside the orb. */
+  avatarUrl?: string | null;
   /** Preset or explicit pixel diameter (minimum 44 for touch). */
   size?: ProfileOrbSize | number;
   /** Selected / focused identity state. */
@@ -35,17 +37,29 @@ function normalizeInitials(initials: string): string {
 
 function ProfileOrbContent({
   initials,
+  avatarUrl,
   hasNotification,
 }: {
   initials: string;
+  avatarUrl?: string | null;
   hasNotification: boolean;
 }) {
   return (
     <>
       <span className="profile-orb-surface">
-        <span className="profile-orb-initials font-ui" aria-hidden>
-          {normalizeInitials(initials)}
-        </span>
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl}
+            alt=""
+            className="profile-orb-avatar"
+            decoding="async"
+          />
+        ) : (
+          <span className="profile-orb-initials font-ui" aria-hidden>
+            {normalizeInitials(initials)}
+          </span>
+        )}
         <span className="profile-orb-reflection" aria-hidden />
       </span>
 
@@ -60,6 +74,7 @@ function ProfileOrbContent({
 
 export default function ProfileOrb({
   initials,
+  avatarUrl = null,
   size = "md",
   active = false,
   hasNotification = false,
@@ -99,14 +114,22 @@ export default function ProfileOrb({
         aria-pressed={active ? true : ariaPressed}
         disabled={disabled}
       >
-        <ProfileOrbContent initials={initials} hasNotification={hasNotification} />
+        <ProfileOrbContent
+          initials={initials}
+          avatarUrl={avatarUrl}
+          hasNotification={hasNotification}
+        />
       </button>
     );
   }
 
   return (
     <div className={sharedClassName} style={orbStyle} role="img" aria-label={label}>
-      <ProfileOrbContent initials={initials} hasNotification={hasNotification} />
+      <ProfileOrbContent
+        initials={initials}
+        avatarUrl={avatarUrl}
+        hasNotification={hasNotification}
+      />
     </div>
   );
 }

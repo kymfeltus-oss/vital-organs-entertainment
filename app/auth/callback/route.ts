@@ -5,6 +5,7 @@ import {
   sanitizeNextPath,
   DEFAULT_ATTENDEE_NEXT,
 } from "@/lib/auth/routing";
+import { syncUserProfileIdentity } from "@/lib/auth/sync-attendee-profile";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
 
 const DEFAULT_NEXT_PATH = DEFAULT_ATTENDEE_NEXT;
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = await createServerSupabaseClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
     console.error("[AUTH_CALLBACK_ERR]:", error.message);
@@ -69,6 +70,10 @@ export async function GET(request: NextRequest) {
       "auth_callback_failed",
       request.nextUrl.searchParams.get("next"),
     );
+  }
+
+  if (data.user) {
+    await syncUserProfileIdentity(data.user);
   }
 
   const nextPath = sanitizeNextPath(

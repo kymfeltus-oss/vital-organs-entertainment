@@ -5,6 +5,7 @@ export const NAV_HIDDEN_ROUTES = [
   "/test-suite",
   "/ops",
   "/experience/live",
+  "/experience/giving",
   "/dashboard/live",
 ] as const;
 

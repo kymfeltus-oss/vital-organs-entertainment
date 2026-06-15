@@ -30,7 +30,7 @@ const NAV_ITEMS: readonly NavItemConfig[] = [
   },
   {
     label: "Vital Seed",
-    href: "/dashboard/vital-seed",
+    href: "/experience/giving",
     icon: Heart,
     match: ["/dashboard/vital-seed", "/giving", "/experience/giving"],
   },

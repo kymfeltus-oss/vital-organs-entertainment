@@ -2,20 +2,29 @@
 
 import ExperienceDashboardBackdrop from "@/components/experience/dashboard/ExperienceDashboardBackdrop";
 import ExperienceDashboardContent from "@/components/experience/dashboard/ExperienceDashboardContent";
+import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
 type ExperienceDashboardDesktopViewProps = {
-  displayName: string;
+  profile: AttendeeProfileSnapshot;
+  onProfileChange: (profile: AttendeeProfileSnapshot) => void;
 };
 
 export default function ExperienceDashboardDesktopView({
-  displayName,
+  profile,
+  onProfileChange,
 }: ExperienceDashboardDesktopViewProps) {
   return (
-    <div className="relative hidden h-[100dvh] min-h-[100dvh] w-full overflow-x-hidden overflow-y-auto bg-brand-black md:block">
+    <div className="relative hidden h-dvh min-h-dvh w-full overflow-hidden bg-brand-black md:block">
       <ExperienceDashboardBackdrop variant="desktop" />
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-8 pt-2">
-        <ExperienceDashboardContent displayName={displayName} variant="desktop" />
+      <div data-dashboard-scroll="desktop" className="relative z-10 h-full w-full overflow-hidden pb-safe">
+        <div className="relative h-full min-h-0 w-full">
+          <ExperienceDashboardContent
+            profile={profile}
+            onProfileChange={onProfileChange}
+            variant="desktop"
+          />
+        </div>
       </div>
     </div>
   );

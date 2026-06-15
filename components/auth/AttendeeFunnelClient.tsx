@@ -41,6 +41,8 @@ export default function AttendeeFunnelClient({
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
   const [phoneTouched, setPhoneTouched] = useState(false);
@@ -64,6 +66,10 @@ export default function AttendeeFunnelClient({
   const handleCredentialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
+    if (activeTab === "signup" && (!firstName.trim() || !lastName.trim())) {
+      setError("First and last name are required.");
+      return;
+    }
 
     setStatus("submitting");
     setError(null);
@@ -77,6 +83,12 @@ export default function AttendeeFunnelClient({
           action: activeTab === "signup" ? "signup" : "login",
           email: email.trim().toLowerCase(),
           password,
+          ...(activeTab === "signup"
+            ? {
+                firstName: firstName.trim(),
+                lastName: lastName.trim(),
+              }
+            : {}),
         }),
       });
 
@@ -111,7 +123,11 @@ export default function AttendeeFunnelClient({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ action: "guest" }),
+        body: JSON.stringify({
+          action: "guest",
+          email: email.trim().toLowerCase(),
+          phone: normalizePhoneDigits(phone),
+        }),
       });
 
       const result = (await response.json()) as { success?: boolean; error?: string };
@@ -177,6 +193,40 @@ export default function AttendeeFunnelClient({
 
       {activeTab !== "guest" ? (
         <form onSubmit={(e) => void handleCredentialSubmit(e)} className="space-y-4">
+          {activeTab === "signup" ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-muted">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  autoComplete="given-name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="First name"
+                  className={gateFieldClass(false, false)}
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-muted">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  autoComplete="family-name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Last name"
+                  className={gateFieldClass(false, false)}
+                />
+              </div>
+            </div>
+          ) : null}
+
           <div>
             <label className="mb-1.5 block font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-muted">
               Email Address

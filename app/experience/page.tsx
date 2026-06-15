@@ -1,24 +1,31 @@
 import ExperienceAttendeeDashboard from "@/components/experience/dashboard/ExperienceAttendeeDashboard";
+import { hydrateAuthMetadataFromAttendee } from "@/lib/auth/sync-attendee-profile";
 import { getUserFromSession } from "@/lib/auth/session";
-import {
-  awakeningHeaderDisplayName,
-  firstNameFromEmail,
-} from "@/lib/experience/user-profile-display";
+import { fetchAttendeeProfileRecord } from "@/lib/experience/fetch-attendee-profile";
+import { buildAttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { AWAKENING_PRELOAD_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
 
 export const revalidate = 0;
 
 export default async function ExperienceHubPage() {
-  const user = await getUserFromSession();
-  const firstName = firstNameFromEmail(user?.email);
-  const displayName = awakeningHeaderDisplayName(firstName);
+  let user = await getUserFromSession();
+  let attendeeRecord = user ? await fetchAttendeeProfileRecord(user.id) : null;
+
+  if (user) {
+    user = await hydrateAuthMetadataFromAttendee(user);
+    if (!attendeeRecord) {
+      attendeeRecord = await fetchAttendeeProfileRecord(user.id);
+    }
+  }
+
+  const profile = buildAttendeeProfileSnapshot(user, attendeeRecord);
 
   return (
     <>
       {AWAKENING_PRELOAD_ASSETS.map((href) => (
         <link key={href} rel="preload" as="image" href={href} fetchPriority="high" />
       ))}
-      <ExperienceAttendeeDashboard displayName={displayName} />
+      <ExperienceAttendeeDashboard initialProfile={profile} />
     </>
   );
 }

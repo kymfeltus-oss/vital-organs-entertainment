@@ -5,6 +5,9 @@ import {
 
 export { HARVEST_GOAL_DOLLARS, formatHarvestCurrency };
 
+/** Full-bleed art for `/dashboard/vital-seed` and `/experience/giving`. */
+export const VITAL_SEED_PAGE_BACKGROUND = "/vital%20seed/main%20background.png";
+
 export type ContributionStatus = "paid" | "pending" | "processing";
 
 export type ContributionEntry = {

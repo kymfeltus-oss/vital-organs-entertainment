@@ -134,24 +134,6 @@ export function useProductionStore() {
 
   useEffect(() => {
     hydrateFromLastKnownGood();
-    // #region agent log
-    fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "baf5b9" },
-      body: JSON.stringify({
-        sessionId: "baf5b9",
-        runId: "post-fix",
-        hypothesisId: "HYDRATION",
-        location: "useProductionStore.ts:mount",
-        message: "Production store mounted after hydration",
-        data: {
-          hadCachedSnapshot: Boolean(loadLastKnownSnapshot()),
-          performanceNowMs: performance.now(),
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
     void refresh();
 
     if (shouldFreezePolling()) {

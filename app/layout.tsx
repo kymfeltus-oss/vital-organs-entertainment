@@ -8,10 +8,12 @@ const bebasNeue = Bebas_Neue({
   subsets: ["latin"],
   variable: "--font-bebas-neue",
   display: "swap",
+  adjustFontFallback: true,
+  fallback: ["Arial Narrow", "Arial", "sans-serif"],
 });
 
 const montserrat = Montserrat({
-  weight: ["400", "600"],
+  weight: ["400", "500", "600"],
   subsets: ["latin"],
   variable: "--font-montserrat",
   display: "swap",
@@ -24,6 +26,7 @@ const inter = Inter({
 });
 
 const oswald = Oswald({
+  weight: ["500", "600", "700"],
   subsets: ["latin"],
   variable: "--font-oswald",
   display: "swap",

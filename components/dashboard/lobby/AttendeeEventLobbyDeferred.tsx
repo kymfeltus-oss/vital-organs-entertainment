@@ -96,7 +96,7 @@ function FeatureCards({ href: ctaHref, disabled: ctaDisabled, label: ctaLabel }:
         title="Vital Seed Giving"
         description="Every gift has a frequency."
         button={
-          <FeatureCardButton href="/dashboard/vital-seed" label="Give Now" borderClass="border-[#B0267A]/75" />
+          <FeatureCardButton href="/experience/giving" label="Give Now" borderClass="border-[#B0267A]/75" />
         }
       />
       <FeatureCardShell

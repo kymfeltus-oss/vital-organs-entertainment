@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 export function PanelShell({
   children,
@@ -39,43 +39,10 @@ export function BrandIcon({
 }) {
   const [failed, setFailed] = useState(false);
 
-  const logIconMetrics = useCallback(
-    (el: HTMLImageElement | null) => {
-      if (!el?.complete || !el.naturalWidth) return;
-      // #region agent log
-      fetch("http://127.0.0.1:7473/ingest/ffaee9e4-347e-4ad6-ad91-0ba8a90fd11c", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Debug-Session-Id": "75e50a",
-        },
-        body: JSON.stringify({
-          sessionId: "75e50a",
-          runId: "icon-fix",
-          hypothesisId: "H1-H3",
-          location: "lobby-shared.tsx:BrandIcon",
-          message: "feature card icon rendered",
-          data: {
-            src,
-            naturalWidth: el.naturalWidth,
-            naturalHeight: el.naturalHeight,
-            clientWidth: el.clientWidth,
-            clientHeight: el.clientHeight,
-            targetSize: width,
-          },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
-    },
-    [src, width]
-  );
-
   if (failed) return <>{fallback}</>;
 
   return (
     <Image
-      ref={logIconMetrics}
       src={src}
       alt={alt}
       width={width}

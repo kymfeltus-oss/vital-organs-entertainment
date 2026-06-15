@@ -54,7 +54,7 @@ export default function ExperienceMobileNav({
 
         <button
           type="button"
-          onClick={() => router.push("/dashboard/vital-seed")}
+          onClick={() => router.push("/experience/giving")}
           className="flex h-full flex-col items-center justify-center"
         >
           <span className="font-ui text-[10px] font-black tracking-widest text-zinc-500">
