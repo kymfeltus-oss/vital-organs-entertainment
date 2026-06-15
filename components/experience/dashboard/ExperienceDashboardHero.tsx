@@ -48,27 +48,46 @@ export default function ExperienceDashboardHero({
         ctaRef={ctaRef}
       />
 
-      <div className="dashboard-hero-topbar pointer-events-auto w-full">
+      <div
+        className={cn(
+          "dashboard-hero-topbar pointer-events-auto w-full",
+          isMobile && "dashboard-hero-topbar--mobile",
+        )}
+      >
         <div className="dashboard-hero-welcome mx-auto text-center">
-          <div className="dashboard-hero-welcome-lines">
+          <div
+            className={cn(
+              "dashboard-hero-welcome-lines",
+              isMobile && "dashboard-hero-welcome-lines--plain",
+            )}
+          >
             <h1 className="dashboard-hero-welcome-title">{welcomeLine}</h1>
           </div>
           <p className="dashboard-hero-tagline">Tap Into The Awakening</p>
         </div>
 
         <div
-          className="dashboard-hero-controls absolute z-50 flex items-center gap-1.5"
-          style={{
-            top: "max(0.25rem, env(safe-area-inset-top))",
-            right: "max(0.5rem, env(safe-area-inset-right))",
-          }}
+          className={cn(
+            "dashboard-hero-controls z-50 flex items-center",
+            isMobile
+              ? "dashboard-hero-controls--mobile"
+              : "absolute gap-1.5",
+          )}
+          style={
+            isMobile
+              ? undefined
+              : {
+                  top: "max(0.35rem, env(safe-area-inset-top))",
+                  right: "max(0.75rem, env(safe-area-inset-right))",
+                }
+          }
         >
           <ProfileOrbEditor
             profile={profile}
             onProfileChange={onProfileChange}
             size={isMobile ? 36 : "sm"}
           />
-          <AwakeningMenuButton />
+          {!isMobile ? <AwakeningMenuButton /> : null}
         </div>
       </div>
 
