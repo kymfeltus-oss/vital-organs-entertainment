@@ -8,6 +8,7 @@ import ProfileOrbEditor from "@/components/profile/ProfileOrbEditor";
 import ExperienceDashboardCardRow from "@/components/experience/dashboard/ExperienceDashboardCardRow";
 import ExperienceDashboardHeroMeasurer from "@/components/experience/dashboard/ExperienceDashboardHeroMeasurer";
 import ExperienceDashboardMobileCardHits from "@/components/experience/dashboard/ExperienceDashboardMobileCardHits";
+import ExperienceDashboardMobileHeroLayout from "@/components/experience/dashboard/ExperienceDashboardMobileHeroLayout";
 import { AWAKENING_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
 import { normalizeBackdropVariant } from "@/lib/experience/dashboard-beam-position";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
@@ -31,6 +32,7 @@ export default function ExperienceDashboardHero({
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
   const headlineBlockRef = useRef<HTMLDivElement>(null);
+  const mobileSpacerRef = useRef<HTMLDivElement>(null);
 
   return (
     <section
@@ -49,6 +51,8 @@ export default function ExperienceDashboardHero({
           ctaRef={ctaRef}
         />
       ) : null}
+
+      {isMobile ? <ExperienceDashboardMobileHeroLayout spacerRef={mobileSpacerRef} /> : null}
 
       {!isMobile ? (
         <div
@@ -80,7 +84,13 @@ export default function ExperienceDashboardHero({
         </div>
       ) : null}
 
-      {isMobile ? <div className="dashboard-hero-mobile-scroll-offset" aria-hidden /> : null}
+      {isMobile ? (
+        <div
+          ref={mobileSpacerRef}
+          className="dashboard-hero-mobile-scroll-offset"
+          aria-hidden
+        />
+      ) : null}
 
       <div
         ref={headlineBlockRef}
@@ -89,7 +99,7 @@ export default function ExperienceDashboardHero({
           isMobile && "dashboard-hero-headline-block--mobile-scroll",
         )}
       >
-        <div className="dashboard-hero-copy-stack">
+        <div className={cn("dashboard-hero-copy-stack", isMobile && "dashboard-hero-copy-stack--mobile")}>
           <div className="dashboard-hero-headline-anchor relative mx-auto px-2">
             <h2 ref={headlineRef} className="dashboard-hero-headline">
               THE AWAKENING IS OPEN
@@ -104,12 +114,17 @@ export default function ExperienceDashboardHero({
             ref={ctaRef}
             className={cn(
               "dashboard-hero-cta-images mx-auto flex w-full flex-col items-center px-2",
-              isMobile ? "gap-1.5" : "gap-2 sm:flex-row sm:items-center sm:justify-center sm:gap-3",
+              isMobile
+                ? "dashboard-hero-cta-images--mobile gap-1"
+                : "gap-2 sm:flex-row sm:items-center sm:justify-center sm:gap-3",
             )}
           >
             <Link
               href={AWAKENING_ASSETS.routes.enterExperience}
-              className="dashboard-hero-cta-link dashboard-hero-cta-link--enter touch-target"
+              className={cn(
+                "dashboard-hero-cta-link dashboard-hero-cta-link--enter",
+                !isMobile && "touch-target",
+              )}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -124,7 +139,10 @@ export default function ExperienceDashboardHero({
 
             <Link
               href={AWAKENING_ASSETS.routes.watchStory}
-              className="dashboard-hero-cta-link dashboard-hero-cta-link--watch touch-target"
+              className={cn(
+                "dashboard-hero-cta-link dashboard-hero-cta-link--watch",
+                !isMobile && "touch-target",
+              )}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
