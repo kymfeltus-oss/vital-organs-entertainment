@@ -50,50 +50,37 @@ export default function ExperienceDashboardHero({
         />
       ) : null}
 
-      <div
-        className={cn(
-          "dashboard-hero-topbar pointer-events-auto w-full",
-          isMobile && "dashboard-hero-topbar--mobile",
-        )}
-      >
-        <div className="dashboard-hero-welcome mx-auto text-center">
-          <div
-            className={cn(
-              "dashboard-hero-welcome-lines",
-              isMobile && "dashboard-hero-welcome-lines--plain",
-            )}
-          >
-            <h1 className="dashboard-hero-welcome-title">{welcomeLine}</h1>
-          </div>
-          <p className="dashboard-hero-tagline">Tap Into The Awakening</p>
-        </div>
-
+      {!isMobile ? (
         <div
           className={cn(
-            "dashboard-hero-controls z-50 flex items-center",
-            isMobile
-              ? "dashboard-hero-controls--mobile"
-              : "absolute gap-1.5",
+            "dashboard-hero-topbar pointer-events-auto w-full",
           )}
-          style={
-            isMobile
-              ? undefined
-              : {
-                  top: "max(0.35rem, env(safe-area-inset-top))",
-                  right: "max(0.75rem, env(safe-area-inset-right))",
-                }
-          }
         >
-          <ProfileOrbEditor
-            profile={profile}
-            onProfileChange={onProfileChange}
-            size={isMobile ? 36 : "sm"}
-          />
-          {!isMobile ? <AwakeningMenuButton /> : null}
-        </div>
-      </div>
+          <div className="dashboard-hero-welcome mx-auto text-center">
+            <div className="dashboard-hero-welcome-lines">
+              <h1 className="dashboard-hero-welcome-title">{welcomeLine}</h1>
+            </div>
+            <p className="dashboard-hero-tagline">Tap Into The Awakening</p>
+          </div>
 
-      {isMobile ? <div className="dashboard-hero-mobile-topbar-spacer" aria-hidden /> : null}
+          <div
+            className="dashboard-hero-controls absolute z-50 flex items-center gap-1.5"
+            style={{
+              top: "max(0.35rem, env(safe-area-inset-top))",
+              right: "max(0.75rem, env(safe-area-inset-right))",
+            }}
+          >
+            <ProfileOrbEditor
+              profile={profile}
+              onProfileChange={onProfileChange}
+              size="sm"
+            />
+            <AwakeningMenuButton />
+          </div>
+        </div>
+      ) : null}
+
+      {isMobile ? <div className="dashboard-hero-mobile-scroll-offset" aria-hidden /> : null}
 
       <div
         ref={headlineBlockRef}

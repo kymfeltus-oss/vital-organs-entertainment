@@ -2,6 +2,7 @@
 
 import ExperienceDashboardBackdrop from "@/components/experience/dashboard/ExperienceDashboardBackdrop";
 import ExperienceDashboardContent from "@/components/experience/dashboard/ExperienceDashboardContent";
+import ExperienceDashboardMobileFixedChrome from "@/components/experience/dashboard/ExperienceDashboardMobileFixedChrome";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
 type ExperienceDashboardMobileViewProps = {
@@ -19,6 +20,11 @@ export default function ExperienceDashboardMobileView({
       className="relative flex h-dvh min-h-dvh w-full max-w-[100vw] flex-col overflow-hidden bg-brand-black md:hidden"
     >
       <ExperienceDashboardBackdrop variant="mobile" />
+
+      <ExperienceDashboardMobileFixedChrome
+        profile={profile}
+        onProfileChange={onProfileChange}
+      />
 
       <div
         data-dashboard-scroll="mobile"
