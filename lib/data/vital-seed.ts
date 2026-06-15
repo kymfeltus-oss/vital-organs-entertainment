@@ -5,12 +5,12 @@ import {
 
 export { HARVEST_GOAL_DOLLARS, formatHarvestCurrency };
 
-/** Desktop / landscape art for Vital Seed giving pages (1536×1024). */
-export const VITAL_SEED_PAGE_BACKGROUND = "/vital%20seed/main%20background.png";
+/** Desktop art for Vital Seed giving pages (1490×1055). */
+export const VITAL_SEED_PAGE_BACKGROUND = "/images/vital-seed/desktop-background.png";
 
-/** Mobile portrait art (864×1821) — avoids cropping the desktop plate on phones. */
+/** Mobile portrait art (941×1672). */
 export const VITAL_SEED_PAGE_BACKGROUND_MOBILE =
-  "/vital%20seed/main%20background%20mobile.png";
+  "/images/vital-seed/mobile-background.png";
 
 export type ContributionStatus = "paid" | "pending" | "processing";
 

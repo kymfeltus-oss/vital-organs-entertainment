@@ -2198,23 +2198,23 @@ html {
   min-height: 100dvh;
 }
 
-.vital-giving-stage__mobile {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
 .vital-giving-artboard {
   position: relative;
-  width: min(100vw, calc(100dvh * 1536 / 1024), 1536px);
-  height: min(100dvh, calc(100vw * 1024 / 1536));
   max-width: 100vw;
   max-height: 100dvh;
-  aspect-ratio: 1536 / 1024;
   container-type: inline-size;
+}
+
+.vital-giving-artboard--desktop {
+  width: min(100vw, calc(100dvh * 1490 / 1055), 1490px);
+  height: min(100dvh, calc(100vw * 1055 / 1490));
+  aspect-ratio: 1490 / 1055;
+}
+
+.vital-giving-artboard--mobile {
+  width: min(100vw, calc(100dvh * 941 / 1672), 941px);
+  height: min(100dvh, calc(100vw * 1672 / 941));
+  aspect-ratio: 941 / 1672;
 }
 
 .vital-giving-artboard__img {
@@ -2230,7 +2230,14 @@ html {
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  font-size: calc(100cqw * 14 / 1536);
+}
+
+.vital-giving-overlay--desktop {
+  font-size: calc(100cqw * 14 / 1490);
+}
+
+.vital-giving-overlay--mobile {
+  font-size: calc(100cqw * 14 / 941);
 }
 
 .vital-giving-overlay > * {
@@ -2249,23 +2256,47 @@ html {
   letter-spacing: 0.22em;
   line-height: 1.1;
   text-transform: uppercase;
-  color: #ffffff;
+  color: #bdf4ff;
+}
+
+.vital-giving-icon {
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.vital-giving-info-icon {
+  width: calc(100cqw * 18 / 1490);
+  height: calc(100cqw * 18 / 1490);
+}
+
+.vital-giving-overlay--mobile .vital-giving-info-icon {
+  width: calc(100cqw * 22 / 941);
+  height: calc(100cqw * 22 / 941);
 }
 
 .vital-giving-hero-main {
   font-family: var(--font-inter), sans-serif;
-  font-size: calc(100cqw * 62 / 1536);
+  font-size: calc(100cqw * 62 / 1490);
   font-weight: 700;
   line-height: 1;
   color: #ffffff;
 }
 
+.vital-giving-overlay--mobile .vital-giving-hero-main {
+  font-size: calc(100cqw * 52 / 941);
+}
+
 .vital-giving-hero-secondary {
   font-family: var(--font-inter), sans-serif;
-  font-size: calc(100cqw * 32 / 1536);
+  font-size: calc(100cqw * 32 / 1490);
   font-weight: 700;
   line-height: 1;
   color: #00c8ff;
+}
+
+.vital-giving-overlay--mobile .vital-giving-hero-secondary {
+  font-size: calc(100cqw * 28 / 941);
 }
 
 .vital-giving-quick-btn {
@@ -2273,47 +2304,99 @@ html {
   background: transparent;
   padding: 0;
   font-family: var(--font-inter), sans-serif;
-  font-size: calc(100cqw * 24 / 1536);
+  font-size: calc(100cqw * 24 / 1490);
   font-weight: 600;
   line-height: 1;
   color: #ffffff;
   cursor: pointer;
 }
 
+.vital-giving-overlay--mobile .vital-giving-quick-btn {
+  font-size: calc(100cqw * 20 / 941);
+}
+
 .vital-giving-seed-label {
   font-family: var(--font-inter), sans-serif;
-  font-size: calc(100cqw * 18 / 1536);
+  font-size: calc(100cqw * 18 / 1490);
   color: #b7c1d9;
+}
+
+.vital-giving-overlay--mobile .vital-giving-seed-label {
+  font-size: calc(100cqw * 16 / 941);
 }
 
 .vital-giving-pink-amount {
   font-family: var(--font-inter), sans-serif;
-  font-size: calc(100cqw * 32 / 1536);
+  font-size: calc(100cqw * 32 / 1490);
   font-weight: 700;
   line-height: 1;
   color: #ff2ea6;
 }
 
+.vital-giving-overlay--mobile .vital-giving-pink-amount {
+  font-size: calc(100cqw * 28 / 941);
+}
+
 .vital-giving-seed-edit {
-  width: calc(100cqw * 18 / 1536);
-  height: calc(100cqw * 18 / 1536);
-  color: #b7c1d9;
+  width: calc(100cqw * 18 / 1490);
+  height: calc(100cqw * 18 / 1490);
+}
+
+.vital-giving-overlay--mobile .vital-giving-seed-edit {
+  width: calc(100cqw * 20 / 941);
+  height: calc(100cqw * 20 / 941);
 }
 
 .vital-giving-body {
   max-width: 28%;
   white-space: normal;
   font-family: var(--font-inter), sans-serif;
-  font-size: calc(100cqw * 18 / 1536);
+  font-size: calc(100cqw * 18 / 1490);
   line-height: 1.45;
   color: #ffffff;
 }
 
+.vital-giving-overlay--mobile .vital-giving-body {
+  max-width: 84%;
+  font-size: calc(100cqw * 16 / 941);
+}
+
+.vital-giving-scripture-quote {
+  max-width: 32%;
+  white-space: normal;
+  font-family: var(--font-inter), sans-serif;
+  font-size: calc(100cqw * 15 / 1490);
+  line-height: 1.35;
+  color: #ffffff;
+}
+
+.vital-giving-overlay--mobile .vital-giving-scripture-quote {
+  max-width: 84%;
+  font-size: calc(100cqw * 14 / 941);
+}
+
 .vital-giving-scripture {
   font-family: var(--font-inter), sans-serif;
-  font-size: calc(100cqw * 14 / 1536);
+  font-size: calc(100cqw * 14 / 1490);
   font-style: italic;
   color: #b7c1d9;
+}
+
+.vital-giving-overlay--mobile .vital-giving-scripture {
+  font-size: calc(100cqw * 13 / 941);
+}
+
+.vital-giving-wave-wrap {
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.vital-giving-wave-divider {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
 }
 
 .vital-giving-calculator-amount {
@@ -2424,19 +2507,25 @@ html {
   min-height: 0;
 }
 
-.vital-giving-stripe-panel .vital-giving-muted {
-  margin: 0;
-  font-size: clamp(9px, 9cqh, 13px);
+.vital-giving-stripe-shield {
+  width: clamp(18px, 12cqh, 28px);
+  height: clamp(18px, 12cqh, 28px);
+  margin-bottom: 0.15em;
 }
 
-.vital-giving-stripe-panel .vital-giving-stripe-logo {
-  margin: 0.1em 0;
+.vital-giving-stripe-panel .vital-giving-muted {
+  margin: 0;
   font-family: var(--font-inter), sans-serif;
-  font-weight: 700;
-  font-style: italic;
-  letter-spacing: -0.04em;
-  color: #635bff;
-  font-size: clamp(16px, 22cqh, 36px);
+  font-size: clamp(9px, 9cqh, 13px);
+  color: #b7c1d9;
+}
+
+.vital-giving-stripe-logo-img {
+  display: block;
+  width: clamp(56px, 28cqh, 96px);
+  height: auto;
+  margin: 0.1em 0;
+  object-fit: contain;
 }
 
 .vital-giving-stripe-panel .vital-giving-stripe-tag {
@@ -2448,11 +2537,21 @@ html {
 }
 
 .vital-giving-stripe-panel .vital-giving-stripe-foot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35em;
   align-self: start;
   margin: 0;
   font-family: var(--font-inter), sans-serif;
   font-size: clamp(8px, 9cqh, 12px);
   color: #b7c1d9;
+}
+
+.vital-giving-stripe-lock {
+  width: clamp(10px, 8cqh, 14px);
+  height: clamp(10px, 8cqh, 14px);
+  flex-shrink: 0;
 }
 
 .vital-giving-keypad-btn {
@@ -2465,57 +2564,115 @@ html {
   background: transparent;
   padding: 0;
   font-family: var(--font-inter), sans-serif;
-  font-size: calc(100cqw * 22 / 1536);
+  font-size: calc(100cqw * 22 / 1490);
   font-weight: 500;
   line-height: 1;
   color: #ffffff;
   cursor: pointer;
 }
 
+.vital-giving-keypad-backspace {
+  width: 55%;
+  height: 55%;
+  max-width: 1.4em;
+  max-height: 1.4em;
+}
+
 .vital-giving-metric-icon {
-  width: calc(100cqw * 16 / 1536);
-  height: calc(100cqw * 16 / 1536);
-  color: #00c8ff;
+  width: calc(100cqw * 16 / 1490);
+  height: calc(100cqw * 16 / 1490);
+}
+
+.vital-giving-overlay--mobile .vital-giving-metric-icon {
+  width: calc(100cqw * 18 / 941);
+  height: calc(100cqw * 18 / 941);
 }
 
 .vital-giving-metric-label {
   font-family: var(--font-inter), sans-serif;
-  font-size: calc(100cqw * 13 / 1536);
+  font-size: calc(100cqw * 13 / 1490);
   color: #b7c1d9;
+}
+
+.vital-giving-overlay--mobile .vital-giving-metric-label {
+  font-size: calc(100cqw * 12 / 941);
 }
 
 .vital-giving-metric-value {
   font-family: var(--font-inter), sans-serif;
-  font-size: calc(100cqw * 15 / 1536);
+  font-size: calc(100cqw * 15 / 1490);
   font-weight: 700;
   color: #ffffff;
 }
 
+.vital-giving-overlay--mobile .vital-giving-metric-value {
+  font-size: calc(100cqw * 14 / 941);
+}
+
 .vital-giving-activity-icon {
-  width: calc(100cqw * 14 / 1536);
-  height: calc(100cqw * 14 / 1536);
-  color: #ff2ea6;
+  width: calc(100cqw * 14 / 1490);
+  height: calc(100cqw * 14 / 1490);
+}
+
+.vital-giving-overlay--mobile .vital-giving-activity-icon {
+  width: calc(100cqw * 16 / 941);
+  height: calc(100cqw * 16 / 941);
+}
+
+.vital-giving-view-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: calc(100cqw * 12 / 1490);
+  font-weight: 600;
+  color: #1677ff;
+  cursor: pointer;
+}
+
+.vital-giving-overlay--mobile .vital-giving-view-all {
+  font-size: calc(100cqw * 11 / 941);
+}
+
+.vital-giving-view-all-chevron {
+  width: 0.95em;
+  height: 0.95em;
 }
 
 .vital-giving-activity-title {
   font-family: var(--font-inter), sans-serif;
-  font-size: calc(100cqw * 14 / 1536);
+  font-size: calc(100cqw * 14 / 1490);
   font-weight: 600;
   color: #ffffff;
 }
 
+.vital-giving-overlay--mobile .vital-giving-activity-title {
+  font-size: calc(100cqw * 13 / 941);
+}
+
 .vital-giving-activity-date {
   font-family: var(--font-inter), sans-serif;
-  font-size: calc(100cqw * 12 / 1536);
+  font-size: calc(100cqw * 12 / 1490);
   color: #b7c1d9;
+}
+
+.vital-giving-overlay--mobile .vital-giving-activity-date {
+  font-size: calc(100cqw * 11 / 941);
 }
 
 .vital-giving-activity-amount {
   text-align: right;
   font-family: var(--font-inter), sans-serif;
-  font-size: calc(100cqw * 14 / 1536);
+  font-size: calc(100cqw * 14 / 1490);
   font-weight: 700;
   color: #00c8ff;
+}
+
+.vital-giving-overlay--mobile .vital-giving-activity-amount {
+  font-size: calc(100cqw * 13 / 941);
 }
 
 .vital-giving-cta-zone {
@@ -2568,12 +2725,15 @@ html {
 .vital-giving-cta-heart {
   width: 0.95em;
   height: 0.95em;
-  color: #ff2ea6;
 }
 
 .vital-giving-inline-error {
   white-space: nowrap;
-  font-size: calc(100cqw * 12 / 1536);
+  font-size: calc(100cqw * 12 / 1490);
   color: #ff2ea6;
   pointer-events: none;
+}
+
+.vital-giving-overlay--mobile .vital-giving-inline-error {
+  font-size: calc(100cqw * 11 / 941);
 }
