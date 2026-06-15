@@ -32,14 +32,13 @@ export default function ExperienceDashboardHero({
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
   const headlineBlockRef = useRef<HTMLDivElement>(null);
-  const mobileSpacerRef = useRef<HTMLDivElement>(null);
 
   return (
     <section
       className={cn(
         "dashboard-hero dashboard-hero--pic1 pointer-events-none z-10 mx-auto w-full bg-transparent",
         isMobile
-          ? "dashboard-hero--mobile relative min-h-dvh px-2"
+          ? "dashboard-hero--mobile absolute inset-0 h-dvh max-h-dvh overflow-hidden px-2"
           : "absolute inset-0 overflow-hidden px-8",
       )}
       aria-label="Experience dashboard hero"
@@ -52,7 +51,9 @@ export default function ExperienceDashboardHero({
         />
       ) : null}
 
-      {isMobile ? <ExperienceDashboardMobileHeroLayout spacerRef={mobileSpacerRef} /> : null}
+      {isMobile ? (
+        <ExperienceDashboardMobileHeroLayout headlineBlockRef={headlineBlockRef} />
+      ) : null}
 
       {!isMobile ? (
         <div
@@ -84,19 +85,11 @@ export default function ExperienceDashboardHero({
         </div>
       ) : null}
 
-      {isMobile ? (
-        <div
-          ref={mobileSpacerRef}
-          className="dashboard-hero-mobile-scroll-offset"
-          aria-hidden
-        />
-      ) : null}
-
       <div
         ref={headlineBlockRef}
         className={cn(
           "dashboard-hero-headline-block pointer-events-auto text-center",
-          isMobile && "dashboard-hero-headline-block--mobile-scroll",
+          isMobile && "dashboard-hero-headline-block--mobile-fixed",
         )}
       >
         <div className={cn("dashboard-hero-copy-stack", isMobile && "dashboard-hero-copy-stack--mobile")}>

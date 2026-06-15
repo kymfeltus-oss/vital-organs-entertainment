@@ -17,7 +17,7 @@ export default function ExperienceDashboardMobileView({
   return (
     <div
       data-dashboard-shell="mobile"
-      className="relative flex h-dvh min-h-dvh w-full max-w-[100vw] flex-col overflow-hidden bg-brand-black md:hidden"
+      className="relative flex h-dvh max-h-dvh min-h-0 w-full max-w-[100vw] flex-col overflow-hidden overscroll-none bg-brand-black md:hidden"
     >
       <ExperienceDashboardBackdrop variant="mobile" />
 
@@ -27,16 +27,14 @@ export default function ExperienceDashboardMobileView({
       />
 
       <div
-        data-dashboard-scroll="mobile"
-        className="relative z-10 flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto pb-safe"
+        data-dashboard-layer="mobile"
+        className="relative z-10 h-full min-h-0 flex-1 overflow-hidden overscroll-none"
       >
-        <div className="relative min-h-dvh w-full flex-1">
-          <ExperienceDashboardContent
-            profile={profile}
-            onProfileChange={onProfileChange}
-            variant="mobile"
-          />
-        </div>
+        <ExperienceDashboardContent
+          profile={profile}
+          onProfileChange={onProfileChange}
+          variant="mobile"
+        />
       </div>
     </div>
   );

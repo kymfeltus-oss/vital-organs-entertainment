@@ -3,32 +3,35 @@
 import { useLayoutEffect, type RefObject } from "react";
 
 type ExperienceDashboardMobileHeroLayoutProps = {
-  spacerRef: RefObject<HTMLDivElement | null>;
+  headlineBlockRef: RefObject<HTMLDivElement | null>;
 };
 
-/** Size the mobile scroll spacer from the rendered backdrop — keeps copy below logo/welcome art. */
+/** Pin mobile hero copy below the backdrop logo band — fixed viewport, no scroll. */
 export default function ExperienceDashboardMobileHeroLayout({
-  spacerRef,
+  headlineBlockRef,
 }: ExperienceDashboardMobileHeroLayoutProps) {
   useLayoutEffect(() => {
     let cancelled = false;
 
     const measure = () => {
       if (cancelled) return;
-      const spacer = spacerRef.current;
+      const block = headlineBlockRef.current;
       const img = document.querySelector<HTMLImageElement>('[data-backdrop-variant="mobile"]');
-      if (!spacer || !img || !img.complete || img.naturalWidth === 0 || img.clientHeight === 0) {
+      if (!block || !img || !img.complete || img.naturalWidth === 0 || img.clientHeight === 0) {
         return;
       }
 
       const rect = img.getBoundingClientRect();
-      /** Baked logo + welcome band occupies ~top 24% of visible mobile plate */
       const logoBandFraction = 0.24;
       const extraClearancePx = 28;
-      const spacerHeight = Math.round(rect.top + rect.height * logoBandFraction + extraClearancePx);
+      const topPx = Math.round(rect.top + rect.height * logoBandFraction + extraClearancePx);
 
-      spacer.style.height = `${spacerHeight}px`;
-      spacer.dataset.mobileHeroSpaced = "true";
+      block.style.setProperty("position", "absolute", "important");
+      block.style.setProperty("top", `${topPx}px`, "important");
+      block.style.setProperty("left", "50%", "important");
+      block.style.setProperty("transform", "translate3d(-50%, 0, 0)", "important");
+      block.style.setProperty("width", "100%", "important");
+      block.dataset.mobileHeroPlaced = "true";
     };
 
     const onResize = () => measure();
@@ -46,7 +49,7 @@ export default function ExperienceDashboardMobileHeroLayout({
       window.removeEventListener("resize", onResize);
       img?.removeEventListener("load", onLoad);
     };
-  }, [spacerRef]);
+  }, [headlineBlockRef]);
 
   return null;
 }

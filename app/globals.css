@@ -1786,14 +1786,19 @@ html {
     --dash-mobile-cta-row-max: min(88vw, 11rem);
     --dash-mobile-backdrop-top-gap: max(4.5rem, calc(env(safe-area-inset-top) + 3.5rem));
     --dash-mobile-backdrop-y: 20%;
-    /* Clear logo + welcome band baked into the mobile backdrop art */
-    /* Fallback until backdrop measurer runs */
-    --dash-mobile-scroll-offset: clamp(14rem, 48vh, 19rem);
   }
 
-  .dashboard-hero-mobile-scroll-offset {
-    height: var(--dash-mobile-scroll-offset);
-    flex-shrink: 0;
+  [data-dashboard-layer="mobile"] {
+    overflow: hidden !important;
+    overscroll-behavior: none;
+  }
+
+  .dashboard-hero--mobile {
+    position: absolute;
+    inset: 0;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
   }
 
   .dashboard-mobile-fixed-chrome {
@@ -1830,20 +1835,24 @@ html {
     letter-spacing: 0.22em;
   }
 
-  .dashboard-hero-headline-block--mobile-scroll {
-    position: relative;
-    top: auto !important;
-    left: auto !important;
-    transform: none !important;
-    visibility: visible;
+  .dashboard-hero-headline-block--mobile-fixed {
+    position: absolute;
+    left: 50%;
+    top: clamp(14rem, 48vh, 19rem);
+    z-index: 30;
     width: 100%;
     max-width: 100%;
     padding-inline: 0.75rem;
-    margin-top: 0;
-    will-change: auto;
+    transform: translate3d(-50%, 0, 0);
+    visibility: hidden;
+    will-change: top;
   }
 
-  .dashboard-hero-headline-block--mobile-scroll::before {
+  .dashboard-hero-headline-block--mobile-fixed[data-mobile-hero-placed="true"] {
+    visibility: visible;
+  }
+
+  .dashboard-hero-headline-block--mobile-fixed::before {
     display: none;
   }
 
