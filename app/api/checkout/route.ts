@@ -95,8 +95,8 @@ export async function POST(request: NextRequest) {
         email: buyer.email,
         amount_cents: String(amountInCents),
       },
-      success_url: `${appUrl}/dashboard/vital-seed?success=true`,
-      cancel_url: `${appUrl}/dashboard/vital-seed?canceled=true`,
+      success_url: `${appUrl}/experience/giving?success=true`,
+      cancel_url: `${appUrl}/experience/giving?canceled=true`,
     });
 
     const supabase = getSupabaseAdmin();

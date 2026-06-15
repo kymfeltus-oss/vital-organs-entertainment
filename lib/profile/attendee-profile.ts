@@ -85,7 +85,7 @@ export function snapshotFromProfileFields(input: {
             last_name: input.lastName,
             avatar_url: input.avatarUrl,
           },
-        } as User)
+        } as unknown as User)
       : null,
     { firstName: input.firstName, lastName: input.lastName },
   );

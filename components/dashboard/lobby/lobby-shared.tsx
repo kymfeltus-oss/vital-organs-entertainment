@@ -50,7 +50,6 @@ export function BrandIcon({
       className={className}
       style={{ width: "auto", height: "auto", maxWidth: width, maxHeight: height }}
       onError={() => setFailed(true)}
-      onLoad={(e) => logIconMetrics(e.currentTarget)}
     />
   );
 }
