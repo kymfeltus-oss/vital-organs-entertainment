@@ -1164,3 +1164,385 @@ html {
     animation: none !important;
   }
 }
+
+/* ── ProfileOrb: futuristic identity beacon ── */
+
+@keyframes profileOrbBreathe {
+  0%,
+  100% {
+    box-shadow:
+      0 0 10px rgba(0, 168, 255, 0.32),
+      0 0 18px rgba(255, 0, 140, 0.22);
+  }
+  50% {
+    box-shadow:
+      0 0 18px rgba(0, 168, 255, 0.52),
+      0 0 30px rgba(255, 0, 140, 0.4);
+  }
+}
+
+@keyframes profileOrbNotificationPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.88;
+  }
+}
+
+.profile-orb {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5px;
+  border: 0;
+  border-radius: 9999px;
+  cursor: default;
+  animation: profileOrbBreathe 4s ease-in-out infinite;
+  will-change: box-shadow;
+  transition:
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
+}
+
+.profile-orb--interactive {
+  cursor: pointer;
+}
+
+.profile-orb--interactive:hover:not(:disabled) {
+  box-shadow:
+    0 0 20px rgba(0, 168, 255, 0.62),
+    0 0 34px rgba(255, 0, 140, 0.48);
+  transform: scale(1.03);
+}
+
+.profile-orb--interactive:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.profile-orb--active {
+  box-shadow:
+    0 0 22px rgba(0, 168, 255, 0.72),
+    0 0 38px rgba(255, 0, 140, 0.58);
+  transform: scale(1.04);
+}
+
+.profile-orb-surface {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: #0b090a;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.profile-orb-initials {
+  position: relative;
+  z-index: 1;
+  font-size: calc(var(--profile-orb-size, 52px) * 0.34);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #ffffff;
+  line-height: 1;
+  user-select: none;
+}
+
+.profile-orb-reflection {
+  pointer-events: none;
+  position: absolute;
+  top: 7%;
+  left: 14%;
+  z-index: 2;
+  height: 30%;
+  width: 58%;
+  border-radius: 9999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.24) 0%,
+    rgba(255, 255, 255, 0.06) 45%,
+    transparent 100%
+  );
+}
+
+.profile-orb-notification {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  height: 24%;
+  width: 24%;
+  min-height: 9px;
+  min-width: 9px;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-orb-notification-core {
+  height: 100%;
+  width: 100%;
+  border-radius: 9999px;
+  border: 2px solid #0b090a;
+  background: #ff008c;
+  box-shadow:
+    0 0 6px #ff008c,
+    0 0 12px rgba(255, 0, 140, 0.85);
+  animation: profileOrbNotificationPulse 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-orb,
+  .profile-orb-notification-core {
+    animation: none;
+    will-change: auto;
+  }
+
+  .profile-orb--interactive:hover:not(:disabled),
+  .profile-orb--active {
+    transform: none;
+  }
+}
+
+/* ── AwakeningMenuButton: neon bars + glass slide menu ── */
+
+.awakening-menu-button {
+  position: relative;
+  z-index: 110;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.awakening-menu-button:hover .awakening-menu-bar {
+  background: #ffffff;
+  box-shadow:
+    0 0 8px rgba(30, 64, 175, 1),
+    0 0 14px rgba(176, 38, 122, 0.95),
+    -2px 0 6px rgba(30, 64, 175, 0.95),
+    2px 0 6px rgba(176, 38, 122, 0.9);
+  filter: brightness(1.15);
+}
+
+.awakening-menu-button:active {
+  transform: scale(0.96);
+}
+
+.awakening-menu-icon {
+  position: relative;
+  display: block;
+  width: 26px;
+  height: 18px;
+}
+
+.awakening-menu-bar {
+  position: absolute;
+  left: 0;
+  height: 3px;
+  border-radius: 9999px;
+  background: #ffffff;
+  box-shadow:
+    0 0 5px rgba(30, 64, 175, 0.85),
+    0 0 9px rgba(176, 38, 122, 0.7),
+    -1px 0 4px rgba(30, 64, 175, 0.75),
+    1px 0 4px rgba(176, 38, 122, 0.7);
+  transition:
+    transform 0.38s cubic-bezier(0.33, 1, 0.32, 1),
+    top 0.38s cubic-bezier(0.33, 1, 0.32, 1),
+    bottom 0.38s cubic-bezier(0.33, 1, 0.32, 1),
+    width 0.38s cubic-bezier(0.33, 1, 0.32, 1),
+    opacity 0.24s ease,
+    box-shadow 0.25s ease,
+    filter 0.25s ease;
+}
+
+.awakening-menu-bar--1 {
+  top: 0;
+  width: 100%;
+}
+
+.awakening-menu-bar--2 {
+  top: 50%;
+  width: 75%;
+  transform: translateY(-50%);
+}
+
+.awakening-menu-bar--3 {
+  bottom: 0;
+  width: 100%;
+}
+
+.awakening-menu-icon[data-open="true"] .awakening-menu-bar--1 {
+  top: 50%;
+  width: 100%;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.awakening-menu-icon[data-open="true"] .awakening-menu-bar--2 {
+  opacity: 0;
+  transform: translateY(-50%) scaleX(0);
+}
+
+.awakening-menu-icon[data-open="true"] .awakening-menu-bar--3 {
+  top: 50%;
+  bottom: auto;
+  width: 100%;
+  transform: translateY(-50%) rotate(-45deg);
+}
+
+.awakening-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  border: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.62);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.32s ease;
+}
+
+.awakening-menu-backdrop--open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.awakening-menu-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 105;
+  display: flex;
+  height: 100dvh;
+  width: min(88vw, 21rem);
+  flex-direction: column;
+  border-left: 1px solid rgba(30, 64, 175, 0.42);
+  background: rgba(11, 9, 10, 0.94);
+  box-shadow:
+    -12px 0 40px rgba(0, 0, 0, 0.55),
+    -4px 0 24px rgba(30, 64, 175, 0.22),
+    -2px 0 18px rgba(176, 38, 122, 0.18);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  padding-top: max(1rem, env(safe-area-inset-top));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  transform: translateX(104%);
+  transition: transform 0.42s cubic-bezier(0.33, 1, 0.32, 1);
+  will-change: transform;
+}
+
+.awakening-menu-panel--open {
+  transform: translateX(0);
+}
+
+.awakening-menu-panel-header {
+  padding: 1.25rem 1.35rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.awakening-menu-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.85rem 0.75rem;
+}
+
+.awakening-menu-link {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+  text-decoration: none;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.awakening-menu-link:hover {
+  background: rgba(30, 64, 175, 0.16);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(30, 64, 175, 0.35);
+}
+
+.awakening-menu-link--active {
+  background: linear-gradient(
+    90deg,
+    rgba(30, 64, 175, 0.28) 0%,
+    rgba(176, 38, 122, 0.2) 100%
+  );
+  color: #ffffff;
+  box-shadow:
+    inset 0 0 0 1px rgba(30, 64, 175, 0.45),
+    0 0 16px rgba(176, 38, 122, 0.2);
+}
+
+.awakening-menu-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 0.85rem 0.75rem 0.25rem;
+}
+
+.awakening-menu-logout {
+  display: flex;
+  min-height: 44px;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(176, 38, 122, 0.45);
+  border-radius: 0.75rem;
+  background: rgba(176, 38, 122, 0.12);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #ffffff;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.awakening-menu-logout:hover:not(:disabled) {
+  background: rgba(176, 38, 122, 0.22);
+  border-color: rgba(176, 38, 122, 0.7);
+  box-shadow: 0 0 18px rgba(176, 38, 122, 0.35);
+}
+
+.awakening-menu-logout:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .awakening-menu-bar,
+  .awakening-menu-backdrop,
+  .awakening-menu-panel {
+    transition-duration: 0.01ms;
+  }
+
+  .awakening-hero-cta a:hover {
+    transform: none !important;
+  }
+}

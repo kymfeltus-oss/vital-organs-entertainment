@@ -1,8 +1,7 @@
 "use client";
 
 import ExperienceDashboardBackdrop from "@/components/experience/dashboard/ExperienceDashboardBackdrop";
-import ExperienceDashboardNav from "@/components/experience/dashboard/ExperienceDashboardNav";
-import AwakeningHeader from "@/components/experience/dashboard/AwakeningHeader";
+import ExperienceDashboardContent from "@/components/experience/dashboard/ExperienceDashboardContent";
 
 type ExperienceDashboardMobileViewProps = {
   displayName: string;
@@ -12,14 +11,12 @@ export default function ExperienceDashboardMobileView({
   displayName,
 }: ExperienceDashboardMobileViewProps) {
   return (
-    <div className="relative flex min-h-[100dvh] w-full max-w-[100vw] flex-col overflow-x-hidden bg-brand-black md:hidden">
+    <div className="relative flex h-dvh min-h-dvh w-full max-w-[100vw] flex-col overflow-hidden bg-brand-black md:hidden">
       <ExperienceDashboardBackdrop variant="mobile" />
 
-      <div className="relative z-10 shrink-0 pt-[max(0.1rem,env(safe-area-inset-top))]">
-        <AwakeningHeader displayName={displayName} />
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto pb-safe">
+        <ExperienceDashboardContent displayName={displayName} variant="mobile" />
       </div>
-
-      <ExperienceDashboardNav variant="bottom" />
     </div>
   );
 }
