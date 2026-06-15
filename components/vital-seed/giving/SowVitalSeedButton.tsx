@@ -3,7 +3,6 @@ import {
   givingRectStyle,
   type GivingVariant,
 } from "@/lib/experience/giving-layout-slots";
-import VitalSeedIcon from "@/components/vital-seed/giving/VitalSeedIcon";
 
 type SowVitalSeedButtonProps = {
   variant: GivingVariant;
@@ -16,12 +15,12 @@ export default function SowVitalSeedButton({
   disabled = false,
   onClick,
 }: SowVitalSeedButtonProps) {
-  const { positions } = getGivingLayout(variant);
+  const { panels } = getGivingLayout(variant);
 
   return (
     <div
       className="vital-giving-cta-zone vital-giving-hit"
-      style={givingRectStyle(positions.ctaHit)}
+      style={givingRectStyle(panels.ctaHit)}
     >
       <button
         type="button"
@@ -30,14 +29,7 @@ export default function SowVitalSeedButton({
         onClick={onClick}
       >
         <span className="vital-giving-cta-title">SOW YOUR VITAL SEED</span>
-        <span className="vital-giving-cta-sub">
-          Thank you for partnering with us!
-          <VitalSeedIcon
-            asset="heartIcon"
-            alt=""
-            className="vital-giving-cta-heart"
-          />
-        </span>
+        <span className="vital-giving-cta-sub">Thank you for partnering with us!</span>
       </button>
     </div>
   );

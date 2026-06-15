@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import {
   VITAL_SEED_GIVING_ASSETS,
@@ -9,13 +8,9 @@ import type { GivingVariant } from "@/lib/experience/giving-layout-slots";
 
 type VitalSeedBackgroundProps = {
   variant: GivingVariant;
-  children: ReactNode;
 };
 
-export default function VitalSeedBackground({
-  variant,
-  children,
-}: VitalSeedBackgroundProps) {
+export default function VitalSeedBackground({ variant }: VitalSeedBackgroundProps) {
   const isDesktop = variant === "desktop";
   const src = isDesktop
     ? VITAL_SEED_GIVING_ASSETS.desktopBackground
@@ -34,7 +29,6 @@ export default function VitalSeedBackground({
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt="" className="vital-giving-artboard__img" />
-      {children}
     </div>
   );
 }

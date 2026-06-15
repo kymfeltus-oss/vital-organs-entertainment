@@ -8,7 +8,6 @@ import {
   formatKeypadAmountDisplay,
   KEYPAD_ROWS,
 } from "@/lib/vital-seed/custom-amount";
-import VitalSeedIcon from "@/components/vital-seed/giving/VitalSeedIcon";
 
 type CustomAmountPadProps = {
   variant: GivingVariant;
@@ -55,15 +54,7 @@ export default function CustomAmountPad({
               }
               onClick={() => onAmountChange(appendKeypadKey(amountRaw, key))}
             >
-              {key === "backspace" ? (
-                <VitalSeedIcon
-                  asset="backspaceIcon"
-                  alt=""
-                  className="vital-giving-keypad-backspace"
-                />
-              ) : (
-                key
-              )}
+              {key === "backspace" ? "⌫" : key}
             </button>
           ))}
         </div>

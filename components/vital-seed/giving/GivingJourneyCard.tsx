@@ -3,7 +3,6 @@ import {
   givingPointStyle,
   type GivingVariant,
 } from "@/lib/experience/giving-layout-slots";
-import VitalSeedIcon from "@/components/vital-seed/giving/VitalSeedIcon";
 
 type GivingJourneyCardProps = {
   variant: GivingVariant;
@@ -20,12 +19,6 @@ export default function GivingJourneyCard({ variant }: GivingJourneyCardProps) {
       >
         Giving Journey
       </p>
-      <VitalSeedIcon
-        asset="seedIcon"
-        alt="Total seeds sown"
-        className="vital-giving-metric-icon vital-giving-hit"
-        style={givingPointStyle(positions.journeyMetric1Icon)}
-      />
       <span
         className="vital-giving-metric-label"
         style={givingPointStyle(positions.journeyMetric1Label)}
@@ -38,12 +31,6 @@ export default function GivingJourneyCard({ variant }: GivingJourneyCardProps) {
       >
         $14,250.00
       </span>
-      <VitalSeedIcon
-        asset="peopleIcon"
-        alt="Lives impacted"
-        className="vital-giving-metric-icon vital-giving-hit"
-        style={givingPointStyle(positions.journeyMetric2Icon)}
-      />
       <span
         className="vital-giving-metric-label"
         style={givingPointStyle(positions.journeyMetric2Label)}
@@ -56,12 +43,6 @@ export default function GivingJourneyCard({ variant }: GivingJourneyCardProps) {
       >
         1,842
       </span>
-      <VitalSeedIcon
-        asset="calendarIcon"
-        alt="Months giving"
-        className="vital-giving-metric-icon vital-giving-hit"
-        style={givingPointStyle(positions.journeyMetric3Icon)}
-      />
       <span
         className="vital-giving-metric-label"
         style={givingPointStyle(positions.journeyMetric3Label)}

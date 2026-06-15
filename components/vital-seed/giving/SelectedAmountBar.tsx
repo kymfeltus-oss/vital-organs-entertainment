@@ -3,7 +3,6 @@ import {
   givingPointStyle,
   type GivingVariant,
 } from "@/lib/experience/giving-layout-slots";
-import VitalSeedIcon from "@/components/vital-seed/giving/VitalSeedIcon";
 
 type SelectedAmountBarProps = {
   variant: GivingVariant;
@@ -32,12 +31,6 @@ export default function SelectedAmountBar({
         <span className="sr-only">Selected amount </span>
         {amountDisplay}
       </span>
-      <VitalSeedIcon
-        asset="pencilIcon"
-        alt="Edit selected amount"
-        className="vital-giving-seed-edit vital-giving-hit"
-        style={givingPointStyle(positions.seedPencil)}
-      />
     </>
   );
 }

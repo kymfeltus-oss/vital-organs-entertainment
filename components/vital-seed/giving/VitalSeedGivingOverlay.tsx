@@ -12,7 +12,6 @@ import SpeakLifeCard from "@/components/vital-seed/giving/SpeakLifeCard";
 import GivingJourneyCard from "@/components/vital-seed/giving/GivingJourneyCard";
 import RecentActivityCard from "@/components/vital-seed/giving/RecentActivityCard";
 import SowVitalSeedButton from "@/components/vital-seed/giving/SowVitalSeedButton";
-import VitalSeedIcon from "@/components/vital-seed/giving/VitalSeedIcon";
 
 type VitalSeedGivingOverlayProps = {
   variant: GivingVariant;
@@ -47,12 +46,6 @@ export default function VitalSeedGivingOverlay({
       >
         Available Impact
       </p>
-      <VitalSeedIcon
-        asset="infoIcon"
-        alt="Available impact information"
-        className="vital-giving-info-icon vital-giving-hit"
-        style={givingPointStyle(positions.heroAvailableInfo)}
-      />
       <p
         className="vital-giving-hero-main"
         style={givingPointStyle(positions.heroAvailableAmount)}

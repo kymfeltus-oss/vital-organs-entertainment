@@ -3,7 +3,6 @@ import {
   givingPointStyle,
   type GivingVariant,
 } from "@/lib/experience/giving-layout-slots";
-import VitalSeedIcon from "@/components/vital-seed/giving/VitalSeedIcon";
 
 type RecentActivityCardProps = {
   variant: GivingVariant;
@@ -25,19 +24,8 @@ export default function RecentActivityCard({ variant }: RecentActivityCardProps)
         className="vital-giving-view-all vital-giving-hit touch-target"
         style={givingPointStyle(positions.viewAllActivity)}
       >
-        View All Activity
-        <VitalSeedIcon
-          asset="chevronRight"
-          alt=""
-          className="vital-giving-view-all-chevron"
-        />
+        View All Activity ›
       </button>
-      <VitalSeedIcon
-        asset="activityIcon"
-        alt="Vital Seed activity"
-        className="vital-giving-activity-icon vital-giving-hit"
-        style={givingPointStyle(positions.activity1Icon)}
-      />
       <span
         className="vital-giving-activity-title"
         style={givingPointStyle(positions.activity1Title)}
@@ -56,12 +44,6 @@ export default function RecentActivityCard({ variant }: RecentActivityCardProps)
       >
         $100.00
       </span>
-      <VitalSeedIcon
-        asset="heartIcon"
-        alt="Tithe activity"
-        className="vital-giving-activity-icon vital-giving-hit"
-        style={givingPointStyle(positions.activity2Icon)}
-      />
       <span
         className="vital-giving-activity-title"
         style={givingPointStyle(positions.activity2Title)}
@@ -80,12 +62,6 @@ export default function RecentActivityCard({ variant }: RecentActivityCardProps)
       >
         $250.00
       </span>
-      <VitalSeedIcon
-        asset="peopleIcon"
-        alt="Outreach activity"
-        className="vital-giving-activity-icon vital-giving-hit"
-        style={givingPointStyle(positions.activity3Icon)}
-      />
       <span
         className="vital-giving-activity-title"
         style={givingPointStyle(positions.activity3Title)}

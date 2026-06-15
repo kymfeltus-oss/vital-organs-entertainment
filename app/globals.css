@@ -2520,12 +2520,14 @@ html {
   color: #b7c1d9;
 }
 
-.vital-giving-stripe-logo-img {
-  display: block;
-  width: clamp(56px, 28cqh, 96px);
-  height: auto;
+.vital-giving-stripe-logo-text {
   margin: 0.1em 0;
-  object-fit: contain;
+  font-family: var(--font-inter), sans-serif;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: -0.04em;
+  color: #635bff;
+  font-size: clamp(16px, 22cqh, 36px);
 }
 
 .vital-giving-stripe-panel .vital-giving-stripe-tag {
