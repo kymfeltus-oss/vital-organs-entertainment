@@ -1,8 +1,7 @@
 "use client";
 
-import { type CSSProperties } from "react";
 import { AWAKENING_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
-import { BACKDROP_HEIGHT_SCALE } from "@/lib/experience/dashboard-beam-position";
+import { cn } from "@/lib/utils";
 
 type ExperienceDashboardBackdropProps = {
   variant: "mobile" | "desktop";
@@ -26,14 +25,12 @@ export default function ExperienceDashboardBackdrop({
         data-backdrop-variant={variant}
         src={src}
         alt=""
-        className="experience-dashboard-backdrop-img w-full"
-        style={
-          {
-            "--backdrop-height-scale": BACKDROP_HEIGHT_SCALE,
-            objectFit: "cover",
-            objectPosition: "center top",
-          } as CSSProperties
-        }
+        className={cn(
+          "experience-dashboard-backdrop-img",
+          isMobile
+            ? "experience-dashboard-backdrop-img--mobile"
+            : "experience-dashboard-backdrop-img--desktop",
+        )}
       />
     </div>
   );

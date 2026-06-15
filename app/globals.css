@@ -1577,6 +1577,18 @@ html {
   height: calc(100dvh * var(--backdrop-height-scale));
   max-height: calc(100dvh * var(--backdrop-height-scale));
   min-height: 0;
+}
+
+.experience-dashboard-backdrop-img--desktop {
+  object-fit: cover;
+  object-position: center top;
+}
+
+.experience-dashboard-backdrop-img--mobile {
+  /* Portrait plate (853×1844) — fill viewport without squeezing desktop art */
+  width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
   object-fit: cover;
   object-position: center top;
 }

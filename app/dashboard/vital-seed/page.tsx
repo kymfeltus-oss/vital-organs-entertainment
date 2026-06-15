@@ -8,6 +8,7 @@ import {
   MOCK_NETWORK_STATS,
   sumPersonalContributions,
   VITAL_SEED_PAGE_BACKGROUND,
+  VITAL_SEED_PAGE_BACKGROUND_MOBILE,
 } from "@/lib/data/vital-seed";
 import { formatHarvestCurrency } from "@/lib/live/harvest-metrics";
 import { useHarvestMetrics } from "@/lib/useHarvestMetrics";
@@ -23,14 +24,21 @@ export default function VitalSeedPage() {
 
   return (
     <main className="relative min-h-dvh w-full overflow-x-hidden bg-brand-black pt-safe pb-safe text-white">
-      <div aria-hidden className="pointer-events-none fixed inset-0 z-0">
+      <picture
+        aria-hidden
+        className="pointer-events-none fixed inset-0 z-0 block h-full w-full bg-brand-black"
+      >
+        <source
+          media="(max-width: 767px) and (orientation: portrait)"
+          srcSet={VITAL_SEED_PAGE_BACKGROUND_MOBILE}
+        />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={VITAL_SEED_PAGE_BACKGROUND}
           alt=""
-          className="h-full w-full object-cover object-center"
+          className="h-full w-full object-contain object-center"
         />
-      </div>
+      </picture>
 
       <div className="relative z-10 w-full px-4 py-6 md:px-6 lg:px-8">
         <header className="border-b border-white/10 pb-6">

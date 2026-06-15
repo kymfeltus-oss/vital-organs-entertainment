@@ -1,3 +1,5 @@
+import { AWAKENING_CONCERT_BACKDROP_ART } from "@/lib/experience/awakening-dashboard-assets";
+
 /** Match baked-in concert flare row — normalized Y (0–1) in each backdrop asset. */
 export type BackdropVariant = "mobile" | "desktop";
 
@@ -13,15 +15,15 @@ const CONCERT_BACKDROP: Record<
   }
 > = {
   desktop: {
-    width: 2752,
-    height: 1536,
+    width: AWAKENING_CONCERT_BACKDROP_ART.desktop.width,
+    height: AWAKENING_CONCERT_BACKDROP_ART.desktop.height,
     beamYN: 0.576,
     heroStackAnchorYN: 0.538,
     cardRowYN: 0.655,
   },
   mobile: {
-    width: 1408,
-    height: 2968,
+    width: AWAKENING_CONCERT_BACKDROP_ART.mobile.width,
+    height: AWAKENING_CONCERT_BACKDROP_ART.mobile.height,
     beamYN: 0.512,
     heroStackAnchorYN: 0.478,
     cardRowYN: 0.618,
@@ -41,7 +43,7 @@ function getBackdropConfig(variant: string | undefined | null) {
 /** Concert lineup backdrop height as a fraction of the viewport (smaller = smaller people). */
 export const BACKDROP_HEIGHT_SCALE = 1;
 
-export const HERO_STACK_LAYOUT_VERSION = 37;
+export const HERO_STACK_LAYOUT_VERSION = 38;
 
 export const HERO_STACK_LIFT_PX: Record<BackdropVariant, number> = {
   mobile: 188,

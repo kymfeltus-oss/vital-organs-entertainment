@@ -1,5 +1,11 @@
 /** Experience dashboard raster assets — backdrops + approved UI button art. */
 
+/** Source art dimensions — keep in sync with PNG files in `public/awakening/`. */
+export const AWAKENING_CONCERT_BACKDROP_ART = {
+  desktop: { width: 1536, height: 1024 },
+  mobile: { width: 853, height: 1844 },
+} as const;
+
 export const AWAKENING_ASSETS = {
   backgrounds: {
     concert: "/awakening/dashboard-concert-bg.png",
