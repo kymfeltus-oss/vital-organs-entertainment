@@ -1790,10 +1790,18 @@ html {
     /* Crop + translate tuning (negative translateY raises art on screen) */
     --dash-mobile-backdrop-y: top;
     --dash-mobile-backdrop-translate-y: -2.5rem;
+    /* Push HTML welcome band below safe area + orb row */
+    --dash-mobile-welcome-offset: 1.5rem;
   }
 
   [data-dashboard-shell="mobile"] .dashboard-hero {
     padding-top: max(0.35rem, env(safe-area-inset-top));
+  }
+
+  [data-dashboard-shell="mobile"] .dashboard-hero-topbar {
+    position: relative;
+    top: auto;
+    margin-top: var(--dash-mobile-welcome-offset);
   }
 
   [data-dashboard-layer="mobile"] {
