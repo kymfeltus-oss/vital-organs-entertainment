@@ -1585,13 +1585,12 @@ html {
 }
 
 .experience-dashboard-backdrop-img--mobile {
-  /* Portrait plate — top gap matches HTML welcome band on [data-dashboard-shell="mobile"] */
   width: 100%;
   height: calc(100dvh - var(--dash-mobile-backdrop-top-gap, 4.25rem));
   max-height: calc(100dvh - var(--dash-mobile-backdrop-top-gap, 4.25rem));
   margin-top: var(--dash-mobile-backdrop-top-gap, 4.25rem);
   object-fit: cover;
-  object-position: center var(--dash-mobile-backdrop-y, 0%);
+  object-position: center 0% !important;
 }
 
 .dashboard-hero--pic1 {
