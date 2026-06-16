@@ -1,14 +1,11 @@
 "use client";
 
-// @refresh reset
 import Link from "next/link";
 import { useRef } from "react";
 import AwakeningMenuButton from "@/components/AwakeningMenuButton";
 import ProfileOrbEditor from "@/components/profile/ProfileOrbEditor";
 import ExperienceDashboardCardRow from "@/components/experience/dashboard/ExperienceDashboardCardRow";
-import ExperienceDashboardHeroMeasurer from "@/components/experience/dashboard/ExperienceDashboardHeroMeasurer";
 import ExperienceDashboardMobileCardHits from "@/components/experience/dashboard/ExperienceDashboardMobileCardHits";
-import ExperienceDashboardMobileHeroLayout from "@/components/experience/dashboard/ExperienceDashboardMobileHeroLayout";
 import { AWAKENING_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
 import { normalizeBackdropVariant } from "@/lib/experience/dashboard-beam-position";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
@@ -36,35 +33,17 @@ export default function ExperienceDashboardHero({
   return (
     <section
       className={cn(
-        "dashboard-hero dashboard-hero--pic1 pointer-events-none z-10 mx-auto w-full bg-transparent",
+        "dashboard-hero z-10 mx-auto w-full bg-transparent",
         isMobile
-          ? "dashboard-hero--mobile absolute inset-0 h-dvh max-h-dvh overflow-hidden px-2"
+          ? "relative px-2 pt-20"
           : "absolute inset-0 overflow-hidden px-8",
       )}
       aria-label="Experience dashboard hero"
     >
       {!isMobile ? (
-        <ExperienceDashboardHeroMeasurer
-          variant={variant}
-          headlineBlockRef={headlineBlockRef}
-          ctaRef={ctaRef}
-        />
-      ) : null}
-
-      {isMobile ? (
-        <ExperienceDashboardMobileHeroLayout headlineBlockRef={headlineBlockRef} />
-      ) : null}
-
-      {!isMobile ? (
-        <div
-          className={cn(
-            "dashboard-hero-topbar pointer-events-auto w-full",
-          )}
-        >
+        <div className="dashboard-hero-topbar pointer-events-auto w-full">
           <div className="dashboard-hero-welcome mx-auto text-center">
-            <div className="dashboard-hero-welcome-lines">
-              <h1 className="dashboard-hero-welcome-title">{welcomeLine}</h1>
-            </div>
+            <h1 className="dashboard-hero-welcome-title">{welcomeLine}</h1>
             <p className="dashboard-hero-tagline">Tap Into The Awakening</p>
           </div>
 
@@ -75,11 +54,7 @@ export default function ExperienceDashboardHero({
               right: "max(0.75rem, env(safe-area-inset-right))",
             }}
           >
-            <ProfileOrbEditor
-              profile={profile}
-              onProfileChange={onProfileChange}
-              size="sm"
-            />
+            <ProfileOrbEditor profile={profile} onProfileChange={onProfileChange} size="sm" />
             <AwakeningMenuButton />
           </div>
         </div>
@@ -89,17 +64,17 @@ export default function ExperienceDashboardHero({
         ref={headlineBlockRef}
         className={cn(
           "dashboard-hero-headline-block pointer-events-auto text-center",
-          isMobile && "dashboard-hero-headline-block--mobile-fixed",
+          isMobile && "mt-12", 
         )}
       >
         <div className={cn("dashboard-hero-copy-stack", isMobile && "dashboard-hero-copy-stack--mobile")}>
           <div className="dashboard-hero-headline-anchor relative mx-auto px-2">
-            <h2 ref={headlineRef} className="dashboard-hero-headline">
+            <h2 ref={headlineRef} className="dashboard-hero-headline text-white">
               THE AWAKENING IS OPEN
             </h2>
           </div>
 
-          <p ref={subtitleRef} className="dashboard-hero-subtitle">
+          <p ref={subtitleRef} className="dashboard-hero-subtitle text-white">
             STEP INTO WORSHIP, PURPOSE AND IMPACT.
           </p>
 
@@ -108,51 +83,29 @@ export default function ExperienceDashboardHero({
             className={cn(
               "dashboard-hero-cta-images mx-auto flex w-full flex-col items-center px-2",
               isMobile
-                ? "dashboard-hero-cta-images--mobile gap-1"
+                ? "gap-4"
                 : "gap-2 sm:flex-row sm:items-center sm:justify-center sm:gap-3",
             )}
           >
-            <Link
-              href={AWAKENING_ASSETS.routes.enterExperience}
-              className={cn(
-                "dashboard-hero-cta-link dashboard-hero-cta-link--enter",
-                !isMobile && "touch-target",
-              )}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+            <Link href={AWAKENING_ASSETS.routes.enterExperience} className="w-full max-w-[300px]">
               <img
                 src={AWAKENING_ASSETS.ui.enterExperience}
                 alt="Enter Experience"
-                width={1774}
-                height={887}
-                decoding="async"
-                className="dashboard-hero-cta-img dashboard-hero-cta-img--enter"
+                className="w-full h-auto"
               />
             </Link>
 
-            <Link
-              href={AWAKENING_ASSETS.routes.watchStory}
-              className={cn(
-                "dashboard-hero-cta-link dashboard-hero-cta-link--watch",
-                !isMobile && "touch-target",
-              )}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+            <Link href={AWAKENING_ASSETS.routes.watchStory} className="w-full max-w-[300px]">
               <img
                 src={AWAKENING_ASSETS.ui.watchStory}
                 alt="Watch Ian's Story"
-                width={1774}
-                height={887}
-                decoding="async"
-                className="dashboard-hero-cta-img dashboard-hero-cta-img--watch"
+                className="w-full h-auto"
               />
             </Link>
           </div>
-
-          {!isMobile ? <ExperienceDashboardCardRow /> : null}
         </div>
       </div>
-
+      
       {isMobile ? <ExperienceDashboardMobileCardHits /> : null}
     </section>
   );
