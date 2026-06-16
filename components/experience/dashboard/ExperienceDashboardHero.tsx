@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRef } from "react";
 import AwakeningMenuButton from "@/components/AwakeningMenuButton";
 import ProfileOrbEditor from "@/components/profile/ProfileOrbEditor";
+import ExperienceDashboardCardRow from "@/components/experience/dashboard/ExperienceDashboardCardRow";
 import ExperienceDashboardMobileCardHits from "@/components/experience/dashboard/ExperienceDashboardMobileCardHits";
 import { AWAKENING_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
 import { normalizeBackdropVariant } from "@/lib/experience/dashboard-beam-position";
@@ -36,7 +37,7 @@ export default function ExperienceDashboardHero({
       className={cn(
         "dashboard-hero z-10 mx-auto w-full bg-transparent",
         isMobile
-          ? "relative px-2 pt-28"
+          ? "relative px-2"
           : "absolute inset-0 overflow-hidden px-8",
       )}
       aria-label="Experience dashboard hero"
@@ -109,6 +110,8 @@ export default function ExperienceDashboardHero({
               />
             </Link>
           </div>
+
+          {!isMobile ? <ExperienceDashboardCardRow /> : null}
         </div>
       </div>
 

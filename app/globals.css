@@ -1585,7 +1585,7 @@ html {
 }
 
 .experience-dashboard-backdrop-img--mobile {
-  /* Portrait plate — sit below a top safe band so logo/welcome do not overlap */
+  /* Portrait plate — top gap matches HTML welcome band on [data-dashboard-shell="mobile"] */
   width: 100%;
   height: calc(100dvh - var(--dash-mobile-backdrop-top-gap, 4.25rem));
   max-height: calc(100dvh - var(--dash-mobile-backdrop-top-gap, 4.25rem));
@@ -1784,8 +1784,16 @@ html {
     --dash-subtitle-size: clamp(0.375rem, 1.55vw, 0.5rem);
     --dash-mobile-cta-max: min(28vw, 5.25rem);
     --dash-mobile-cta-row-max: min(88vw, 11rem);
-    --dash-mobile-backdrop-top-gap: max(4.5rem, calc(env(safe-area-inset-top) + 3.5rem));
-    --dash-mobile-backdrop-y: 20%;
+  /* Backdrop starts just below welcome title + tagline (HTML headers above the plate). */
+    --dash-mobile-backdrop-top-gap: max(
+      4.25rem,
+      calc(env(safe-area-inset-top) + var(--dash-welcome-h) + 0.65rem)
+    );
+    --dash-mobile-backdrop-y: 4%;
+  }
+
+  [data-dashboard-shell="mobile"] .dashboard-hero {
+    padding-top: max(0.35rem, env(safe-area-inset-top));
   }
 
   [data-dashboard-layer="mobile"] {
