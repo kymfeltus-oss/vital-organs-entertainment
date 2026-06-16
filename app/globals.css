@@ -1585,13 +1585,16 @@ html {
 }
 
 .experience-dashboard-backdrop-img--mobile {
-  /* Full viewport plate — welcome HTML sits above in z-10; crop via --dash-mobile-backdrop-y */
+  /* Full viewport plate — welcome HTML sits above in z-10 */
   width: 100%;
   height: 100dvh;
   max-height: 100dvh;
   margin-top: 0;
   object-fit: cover;
   object-position: center var(--dash-mobile-backdrop-y, top);
+  /* Aspect ratio ≈ viewport — object-position barely crops; translate shifts visible art */
+  transform: translate3d(0, var(--dash-mobile-backdrop-translate-y, -2.5rem), 0);
+  will-change: transform;
 }
 
 .dashboard-hero--pic1 {
@@ -1784,8 +1787,9 @@ html {
     --dash-subtitle-size: clamp(0.375rem, 1.55vw, 0.5rem);
     --dash-mobile-cta-max: min(28vw, 5.25rem);
     --dash-mobile-cta-row-max: min(88vw, 11rem);
-    /* Crop tuning — negative % pulls art up inside full viewport (e.g. -8%) */
-    --dash-mobile-backdrop-y: -6%;
+    /* Crop + translate tuning (negative translateY raises art on screen) */
+    --dash-mobile-backdrop-y: top;
+    --dash-mobile-backdrop-translate-y: -2.5rem;
   }
 
   [data-dashboard-shell="mobile"] .dashboard-hero {
