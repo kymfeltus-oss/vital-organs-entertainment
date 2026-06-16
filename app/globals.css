@@ -1785,7 +1785,7 @@ html {
     --dash-mobile-cta-max: min(28vw, 5.25rem);
     --dash-mobile-cta-row-max: min(88vw, 11rem);
     /* Crop tuning — negative % pulls art up inside full viewport (e.g. -8%) */
-    --dash-mobile-backdrop-y: top;
+    --dash-mobile-backdrop-y: -6%;
   }
 
   [data-dashboard-shell="mobile"] .dashboard-hero {
