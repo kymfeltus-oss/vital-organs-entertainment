@@ -65,15 +65,6 @@ export default function PersonaHubClient() {
         </Link>
       </div>
 
-      <div className="mt-6 rounded-xl border border-dashed border-brand-border bg-brand-panel/60 px-4 py-3">
-        <p className="font-ui text-[0.52rem] font-bold uppercase tracking-[0.16em] text-brand-muted">
-          Routing Intersection
-        </p>
-        <p className="mt-1 font-body text-xs text-brand-muted">
-          Attendee path preserves your destination (
-          <span className="text-white">{attendeeNext}</span>). Team path defaults to broadcast console access.
-        </p>
-      </div>
     </EmailGateShell>
   );
 }
