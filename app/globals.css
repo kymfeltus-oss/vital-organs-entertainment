@@ -1786,10 +1786,10 @@ html {
     --dash-mobile-cta-row-max: min(88vw, 11rem);
   /* Backdrop starts just below welcome title + tagline (HTML headers above the plate). */
     --dash-mobile-backdrop-top-gap: max(
-      4.25rem,
+      2.25rem,
       calc(env(safe-area-inset-top) + var(--dash-welcome-h) + 0.65rem)
     );
-    --dash-mobile-backdrop-y: 4%;
+    --dash-mobile-backdrop-y: 2%;
   }
 
   [data-dashboard-shell="mobile"] .dashboard-hero {
