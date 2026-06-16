@@ -1591,7 +1591,7 @@ html {
   max-height: calc(100dvh - var(--dash-mobile-backdrop-top-gap, 4.25rem));
   margin-top: var(--dash-mobile-backdrop-top-gap, 4.25rem);
   object-fit: cover;
-  object-position: center var(--dash-mobile-backdrop-y, 6%);
+  object-position: center var(--dash-mobile-backdrop-y, 0%);
 }
 
 .dashboard-hero--pic1 {
