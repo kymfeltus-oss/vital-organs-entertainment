@@ -85,7 +85,7 @@ export default function ExperienceDashboardHero({
                 : "gap-2 sm:flex-row sm:items-center sm:justify-center sm:gap-3",
             )}
           >
-            <Link href={AWAKENING_ASSETS.routes.enterExperience} className="w-full max-w-[300px]">
+            <Link href={AWAKENING_ASSETS.routes.enterExperience} className="w-full max-w-[100px]">
               <img
                 src={AWAKENING_ASSETS.ui.enterExperience}
                 alt="Enter Experience"
@@ -93,7 +93,7 @@ export default function ExperienceDashboardHero({
               />
             </Link>
 
-            <Link href={AWAKENING_ASSETS.routes.watchStory} className="w-full max-w-[300px]">
+            <Link href={AWAKENING_ASSETS.routes.watchStory} className="w-full max-w-[100px]">
               <img
                 src={AWAKENING_ASSETS.ui.watchStory}
                 alt="Watch Ian's Story"
