@@ -2,10 +2,30 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import MusicAppleMusicHeader from "@/components/music/MusicAppleMusicHeader";
 import MusicOverlay from "@/components/music/MusicOverlay";
-import { MUSIC_ARTBOARD, MUSIC_BACKGROUND_SRC } from "@/lib/music/assets";
+import {
+  MUSIC_ASSETS,
+  MUSIC_DESKTOP_ART,
+  MUSIC_MOBILE_ART,
+  type MusicOverlayVariant,
+} from "@/lib/music/assets";
 
-export default function MusicPageClient() {
+type ScaledMusicArtboardProps = {
+  artWidth: number;
+  artHeight: number;
+  backgroundSrc: string;
+  variant: MusicOverlayVariant;
+  visibleClassName: string;
+};
+
+function ScaledMusicArtboard({
+  artWidth,
+  artHeight,
+  backgroundSrc,
+  variant,
+  visibleClassName,
+}: ScaledMusicArtboardProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
@@ -17,9 +37,7 @@ export default function MusicPageClient() {
       const { width: hostWidth, height: hostHeight } = host.getBoundingClientRect();
       if (!hostWidth || !hostHeight) return;
 
-      setScale(
-        Math.min(hostWidth / MUSIC_ARTBOARD.width, hostHeight / MUSIC_ARTBOARD.height),
-      );
+      setScale(Math.min(hostWidth / artWidth, hostHeight / artHeight));
     };
 
     updateScale();
@@ -32,32 +50,54 @@ export default function MusicPageClient() {
       resizeObserver.disconnect();
       window.removeEventListener("orientationchange", updateScale);
     };
-  }, []);
+  }, [artWidth, artHeight]);
 
   return (
     <div
       ref={hostRef}
-      className="relative flex min-h-dvh w-full flex-1 items-center justify-center overflow-hidden"
+      className={`relative flex w-full flex-1 items-center justify-center overflow-hidden ${visibleClassName}`}
     >
       <div
         className="relative shrink-0 origin-center"
         style={{
-          width: MUSIC_ARTBOARD.width,
-          height: MUSIC_ARTBOARD.height,
+          width: artWidth,
+          height: artHeight,
           transform: `scale(${scale})`,
         }}
       >
         <Image
-          src={MUSIC_BACKGROUND_SRC}
+          src={backgroundSrc}
           alt=""
-          width={MUSIC_ARTBOARD.width}
-          height={MUSIC_ARTBOARD.height}
+          width={artWidth}
+          height={artHeight}
           priority
           sizes="100vw"
           className="z-0 h-full w-full object-fill"
         />
-        <MusicOverlay />
+        <MusicAppleMusicHeader variant={variant} />
+        <MusicOverlay variant={variant} />
       </div>
     </div>
+  );
+}
+
+export default function MusicPageClient() {
+  return (
+    <>
+      <ScaledMusicArtboard
+        artWidth={MUSIC_DESKTOP_ART.width}
+        artHeight={MUSIC_DESKTOP_ART.height}
+        backgroundSrc={MUSIC_ASSETS.desktopBackground}
+        variant="desktop"
+        visibleClassName="hidden flex-1 lg:flex"
+      />
+      <ScaledMusicArtboard
+        artWidth={MUSIC_MOBILE_ART.width}
+        artHeight={MUSIC_MOBILE_ART.height}
+        backgroundSrc={MUSIC_ASSETS.mobileBackground}
+        variant="mobile"
+        visibleClassName="flex flex-1 lg:hidden"
+      />
+    </>
   );
 }
