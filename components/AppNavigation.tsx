@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Heart, Loader2, LogOut, Newspaper, Radio, ShoppingBag } from "lucide-react";
+import { Heart, Loader2, LogOut, Music, Newspaper, Radio } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { PERSONA_HUB_PATH } from "@/lib/auth/routing";
 
@@ -23,10 +23,10 @@ const NAV_ITEMS: readonly NavItemConfig[] = [
     match: ["/dashboard/live", "/experience/live", "/dashboard", "/live", "/experience"],
   },
   {
-    label: "Merch",
-    href: "/dashboard/merch",
-    icon: ShoppingBag,
-    match: ["/dashboard/merch"],
+    label: "Music",
+    href: "/experience/music",
+    icon: Music,
+    match: ["/experience/music", "/music"],
   },
   {
     label: "Vital Seed",

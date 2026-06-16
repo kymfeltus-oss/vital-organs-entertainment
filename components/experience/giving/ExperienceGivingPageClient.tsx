@@ -1,5 +1,9 @@
-import VitalSeedGivingPage from "@/components/vital-seed/VitalSeedGivingPage";
+import VitalSeedGivingForm from "@/components/vital-seed/VitalSeedGivingForm";
 
 export default function ExperienceGivingPageClient() {
-  return <VitalSeedGivingPage />;
+  return (
+    <main className="relative min-h-dvh w-full overflow-x-hidden bg-[#02030A]">
+      <VitalSeedGivingForm />
+    </main>
+  );
 }
