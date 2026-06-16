@@ -35,7 +35,7 @@ export default function ExperienceDashboardHero({
       className={cn(
         "dashboard-hero z-10 mx-auto w-full bg-transparent",
         isMobile
-          ? "relative px-2 pt-20"
+          ? "relative px-2 pt-24"
           : "absolute inset-0 overflow-hidden px-8",
       )}
       aria-label="Experience dashboard hero"
@@ -62,10 +62,8 @@ export default function ExperienceDashboardHero({
 
       <div
         ref={headlineBlockRef}
-        className={cn(
-          "dashboard-hero-headline-block pointer-events-auto text-center",
-          isMobile && "mt-12", 
-        )}
+        data-hero-measured="true"
+        className="dashboard-hero-headline-block pointer-events-auto text-center"
       >
         <div className={cn("dashboard-hero-copy-stack", isMobile && "dashboard-hero-copy-stack--mobile")}>
           <div className="dashboard-hero-headline-anchor relative mx-auto px-2">
