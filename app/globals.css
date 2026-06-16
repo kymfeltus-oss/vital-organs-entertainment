@@ -1585,12 +1585,13 @@ html {
 }
 
 .experience-dashboard-backdrop-img--mobile {
+  /* Full viewport plate — welcome HTML sits above in z-10; crop via --dash-mobile-backdrop-y */
   width: 100%;
-  height: calc(100dvh - var(--dash-mobile-backdrop-top-gap, 4.25rem));
-  max-height: calc(100dvh - var(--dash-mobile-backdrop-top-gap, 4.25rem));
-  margin-top: var(--dash-mobile-backdrop-top-gap, 4.25rem);
+  height: 100dvh;
+  max-height: 100dvh;
+  margin-top: 0;
   object-fit: cover;
-  object-position: center 0% !important;
+  object-position: center var(--dash-mobile-backdrop-y, top);
 }
 
 .dashboard-hero--pic1 {
@@ -1783,12 +1784,8 @@ html {
     --dash-subtitle-size: clamp(0.375rem, 1.55vw, 0.5rem);
     --dash-mobile-cta-max: min(28vw, 5.25rem);
     --dash-mobile-cta-row-max: min(88vw, 11rem);
-  /* Backdrop starts just below welcome title + tagline (HTML headers above the plate). */
-    --dash-mobile-backdrop-top-gap: max(
-      2.25rem,
-      calc(env(safe-area-inset-top) + var(--dash-welcome-h) + 0.65rem)
-    );
-    --dash-mobile-backdrop-y: 2%;
+    /* Crop tuning — negative % pulls art up inside full viewport (e.g. -8%) */
+    --dash-mobile-backdrop-y: top;
   }
 
   [data-dashboard-shell="mobile"] .dashboard-hero {
