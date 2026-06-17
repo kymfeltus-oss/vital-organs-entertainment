@@ -17,7 +17,7 @@ export function formatIgViewerCount(count: number): string {
 }
 
 export function useIgLiveViewerCount(enabled: boolean): string {
-  const [viewerCount, setViewerCount] = useState(EVENT_LOBBY.community.viewersReady);
+  const [viewerCount, setViewerCount] = useState<number>(EVENT_LOBBY.community.viewersReady);
 
   useEffect(() => {
     if (!enabled) return;
