@@ -1820,11 +1820,12 @@ html {
     --dash-mobile-pair-gap: clamp(0.85rem, 4vw, 1.1rem);
     --dash-mobile-card-pad-block: clamp(0.9rem, 3vh, 1.25rem);
     --dash-mobile-card-row-bottom: calc(env(safe-area-inset-bottom, 0px) + 1.35rem);
-    --dash-mobile-card-row-lift: clamp(3.75rem, 9vh, 5.25rem);
+    --dash-mobile-card-row-lift: clamp(2.85rem, 7.25vh, 4.35rem);
     --dash-mobile-card-row-width: min(
-      calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - 0.75rem),
-      22rem
+      calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - 0.5rem),
+      24rem
     );
+    --dash-mobile-card-aspect: 1.88;
     --dash-mobile-card-row-gap: var(--dash-mobile-pair-gap);
   }
 
@@ -1878,6 +1879,7 @@ html {
   [data-dashboard-shell="mobile"] .dashboard-hero-card-row-link {
     min-width: 0;
     max-width: 100%;
+    aspect-ratio: var(--dash-mobile-card-aspect, var(--dashboard-card-aspect, 1.822));
     border-radius: clamp(0.4rem, 1.2vw, 0.6rem);
   }
 
