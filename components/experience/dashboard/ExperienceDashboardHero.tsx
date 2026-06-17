@@ -5,7 +5,6 @@ import { useRef } from "react";
 import AwakeningMenuButton from "@/components/AwakeningMenuButton";
 import ProfileOrbEditor from "@/components/profile/ProfileOrbEditor";
 import ExperienceDashboardCardRow from "@/components/experience/dashboard/ExperienceDashboardCardRow";
-import ExperienceDashboardMobileCardHits from "@/components/experience/dashboard/ExperienceDashboardMobileCardHits";
 import { AWAKENING_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
 import { normalizeBackdropVariant } from "@/lib/experience/dashboard-beam-position";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
@@ -74,7 +73,13 @@ export default function ExperienceDashboardHero({
       >
         <div className={cn("dashboard-hero-copy-stack", isMobile && "flex flex-col items-center gap-1.5")}>
           <div className="dashboard-hero-headline-anchor relative mx-auto px-2">
-            <h2 ref={headlineRef} className="dashboard-hero-headline text-white">
+            <h2
+              ref={headlineRef}
+              className={cn(
+                "dashboard-hero-headline text-white",
+                "dashboard-hero-headline--alive",
+              )}
+            >
               THE AWAKENING IS OPEN
             </h2>
           </div>
@@ -115,7 +120,7 @@ export default function ExperienceDashboardHero({
         </div>
       </div>
 
-      {isMobile ? <ExperienceDashboardMobileCardHits /> : null}
+      {isMobile ? <ExperienceDashboardCardRow /> : null}
     </section>
   );
 }

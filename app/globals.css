@@ -1715,6 +1715,30 @@ html {
   transition: none;
 }
 
+@keyframes dashboard-headline-alive {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    text-shadow:
+      0 0 10px rgba(0, 168, 255, 0.42),
+      0 0 22px rgba(255, 0, 140, 0.28),
+      0 0 6px rgba(255, 255, 255, 0.38);
+  }
+
+  50% {
+    transform: translate3d(0, -6px, 0) scale(1.02);
+    text-shadow:
+      0 0 16px rgba(0, 168, 255, 0.72),
+      0 0 32px rgba(255, 0, 140, 0.45),
+      0 0 10px rgba(255, 255, 255, 0.55);
+  }
+}
+
+.dashboard-hero-headline--alive {
+  animation: dashboard-headline-alive 4.8s ease-in-out infinite;
+  will-change: transform;
+}
+
 .dashboard-hero-subtitle {
   margin: 0.5rem auto 0;
   max-width: 48rem;
@@ -1780,7 +1804,7 @@ html {
     --dash-welcome-h: clamp(2.75rem, 7.5vw, 3.5rem);
     --dash-welcome-size: clamp(1.45rem, 5vw, 1.85rem);
     --dash-tagline-size: clamp(0.5rem, 2.4vw, 0.625rem);
-    --dash-headline-size-mobile: clamp(1rem, 3.75vw, 1.35rem);
+    --dash-headline-size-mobile: clamp(1.4rem, 5.25vw, 1.85rem);
     --dash-headline-slot-h-mobile: calc(
       var(--dash-headline-size-mobile) * var(--dash-headline-line-height)
     );
@@ -1805,11 +1829,32 @@ html {
   }
 
   [data-dashboard-shell="mobile"] .dashboard-hero-copy-stack {
-    gap: 0.75rem;
+    gap: 0.25rem;
+  }
+
+  [data-dashboard-shell="mobile"] .dashboard-hero-headline {
+    max-width: 17.5rem;
+    line-height: 1.04;
+    letter-spacing: 0.05em;
   }
 
   [data-dashboard-shell="mobile"] .dashboard-hero-subtitle {
-    margin-top: 0.5rem;
+    margin-top: 0.125rem;
+  }
+
+  [data-dashboard-shell="mobile"] .dashboard-hero-card-row {
+    position: fixed;
+    left: 50%;
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    z-index: 35;
+    display: grid;
+    width: min(88vw, 19.5rem);
+    max-width: min(88vw, 19.5rem);
+    margin-top: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(0.28rem, 1.6vw, 0.45rem);
+    transform: translateX(-50%);
+    pointer-events: auto;
   }
 
   [data-dashboard-layer="mobile"] {
@@ -1952,10 +1997,6 @@ html {
     letter-spacing: 0.2em;
     max-width: 16rem;
     line-height: 1.25;
-  }
-
-  .dashboard-hero-card-row {
-    display: none;
   }
 }
 
@@ -2204,6 +2245,14 @@ html {
     animation: none;
     opacity: 0.85;
     text-shadow: none;
+  }
+
+  .dashboard-hero-headline--alive {
+    animation: none;
+    transform: none;
+    text-shadow:
+      0 0 12px rgba(255, 255, 255, 0.35),
+      0 0 28px rgba(255, 255, 255, 0.15);
   }
 
   .dashboard-hero-headline-block {
