@@ -1705,7 +1705,7 @@ html {
   font-weight: 700;
   font-size: var(--dash-headline-size);
   line-height: var(--dash-headline-line-height);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   white-space: nowrap;
   color: #ffffff;
@@ -1835,7 +1835,7 @@ html {
   [data-dashboard-shell="mobile"] .dashboard-hero-headline {
     max-width: 17.5rem;
     line-height: 1.04;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
   }
 
   [data-dashboard-shell="mobile"] .dashboard-hero-subtitle {
@@ -1986,7 +1986,7 @@ html {
   .dashboard-hero-headline {
     font-size: var(--dash-headline-size-mobile);
     white-space: normal;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
   }
 
   .dashboard-hero-headline-anchor {
