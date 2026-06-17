@@ -1816,6 +1816,13 @@ html {
     --dash-mobile-backdrop-translate-y: -2.5rem;
     /* Push HTML welcome band below safe area + orb row */
     --dash-mobile-welcome-offset: 2rem;
+    /* Bottom feature card grid */
+    --dash-mobile-card-row-bottom: calc(env(safe-area-inset-bottom, 0px) + 1.35rem);
+    --dash-mobile-card-row-width: min(
+      calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - 1.5rem),
+      18rem
+    );
+    --dash-mobile-card-row-gap: clamp(0.45rem, 2.2vw, 0.65rem);
   }
 
   [data-dashboard-shell="mobile"] .dashboard-hero {
@@ -1845,16 +1852,24 @@ html {
   [data-dashboard-shell="mobile"] .dashboard-hero-card-row {
     position: fixed;
     left: 50%;
-    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    right: auto;
+    bottom: var(--dash-mobile-card-row-bottom);
     z-index: 35;
     display: grid;
-    width: min(88vw, 19.5rem);
-    max-width: min(88vw, 19.5rem);
+    width: var(--dash-mobile-card-row-width);
+    max-width: var(--dash-mobile-card-row-width);
     margin-top: 0;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: clamp(0.28rem, 1.6vw, 0.45rem);
+    gap: var(--dash-mobile-card-row-gap);
     transform: translateX(-50%);
     pointer-events: auto;
+    box-sizing: border-box;
+  }
+
+  [data-dashboard-shell="mobile"] .dashboard-hero-card-row-link {
+    min-width: 0;
+    max-width: 100%;
+    border-radius: clamp(0.4rem, 1.2vw, 0.6rem);
   }
 
   [data-dashboard-layer="mobile"] {
