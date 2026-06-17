@@ -1777,10 +1777,10 @@ html {
 
 @media (max-width: 767px) {
   [data-dashboard-shell="mobile"] {
-    --dash-welcome-h: clamp(2.35rem, 6.5vw, 3rem);
-    --dash-welcome-size: clamp(1.2rem, 4.2vw, 1.55rem);
+    --dash-welcome-h: clamp(2.75rem, 7.5vw, 3.5rem);
+    --dash-welcome-size: clamp(1.45rem, 5vw, 1.85rem);
     --dash-tagline-size: clamp(0.5rem, 2.4vw, 0.625rem);
-    --dash-headline-size-mobile: clamp(0.8125rem, 3vw, 1.05rem);
+    --dash-headline-size-mobile: clamp(1rem, 3.75vw, 1.35rem);
     --dash-headline-slot-h-mobile: calc(
       var(--dash-headline-size-mobile) * var(--dash-headline-line-height)
     );
@@ -1884,7 +1884,7 @@ html {
     white-space: normal;
     letter-spacing: 0.05em;
     line-height: 1.05;
-    max-width: 12.5rem;
+    max-width: 14.5rem;
     margin-inline: auto;
   }
 
