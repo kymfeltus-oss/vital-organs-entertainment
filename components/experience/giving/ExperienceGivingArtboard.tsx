@@ -17,7 +17,7 @@ export default function ExperienceGivingArtboard({
   artHeight,
   backgroundSrc,
   visibleClassName,
-  scaleMode = "cover",
+  scaleMode = "contain",
   children,
 }: ExperienceGivingArtboardProps) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -68,7 +68,7 @@ export default function ExperienceGivingArtboard({
           height={artHeight}
           priority
           sizes="100vw"
-          className="z-0 h-full w-full object-cover"
+          className="z-0 block h-full w-full object-contain"
         />
         {children}
       </div>
