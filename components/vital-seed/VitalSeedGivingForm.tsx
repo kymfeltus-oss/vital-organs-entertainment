@@ -22,6 +22,7 @@ import {
 } from "@/lib/vital-seed/custom-amount";
 import {
   VITAL_SEED_GIVING_ASSETS,
+  VITAL_SEED_GIVING_MOBILE_ART,
 } from "@/lib/vital-seed/giving-assets";
 
 const DESKTOP_ART = {
@@ -30,8 +31,8 @@ const DESKTOP_ART = {
 } as const;
 
 const MOBILE_ART = {
-  width: 768,
-  height: 1536,
+  width: VITAL_SEED_GIVING_MOBILE_ART.width,
+  height: VITAL_SEED_GIVING_MOBILE_ART.height,
 } as const;
 
 type ScaledGivingArtboardProps = {
