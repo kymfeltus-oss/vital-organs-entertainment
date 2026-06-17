@@ -4,9 +4,19 @@ import Link from "next/link";
 import {
   AWAKENING_DASHBOARD_CARD_ASPECT,
   AWAKENING_DASHBOARD_CARDS,
+  AWAKENING_DASHBOARD_CARDS_MOBILE,
 } from "@/lib/experience/awakening-dashboard-assets";
 
-export default function ExperienceDashboardCardRow() {
+type ExperienceDashboardCardRowProps = {
+  variant?: "mobile" | "desktop";
+};
+
+export default function ExperienceDashboardCardRow({
+  variant = "desktop",
+}: ExperienceDashboardCardRowProps) {
+  const cards =
+    variant === "mobile" ? AWAKENING_DASHBOARD_CARDS_MOBILE : AWAKENING_DASHBOARD_CARDS;
+
   return (
     <div
       className="dashboard-hero-card-row pointer-events-auto"
@@ -16,7 +26,7 @@ export default function ExperienceDashboardCardRow() {
         } as React.CSSProperties
       }
     >
-      {AWAKENING_DASHBOARD_CARDS.map((card) => (
+      {cards.map((card) => (
         <Link
           key={card.id}
           href={card.href}

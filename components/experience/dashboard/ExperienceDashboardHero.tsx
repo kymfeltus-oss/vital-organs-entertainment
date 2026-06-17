@@ -116,11 +116,11 @@ export default function ExperienceDashboardHero({
             </Link>
           </div>
 
-          {!isMobile ? <ExperienceDashboardCardRow /> : null}
+          {!isMobile ? <ExperienceDashboardCardRow variant="desktop" /> : null}
         </div>
       </div>
 
-      {isMobile ? <ExperienceDashboardCardRow /> : null}
+      {isMobile ? <ExperienceDashboardCardRow variant="mobile" /> : null}
     </section>
   );
 }

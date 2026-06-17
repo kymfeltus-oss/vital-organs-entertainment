@@ -75,6 +75,14 @@ export const AWAKENING_DASHBOARD_CARDS = [
   },
 ] as const;
 
+/** Mobile 2×2 grid — swap music/prayer slots so warm cards are diagonal, not adjacent. */
+export const AWAKENING_DASHBOARD_CARDS_MOBILE = [
+  AWAKENING_DASHBOARD_CARDS[0],
+  AWAKENING_DASHBOARD_CARDS[3],
+  AWAKENING_DASHBOARD_CARDS[1],
+  AWAKENING_DASHBOARD_CARDS[2],
+] as const;
+
 export const AWAKENING_PRELOAD_ASSETS = [
   AWAKENING_ASSETS.backgrounds.concert,
   AWAKENING_ASSETS.backgrounds.concertMobile,
