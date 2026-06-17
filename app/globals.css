@@ -2874,3 +2874,64 @@ html {
 .vital-giving-overlay--mobile .vital-giving-inline-error {
   font-size: calc(100cqw * 11 / 941);
 }
+
+/* Viewer POV Go Live — mock attendee layouts */
+.viewer-pov-scrim-top {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.35) 55%, transparent 100%);
+}
+
+.viewer-pov-scrim-bottom {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.45) 45%, transparent 100%);
+}
+
+.viewer-pov-text-shadow {
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.92);
+}
+
+.viewer-pov-chat-mask {
+  mask-image: linear-gradient(to top, #000 52%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to top, #000 52%, transparent 100%);
+}
+
+.viewer-pov-chat-scroll {
+  animation: viewer-pov-chat-drift 18s linear infinite;
+}
+
+@keyframes viewer-pov-chat-drift {
+  0% {
+    transform: translateY(12%);
+  }
+  100% {
+    transform: translateY(-8%);
+  }
+}
+
+.viewer-pov-seed-pulse {
+  animation: viewer-pov-seed-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes viewer-pov-seed-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 14px rgba(255, 0, 140, 0.35);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(255, 0, 140, 0.58);
+    transform: scale(1.05);
+  }
+}
+
+.viewer-pov-gift-alert {
+  box-shadow: 0 0 24px rgba(255, 0, 140, 0.22);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewer-pov-chat-scroll {
+    animation: none;
+  }
+
+  .viewer-pov-seed-pulse {
+    animation: none;
+  }
+}

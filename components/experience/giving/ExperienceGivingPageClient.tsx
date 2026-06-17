@@ -92,7 +92,7 @@ function ExperienceGivingPageContent() {
     <>
       <section
         id="sow-seed"
-        className="relative flex min-h-dvh w-full flex-col overflow-hidden bg-brand-black pt-safe pb-safe"
+        className="relative flex min-h-dvh w-full flex-col overflow-hidden bg-brand-black pb-safe"
       >
         <ExperienceGivingArtboard
           artWidth={VITAL_SEED_GIVING_DESKTOP_ART.width}

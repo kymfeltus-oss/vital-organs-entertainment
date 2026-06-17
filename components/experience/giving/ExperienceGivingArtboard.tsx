@@ -51,10 +51,10 @@ export default function ExperienceGivingArtboard({
   return (
     <div
       ref={hostRef}
-      className={`relative flex w-full flex-1 items-center justify-center overflow-hidden ${visibleClassName}`}
+      className={`relative flex w-full flex-1 items-start justify-center overflow-hidden ${visibleClassName}`}
     >
       <div
-        className="relative shrink-0 origin-center"
+        className="relative shrink-0 origin-top"
         style={{
           width: artWidth,
           height: artHeight,
