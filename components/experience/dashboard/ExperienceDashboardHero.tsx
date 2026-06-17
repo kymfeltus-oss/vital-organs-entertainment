@@ -93,7 +93,7 @@ export default function ExperienceDashboardHero({
             className={cn(
               "dashboard-hero-cta-images mx-auto flex w-full items-center justify-center px-2",
               isMobile
-                ? "mt-4 flex-row gap-2"
+                ? "mt-4 flex-row"
                 : "flex-col gap-2 sm:flex-row sm:gap-3",
             )}
           >

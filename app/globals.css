@@ -1817,12 +1817,13 @@ html {
     /* Push HTML welcome band below safe area + orb row */
     --dash-mobile-welcome-offset: 2rem;
     /* Bottom feature card grid */
-    --dash-mobile-card-row-bottom: calc(env(safe-area-inset-bottom, 0px) + 3.25rem);
+    --dash-mobile-pair-gap: clamp(0.65rem, 3vw, 0.9rem);
+    --dash-mobile-card-row-bottom: calc(env(safe-area-inset-bottom, 0px) + 5.75rem);
     --dash-mobile-card-row-width: min(
       calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - 1.5rem),
       18rem
     );
-    --dash-mobile-card-row-gap: clamp(0.45rem, 2.2vw, 0.65rem);
+    --dash-mobile-card-row-gap: var(--dash-mobile-pair-gap);
   }
 
   [data-dashboard-shell="mobile"] .dashboard-hero {
@@ -1847,6 +1848,10 @@ html {
 
   [data-dashboard-shell="mobile"] .dashboard-hero-subtitle {
     margin-top: 0.125rem;
+  }
+
+  [data-dashboard-shell="mobile"] .dashboard-hero-cta-images {
+    gap: var(--dash-mobile-pair-gap);
   }
 
   [data-dashboard-shell="mobile"] .dashboard-hero-card-row {
