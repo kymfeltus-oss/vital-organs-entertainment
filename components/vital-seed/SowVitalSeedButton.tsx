@@ -1,3 +1,5 @@
+import { VITAL_SEED_OVERLAY_HIT_CLASS } from "@/lib/vital-seed/giving-overlay-props";
+
 type SowVitalSeedButtonProps = {
   variant?: "desktop" | "mobile";
   onSowSeed: () => void;
@@ -29,7 +31,7 @@ export default function SowVitalSeedButton({
     >
       <button
         type="button"
-        className={`font-headline leading-none text-white transition-transform hover:scale-105 ${titleClass}`}
+        className={`${VITAL_SEED_OVERLAY_HIT_CLASS} font-headline leading-none text-white hover:scale-[1.02] ${titleClass}`}
         onClick={onSowSeed}
       >
         SOW YOUR VITAL SEED

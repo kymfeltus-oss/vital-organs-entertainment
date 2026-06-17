@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { VitalSeedOverlaySharedProps } from "@/lib/vital-seed/giving-overlay-props";
+import { VITAL_SEED_OVERLAY_HIT_CLASS } from "@/lib/vital-seed/giving-overlay-props";
 import SowVitalSeedButton from "@/components/vital-seed/SowVitalSeedButton";
 
 const assetPath = "/images/vital-seed";
@@ -74,26 +75,32 @@ export default function VitalSeedOverlay({
         DONATION GOAL
       </div>
 
-      <img
-        src={`${assetPath}/info-icon.png`}
-        alt="Donation Goal information"
-        className="pointer-events-auto absolute left-[55.2%] top-[16.0%] h-3 w-3 object-contain opacity-60"
-      />
+      <button
+        type="button"
+        aria-label="Donation Goal information"
+        className={`${VITAL_SEED_OVERLAY_HIT_CLASS} absolute left-[55.2%] top-[16.0%] flex h-3 w-3 items-center justify-center p-0 opacity-60`}
+      >
+        <img
+          src={`${assetPath}/info-icon.png`}
+          alt=""
+          className="h-full w-full object-contain pointer-events-none"
+        />
+      </button>
 
       <div className="absolute left-[40.2%] top-[20.2%] w-[22%] text-center text-[28px] font-bold leading-none text-white">
         $20,000.00
       </div>
-      <img
-        src={`${assetPath}/info-icon.png`}
-        alt="Donation Goal information"
-        className="pointer-events-auto absolute left-[60.2%] top-[15.45%] h-3 w-3 object-contain opacity-60"
-      />
-
-      <img
-        src={`${assetPath}/info-icon.png`}
-        alt="Donation Goal information"
-        className="pointer-events-auto absolute left-[55.2%] top-[16.0%] h-3 w-3 object-contain opacity-60"
-      />
+      <button
+        type="button"
+        aria-label="Seeds Sown information"
+        className={`${VITAL_SEED_OVERLAY_HIT_CLASS} absolute left-[60.2%] top-[15.45%] flex h-3 w-3 items-center justify-center p-0 opacity-60`}
+      >
+        <img
+          src={`${assetPath}/info-icon.png`}
+          alt=""
+          className="h-full w-full object-contain pointer-events-none"
+        />
+      </button>
 
       <div className="absolute left-[75.7%] top-[15.9%] w-[18%] text-center font-headline text-[24px] tracking-[0.24em] text-white">
         SEEDS SOWN
@@ -118,7 +125,7 @@ export default function VitalSeedOverlay({
           key={item.label}
           type="button"
           onClick={() => onQuickAmount(item.value)}
-          className="pointer-events-auto absolute top-[32.05%] flex h-[4.8%] items-center justify-center bg-transparent text-[20px] font-bold text-white"
+          className={`${VITAL_SEED_OVERLAY_HIT_CLASS} absolute top-[32.05%] flex h-[4.8%] items-center justify-center text-[20px] font-bold text-white`}
           style={{ left: item.left, width: item.width }}
         >
           {item.label}
@@ -164,7 +171,7 @@ export default function VitalSeedOverlay({
           type="button"
           aria-label={item.value === "backspace" ? "Backspace" : item.value}
           onClick={() => handleKeypadClick(item.value)}
-          className="pointer-events-auto absolute flex h-[4.35%] w-[4.2%] items-center justify-center bg-transparent text-[20px] font-semibold text-white"
+          className={`${VITAL_SEED_OVERLAY_HIT_CLASS} absolute flex h-[4.35%] w-[4.2%] items-center justify-center text-[20px] font-semibold text-white`}
           style={{ left: item.left, top: item.top }}
         >
           {item.value === "backspace" ? (
@@ -273,15 +280,24 @@ export default function VitalSeedOverlay({
         </div>
       ))}
 
-      <div className="pointer-events-auto absolute left-[52.0%] top-[83.0%] cursor-pointer text-[14px] text-white">
+      <button
+        type="button"
+        className={`${VITAL_SEED_OVERLAY_HIT_CLASS} absolute left-[52.0%] top-[83.0%] text-[14px] text-white`}
+      >
         View All Activity
-      </div>
+      </button>
 
-      <img
-        src={`${assetPath}/chevron-right.png`}
-        alt="View all activity"
-        className="absolute right-[5.7%] top-[82.9%] h-[18px] w-[18px] object-contain"
-      />
+      <button
+        type="button"
+        aria-label="View all activity"
+        className={`${VITAL_SEED_OVERLAY_HIT_CLASS} absolute right-[5.7%] top-[82.9%] flex h-[18px] w-[18px] items-center justify-center p-0`}
+      >
+        <img
+          src={`${assetPath}/chevron-right.png`}
+          alt=""
+          className="h-full w-full object-contain pointer-events-none"
+        />
+      </button>
 
       <SowVitalSeedButton onSowSeed={onSowSeed} />
     </div>

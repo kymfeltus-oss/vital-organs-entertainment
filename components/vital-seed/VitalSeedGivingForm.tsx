@@ -22,13 +22,9 @@ import {
 } from "@/lib/vital-seed/custom-amount";
 import {
   VITAL_SEED_GIVING_ASSETS,
+  VITAL_SEED_GIVING_DESKTOP_ART,
   VITAL_SEED_GIVING_MOBILE_ART,
 } from "@/lib/vital-seed/giving-assets";
-
-const DESKTOP_ART = {
-  width: 1536,
-  height: 1024,
-} as const;
 
 const MOBILE_ART = {
   width: VITAL_SEED_GIVING_MOBILE_ART.width,
@@ -40,6 +36,8 @@ type ScaledGivingArtboardProps = {
   artHeight: number;
   backgroundSrc: string;
   visibleClassName: string;
+  scaleMode?: "contain" | "cover";
+  imageClassName?: string;
   children: ReactNode;
 };
 
@@ -48,6 +46,8 @@ function ScaledGivingArtboard({
   artHeight,
   backgroundSrc,
   visibleClassName,
+  scaleMode = "contain",
+  imageClassName = "z-0 h-full w-full object-cover",
   children,
 }: ScaledGivingArtboardProps) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -61,7 +61,9 @@ function ScaledGivingArtboard({
       const { width: hostWidth, height: hostHeight } = host.getBoundingClientRect();
       if (!hostWidth || !hostHeight) return;
 
-      setScale(Math.min(hostWidth / artWidth, hostHeight / artHeight));
+      const widthScale = hostWidth / artWidth;
+      const heightScale = hostHeight / artHeight;
+      setScale(scaleMode === "cover" ? Math.max(widthScale, heightScale) : Math.min(widthScale, heightScale));
     };
 
     updateScale();
@@ -74,7 +76,7 @@ function ScaledGivingArtboard({
       resizeObserver.disconnect();
       window.removeEventListener("orientationchange", updateScale);
     };
-  }, [artWidth, artHeight]);
+  }, [artWidth, artHeight, scaleMode]);
 
   return (
     <div
@@ -96,7 +98,7 @@ function ScaledGivingArtboard({
           height={artHeight}
           priority
           sizes="100vw"
-          className="z-0 h-full w-full object-fill"
+          className={imageClassName}
         />
         <div className="absolute inset-0 z-10 overflow-hidden">{children}</div>
       </div>
@@ -192,10 +194,11 @@ function VitalSeedGivingFormContent() {
         className="relative flex min-h-dvh w-full flex-col overflow-hidden bg-[#02030A] pt-safe pb-safe"
       >
         <ScaledGivingArtboard
-          artWidth={DESKTOP_ART.width}
-          artHeight={DESKTOP_ART.height}
+          artWidth={VITAL_SEED_GIVING_DESKTOP_ART.width}
+          artHeight={VITAL_SEED_GIVING_DESKTOP_ART.height}
           backgroundSrc={VITAL_SEED_GIVING_ASSETS.desktopBackground}
           visibleClassName="hidden flex-1 lg:flex"
+          scaleMode="cover"
         >
           <VitalSeedOverlay {...overlayProps} />
         </ScaledGivingArtboard>

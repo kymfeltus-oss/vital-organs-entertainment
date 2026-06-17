@@ -2297,6 +2297,31 @@ html {
   }
 }
 
+/* Vital Seed giving — transparent overlay hit targets */
+.vital-seed-overlay-hit {
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(0, 168, 255, 0.22);
+  transition: transform 0.12s ease, filter 0.12s ease, opacity 0.12s ease;
+}
+
+.vital-seed-overlay-hit:active {
+  transform: scale(0.97);
+  filter: brightness(1.12);
+  opacity: 0.92;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vital-seed-overlay-hit {
+    transition: none;
+  }
+
+  .vital-seed-overlay-hit:active {
+    transform: none;
+    filter: brightness(1.08);
+  }
+}
+
 /* Vital Seed giving — content-only overlay (background art is the layout) */
 .vital-giving-stage {
   position: relative;
@@ -2316,9 +2341,9 @@ html {
 }
 
 .vital-giving-artboard--desktop {
-  width: min(100vw, calc(100dvh * 1490 / 1055), 1490px);
-  height: min(100dvh, calc(100vw * 1055 / 1490));
-  aspect-ratio: 1490 / 1055;
+  width: min(100vw, calc(100dvh * 1536 / 1024), 1536px);
+  height: min(100dvh, calc(100vw * 1024 / 1536));
+  aspect-ratio: 1536 / 1024;
 }
 
 .vital-giving-artboard--mobile {

@@ -6,8 +6,8 @@ export const VITAL_SEED_GIVING_ASSETS = {
 } as const;
 
 export const VITAL_SEED_GIVING_DESKTOP_ART = {
-  width: 1490,
-  height: 1055,
+  width: 1536,
+  height: 1024,
 } as const;
 
 export const VITAL_SEED_GIVING_MOBILE_ART = {

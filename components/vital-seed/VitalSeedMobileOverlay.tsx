@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { VitalSeedOverlaySharedProps } from "@/lib/vital-seed/giving-overlay-props";
+import { VITAL_SEED_OVERLAY_HIT_CLASS } from "@/lib/vital-seed/giving-overlay-props";
 import SowVitalSeedButton from "@/components/vital-seed/SowVitalSeedButton";
 
 const assetPath = "/images/vital-seed";
@@ -74,12 +75,18 @@ export default function VitalSeedMobileOverlay({
         DONATION GOAL
       </div>
 
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={`${assetPath}/info-icon.png`}
-        alt="Donation Goal information"
-        className="pointer-events-auto absolute left-[38%] top-[5.5%] h-3 w-3 object-contain opacity-60"
-      />
+      <button
+        type="button"
+        aria-label="Donation Goal information"
+        className={`${VITAL_SEED_OVERLAY_HIT_CLASS} absolute left-[38%] top-[5.5%] flex h-3 w-3 items-center justify-center p-0 opacity-60`}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`${assetPath}/info-icon.png`}
+          alt=""
+          className="h-full w-full object-contain pointer-events-none"
+        />
+      </button>
 
       <div className="absolute left-[6%] top-[7.2%] w-[40%] text-center text-[26px] font-bold leading-none text-white">
         $20,000.00
@@ -89,12 +96,18 @@ export default function VitalSeedMobileOverlay({
         SEEDS SOWN
       </div>
 
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={`${assetPath}/info-icon.png`}
-        alt="Seeds Sown information"
-        className="pointer-events-auto absolute left-[88%] top-[5.5%] h-3 w-3 object-contain opacity-60"
-      />
+      <button
+        type="button"
+        aria-label="Seeds Sown information"
+        className={`${VITAL_SEED_OVERLAY_HIT_CLASS} absolute left-[88%] top-[5.5%] flex h-3 w-3 items-center justify-center p-0 opacity-60`}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`${assetPath}/info-icon.png`}
+          alt=""
+          className="h-full w-full object-contain pointer-events-none"
+        />
+      </button>
 
       <div className="absolute left-[56%] top-[7.2%] w-[40%] text-center bg-gradient-to-r from-[#00C8FF] via-[#A855F7] to-[#FF2EA6] bg-clip-text text-[26px] font-semibold leading-none text-transparent">
         $8,540.00
@@ -115,7 +128,7 @@ export default function VitalSeedMobileOverlay({
           key={item.label}
           type="button"
           onClick={() => onQuickAmount(item.value)}
-          className="pointer-events-auto absolute top-[15.2%] flex h-[3.2%] items-center justify-center bg-transparent text-[14px] font-bold text-white"
+          className={`${VITAL_SEED_OVERLAY_HIT_CLASS} absolute top-[15.2%] flex h-[3.2%] items-center justify-center text-[14px] font-bold text-white`}
           style={{ left: item.left, width: item.width }}
         >
           {item.label}
@@ -140,7 +153,7 @@ export default function VitalSeedMobileOverlay({
           type="button"
           aria-label={item.value === "backspace" ? "Backspace" : item.value}
           onClick={() => handleKeypadClick(item.value)}
-          className="pointer-events-auto absolute flex h-[3.8%] w-[7.5%] items-center justify-center bg-transparent text-[18px] font-semibold text-white"
+          className={`${VITAL_SEED_OVERLAY_HIT_CLASS} absolute flex h-[3.8%] w-[7.5%] items-center justify-center text-[18px] font-semibold text-white`}
           style={{ left: item.left, top: item.top }}
         >
           {item.value === "backspace" ? (
@@ -276,16 +289,25 @@ export default function VitalSeedMobileOverlay({
         </div>
       ))}
 
-      <div className="pointer-events-auto absolute left-[6%] top-[87.2%] cursor-pointer text-[12px] text-white">
+      <button
+        type="button"
+        className={`${VITAL_SEED_OVERLAY_HIT_CLASS} absolute left-[6%] top-[87.2%] text-[12px] text-white`}
+      >
         View All Activity
-      </div>
+      </button>
 
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={`${assetPath}/chevron-right.png`}
-        alt="View all activity"
-        className="absolute right-[8%] top-[87.1%] h-4 w-4 object-contain"
-      />
+      <button
+        type="button"
+        aria-label="View all activity"
+        className={`${VITAL_SEED_OVERLAY_HIT_CLASS} absolute right-[8%] top-[87.1%] flex h-4 w-4 items-center justify-center p-0`}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`${assetPath}/chevron-right.png`}
+          alt=""
+          className="h-full w-full object-contain pointer-events-none"
+        />
+      </button>
 
       <SowVitalSeedButton variant="mobile" onSowSeed={onSowSeed} />
     </div>
