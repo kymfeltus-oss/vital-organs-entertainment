@@ -1809,8 +1809,8 @@ html {
       var(--dash-headline-size-mobile) * var(--dash-headline-line-height)
     );
     --dash-subtitle-size: clamp(0.375rem, 1.55vw, 0.5rem);
-    --dash-mobile-cta-max: min(28vw, 5.25rem);
-    --dash-mobile-cta-row-max: min(88vw, 11rem);
+    --dash-mobile-cta-max: min(42vw, 11rem);
+    --dash-mobile-cta-row-max: min(94vw, 22.5rem);
     /* Crop + translate tuning (negative translateY raises art on screen) */
     --dash-mobile-backdrop-y: top;
     --dash-mobile-backdrop-translate-y: -2.5rem;
@@ -1820,7 +1820,7 @@ html {
     --dash-mobile-pair-gap: clamp(0.85rem, 4vw, 1.1rem);
     --dash-mobile-card-pad-block: clamp(0.9rem, 3vh, 1.25rem);
     --dash-mobile-card-row-bottom: calc(env(safe-area-inset-bottom, 0px) + 1.35rem);
-    --dash-mobile-card-row-lift: clamp(2.2rem, 6.5vh, 3.65rem);
+    --dash-mobile-card-row-lift: clamp(1rem, 4.25vh, 2.25rem);
     --dash-mobile-cta-margin-top: clamp(0.4rem, 1.1vh, 0.6rem);
     --dash-mobile-card-row-width: min(
       calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - 0.5rem),
@@ -1858,6 +1858,15 @@ html {
     gap: var(--dash-mobile-pair-gap);
     margin-top: var(--dash-mobile-cta-margin-top);
     margin-bottom: clamp(0.85rem, 2.5vh, 1.15rem);
+    width: min(100%, var(--dash-mobile-cta-row-max));
+    max-width: var(--dash-mobile-cta-row-max);
+  }
+
+  [data-dashboard-shell="mobile"] .dashboard-hero-cta-link {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    max-width: var(--dash-mobile-cta-max);
   }
 
   [data-dashboard-shell="mobile"] .dashboard-hero-card-row {

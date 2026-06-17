@@ -29,7 +29,10 @@ export default function ExperienceDashboardHero({
   const ctaRef = useRef<HTMLDivElement>(null);
   const headlineBlockRef = useRef<HTMLDivElement>(null);
 
-  const ctaLinkClass = cn("w-full", isMobile ? "max-w-[150px]" : "max-w-[300px]");
+  const ctaLinkClass = cn(
+    "dashboard-hero-cta-link w-full",
+    !isMobile && "max-w-[300px]",
+  );
 
   return (
     <section
@@ -102,7 +105,7 @@ export default function ExperienceDashboardHero({
               <img
                 src={AWAKENING_ASSETS.ui.enterExperience}
                 alt="Enter Experience"
-                className="w-full h-auto"
+                className="dashboard-hero-cta-img w-full h-auto"
               />
             </Link>
 
@@ -111,7 +114,7 @@ export default function ExperienceDashboardHero({
               <img
                 src={AWAKENING_ASSETS.ui.watchStory}
                 alt="Watch Ian's Story"
-                className="w-full h-auto"
+                className="dashboard-hero-cta-img w-full h-auto"
               />
             </Link>
           </div>
