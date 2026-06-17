@@ -14,7 +14,7 @@ export default function IgLiveTopBar({ preview = false }: IgLiveTopBarProps) {
   const viewerLabel = useIgLiveViewerCount(!preview);
 
   return (
-    <header className="ig-live-top-bar pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start gap-3 px-3 pt-safe md:px-6 md:py-4">
+    <header className="ig-live-top-bar pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start gap-3 px-3 pt-[max(0.5rem,env(safe-area-inset-top))]">
       <Link
         href={IG_LIVE_CREATOR.exitHref}
         className="touch-target pointer-events-auto mt-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition hover:bg-black/55"

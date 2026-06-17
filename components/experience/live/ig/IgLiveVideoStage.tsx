@@ -21,14 +21,7 @@ export default function IgLiveVideoStage({
   return (
     <div className="ig-live-video-stage absolute inset-0 overflow-hidden bg-black">
       {preview ? (
-        <div
-          className="ig-live-video h-full w-full bg-cover bg-center"
-          style={{
-            backgroundImage:
-              "linear-gradient(165deg, rgba(0,168,255,0.12) 0%, rgba(0,0,0,0.92) 45%, rgba(255,0,140,0.08) 100%), url(/awakening/dashboard-concert-bg-mobile.png)",
-          }}
-          aria-hidden="true"
-        />
+        <div className="ig-live-preview-video h-full w-full" aria-hidden="true" />
       ) : (
         <AttendeeStreamPlayer
           key={selectedExperience}

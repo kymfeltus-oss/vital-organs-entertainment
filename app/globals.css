@@ -2877,9 +2877,38 @@ html {
 
 /* Instagram-style live viewer POV */
 .ig-live-root {
-  position: relative;
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  height: 100dvh;
+  max-height: 100dvh;
   width: 100%;
+  max-width: 100vw;
+  overflow: hidden;
+  overscroll-behavior: none;
   background: #000000;
+}
+
+.ig-live-root--desktop {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(18rem, 1fr);
+}
+
+.ig-live-preview-video {
+  background-image:
+    linear-gradient(165deg, rgba(0, 168, 255, 0.12) 0%, rgba(0, 0, 0, 0.92) 45%, rgba(255, 0, 140, 0.08) 100%),
+    url("/awakening/dashboard-concert-bg-mobile.png");
+  background-size: cover;
+  background-position: center top;
+}
+
+@media (min-width: 768px) {
+  .ig-live-preview-video {
+    background-image:
+      linear-gradient(165deg, rgba(0, 168, 255, 0.12) 0%, rgba(0, 0, 0, 0.92) 45%, rgba(255, 0, 140, 0.08) 100%),
+      url("/awakening/dashboard-concert-bg.png");
+    background-position: center center;
+  }
 }
 
 .ig-live-video-stage .experience-player-fit {

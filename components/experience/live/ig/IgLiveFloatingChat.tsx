@@ -1,8 +1,8 @@
 "use client";
 
+import { useIgLiveChat } from "@/components/experience/live/ig/IgLiveChatContext";
 import { chatAuthorColorClass } from "@/lib/experience/chat-author-color";
 import { IG_LIVE_MOCK_CHAT } from "@/lib/experience/ig-live-mock";
-import { useFellowshipChat } from "@/lib/experience/useFellowshipChat";
 
 const FLOATING_CHAT_LIMIT = 8;
 
@@ -10,23 +10,33 @@ type IgLiveFloatingChatProps = {
   preview?: boolean;
 };
 
-export default function IgLiveFloatingChat({ preview = false }: IgLiveFloatingChatProps) {
-  const { messages } = useFellowshipChat();
+function IgLiveFloatingChatPreview() {
+  const lines = IG_LIVE_MOCK_CHAT.slice(-FLOATING_CHAT_LIMIT);
+  return <IgLiveFloatingChatView lines={lines} />;
+}
 
-  const lines = preview
-    ? IG_LIVE_MOCK_CHAT.slice(-FLOATING_CHAT_LIMIT)
-    : messages.slice(-FLOATING_CHAT_LIMIT).map((message) => ({
-        id: message.id,
-        author: message.author,
-        userId: message.userId,
-        body: message.body,
-      }));
+function IgLiveFloatingChatLive() {
+  const { messages } = useIgLiveChat();
+  const lines = messages.slice(-FLOATING_CHAT_LIMIT).map((message) => ({
+    id: message.id,
+    author: message.author,
+    userId: message.userId,
+    body: message.body,
+  }));
 
+  return <IgLiveFloatingChatView lines={lines} />;
+}
+
+function IgLiveFloatingChatView({
+  lines,
+}: {
+  lines: { id: string; author: string; userId: string; body: string }[];
+}) {
   if (lines.length === 0) return null;
 
   return (
     <div
-      className="ig-live-chat-mask pointer-events-none absolute bottom-[calc(5.75rem+env(safe-area-inset-bottom))] left-4 z-20 max-h-[38dvh] max-w-[min(78%,20rem)] overflow-hidden md:bottom-28 md:max-w-[min(42%,24rem)] lg:hidden"
+      className="ig-live-chat-mask pointer-events-none absolute bottom-[calc(5rem+env(safe-area-inset-bottom))] left-4 z-20 max-h-[34dvh] max-w-[min(78%,20rem)] overflow-hidden"
       aria-live="polite"
       aria-label="Live chat"
     >
@@ -44,4 +54,9 @@ export default function IgLiveFloatingChat({ preview = false }: IgLiveFloatingCh
       </div>
     </div>
   );
+}
+
+export default function IgLiveFloatingChat({ preview = false }: IgLiveFloatingChatProps) {
+  if (preview) return <IgLiveFloatingChatPreview />;
+  return <IgLiveFloatingChatLive />;
 }

@@ -14,6 +14,8 @@ import { IG_LIVE_CREATOR } from "@/lib/experience/ig-live-config";
 import Link from "next/link";
 import { X } from "lucide-react";
 
+import IgLivePreviewSidebar from "@/components/experience/live/ig/IgLivePreviewSidebar";
+
 const FellowshipChatPanel = dynamic(
   () => import("@/components/experience/live/FellowshipChatPanel"),
   {
@@ -49,7 +51,7 @@ export default function IgLiveDesktop({
     sheetAction && sheetAction !== "more" ? sheetAction : null;
 
   return (
-    <div className="ig-live-root hidden h-dvh w-full overflow-hidden bg-black md:grid md:grid-cols-[minmax(0,3fr)_minmax(18rem,1fr)]">
+    <div className="ig-live-root ig-live-root--desktop">
       <section className="relative min-h-0 overflow-hidden">
         <IgLiveVideoStage
           showPaywall={showPaywall}
@@ -57,7 +59,7 @@ export default function IgLiveDesktop({
           preview={preview}
         />
 
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-30 hidden items-center justify-between px-6 py-4 md:flex">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center justify-between px-6 py-4">
           <div>
             <p className="font-headline text-fluid-section uppercase tracking-widest text-white ig-live-text-shadow">
               {IG_LIVE_CREATOR.subtitle}
@@ -104,19 +106,23 @@ export default function IgLiveDesktop({
         ) : null}
       </section>
 
-      <aside className="ig-live-glass-sidebar flex min-h-0 min-w-0 flex-col border-l border-brand-border">
-        <div className="shrink-0 border-b border-brand-border px-4 py-3">
-          <p className="font-ui text-[0.58rem] font-bold uppercase tracking-[0.18em] text-brand-muted">
-            Fellowship Chat
-          </p>
-        </div>
+      {preview ? (
+        <IgLivePreviewSidebar />
+      ) : (
+        <aside className="ig-live-glass-sidebar flex min-h-0 min-w-0 flex-col border-l border-brand-border">
+          <div className="shrink-0 border-b border-brand-border px-4 py-3">
+            <p className="font-ui text-[0.58rem] font-bold uppercase tracking-[0.18em] text-brand-muted">
+              Fellowship Chat
+            </p>
+          </div>
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3">
-          <FeatureErrorBoundary featureLabel="Fellowship Chat">
-            <FellowshipChatPanel embedded />
-          </FeatureErrorBoundary>
-        </div>
-      </aside>
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3">
+            <FeatureErrorBoundary featureLabel="Fellowship Chat">
+              <FellowshipChatPanel embedded />
+            </FeatureErrorBoundary>
+          </div>
+        </aside>
+      )}
 
       <IgLiveSheet
         action={sheetAction}

@@ -50,6 +50,7 @@ export function useFellowshipChat(): UseFellowshipChatResult {
   const fellowship = useParableSubsystem("fellowship_chat");
   const instanceId = useId().replace(/:/g, "");
   const channelRef = useRef<Awaited<ReturnType<typeof createRealtimeChannel>> | null>(null);
+  const syncAbortRef = useRef<AbortController | null>(null);
 
   const [messages, setMessages] = useState<FellowshipChatMessage[]>([]);
   const [pinned, setPinned] = useState<FellowshipChatMessage | null>(null);
@@ -66,34 +67,58 @@ export function useFellowshipChat(): UseFellowshipChatResult {
       return;
     }
 
+    syncAbortRef.current?.abort();
+    const abortController = new AbortController();
+    syncAbortRef.current = abortController;
+
     try {
       const { response } = await parableFetch(
         `${getClientAppUrl()}/api/experience/fellowship-chat`,
         {
           cache: "no-store",
           credentials: "include",
+          signal: abortController.signal,
         },
         { subsystem: "fellowship_chat" },
       );
+
+      if (abortController.signal.aborted) return;
 
       if (!response.ok) {
         throw new Error("feed unavailable");
       }
 
       const payload = (await response.json()) as FellowshipChatPayload;
+      if (abortController.signal.aborted) return;
+
       setMessages(payload.messages);
       setPinned(payload.pinned);
       setSession(payload.session);
       setUsePollingFallback(false);
       setError(null);
     } catch (syncError) {
+      if (
+        abortController.signal.aborted ||
+        (syncError instanceof DOMException && syncError.name === "AbortError") ||
+        (syncError instanceof Error && syncError.name === "AbortError")
+      ) {
+        return;
+      }
       console.error("Fellowship chat sync failed:", syncError);
       setUsePollingFallback(false);
       setError("Fellowship Chat is temporarily unavailable.");
     } finally {
-      setIsLoading(false);
+      if (!abortController.signal.aborted) {
+        setIsLoading(false);
+      }
     }
   }, [fellowship]);
+
+  useEffect(() => {
+    return () => {
+      syncAbortRef.current?.abort();
+    };
+  }, []);
 
   useEffect(() => {
     void syncFeed();

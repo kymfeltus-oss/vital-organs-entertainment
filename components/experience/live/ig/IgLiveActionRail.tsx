@@ -53,7 +53,7 @@ export default function IgLiveActionRail({
   ] as const;
 
   return (
-    <div className="absolute bottom-[calc(6.25rem+env(safe-area-inset-bottom))] right-3 z-[25] flex flex-col items-center gap-4 md:bottom-32 md:right-5">
+    <div className="absolute bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-3 z-[25] flex flex-col items-center gap-3 md:bottom-28 md:right-5">
       {items.map(({ key, label, icon: Icon, onClick, className }) => (
         <button
           key={key}

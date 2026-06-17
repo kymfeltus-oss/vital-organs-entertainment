@@ -40,7 +40,7 @@ export default function IgLiveMobile({
     sheetAction && sheetAction !== "more" ? sheetAction : null;
 
   return (
-    <div className="ig-live-root relative h-dvh w-full overflow-hidden bg-black md:hidden">
+    <div className="ig-live-root">
       <IgLiveVideoStage
         showPaywall={showPaywall}
         paywallOverlay={paywallOverlay}
