@@ -47,10 +47,12 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const localUserIdRef = useRef<string | null>(null);
+  const shouldFetchRef = useRef(seeds.shouldFetch);
+  shouldFetchRef.current = seeds.shouldFetch;
   const allowRealtime = seeds.shouldAllowRealtime();
 
-  const refresh = useCallback(async () => {
-    if (!seeds.shouldFetch()) {
+  const refresh = useCallback(async (signal?: AbortSignal) => {
+    if (!shouldFetchRef.current()) {
       setIsLoading(false);
       setError("Seed wallet paused to protect live stream.");
       return;
@@ -64,6 +66,7 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
         {
           method: "GET",
           credentials: "include",
+          signal,
         },
         { subsystem: "seeds" },
       );
@@ -91,18 +94,28 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
       setUsedFreeTaps(typeof data.usedFreeTaps === "number" ? data.usedFreeTaps : 0);
       setIsLoading(false);
     } catch (refreshError) {
+      if (
+        refreshError instanceof Error &&
+        refreshError.name === "AbortError"
+      ) {
+        return;
+      }
       console.error("Seed wallet refresh failed:", refreshError);
       setError("Unable to load seed balance.");
       setIsLoading(false);
     }
-  }, [seeds]);
+  }, []);
 
   useEffect(() => {
+    const abortController = new AbortController();
+
     if (!allowRealtime) {
       queueMicrotask(() => {
-        void refresh();
+        void refresh(abortController.signal);
       });
-      return;
+      return () => {
+        abortController.abort();
+      };
     }
 
     let cancelled = false;
@@ -166,12 +179,13 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
 
     queueMicrotask(() => {
       if (!cancelled) {
-        void refresh();
+        void refresh(abortController.signal);
       }
     });
 
     return () => {
       cancelled = true;
+      abortController.abort();
       unregisterPlatformListener(SEED_WALLET_LISTENER_ID);
       releasePlatformChannel(supabase);
     };

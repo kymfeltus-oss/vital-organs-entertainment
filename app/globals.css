@@ -1791,7 +1791,7 @@ html {
     --dash-mobile-backdrop-y: top;
     --dash-mobile-backdrop-translate-y: -2.5rem;
     /* Push HTML welcome band below safe area + orb row */
-    --dash-mobile-welcome-offset: 1.5rem;
+    --dash-mobile-welcome-offset: 2rem;
   }
 
   [data-dashboard-shell="mobile"] .dashboard-hero {

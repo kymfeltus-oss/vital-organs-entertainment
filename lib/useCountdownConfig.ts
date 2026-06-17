@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DEFAULT_COUNTDOWN_CONFIG,
   type EventCountdownConfig,
@@ -26,12 +26,17 @@ export function useCountdownConfig(options: UseCountdownConfigOptions = {}) {
   });
   const [isLoading, setIsLoading] = useState(!options.initialConfig);
   const [usingLocalFallback, setUsingLocalFallback] = useState(false);
+  const shouldFetchRef = useRef(shouldFetch);
+  const persistCountdownConfigRef = useRef(persistCountdownConfig);
+  shouldFetchRef.current = shouldFetch;
+  persistCountdownConfigRef.current = persistCountdownConfig;
 
   useEffect(() => {
     let cancelled = false;
+    const abortController = new AbortController();
 
     async function load() {
-      if (!shouldFetch()) {
+      if (!shouldFetchRef.current()) {
         const cached = loadLastKnownCountdown();
         if (cached && !cancelled) {
           setConfig(cached);
@@ -44,7 +49,7 @@ export function useCountdownConfig(options: UseCountdownConfigOptions = {}) {
       try {
         const { response } = await parableFetch(
           "/api/countdown",
-          { cache: "no-store" },
+          { cache: "no-store", signal: abortController.signal },
           { subsystem: "countdown" },
         );
 
@@ -55,9 +60,9 @@ export function useCountdownConfig(options: UseCountdownConfigOptions = {}) {
         setConfig(data);
         setUsingLocalFallback(false);
         saveLastKnownCountdown(data);
-        persistCountdownConfig(data);
+        persistCountdownConfigRef.current(data);
       } catch {
-        if (cancelled) return;
+        if (abortController.signal.aborted || cancelled) return;
 
         const cached = loadLastKnownCountdown();
         if (cached) {
@@ -78,6 +83,7 @@ export function useCountdownConfig(options: UseCountdownConfigOptions = {}) {
       }, { timeout: 1_000 });
       return () => {
         cancelled = true;
+        abortController.abort();
         window.cancelIdleCallback(idleId);
       };
     }
@@ -85,8 +91,9 @@ export function useCountdownConfig(options: UseCountdownConfigOptions = {}) {
     void load();
     return () => {
       cancelled = true;
+      abortController.abort();
     };
-  }, [options.initialConfig, persistCountdownConfig, shouldFetch]);
+  }, [options.initialConfig]);
 
   return { config, isLoading, usingLocalFallback };
 }

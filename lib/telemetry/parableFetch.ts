@@ -62,11 +62,17 @@ export async function parableFetch(
   } catch (error) {
     clearTimeout(timeoutId);
 
-    updateSystemHealth({
-      latency: performance.now() - startTime,
-      subsystem,
-      failed: true,
-    });
+    const isAbort =
+      (error instanceof DOMException || error instanceof Error) &&
+      error.name === "AbortError";
+
+    if (!isAbort) {
+      updateSystemHealth({
+        latency: performance.now() - startTime,
+        subsystem,
+        failed: true,
+      });
+    }
 
     throw error;
   } finally {
