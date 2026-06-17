@@ -93,8 +93,8 @@ export default function ExperienceDashboardHero({
             className={cn(
               "dashboard-hero-cta-images mx-auto flex w-full items-center justify-center px-2",
               isMobile
-                ? "mt-4 flex-row"
-                : "flex-col gap-2 sm:flex-row sm:gap-3",
+                ? "flex-row"
+                : "mt-4 flex-col gap-2 sm:flex-row sm:gap-3",
             )}
           >
             <Link href={AWAKENING_ASSETS.routes.enterExperience} className={ctaLinkClass}>
