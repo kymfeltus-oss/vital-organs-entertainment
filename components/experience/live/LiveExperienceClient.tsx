@@ -6,9 +6,11 @@ import { useEffect, useRef, useState } from "react";
 import type { ExperienceActionId } from "@/components/experience/live/experience-actions";
 import ExperienceLiveLayout from "@/components/experience/live/ExperienceLiveLayout";
 import GoingLiveTransition from "@/components/experience/live/GoingLiveTransition";
-import ViewerPovGoLiveShell from "@/components/experience/live/pov/ViewerPovGoLiveShell";
+import IgLiveShell from "@/components/experience/live/ig/IgLiveShell";
 import WaitingRoom from "@/components/experience/live/WaitingRoom";
 import PassActivatingShell from "@/components/live/PassActivatingShell";
+import { LiveExperienceStreamProvider } from "@/lib/experience/LiveExperienceStreamContext";
+import { LiveStreamReactionsProvider } from "@/lib/experience/LiveStreamReactionsContext";
 import { shouldShowCountdownTimer } from "@/lib/experience/countdown-display";
 import { useAttendeeLiveState } from "@/lib/experience/useAttendeeLiveState";
 import { useEventCountdown } from "@/lib/experience/useEventCountdown";
@@ -16,6 +18,7 @@ import { useMobilePortraitLayout } from "@/lib/experience/useMobilePortraitLayou
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import {
   BroadcastHealthProvider,
+  useBroadcastHealth,
 } from "@/lib/parable/BroadcastHealthContext";
 import { useCountdownConfig } from "@/lib/useCountdownConfig";
 import { useLiveAccessVerification } from "@/lib/useLiveAccessVerification";
@@ -45,6 +48,7 @@ export default function LiveExperienceClient({
 function LiveExperienceClientInner({
   initialCountdownConfig,
 }: LiveExperienceClientProps) {
+  const health = useBroadcastHealth();
   const { phase, verificationAttempt } = useLiveAccessVerification();
   const { isLive: streamIsLive, isLoading: isStreamStateLoading } = useAttendeeLiveState();
   const { config: countdownConfig, isLoading: countdownLoading } = useCountdownConfig({
@@ -116,18 +120,20 @@ function LiveExperienceClientInner({
   }
 
   const showLiveView = streamIsLive && !goingLive;
+  const showPaywall = phase === "guest_hub";
+  const paywallOverlay = showPaywall ? <StreamPaywallOverlay /> : undefined;
 
   if (showLiveView) {
     return (
-      <>
-        <ViewerPovGoLiveShell />
+      <LiveStreamReactionsProvider enabled={!health.safeMode}>
+        <LiveExperienceStreamProvider enabled={showLiveView}>
+          <IgLiveShell showPaywall={showPaywall} paywallOverlay={paywallOverlay} />
+        </LiveExperienceStreamProvider>
         <GoingLiveTransition visible={goingLive} />
-      </>
+      </LiveStreamReactionsProvider>
     );
   }
 
-  const showPaywall = phase === "guest_hub";
-  const paywallOverlay = showPaywall ? <StreamPaywallOverlay /> : undefined;
   const statusLabel =
     countdownConfig.status_label?.trim() || "Waiting for live signal";
   const showCountdownTimer = shouldShowCountdownTimer(
