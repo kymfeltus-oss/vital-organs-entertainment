@@ -3,16 +3,16 @@
 import ViewerPovGoLiveDesktop from "@/components/experience/live/pov/ViewerPovGoLiveDesktop";
 import ViewerPovGoLiveMobile from "@/components/experience/live/pov/ViewerPovGoLiveMobile";
 
-/** Responsive shell — mobile immersive POV below md, split dashboard at md+. */
+/** Full-viewport immersive POV shell — no legacy chrome or nav. */
 export default function ViewerPovGoLiveShell() {
   return (
-    <>
-      <div className="block md:hidden">
+    <div className="fixed inset-0 z-[100] h-dvh w-full overflow-hidden bg-brand-black">
+      <div className="h-full w-full md:hidden">
         <ViewerPovGoLiveMobile />
       </div>
-      <div className="hidden md:block">
+      <div className="hidden h-full w-full md:block">
         <ViewerPovGoLiveDesktop />
       </div>
-    </>
+    </div>
   );
 }
