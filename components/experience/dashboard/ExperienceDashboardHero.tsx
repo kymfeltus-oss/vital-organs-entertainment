@@ -5,8 +5,11 @@ import { useRef } from "react";
 import AwakeningMenuButton from "@/components/AwakeningMenuButton";
 import ProfileOrbEditor from "@/components/profile/ProfileOrbEditor";
 import ExperienceDashboardCardRow from "@/components/experience/dashboard/ExperienceDashboardCardRow";
+import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
 import { AWAKENING_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
 import { normalizeBackdropVariant } from "@/lib/experience/dashboard-beam-position";
+import type { EventCountdownConfig } from "@/lib/live/countdown-config";
+import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { cn } from "@/lib/utils";
 
@@ -14,15 +17,20 @@ type ExperienceDashboardHeroProps = {
   profile: AttendeeProfileSnapshot;
   onProfileChange: (profile: AttendeeProfileSnapshot) => void;
   variant?: "mobile" | "desktop";
+  initialCountdownConfig?: EventCountdownConfig;
 };
 
 export default function ExperienceDashboardHero({
   profile,
   onProfileChange,
   variant = "desktop",
+  initialCountdownConfig,
 }: ExperienceDashboardHeroProps) {
   const backdropVariant = normalizeBackdropVariant(variant);
   const isMobile = backdropVariant === "mobile";
+  const { config, countdown, eventPhase, isLoading, showTimer } = useLobbyCountdown({
+    initialConfig: initialCountdownConfig,
+  });
   const welcomeLine = `Welcome ${profile.headerDisplayName}`;
   const headlineRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
@@ -90,6 +98,27 @@ export default function ExperienceDashboardHero({
           <p ref={subtitleRef} className="dashboard-hero-subtitle text-white">
             STEP INTO WORSHIP, PURPOSE AND IMPACT.
           </p>
+
+          <div className={cn("mx-auto w-full px-2", isMobile ? "max-w-[min(100%,20rem)]" : "max-w-md")}>
+            <LobbyCountdownTimer
+              config={config}
+              countdown={countdown}
+              eventPhase={eventPhase}
+              showTimer={showTimer}
+              isLoading={isLoading}
+              variant="segmented"
+            />
+            {eventPhase === "waiting" && showTimer ? (
+              <p className="mt-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.2em] text-brand-muted">
+                {config.status_label}
+              </p>
+            ) : null}
+            {eventPhase === "ended" ? (
+              <p className="mt-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.2em] text-brand-muted">
+                Experience Ended
+              </p>
+            ) : null}
+          </div>
 
           <div
             ref={ctaRef}

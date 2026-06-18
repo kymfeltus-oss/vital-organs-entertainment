@@ -2,16 +2,19 @@
 
 import ExperienceDashboardBackdrop from "@/components/experience/dashboard/ExperienceDashboardBackdrop";
 import ExperienceDashboardContent from "@/components/experience/dashboard/ExperienceDashboardContent";
+import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
 type ExperienceDashboardDesktopViewProps = {
   profile: AttendeeProfileSnapshot;
   onProfileChange: (profile: AttendeeProfileSnapshot) => void;
+  initialCountdownConfig?: EventCountdownConfig;
 };
 
 export default function ExperienceDashboardDesktopView({
   profile,
   onProfileChange,
+  initialCountdownConfig,
 }: ExperienceDashboardDesktopViewProps) {
   return (
     <div className="relative hidden h-dvh min-h-dvh w-full overflow-hidden bg-brand-black md:block">
@@ -23,6 +26,7 @@ export default function ExperienceDashboardDesktopView({
             profile={profile}
             onProfileChange={onProfileChange}
             variant="desktop"
+            initialCountdownConfig={initialCountdownConfig}
           />
         </div>
       </div>

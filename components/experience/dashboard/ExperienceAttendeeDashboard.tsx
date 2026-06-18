@@ -4,14 +4,17 @@ import { useEffect, useState } from "react";
 import ExperienceDashboardDesktopView from "@/components/experience/dashboard/ExperienceDashboardDesktopView";
 import ExperienceDashboardMobileView from "@/components/experience/dashboard/ExperienceDashboardMobileView";
 import { AWAKENING_PRELOAD_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
+import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
 type ExperienceAttendeeDashboardProps = {
   initialProfile: AttendeeProfileSnapshot;
+  initialCountdownConfig?: EventCountdownConfig;
 };
 
 export default function ExperienceAttendeeDashboard({
   initialProfile,
+  initialCountdownConfig,
 }: ExperienceAttendeeDashboardProps) {
   const [profile, setProfile] = useState(initialProfile);
 
@@ -38,8 +41,16 @@ export default function ExperienceAttendeeDashboard({
 
   return (
     <>
-      <ExperienceDashboardMobileView profile={profile} onProfileChange={setProfile} />
-      <ExperienceDashboardDesktopView profile={profile} onProfileChange={setProfile} />
+      <ExperienceDashboardMobileView
+        profile={profile}
+        onProfileChange={setProfile}
+        initialCountdownConfig={initialCountdownConfig}
+      />
+      <ExperienceDashboardDesktopView
+        profile={profile}
+        onProfileChange={setProfile}
+        initialCountdownConfig={initialCountdownConfig}
+      />
     </>
   );
 }

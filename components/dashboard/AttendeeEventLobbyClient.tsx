@@ -2,18 +2,13 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import DashboardHeroSection from "@/components/dashboard/DashboardHeroSection";
 import { SidebarSkeleton } from "@/components/dashboard/lobby/AttendeeEventLobbySidebar";
 import PassActivatingShell from "@/components/live/PassActivatingShell";
-import {
-  computeEventCountdownPhase,
-  type EventCountdownConfig,
-  type EventCountdownPhase,
-} from "@/lib/live/countdown-config";
-import { computeCountdown, type CountdownParts } from "@/lib/live/event-lobby";
+import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import { filterActivityByKinds } from "@/lib/live/live-activity";
-import { useCountdownConfig } from "@/lib/useCountdownConfig";
+import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
 import { useDeferredMount } from "@/lib/useDeferredMount";
 import { useHybridLiveActivity } from "@/lib/useHybridLiveActivity";
 import { useLiveAccessVerification } from "@/lib/useLiveAccessVerification";
@@ -44,34 +39,6 @@ const AttendeeEventLobbyBottomNav = dynamic(() =>
   ),
 );
 
-function useEventCountdown(targetIso: string): CountdownParts {
-  const [parts, setParts] = useState<CountdownParts>(() => computeCountdown(targetIso));
-
-  useEffect(() => {
-    const tick = () => setParts(computeCountdown(targetIso));
-    tick();
-    const intervalId = setInterval(tick, 1_000);
-    return () => clearInterval(intervalId);
-  }, [targetIso]);
-
-  return parts;
-}
-
-function useEventPhase(startTime: string, endTime: string): EventCountdownPhase {
-  const [phase, setPhase] = useState<EventCountdownPhase>(() =>
-    computeEventCountdownPhase(startTime, endTime),
-  );
-
-  useEffect(() => {
-    const tick = () => setPhase(computeEventCountdownPhase(startTime, endTime));
-    tick();
-    const intervalId = setInterval(tick, 1_000);
-    return () => clearInterval(intervalId);
-  }, [endTime, startTime]);
-
-  return phase;
-}
-
 type AttendeeEventLobbyClientProps = {
   initialCountdownConfig: EventCountdownConfig;
 };
@@ -83,11 +50,9 @@ export default function AttendeeEventLobbyClient({
   const { phase, verificationAttempt } = useLiveAccessVerification();
   const { isLive: streamIsLive, isLoading: isStreamStateLoading } = useLiveStreamState();
   const { pool, visible: activityVisible } = useHybridLiveActivity({ enabled: deferredReady });
-  const { config: countdownConfig } = useCountdownConfig({
+  const { config: countdownConfig, countdown, eventPhase, showTimer } = useLobbyCountdown({
     initialConfig: initialCountdownConfig,
   });
-  const eventPhase = useEventPhase(countdownConfig.start_time, countdownConfig.end_time);
-  const countdown = useEventCountdown(countdownConfig.start_time);
   const cta = useLobbyCta(countdownConfig, eventPhase, phase, streamIsLive);
 
   const movementActivity = useMemo(() => {
@@ -143,6 +108,7 @@ export default function AttendeeEventLobbyClient({
             countdown={countdown}
             eventPhase={eventPhase}
             showLiveSignal={showLiveSignal}
+            showTimer={showTimer}
             ctaLabel={cta.label}
             ctaHref={cta.href}
             ctaDisabled={cta.disabled}

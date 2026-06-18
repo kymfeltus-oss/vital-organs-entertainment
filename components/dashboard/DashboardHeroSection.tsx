@@ -2,19 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
 import type { CountdownParts } from "@/lib/live/event-lobby";
 import type { EventCountdownConfig, EventCountdownPhase } from "@/lib/live/countdown-config";
-
-function formatCountdownHms(countdown: CountdownParts): string {
-  const totalHours = countdown.days * 24 + countdown.hours;
-  return `${String(totalHours).padStart(2, "0")} : ${String(countdown.minutes).padStart(2, "0")} : ${String(countdown.seconds).padStart(2, "0")}`;
-}
 
 export type DashboardHeroSectionProps = {
   config: EventCountdownConfig;
   countdown: CountdownParts;
   eventPhase: EventCountdownPhase;
   showLiveSignal: boolean;
+  showTimer: boolean;
   ctaLabel: string;
   ctaHref?: string;
   ctaDisabled: boolean;
@@ -25,15 +22,11 @@ export default function DashboardHeroSection({
   countdown,
   eventPhase,
   showLiveSignal,
+  showTimer,
   ctaLabel,
   ctaHref,
   ctaDisabled,
 }: DashboardHeroSectionProps) {
-  const timeDisplay =
-    eventPhase === "waiting" && !countdown.isComplete
-      ? formatCountdownHms(countdown)
-      : "00 : 00 : 00";
-
   const pillSrc = showLiveSignal ? "/ui/live-pill.png" : config.waiting_pill_url;
   const pillAlt = showLiveSignal ? "Live signal" : config.status_label;
 
@@ -81,27 +74,14 @@ export default function DashboardHeroSection({
           {config.subtitle}
         </p>
 
-        <div className="relative mb-2 h-[108px] w-full max-w-[390px]">
-          <Image
-            src={config.countdown_frame_url}
-            alt=""
-            fill
-            className="object-contain"
-            priority
+        <div className="relative mb-2 flex w-full justify-center">
+          <LobbyCountdownTimer
+            config={config}
+            countdown={countdown}
+            eventPhase={eventPhase}
+            showTimer={showTimer}
+            variant="hms"
           />
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center">
-            <p
-              className="text-[42px] font-black leading-none tracking-[0.18em] text-white"
-              style={{ textShadow: "0 2px 16px rgba(0,0,0,0.95), 0 0 24px rgba(0,0,0,0.85)" }}
-            >
-              {timeDisplay}
-            </p>
-            <div className="mt-[10px] grid w-[250px] grid-cols-3 text-[10px] font-bold uppercase tracking-[0.28em] text-[#D4D4D8]">
-              <span>HRS</span>
-              <span className="text-center">MINS</span>
-              <span className="text-right">SECS</span>
-            </div>
-          </div>
         </div>
 
         {eventPhase === "waiting" && (

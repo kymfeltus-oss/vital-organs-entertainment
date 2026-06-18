@@ -4,6 +4,7 @@ import { getUserFromSession } from "@/lib/auth/session";
 import { fetchAttendeeProfileRecord } from "@/lib/experience/fetch-attendee-profile";
 import { buildAttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { AWAKENING_PRELOAD_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
+import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
 
 export const revalidate = 0;
 
@@ -19,13 +20,17 @@ export default async function ExperienceHubPage() {
   }
 
   const profile = buildAttendeeProfileSnapshot(user, attendeeRecord);
+  const initialCountdownConfig = await loadActiveCountdownConfig();
 
   return (
     <>
       {AWAKENING_PRELOAD_ASSETS.map((href) => (
         <link key={href} rel="preload" as="image" href={href} fetchPriority="high" />
       ))}
-      <ExperienceAttendeeDashboard initialProfile={profile} />
+      <ExperienceAttendeeDashboard
+        initialProfile={profile}
+        initialCountdownConfig={initialCountdownConfig}
+      />
     </>
   );
 }
