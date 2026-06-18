@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Mail, Smartphone } from "lucide-react";
+import AttendeeAuthArtboard from "@/components/auth/AttendeeAuthArtboard";
+import AttendeeAuthLoginPlate from "@/components/auth/AttendeeAuthLoginPlate";
 import EmailGateShell, {
   gateFieldClass,
   PrimaryGateButton,
@@ -38,6 +39,8 @@ export default function AttendeeFunnelClient({
 
   const [activeTab, setActiveTab] = useState<AttendeeTab>("login");
   const [guestStep, setGuestStep] = useState<"form" | "otp">("form");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -65,7 +68,10 @@ export default function AttendeeFunnelClient({
 
   const handleCredentialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    if (!email.trim() || !password) {
+      setError("Enter your email and password.");
+      return;
+    }
     if (activeTab === "signup" && (!firstName.trim() || !lastName.trim())) {
       setError("First and last name are required.");
       return;
@@ -157,192 +163,112 @@ export default function AttendeeFunnelClient({
     );
   }
 
-  return (
-    <EmailGateShell
-      eyebrow="Attendee Entrance"
-      title="Join The Awakening"
-      description="Log in, create your pass account, or continue as a guest. Guest verification collects contact details before OTP confirmation."
-      backHref={hubBackHref}
-    >
-      <div className="mb-6 grid grid-cols-3 gap-1 rounded-xl border border-brand-border bg-brand-black p-1 font-ui text-[0.58rem] font-bold uppercase tracking-[0.08em]">
-        {(
-          [
-            ["login", "Log In"],
-            ["signup", "Create Account"],
-            ["guest", "Continue as Guest"],
-          ] as const
-        ).map(([tab, label]) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => {
-              setActiveTab(tab);
-              setGuestStep("form");
-              setError(null);
-            }}
-            className={`min-h-11 rounded-lg px-1 py-2 transition-colors ${
-              activeTab === tab
-                ? "border border-brand-blue/40 bg-brand-blue/15 text-white"
-                : "text-brand-muted hover:text-white"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+  if (activeTab === "guest") {
+    return (
+      <EmailGateShell backHref={hubBackHref} backLabel="Back to entry hub">
+        <form onSubmit={handleGuestFormSubmit} className="space-y-3">
+          <input
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onBlur={() => setEmailTouched(true)}
+            placeholder="Email"
+            className={gateFieldClass(emailState === "valid", emailState === "invalid")}
+          />
+          <ValidationHint
+            valid={emailState === "valid"}
+            invalid={emailState === "invalid"}
+            validMessage="Valid email"
+            invalidMessage="Enter a valid email"
+          />
 
-      {activeTab !== "guest" ? (
-        <form onSubmit={(e) => void handleCredentialSubmit(e)} className="space-y-4">
-          {activeTab === "signup" ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1.5 block font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-muted">
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  autoComplete="given-name"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="First name"
-                  className={gateFieldClass(false, false)}
-                />
-              </div>
-
-              <div>
-                <label className="mb-1.5 block font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-muted">
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  autoComplete="family-name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Last name"
-                  className={gateFieldClass(false, false)}
-                />
-              </div>
-            </div>
-          ) : null}
-
-          <div>
-            <label className="mb-1.5 block font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-muted">
-              Email Address
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onBlur={() => setEmailTouched(true)}
-              placeholder="name@domain.com"
-              className={gateFieldClass(emailState === "valid", emailState === "invalid")}
-            />
-            <ValidationHint
-              valid={emailState === "valid"}
-              invalid={emailState === "invalid"}
-              validMessage="Valid email format"
-              invalidMessage="Enter a valid email address"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-muted">
-              Password
-            </label>
-            <input
-              type="password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={
-                activeTab === "signup" ? "Create password (8+ chars)" : "Your password"
-              }
-              className={gateFieldClass(false, false)}
-            />
-          </div>
-
-          <PrimaryGateButton type="submit" disabled={status === "submitting"}>
-            {status === "submitting" ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                Processing Secure Entry...
-              </>
-            ) : activeTab === "login" ? (
-              "Sign In"
-            ) : (
-              "Create Account"
-            )}
-          </PrimaryGateButton>
-        </form>
-      ) : (
-        <form onSubmit={handleGuestFormSubmit} className="space-y-4">
-          <p className="rounded-xl border border-brand-border bg-brand-panel/70 px-4 py-3 font-body text-xs leading-relaxed text-brand-muted">
-            Guest entry collects email and mobile contact for verification. SMS and email OTP delivery will connect here in a later phase.
-          </p>
-
-          <div>
-            <label className="mb-1.5 flex items-center gap-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-muted">
-              <Mail className="h-3.5 w-3.5 text-brand-blue" aria-hidden="true" />
-              Email Address
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onBlur={() => setEmailTouched(true)}
-              placeholder="name@domain.com"
-              className={gateFieldClass(emailState === "valid", emailState === "invalid")}
-            />
-            <ValidationHint
-              valid={emailState === "valid"}
-              invalid={emailState === "invalid"}
-              validMessage="Valid email format"
-              invalidMessage="Enter a valid email address"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 flex items-center gap-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-muted">
-              <Smartphone className="h-3.5 w-3.5 text-brand-pink" aria-hidden="true" />
-              Phone Number
-            </label>
-            <input
-              type="tel"
-              inputMode="numeric"
-              required
-              value={phone}
-              onChange={(e) => setPhone(normalizePhoneDigits(e.target.value))}
-              onBlur={() => setPhoneTouched(true)}
-              placeholder="10-digit mobile number"
-              className={gateFieldClass(phoneState === "valid", phoneState === "invalid")}
-            />
-            <ValidationHint
-              valid={phoneState === "valid"}
-              invalid={phoneState === "invalid"}
-              validMessage="Valid 10-digit phone pattern"
-              invalidMessage="Enter a 10-digit US phone number"
-            />
-          </div>
+          <input
+            type="tel"
+            inputMode="numeric"
+            required
+            autoComplete="tel"
+            value={phone}
+            onChange={(e) => setPhone(normalizePhoneDigits(e.target.value))}
+            onBlur={() => setPhoneTouched(true)}
+            placeholder="Phone"
+            className={gateFieldClass(phoneState === "valid", phoneState === "invalid")}
+          />
+          <ValidationHint
+            valid={phoneState === "valid"}
+            invalid={phoneState === "invalid"}
+            validMessage="Valid phone"
+            invalidMessage="Enter a 10-digit US phone number"
+          />
 
           <PrimaryGateButton type="submit" disabled={!guestFormValid}>
-            Send Verification Code
+            Continue
           </PrimaryGateButton>
+
+          <button
+            type="button"
+            className="mt-2 w-full min-h-11 font-ui text-xs text-brand-muted underline"
+            onClick={() => {
+              setActiveTab("login");
+              setError(null);
+            }}
+          >
+            Back to login
+          </button>
         </form>
-      )}
+
+        {displayError ? (
+          <p role="alert" className="mt-4 font-body text-sm text-brand-pink">
+            {displayError}
+          </p>
+        ) : null}
+      </EmailGateShell>
+    );
+  }
+
+  return (
+    <AttendeeAuthArtboard>
+      <AttendeeAuthLoginPlate
+        mode={activeTab}
+        email={email}
+        password={password}
+        firstName={firstName}
+        lastName={lastName}
+        showPassword={showPassword}
+        rememberMe={rememberMe}
+        isSubmitting={status === "submitting"}
+        onEmailChange={setEmail}
+        onPasswordChange={setPassword}
+        onFirstNameChange={setFirstName}
+        onLastNameChange={setLastName}
+        onEmailBlur={() => setEmailTouched(true)}
+        onToggleShowPassword={() => setShowPassword((current) => !current)}
+        onRememberMeChange={setRememberMe}
+        onSubmit={(event) => void handleCredentialSubmit(event)}
+        onCreateAccount={() => {
+          setActiveTab("signup");
+          setError(null);
+        }}
+        onBackToLogin={() => {
+          setActiveTab("login");
+          setError(null);
+        }}
+        onGuest={() => {
+          setActiveTab("guest");
+          setGuestStep("form");
+          setError(null);
+        }}
+      />
 
       {displayError ? (
         <p
           role="alert"
-          className="mt-4 rounded-xl border border-brand-pink/40 bg-brand-pink/10 px-4 py-3 text-center font-body text-sm text-white"
+          className="auth-attendee-error font-body text-sm text-brand-pink"
         >
           {displayError}
         </p>
       ) : null}
-    </EmailGateShell>
+    </AttendeeAuthArtboard>
   );
 }

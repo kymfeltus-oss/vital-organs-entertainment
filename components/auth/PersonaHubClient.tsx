@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Radio, Shield } from "lucide-react";
 import EmailGateShell from "@/components/auth/EmailGateShell";
 import {
   buildAttendeeGateUrl,
@@ -24,47 +23,21 @@ export default function PersonaHubClient() {
   );
 
   return (
-    <EmailGateShell
-      eyebrow="300 Awakening Entry Hub"
-      title="Select Your Path"
-      description="Choose how you are entering the experience. Attendees join the live awakening. Promoters and production teams access broadcast and ops consoles."
-    >
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Link href={attendeeHref} className="group block">
-          <article className="flex h-full min-h-[180px] flex-col rounded-2xl border border-brand-border bg-brand-black p-5 transition hover:border-brand-blue/50 hover:shadow-[0_0_30px_rgba(0,168,255,0.15)]">
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-brand-blue/30 bg-brand-blue/10">
-              <Radio className="h-5 w-5 text-brand-blue" aria-hidden="true" />
-            </div>
-            <h2 className="font-card-title text-lg uppercase tracking-[0.08em] text-white">
-              Attendee Entrance
-            </h2>
-            <p className="mt-2 flex-1 font-body text-xs leading-relaxed text-brand-muted">
-              Log in, create an account, or continue as a guest to enter the live experience and event lobby.
-            </p>
-            <span className="mt-4 font-ui text-[0.58rem] font-bold uppercase tracking-[0.14em] text-brand-blue group-hover:underline">
-              Continue as Attendee →
-            </span>
-          </article>
+    <EmailGateShell>
+      <div className="flex flex-col gap-3">
+        <Link
+          href={attendeeHref}
+          className="flex min-h-11 items-center justify-center rounded-lg border border-brand-border px-4 py-2 text-sm text-white"
+        >
+          Attendee — log in or create account
         </Link>
-
-        <Link href={teamHref} className="group block">
-          <article className="flex h-full min-h-[180px] flex-col rounded-2xl border border-brand-border bg-brand-black p-5 transition hover:border-brand-pink/50 hover:shadow-[0_0_30px_rgba(255,0,140,0.15)]">
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-brand-pink/30 bg-brand-pink/10">
-              <Shield className="h-5 w-5 text-brand-pink" aria-hidden="true" />
-            </div>
-            <h2 className="font-card-title text-lg uppercase tracking-[0.08em] text-white">
-              Promoter &amp; Production Team Login
-            </h2>
-            <p className="mt-2 flex-1 font-body text-xs leading-relaxed text-brand-muted">
-              Secure credentials for PARABLE broadcast control, readiness gates, and operator live hub access.
-            </p>
-            <span className="mt-4 font-ui text-[0.58rem] font-bold uppercase tracking-[0.14em] text-brand-pink group-hover:underline">
-              Team Secure Login →
-            </span>
-          </article>
+        <Link
+          href={teamHref}
+          className="flex min-h-11 items-center justify-center rounded-lg border border-brand-border px-4 py-2 text-sm text-brand-muted"
+        >
+          Team login
         </Link>
       </div>
-
     </EmailGateShell>
   );
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, RotateCcw, Save } from "lucide-react";
-import DashboardHeroSection from "@/components/dashboard/DashboardHeroSection";
+import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
 import { shouldShowCountdownTimer } from "@/lib/experience/countdown-display";
 import {
   computeEventCountdownPhase,
@@ -307,16 +307,23 @@ export default function CountdownAdminClient({
               Phase: {previewPhase}
             </span>
           </div>
-          <DashboardHeroSection
-            config={form}
-            countdown={previewCountdown}
-            eventPhase={previewPhase}
-            showLiveSignal={previewPhase === "live"}
-            showTimer={shouldShowCountdownTimer(form, false)}
-            ctaLabel={previewCta.label}
-            ctaHref={previewCta.href}
-            ctaDisabled={previewCta.disabled}
-          />
+          <div className="space-y-3 rounded-xl border border-white/10 bg-[#111111] p-4">
+            <p className="font-headline text-lg uppercase tracking-widest text-white">{form.headline}</p>
+            <p className="text-xs uppercase tracking-widest text-[#A1A1AA]">{form.subtitle}</p>
+            {shouldShowCountdownTimer(form, false) && previewPhase === "waiting" ? (
+              <LobbyCountdownTimer
+                config={form}
+                countdown={previewCountdown}
+                eventPhase={previewPhase}
+                showTimer
+                variant="hms"
+              />
+            ) : null}
+            <p className="text-[10px] uppercase tracking-widest text-[#93C5FD]">
+              CTA: {previewCta.label}
+              {previewCta.disabled ? " (disabled)" : ""}
+            </p>
+          </div>
         </section>
       </div>
     </div>

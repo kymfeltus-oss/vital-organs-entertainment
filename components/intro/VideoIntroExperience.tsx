@@ -2,21 +2,48 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { AccessContext } from "@/lib/access";
 import { fetchAccessContext } from "@/lib/access";
 import { buildPersonaHubUrl, DEFAULT_ATTENDEE_NEXT } from "@/lib/auth/routing";
+import {
+  INTRO_ENTER_PANEL,
+  INTRO_MOBILE_ART,
+  INTRO_MUSIC_SRC,
+  INTRO_VIDEO_SRC,
+} from "@/lib/experience/intro-assets";
+import { introRectStyle } from "@/lib/experience/intro-layout-slots";
 
-const INTRO_VIDEO_SRC = "/intro%20mobile.mp4";
-const INTRO_MUSIC_SRC = "/intro-music.m4a";
-const INTRO_MUSIC_LOOP_AFTER_MS = 10_000;
 const EXIT_MS = 520;
+const ACCESS_TIMEOUT_MS = 2500;
+
+async function resolveIntroDestination(): Promise<string> {
+  try {
+    const context = await Promise.race<AccessContext>([
+      fetchAccessContext(),
+      new Promise((resolve) => {
+        window.setTimeout(
+          () => resolve({ userId: null, email: null, isGuest: false }),
+          ACCESS_TIMEOUT_MS,
+        );
+      }),
+    ]);
+
+    return context.userId
+      ? DEFAULT_ATTENDEE_NEXT
+      : buildPersonaHubUrl(DEFAULT_ATTENDEE_NEXT);
+  } catch {
+    return buildPersonaHubUrl(DEFAULT_ATTENDEE_NEXT);
+  }
+}
 
 export default function VideoIntroExperience() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const musicRef = useRef<HTMLAudioElement | null>(null);
+  const musicRef = useRef<HTMLAudioElement>(null);
   const [isExiting, setIsExiting] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  const [artSize, setArtSize] = useState<{ width: number; height: number }>(INTRO_MOBILE_ART);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -42,23 +69,26 @@ export default function VideoIntroExperience() {
       });
     };
 
-    if (video.readyState >= 2) {
-      setVideoReady(true);
-      tryPlay();
-      return;
-    }
-
     const onReady = () => {
+      if (video.videoWidth > 0 && video.videoHeight > 0) {
+        setArtSize({ width: video.videoWidth, height: video.videoHeight });
+      }
       setVideoReady(true);
       tryPlay();
     };
 
+    if (video.readyState >= 2) {
+      onReady();
+    }
+
     video.addEventListener("loadeddata", onReady);
     video.addEventListener("canplay", onReady);
+    video.addEventListener("loadedmetadata", onReady);
 
     return () => {
       video.removeEventListener("loadeddata", onReady);
       video.removeEventListener("canplay", onReady);
+      video.removeEventListener("loadedmetadata", onReady);
     };
   }, []);
 
@@ -74,55 +104,41 @@ export default function VideoIntroExperience() {
     if (!audio) return;
     audio.pause();
     audio.currentTime = 0;
-    audio.loop = false;
+  }, []);
+
+  const playIntroMusic = useCallback(async () => {
+    const audio = musicRef.current;
+    if (!audio) return;
+
+    audio.volume = 0.85;
+
+    try {
+      if (audio.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+        audio.load();
+      }
+      if (audio.paused) {
+        await audio.play();
+      }
+    } catch {
+      /* Browser autoplay policy — unlocks on first tap. */
+    }
   }, []);
 
   useEffect(() => {
-    const audio = new Audio(INTRO_MUSIC_SRC);
-    musicRef.current = audio;
-    audio.preload = "auto";
-    audio.loop = false;
-    audio.volume = 0.85;
+    void playIntroMusic();
 
-    const tryPlayMusic = () => {
-      void audio.play().catch(() => {
-        /* Autoplay may require user gesture — first tap unlocks playback. */
-      });
+    const unlockOnGesture = () => {
+      void playIntroMusic();
     };
 
-    tryPlayMusic();
-
-    const loopTimer = window.setTimeout(() => {
-      if (musicRef.current !== audio) return;
-      audio.loop = true;
-      if (audio.paused) tryPlayMusic();
-    }, INTRO_MUSIC_LOOP_AFTER_MS);
-
-    const unlockOnGesture = () => tryPlayMusic();
-    window.addEventListener("pointerdown", unlockOnGesture, { once: true, passive: true });
+    window.addEventListener("pointerdown", unlockOnGesture, { passive: true });
+    window.addEventListener("keydown", unlockOnGesture, { passive: true });
 
     return () => {
-      window.clearTimeout(loopTimer);
       window.removeEventListener("pointerdown", unlockOnGesture);
-      audio.pause();
-      audio.currentTime = 0;
-      if (musicRef.current === audio) {
-        musicRef.current = null;
-      }
+      window.removeEventListener("keydown", unlockOnGesture);
     };
-  }, []);
-
-  const engageIntroVideo = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    video.muted = false;
-    video.volume = 1;
-    void video.play().catch(() => {
-      video.muted = true;
-      void video.play().catch(() => {});
-    });
-  }, []);
+  }, [playIntroMusic]);
 
   useEffect(() => {
     return () => {
@@ -134,46 +150,58 @@ export default function VideoIntroExperience() {
   const handleEnter = useCallback(async () => {
     if (isNavigating) return;
 
-    engageIntroVideo();
-    stopIntroMusic();
     setIsNavigating(true);
 
     const reducedMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const context = await fetchAccessContext();
-    const destination = context.userId
-      ? DEFAULT_ATTENDEE_NEXT
-      : buildPersonaHubUrl(DEFAULT_ATTENDEE_NEXT);
+    const destination = await resolveIntroDestination();
 
     if (reducedMotion) {
+      stopIntroMusic();
       router.push(destination);
       return;
     }
 
     setIsExiting(true);
     window.setTimeout(() => {
+      stopIntroMusic();
       router.push(destination);
     }, EXIT_MS);
-  }, [engageIntroVideo, isNavigating, router, stopIntroMusic]);
+  }, [isNavigating, router, stopIntroMusic]);
 
   return (
     <div
       className={`intro-flash-root fixed inset-0 z-50 h-dvh w-full overflow-hidden bg-brand-black transition-opacity duration-500 ease-out ${
         isExiting ? "opacity-0" : "opacity-100"
       }`}
+      onPointerDown={() => void playIntroMusic()}
     >
+      <audio
+        ref={musicRef}
+        src={INTRO_MUSIC_SRC}
+        loop
+        preload="auto"
+        className="intro-flash-audio"
+        aria-hidden="true"
+      />
+
       <div className="intro-flash-ambience intro-flash-ambience--back" aria-hidden="true">
         <div className="intro-flash-vignette" />
       </div>
 
       <div className="intro-flash-stage">
-        <div className="intro-flash-frame intro-flash-frame--video">
+        <div
+          className="intro-flash-artboard"
+          style={{ aspectRatio: `${artSize.width} / ${artSize.height}` }}
+        >
           <video
             ref={videoRef}
             src={INTRO_VIDEO_SRC}
-            className="intro-flash-art intro-flash-video"
+            className="intro-flash-artboard__video"
+            width={artSize.width}
+            height={artSize.height}
             autoPlay
             loop
             muted
@@ -181,21 +209,25 @@ export default function VideoIntroExperience() {
             preload="auto"
             aria-hidden="true"
           />
+
           {!videoReady ? (
             <div className="intro-flash-video-loading" aria-hidden="true">
               <span className="intro-flash-video-loading-bar" />
             </div>
           ) : null}
+
+          <div className="intro-flash-overlay">
+            <button
+              type="button"
+              onClick={() => void handleEnter()}
+              disabled={isNavigating}
+              aria-label="Let's get awakened — enter experience"
+              className="intro-flash-enter-hit touch-target"
+              style={introRectStyle(INTRO_ENTER_PANEL)}
+            />
+          </div>
         </div>
       </div>
-
-      <button
-        type="button"
-        onClick={() => void handleEnter()}
-        disabled={isNavigating}
-        aria-label="Let's get awakened — enter experience"
-        className="intro-flash-enter-hit touch-target"
-      />
     </div>
   );
 }
