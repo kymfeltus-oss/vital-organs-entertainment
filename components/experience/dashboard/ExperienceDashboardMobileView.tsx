@@ -31,7 +31,7 @@ export default function ExperienceDashboardMobileView({
 
       <div
         data-dashboard-layer="mobile"
-        className="relative z-10 h-full min-h-0 flex-1 overflow-hidden overscroll-none"
+        className="relative z-10 h-full min-h-0 flex-1 overflow-hidden overscroll-none md:hidden"
       >
         <ExperienceDashboardContent initialCountdownConfig={initialCountdownConfig} />
       </div>

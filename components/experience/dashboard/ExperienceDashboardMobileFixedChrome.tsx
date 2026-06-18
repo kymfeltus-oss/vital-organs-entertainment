@@ -16,7 +16,7 @@ export default function ExperienceDashboardMobileFixedChrome({
   return (
     <div
       data-dashboard-mobile-chrome
-      className="dashboard-mobile-fixed-chrome pointer-events-auto fixed z-[60]"
+      className="dashboard-mobile-fixed-chrome pointer-events-auto fixed z-[60] md:hidden"
       style={{
         top: "max(0.5rem, env(safe-area-inset-top))",
         right: "max(0.5rem, env(safe-area-inset-right))",

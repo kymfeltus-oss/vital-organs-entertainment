@@ -1123,7 +1123,7 @@ html {
   position: absolute;
   z-index: 60;
   left: 50%;
-  bottom: max(8dvh, calc(env(safe-area-inset-bottom) + 1.5rem));
+  bottom: max(4dvh, calc(env(safe-area-inset-bottom) + 0.75rem));
   margin: 0;
   padding: 0;
   border: 0;
@@ -1140,7 +1140,7 @@ html {
   position: absolute;
   z-index: 60;
   left: 50%;
-  bottom: max(8dvh, calc(env(safe-area-inset-bottom) + 1.5rem));
+  bottom: max(4dvh, calc(env(safe-area-inset-bottom) + 0.75rem));
   display: flex;
   min-height: 3rem;
   width: min(calc(100% - 2rem), 22rem);
