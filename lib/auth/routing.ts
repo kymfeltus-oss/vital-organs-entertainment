@@ -8,8 +8,6 @@ export const DEFAULT_OPS_NEXT = "/ops/live-hub";
 
 const ATTENDEE_PROTECTED_EXACT = new Set(["/dashboard"]);
 const ATTENDEE_PROTECTED_PREFIXES = ["/experience"];
-/** Mock layout preview — no auth / Supabase session required. */
-const ATTENDEE_PUBLIC_EXACT = new Set(["/experience/live/ig"]);
 
 const TEAM_PROTECTED_PREFIXES = ["/ops", "/dashboard/broadcast"];
 
@@ -65,7 +63,6 @@ export function buildTeamGateUrl(nextPath?: string | null): string {
 }
 
 export function isAttendeeProtectedPath(pathname: string): boolean {
-  if (ATTENDEE_PUBLIC_EXACT.has(pathname)) return false;
   if (ATTENDEE_PROTECTED_EXACT.has(pathname)) return true;
   return ATTENDEE_PROTECTED_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),

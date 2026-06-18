@@ -1,11 +1,29 @@
-import type { Metadata } from "next";
-import IgLivePreviewClient from "@/components/experience/live/ig/IgLivePreviewClient";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "IG Live Preview | 300 Awakening",
-  description: "Instagram-style live viewer layout preview for 300 Awakening.",
+type IgLiveLegacyPageProps = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export default function IgLivePreviewPage() {
-  return <IgLivePreviewClient />;
+function buildQueryString(params: Record<string, string | string[] | undefined>): string {
+  const query = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined) continue;
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        query.append(key, entry);
+      }
+      continue;
+    }
+    query.set(key, value);
+  }
+
+  const serialized = query.toString();
+  return serialized ? `?${serialized}` : "";
+}
+
+/** Legacy IG preview URL — attendee live is unified at `/experience/live`. */
+export default async function IgLiveLegacyRedirectPage({ searchParams }: IgLiveLegacyPageProps) {
+  const params = await searchParams;
+  redirect(`/experience/live${buildQueryString(params)}`);
 }

@@ -1,11 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState } from "react";
 import IgLiveActionPanels from "@/components/experience/live/ig/IgLiveActionPanels";
 import IgLiveActionRail from "@/components/experience/live/ig/IgLiveActionRail";
 import IgLiveComposer, { type IgLiveComposerHandle } from "@/components/experience/live/ig/IgLiveComposer";
 import IgLiveFloatingChat from "@/components/experience/live/ig/IgLiveFloatingChat";
+import type { IgLiveSurfaceProps } from "@/components/experience/live/ig/ig-live-shell-types";
 import IgLiveSheet from "@/components/experience/live/ig/IgLiveSheet";
 import IgLiveTopBar from "@/components/experience/live/ig/IgLiveTopBar";
 import IgLiveVideoStage from "@/components/experience/live/ig/IgLiveVideoStage";
@@ -17,21 +18,17 @@ const ExperienceSelector = dynamic(
   { ssr: false },
 );
 
-type IgLiveMobileProps = {
-  showPaywall: boolean;
-  paywallOverlay?: ReactNode;
-  preview?: boolean;
-};
-
 export default function IgLiveMobile({
+  mode,
   showPaywall,
   paywallOverlay,
-  preview = false,
-}: IgLiveMobileProps) {
+  waiting,
+}: IgLiveSurfaceProps) {
   const composerRef = useRef<IgLiveComposerHandle>(null);
   const [sheetAction, setSheetAction] = useState<IgLiveSheetAction>(null);
   const { feeds, showSelector, selectedExperience, setSelectedExperience } =
     useLiveExperienceStream();
+  const isLive = mode === "live";
 
   const openSheet = (action: IgLiveSheetAction) => setSheetAction(action);
   const closeSheet = () => setSheetAction(null);
@@ -42,15 +39,16 @@ export default function IgLiveMobile({
   return (
     <div className="ig-live-root">
       <IgLiveVideoStage
+        mode={mode}
         showPaywall={showPaywall}
         paywallOverlay={paywallOverlay}
-        preview={preview}
+        waiting={waiting}
       />
 
-      <IgLiveTopBar preview={preview} />
-      <IgLiveFloatingChat preview={preview} />
+      <IgLiveTopBar isLive={isLive} />
+      <IgLiveFloatingChat />
 
-      {showSelector && !preview ? (
+      {showSelector && isLive ? (
         <div className="absolute left-4 right-20 top-[calc(4.75rem+env(safe-area-inset-top))] z-20">
           <ExperienceSelector
             feeds={feeds}
@@ -68,7 +66,6 @@ export default function IgLiveMobile({
 
       <IgLiveComposer
         ref={composerRef}
-        preview={preview}
         onOpenGive={() => openSheet("give")}
       />
 

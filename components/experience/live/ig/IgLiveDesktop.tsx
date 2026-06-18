@@ -1,20 +1,19 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import IgLiveActionPanels from "@/components/experience/live/ig/IgLiveActionPanels";
 import IgLiveActionRail from "@/components/experience/live/ig/IgLiveActionRail";
+import type { IgLiveSurfaceProps } from "@/components/experience/live/ig/ig-live-shell-types";
 import IgLiveSheet from "@/components/experience/live/ig/IgLiveSheet";
 import IgLiveVideoStage from "@/components/experience/live/ig/IgLiveVideoStage";
 import FeatureErrorBoundary from "@/components/parable/FeatureErrorBoundary";
 import { useLiveExperienceStream } from "@/lib/experience/LiveExperienceStreamContext";
 import type { IgLiveSheetAction } from "@/lib/experience/ig-live-config";
-import { useIgLiveViewerCount } from "@/lib/experience/useIgLiveViewerCount";
 import { IG_LIVE_CREATOR } from "@/lib/experience/ig-live-config";
+import { useIgLiveViewerCount } from "@/lib/experience/useIgLiveViewerCount";
 import Link from "next/link";
 import { X } from "lucide-react";
-
-import IgLivePreviewSidebar from "@/components/experience/live/ig/IgLivePreviewSidebar";
 
 const FellowshipChatPanel = dynamic(
   () => import("@/components/experience/live/FellowshipChatPanel"),
@@ -31,19 +30,15 @@ const ExperienceSelector = dynamic(
   { ssr: false },
 );
 
-type IgLiveDesktopProps = {
-  showPaywall: boolean;
-  paywallOverlay?: ReactNode;
-  preview?: boolean;
-};
-
 export default function IgLiveDesktop({
+  mode,
   showPaywall,
   paywallOverlay,
-  preview = false,
-}: IgLiveDesktopProps) {
+  waiting,
+}: IgLiveSurfaceProps) {
   const [sheetAction, setSheetAction] = useState<IgLiveSheetAction>(null);
-  const viewerLabel = useIgLiveViewerCount(!preview);
+  const isLive = mode === "live";
+  const viewerLabel = useIgLiveViewerCount(isLive);
   const { feeds, showSelector, selectedExperience, setSelectedExperience, fallbackNotice } =
     useLiveExperienceStream();
 
@@ -54,9 +49,10 @@ export default function IgLiveDesktop({
     <div className="ig-live-root ig-live-root--desktop">
       <section className="relative min-h-0 overflow-hidden">
         <IgLiveVideoStage
+          mode={mode}
           showPaywall={showPaywall}
           paywallOverlay={paywallOverlay}
-          preview={preview}
+          waiting={waiting}
         />
 
         <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center justify-between px-6 py-4">
@@ -65,7 +61,11 @@ export default function IgLiveDesktop({
               {IG_LIVE_CREATOR.subtitle}
             </p>
             <p className="mt-1 font-ui text-xs font-semibold uppercase tracking-[0.14em] text-brand-pink">
-              ● Live · {viewerLabel} watching
+              {isLive ? (
+                <>● Live · {viewerLabel} watching</>
+              ) : (
+                <span className="text-brand-blue">Waiting for live signal</span>
+              )}
             </p>
           </div>
           <Link
@@ -77,7 +77,7 @@ export default function IgLiveDesktop({
           </Link>
         </div>
 
-        {showSelector && !preview ? (
+        {showSelector && isLive ? (
           <div className="absolute left-6 top-24 z-20 max-w-md">
             <ExperienceSelector
               feeds={feeds}
@@ -96,7 +96,7 @@ export default function IgLiveDesktop({
           onOpenMore={() => setSheetAction("more")}
         />
 
-        {fallbackNotice ? (
+        {fallbackNotice && isLive ? (
           <p
             className="absolute bottom-4 left-6 z-20 max-w-md font-body text-xs text-brand-muted ig-live-text-shadow"
             role="status"
@@ -106,23 +106,19 @@ export default function IgLiveDesktop({
         ) : null}
       </section>
 
-      {preview ? (
-        <IgLivePreviewSidebar />
-      ) : (
-        <aside className="ig-live-glass-sidebar flex min-h-0 min-w-0 flex-col border-l border-brand-border">
-          <div className="shrink-0 border-b border-brand-border px-4 py-3">
-            <p className="font-ui text-[0.58rem] font-bold uppercase tracking-[0.18em] text-brand-muted">
-              Fellowship Chat
-            </p>
-          </div>
+      <aside className="ig-live-glass-sidebar flex min-h-0 min-w-0 flex-col border-l border-brand-border">
+        <div className="shrink-0 border-b border-brand-border px-4 py-3">
+          <p className="font-ui text-[0.58rem] font-bold uppercase tracking-[0.18em] text-brand-muted">
+            Fellowship Chat
+          </p>
+        </div>
 
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3">
-            <FeatureErrorBoundary featureLabel="Fellowship Chat">
-              <FellowshipChatPanel embedded />
-            </FeatureErrorBoundary>
-          </div>
-        </aside>
-      )}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3">
+          <FeatureErrorBoundary featureLabel="Fellowship Chat">
+            <FellowshipChatPanel embedded />
+          </FeatureErrorBoundary>
+        </div>
+      </aside>
 
       <IgLiveSheet
         action={sheetAction}

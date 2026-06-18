@@ -3,26 +3,31 @@
 import type { ReactNode } from "react";
 import AttendeeStreamPlayer from "@/components/experience/live/AttendeeStreamPlayer";
 import FloatingLiveReactions from "@/components/experience/live/FloatingLiveReactions";
+import IgLiveWaitingStage, {
+  type IgLiveWaitingState,
+} from "@/components/experience/live/ig/IgLiveWaitingStage";
+import type { IgLiveShellMode } from "@/components/experience/live/ig/ig-live-shell-types";
 import { useLiveExperienceStream } from "@/lib/experience/LiveExperienceStreamContext";
 
 type IgLiveVideoStageProps = {
+  mode: IgLiveShellMode;
   showPaywall: boolean;
   paywallOverlay?: ReactNode;
-  preview?: boolean;
+  waiting: IgLiveWaitingState;
 };
 
 export default function IgLiveVideoStage({
+  mode,
   showPaywall,
   paywallOverlay,
-  preview = false,
+  waiting,
 }: IgLiveVideoStageProps) {
   const { selectedExperience, handleExperienceUnavailable } = useLiveExperienceStream();
+  const isLive = mode === "live";
 
   return (
     <div className="ig-live-video-stage absolute inset-0 overflow-hidden bg-black">
-      {preview ? (
-        <div className="ig-live-preview-video h-full w-full" aria-hidden="true" />
-      ) : (
+      {isLive ? (
         <AttendeeStreamPlayer
           key={selectedExperience}
           experience={selectedExperience}
@@ -32,9 +37,11 @@ export default function IgLiveVideoStage({
           onExperienceUnavailable={handleExperienceUnavailable}
           embedded
         />
+      ) : (
+        <IgLiveWaitingStage {...waiting} />
       )}
 
-      <FloatingLiveReactions />
+      {isLive ? <FloatingLiveReactions /> : null}
     </div>
   );
 }

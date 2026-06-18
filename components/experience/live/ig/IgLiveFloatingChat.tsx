@@ -2,20 +2,10 @@
 
 import { useIgLiveChat } from "@/components/experience/live/ig/IgLiveChatContext";
 import { chatAuthorColorClass } from "@/lib/experience/chat-author-color";
-import { IG_LIVE_MOCK_CHAT } from "@/lib/experience/ig-live-mock";
 
 const FLOATING_CHAT_LIMIT = 8;
 
-type IgLiveFloatingChatProps = {
-  preview?: boolean;
-};
-
-function IgLiveFloatingChatPreview() {
-  const lines = IG_LIVE_MOCK_CHAT.slice(-FLOATING_CHAT_LIMIT);
-  return <IgLiveFloatingChatView lines={lines} />;
-}
-
-function IgLiveFloatingChatLive() {
+export default function IgLiveFloatingChat() {
   const { messages } = useIgLiveChat();
   const lines = messages.slice(-FLOATING_CHAT_LIMIT).map((message) => ({
     id: message.id,
@@ -24,14 +14,6 @@ function IgLiveFloatingChatLive() {
     body: message.body,
   }));
 
-  return <IgLiveFloatingChatView lines={lines} />;
-}
-
-function IgLiveFloatingChatView({
-  lines,
-}: {
-  lines: { id: string; author: string; userId: string; body: string }[];
-}) {
   if (lines.length === 0) return null;
 
   return (
@@ -54,9 +36,4 @@ function IgLiveFloatingChatView({
       </div>
     </div>
   );
-}
-
-export default function IgLiveFloatingChat({ preview = false }: IgLiveFloatingChatProps) {
-  if (preview) return <IgLiveFloatingChatPreview />;
-  return <IgLiveFloatingChatLive />;
 }

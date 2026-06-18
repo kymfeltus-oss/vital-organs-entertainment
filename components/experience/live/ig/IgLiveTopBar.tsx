@@ -7,11 +7,11 @@ import { IG_LIVE_CREATOR } from "@/lib/experience/ig-live-config";
 import { useIgLiveViewerCount } from "@/lib/experience/useIgLiveViewerCount";
 
 type IgLiveTopBarProps = {
-  preview?: boolean;
+  isLive: boolean;
 };
 
-export default function IgLiveTopBar({ preview = false }: IgLiveTopBarProps) {
-  const viewerLabel = useIgLiveViewerCount(!preview);
+export default function IgLiveTopBar({ isLive }: IgLiveTopBarProps) {
+  const viewerLabel = useIgLiveViewerCount(isLive);
 
   return (
     <header className="ig-live-top-bar pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start gap-3 px-3 pt-[max(0.5rem,env(safe-area-inset-top))]">
@@ -42,12 +42,21 @@ export default function IgLiveTopBar({ preview = false }: IgLiveTopBarProps) {
             {IG_LIVE_CREATOR.subtitle}
           </p>
           <p className="mt-0.5 flex items-center gap-2 font-ui text-[0.58rem] font-semibold uppercase tracking-[0.12em] ig-live-text-shadow">
-            <span className="inline-flex items-center gap-1.5 text-brand-pink">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-pink" aria-hidden="true" />
-              Live
-            </span>
-            <span className="text-white/60">·</span>
-            <span className="text-white/75">{viewerLabel} watching</span>
+            {isLive ? (
+              <>
+                <span className="inline-flex items-center gap-1.5 text-brand-pink">
+                  <span
+                    className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-pink"
+                    aria-hidden="true"
+                  />
+                  Live
+                </span>
+                <span className="text-white/60">·</span>
+                <span className="text-white/75">{viewerLabel} watching</span>
+              </>
+            ) : (
+              <span className="text-brand-blue">Waiting for live signal</span>
+            )}
           </p>
         </div>
       </div>
