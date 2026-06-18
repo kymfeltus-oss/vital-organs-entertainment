@@ -3,7 +3,6 @@
 import { type CSSProperties } from "react";
 import {
   INTRO_AMBIENT_FLARES,
-  INTRO_AMBIENT_ORBS,
   INTRO_AMBIENT_PARTICLES,
   type IntroAmbientTone,
 } from "@/lib/intro/introAmbientFx";
@@ -19,7 +18,7 @@ type IntroAmbientFxLayerProps = {
 };
 
 /**
- * GPU-composited intro ambience: rising particles, drifting orbs, and lens flares.
+ * GPU-composited intro ambience: rising particles + header lens flares.
  * Animations use transform/opacity only (no layout or filter on particles).
  */
 export default function IntroAmbientFxLayer({ className = "" }: IntroAmbientFxLayerProps) {
@@ -40,29 +39,6 @@ export default function IntroAmbientFxLayer({ className = "" }: IntroAmbientFxLa
           }}
         />
       ))}
-
-      <div className="intro-ambient-orb-field">
-        {INTRO_AMBIENT_ORBS.map((orb) => (
-          <span
-            key={orb.id}
-            className={`intro-ambient-orb intro-ambient-orb--${orb.tone}`}
-            style={
-              {
-                left: `${orb.leftPct}%`,
-                top: `${orb.topPct}%`,
-                width: `${orb.sizePx}px`,
-                height: `${orb.sizePx}px`,
-                "--intro-drift-x": `${orb.driftXPx}px`,
-                "--intro-drift-y": `${orb.driftYPx}px`,
-                "--intro-peak-opacity": orb.peakOpacity,
-                animationDelay: `${orb.delaySec}s`,
-                animationDuration: `${orb.durationSec}s`,
-                color: TONE_GLOW[orb.tone],
-              } as CSSProperties
-            }
-          />
-        ))}
-      </div>
 
       <div className="intro-ambient-particle-field">
         {INTRO_AMBIENT_PARTICLES.map((particle) => (

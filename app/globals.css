@@ -953,10 +953,10 @@ html {
     transform: translate3d(0, 0, 0) scale(0.75);
   }
   12% {
-    opacity: var(--intro-peak-opacity, 0.65);
+    opacity: var(--intro-peak-opacity, 0.75);
   }
   70% {
-    opacity: calc(var(--intro-peak-opacity, 0.65) * 0.45);
+    opacity: calc(var(--intro-peak-opacity, 0.75) * 0.55);
   }
   100% {
     opacity: 0;
@@ -977,18 +977,6 @@ html {
   }
 }
 
-@keyframes intro-ambient-orb-float {
-  0%,
-  100% {
-    opacity: calc(var(--intro-peak-opacity, 0.3) * 0.55);
-    transform: translate3d(0, 0, 0) scale(0.92);
-  }
-  50% {
-    opacity: var(--intro-peak-opacity, 0.3);
-    transform: translate3d(var(--intro-drift-x, 0), var(--intro-drift-y, 0), 0) scale(1.06);
-  }
-}
-
 .intro-ambient-layer {
   contain: layout style paint;
   transform: translate3d(0, 0, 0);
@@ -1000,42 +988,6 @@ html {
   inset: 0;
 }
 
-.intro-ambient-orb-field {
-  position: absolute;
-  inset: 0;
-}
-
-.intro-ambient-orb {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0;
-  will-change: transform, opacity;
-  transform: translate3d(-50%, -50%, 0);
-  animation: intro-ambient-orb-float ease-in-out infinite;
-  background: radial-gradient(
-    circle at 35% 35%,
-    color-mix(in srgb, currentColor 72%, #ffffff 28%) 0%,
-    color-mix(in srgb, currentColor 42%, transparent 58%) 42%,
-    transparent 72%
-  );
-  box-shadow:
-    0 0 24px color-mix(in srgb, currentColor 45%, transparent),
-    0 0 48px color-mix(in srgb, currentColor 22%, transparent);
-  filter: blur(0.5px);
-}
-
-.intro-ambient-orb--blue {
-  color: rgba(0, 168, 255, 0.9);
-}
-
-.intro-ambient-orb--purple {
-  color: rgba(138, 46, 255, 0.88);
-}
-
-.intro-ambient-orb--pink {
-  color: rgba(255, 47, 175, 0.86);
-}
-
 .intro-ambient-particle {
   position: absolute;
   border-radius: 50%;
@@ -1044,20 +996,21 @@ html {
   transform: translate3d(0, 0, 0);
   animation: intro-ambient-rise linear infinite;
   box-shadow:
-    0 0 10px currentColor,
-    0 0 18px color-mix(in srgb, currentColor 55%, transparent);
+    0 0 12px currentColor,
+    0 0 22px color-mix(in srgb, currentColor 70%, transparent),
+    0 0 34px color-mix(in srgb, currentColor 35%, transparent);
 }
 
 .intro-ambient-particle--blue {
-  background: rgba(0, 168, 255, 0.88);
+  background: rgba(0, 168, 255, 0.95);
 }
 
 .intro-ambient-particle--purple {
-  background: rgba(138, 46, 255, 0.86);
+  background: rgba(138, 46, 255, 0.92);
 }
 
 .intro-ambient-particle--pink {
-  background: rgba(255, 47, 175, 0.85);
+  background: rgba(255, 47, 175, 0.92);
 }
 
 .intro-ambient-flare {
@@ -1287,18 +1240,12 @@ html {
   }
 
   .intro-ambient-particle,
-  .intro-ambient-orb,
   .intro-ambient-flare {
     animation: none !important;
   }
 
   .intro-ambient-particle {
-    opacity: 0.35;
-  }
-
-  .intro-ambient-orb {
-    opacity: 0.22;
-    transform: translate3d(-50%, -50%, 0) scale(1);
+    opacity: 0.52;
   }
 
   .intro-ambient-flare {
