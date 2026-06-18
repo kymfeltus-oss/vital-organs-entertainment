@@ -68,6 +68,7 @@ function LobbyCountdownHms({
 function LobbyCountdownSegmented({
   config,
   countdown,
+  eventPhase,
   showTimer,
   isLoading = false,
   className,
@@ -78,6 +79,10 @@ function LobbyCountdownSegmented({
         Loading event schedule…
       </p>
     );
+  }
+
+  if (eventPhase === "ended" || eventPhase === "live") {
+    return null;
   }
 
   if (!showTimer) {

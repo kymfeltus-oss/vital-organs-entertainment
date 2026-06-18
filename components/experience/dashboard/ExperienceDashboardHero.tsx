@@ -32,7 +32,7 @@ export default function ExperienceDashboardHero({
         className="dashboard-hero-headline-block dashboard-hero-headline-block--mobile-fixed pointer-events-none text-center"
       >
         <div className="dashboard-hero-copy-stack pointer-events-auto flex flex-col items-center gap-2">
-          {(showTimer || isLoading) && (
+          {(showTimer || isLoading) && eventPhase === "waiting" && (
             <div className="mx-auto w-full max-w-[min(100%,16rem)] px-2">
               <LobbyCountdownTimer
                 config={config}
