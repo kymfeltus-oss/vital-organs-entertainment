@@ -1,6 +1,5 @@
 "use client";
 
-import ExperienceDashboardBackdrop from "@/components/experience/dashboard/ExperienceDashboardBackdrop";
 import ExperienceDashboardContent from "@/components/experience/dashboard/ExperienceDashboardContent";
 import ExperienceDashboardMobileFixedChrome from "@/components/experience/dashboard/ExperienceDashboardMobileFixedChrome";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
@@ -20,21 +19,14 @@ export default function ExperienceDashboardMobileView({
   return (
     <div
       data-dashboard-shell="mobile"
-      className="relative flex h-dvh max-h-dvh min-h-0 w-full max-w-[100vw] flex-col overflow-hidden overscroll-none bg-brand-black"
+      className="experience-dashboard-stage relative flex h-dvh max-h-dvh min-h-0 w-full items-start justify-center overflow-hidden overscroll-none bg-brand-black pt-safe pb-safe"
     >
-      <ExperienceDashboardBackdrop />
-
       <ExperienceDashboardMobileFixedChrome
         profile={profile}
         onProfileChange={onProfileChange}
       />
 
-      <div
-        data-dashboard-layer="mobile"
-        className="relative z-10 h-full min-h-0 flex-1 overflow-hidden overscroll-none"
-      >
-        <ExperienceDashboardContent initialCountdownConfig={initialCountdownConfig} />
-      </div>
+      <ExperienceDashboardContent initialCountdownConfig={initialCountdownConfig} />
     </div>
   );
 }

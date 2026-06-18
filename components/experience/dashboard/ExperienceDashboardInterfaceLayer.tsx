@@ -1,0 +1,143 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useRef } from "react";
+import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
+import {
+  AWAKENING_ASSETS,
+  AWAKENING_CREATOR_STREAM_SRC,
+  AWAKENING_DASHBOARD_BUTTON_GRID,
+  AWAKENING_DASHBOARD_CONTAINER,
+} from "@/lib/experience/awakening-dashboard-assets";
+import type { EventCountdownConfig } from "@/lib/live/countdown-config";
+import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
+
+type ExperienceDashboardInterfaceLayerProps = {
+  initialCountdownConfig?: EventCountdownConfig;
+};
+
+export default function ExperienceDashboardInterfaceLayer({
+  initialCountdownConfig,
+}: ExperienceDashboardInterfaceLayerProps) {
+  const backgroundRef = useRef<HTMLVideoElement>(null);
+  const creatorRef = useRef<HTMLVideoElement>(null);
+
+  const { config, countdown, eventPhase, isLoading, showTimer } = useLobbyCountdown({
+    initialConfig: initialCountdownConfig,
+  });
+
+  useEffect(() => {
+    const video = backgroundRef.current;
+    if (!video) return;
+
+    video.muted = true;
+    video.playsInline = true;
+    video.loop = true;
+
+    const tryPlay = () => {
+      void video.play().catch(() => {
+        /* Autoplay may require a user gesture on some browsers. */
+      });
+    };
+
+    tryPlay();
+    video.addEventListener("loadeddata", tryPlay);
+
+    return () => {
+      video.removeEventListener("loadeddata", tryPlay);
+      video.pause();
+    };
+  }, []);
+
+  useEffect(() => {
+    const video = creatorRef.current;
+    if (!video || !AWAKENING_CREATOR_STREAM_SRC) return;
+
+    video.src = AWAKENING_CREATOR_STREAM_SRC;
+    video.playsInline = true;
+    void video.play().catch(() => {});
+  }, []);
+
+  return (
+    <div
+      className="experience-dashboard-container"
+      style={{
+        aspectRatio: `${AWAKENING_DASHBOARD_CONTAINER.aspectWidth} / ${AWAKENING_DASHBOARD_CONTAINER.aspectHeight}`,
+      }}
+    >
+      <video
+        ref={backgroundRef}
+        src={AWAKENING_ASSETS.background}
+        className="experience-dashboard-bg-video"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        aria-hidden="true"
+      />
+
+      <div className="experience-dashboard-content-overlay">
+        {(showTimer || isLoading) && eventPhase === "waiting" ? (
+          <div className="experience-dashboard-countdown-slot">
+            <LobbyCountdownTimer
+              config={config}
+              countdown={countdown}
+              eventPhase={eventPhase}
+              showTimer={showTimer}
+              isLoading={isLoading}
+              variant="segmented"
+            />
+          </div>
+        ) : null}
+
+        <div className="experience-dashboard-upper-zone">
+          <div className="experience-dashboard-creator-slot">
+            {AWAKENING_CREATOR_STREAM_SRC ? (
+              <video
+                ref={creatorRef}
+                className="experience-dashboard-creator-video"
+                controls
+                autoPlay
+                playsInline
+                aria-label="Creator portrait stream"
+              />
+            ) : (
+              <video
+                ref={creatorRef}
+                className="experience-dashboard-creator-video experience-dashboard-creator-video--idle"
+                controls
+                playsInline
+                preload="none"
+                aria-label="Creator portrait stream placeholder"
+              />
+            )}
+          </div>
+        </div>
+
+        <div className="experience-dashboard-lower-zone">
+          <nav className="experience-dashboard-button-grid" aria-label="Dashboard shortcuts">
+            {AWAKENING_DASHBOARD_BUTTON_GRID.map((button) => (
+              <Link
+                key={button.id}
+                href={button.href}
+                className="experience-dashboard-button-grid__link touch-target"
+                aria-label={button.ariaLabel}
+              >
+                <Image
+                  src={button.src}
+                  alt=""
+                  width={210}
+                  height={111}
+                  className="experience-dashboard-button-grid__img"
+                  draggable={false}
+                />
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import type { AccessContext } from "@/lib/access";
 import { fetchAccessContext } from "@/lib/access";
 import { buildPersonaHubUrl, DEFAULT_ATTENDEE_NEXT } from "@/lib/auth/routing";
@@ -14,7 +13,7 @@ import {
 import { introRectStyle } from "@/lib/experience/intro-layout-slots";
 
 const EXIT_MS = 520;
-const ACCESS_TIMEOUT_MS = 2500;
+const ACCESS_TIMEOUT_MS = 600;
 
 async function resolveIntroDestination(): Promise<string> {
   try {
@@ -37,11 +36,10 @@ async function resolveIntroDestination(): Promise<string> {
 }
 
 export default function VideoIntroExperience() {
-  const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const musicRef = useRef<HTMLAudioElement>(null);
+  const isNavigatingRef = useRef(false);
   const [isExiting, setIsExiting] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const [artSize, setArtSize] = useState<{ width: number; height: number }>(INTRO_MOBILE_ART);
 
@@ -147,29 +145,34 @@ export default function VideoIntroExperience() {
     };
   }, [stopIntroVideo, stopIntroMusic]);
 
-  const handleEnter = useCallback(async () => {
-    if (isNavigating) return;
+  const handleEnter = useCallback(() => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
 
-    setIsNavigating(true);
+    setIsExiting(true);
 
     const reducedMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const destination = await resolveIntroDestination();
-
-    if (reducedMotion) {
+    const navigate = (destination: string) => {
       stopIntroMusic();
-      router.push(destination);
-      return;
-    }
+      stopIntroVideo();
 
-    setIsExiting(true);
-    window.setTimeout(() => {
-      stopIntroMusic();
-      router.push(destination);
-    }, EXIT_MS);
-  }, [isNavigating, router, stopIntroMusic]);
+      if (reducedMotion) {
+        window.location.assign(destination);
+        return;
+      }
+
+      window.setTimeout(() => {
+        window.location.assign(destination);
+      }, EXIT_MS);
+    };
+
+    void resolveIntroDestination()
+      .then(navigate)
+      .catch(() => navigate(buildPersonaHubUrl(DEFAULT_ATTENDEE_NEXT)));
+  }, [stopIntroMusic, stopIntroVideo]);
 
   return (
     <div
@@ -194,7 +197,11 @@ export default function VideoIntroExperience() {
       <div className="intro-flash-stage">
         <div
           className="intro-flash-artboard"
-          style={{ aspectRatio: `${artSize.width} / ${artSize.height}` }}
+          style={{
+            aspectRatio: `${artSize.width} / ${artSize.height}`,
+            ["--intro-art-w" as string]: String(artSize.width),
+            ["--intro-art-h" as string]: String(artSize.height),
+          }}
         >
           <video
             ref={videoRef}
@@ -219,10 +226,9 @@ export default function VideoIntroExperience() {
           <div className="intro-flash-overlay">
             <button
               type="button"
-              onClick={() => void handleEnter()}
-              disabled={isNavigating}
+              onClick={handleEnter}
               aria-label="Let's get awakened — enter experience"
-              className="intro-flash-enter-hit touch-target"
+              className="intro-flash-enter-hit"
               style={introRectStyle(INTRO_ENTER_PANEL)}
             />
           </div>

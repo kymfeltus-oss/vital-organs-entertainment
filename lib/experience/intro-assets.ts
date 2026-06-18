@@ -19,8 +19,8 @@ export type IntroLayoutRect = {
 
 /** Enter CTA aligned to intro mobile.mp4 art (tune if export shifts). */
 export const INTRO_ENTER_PANEL = {
-  left: 11.5,
-  top: 76.2,
-  width: 77,
-  height: 5.4,
+  left: 8,
+  top: 69.5,
+  width: 84,
+  height: 12,
 } as const satisfies IntroLayoutRect;
