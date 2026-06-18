@@ -1412,30 +1412,38 @@ html {
   will-change: transform;
 }
 
+.intro-flash-motion--desktop {
+  /* desktop frame centers via object-position */
+}
+
 .intro-flash-motion--mobile {
   animation:
     intro-flash-ken-burns 18s ease-in-out infinite alternate,
     intro-flash-float 7s ease-in-out infinite;
 }
 
-.intro-flash-art {
-  position: absolute;
-  inset: 0;
-  display: block;
+.intro-flash-frame {
   width: 100%;
-  height: 100%;
-  min-width: 100%;
-  min-height: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-.intro-flash-art--mobile {
-  object-fit: cover;
+.intro-flash-frame--mobile .intro-flash-art {
   object-position: center bottom;
 }
 
-.intro-flash-art--desktop {
-  object-fit: cover;
+.intro-flash-frame--desktop .intro-flash-art {
   object-position: center center;
+}
+
+.intro-flash-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .intro-flash-enter-hit {

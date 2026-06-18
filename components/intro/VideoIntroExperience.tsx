@@ -138,18 +138,18 @@ export default function VideoIntroExperience() {
       </div>
 
       <div className="intro-flash-stage" aria-hidden="true">
-        <div
-          className={`intro-flash-motion intro-flash-motion--${viewport}`}
-        >
-          <img
-            key={imageSrc}
-            src={imageSrc}
-            alt=""
-            decoding="async"
-            fetchPriority="high"
-            onError={handleImageError}
-            className={`intro-flash-art intro-flash-art--${viewport}`}
-          />
+        <div className={`intro-flash-motion intro-flash-motion--${viewport}`}>
+          <div className={`intro-flash-frame intro-flash-frame--${viewport}`}>
+            <img
+              key={imageSrc}
+              src={imageSrc}
+              alt=""
+              decoding="async"
+              fetchPriority="high"
+              onError={handleImageError}
+              className="intro-flash-art"
+            />
+          </div>
         </div>
       </div>
 
