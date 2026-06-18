@@ -1966,18 +1966,17 @@ html {
 /* Experience dashboard — 9:16 container with cover video + vertical overlay */
 .experience-dashboard-stage {
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: flex-start;
 }
 
 .experience-dashboard-container {
   position: relative;
-  width: min(100vw, calc(100dvh * 9 / 16));
-  height: min(100dvh, calc(100vw * 16 / 9));
-  max-width: 100vw;
-  max-height: 100dvh;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
-  border-radius: clamp(0px, 2vw, 24px);
+  border-radius: 0;
   background-color: #000000;
   isolation: isolate;
 }
@@ -1997,38 +1996,35 @@ html {
   position: absolute;
   inset: 0;
   z-index: 2;
-  display: flex;
+  display: block;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  overflow: hidden;
-  padding:
-    calc(env(safe-area-inset-top, 0px) + clamp(0.75rem, 2.5vh, 1.25rem))
-    calc(env(safe-area-inset-right, 0px) + clamp(0.75rem, 4vw, 1rem))
-    calc(env(safe-area-inset-bottom, 0px) + clamp(0.35rem, 1.5vh, 0.75rem))
-    calc(env(safe-area-inset-left, 0px) + clamp(0.75rem, 4vw, 1rem));
+  overflow: visible;
+  pointer-events: none;
 }
 
 .experience-dashboard-countdown-slot {
   position: absolute;
   top: calc(env(safe-area-inset-top, 0px) + clamp(0.5rem, 2vh, 0.75rem));
   left: 50%;
-  z-index: 3;
+  z-index: 12;
   width: min(72%, 11rem);
   transform: translateX(-50%);
+  pointer-events: auto;
 }
 
 .experience-dashboard-button-grid {
+  position: absolute;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(1rem, 4vh, 1.75rem));
+  z-index: 12;
   display: grid;
-  width: min(78%, 14.25rem);
-  flex-shrink: 0;
-  margin-top: auto;
-  margin-bottom: clamp(0.25rem, 1.2vh, 0.5rem);
+  width: min(88vw, 16.5rem);
+  transform: translateX(-50%);
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: clamp(0.5rem, 2.7vw, 0.75rem);
+  pointer-events: auto;
 }
 
 .experience-dashboard-button-grid__link {
@@ -2054,6 +2050,7 @@ html {
   height: auto;
   pointer-events: none;
   user-select: none;
+  -webkit-user-drag: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2070,6 +2067,11 @@ html {
 @media (min-width: 768px) {
   .experience-dashboard-container {
     width: min(100vw, calc(100dvh * 9 / 16));
+    height: min(100dvh, calc(100vw * 16 / 9));
+    max-width: 100vw;
+    max-height: 100dvh;
+    margin-inline: auto;
+    border-radius: clamp(0px, 2vw, 24px);
   }
 }
 

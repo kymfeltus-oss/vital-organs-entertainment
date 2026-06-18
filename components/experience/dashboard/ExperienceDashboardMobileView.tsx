@@ -19,14 +19,16 @@ export default function ExperienceDashboardMobileView({
   return (
     <div
       data-dashboard-shell="mobile"
-      className="experience-dashboard-stage relative flex h-dvh max-h-dvh min-h-0 w-full items-start justify-center overflow-hidden overscroll-none bg-brand-black pt-safe pb-safe"
+      className="experience-dashboard-stage relative flex h-dvh max-h-dvh min-h-0 w-full flex-col items-stretch justify-start overflow-hidden overscroll-none bg-brand-black pt-safe pb-safe"
     >
       <ExperienceDashboardMobileFixedChrome
         profile={profile}
         onProfileChange={onProfileChange}
       />
 
-      <ExperienceDashboardContent initialCountdownConfig={initialCountdownConfig} />
+      <div className="relative z-10 flex min-h-0 w-full flex-1">
+        <ExperienceDashboardContent initialCountdownConfig={initialCountdownConfig} />
+      </div>
     </div>
   );
 }

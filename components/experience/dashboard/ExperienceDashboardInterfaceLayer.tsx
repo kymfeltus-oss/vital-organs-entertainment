@@ -1,13 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
 import {
   AWAKENING_ASSETS,
   AWAKENING_DASHBOARD_BUTTON_GRID,
-  AWAKENING_DASHBOARD_CONTAINER,
 } from "@/lib/experience/awakening-dashboard-assets";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
@@ -49,12 +47,7 @@ export default function ExperienceDashboardInterfaceLayer({
   }, []);
 
   return (
-    <div
-      className="experience-dashboard-container"
-      style={{
-        aspectRatio: `${AWAKENING_DASHBOARD_CONTAINER.aspectWidth} / ${AWAKENING_DASHBOARD_CONTAINER.aspectHeight}`,
-      }}
-    >
+    <div className="experience-dashboard-container">
       <video
         ref={backgroundRef}
         src={AWAKENING_ASSETS.background}
@@ -89,12 +82,15 @@ export default function ExperienceDashboardInterfaceLayer({
               className="experience-dashboard-button-grid__link touch-target"
               aria-label={button.ariaLabel}
             >
-              <Image
+              {/* Native img — direct public asset path for reliable mobile loading */}
+              <img
                 src={button.src}
                 alt=""
                 width={210}
                 height={111}
                 className="experience-dashboard-button-grid__img"
+                loading="eager"
+                decoding="async"
                 draggable={false}
               />
             </Link>
