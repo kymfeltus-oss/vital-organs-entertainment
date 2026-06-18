@@ -86,7 +86,7 @@ function FeatureCards({ href: ctaHref, disabled: ctaDisabled, label: ctaLabel }:
         borderClass="border-[#B0267A]/75"
         media={
           <FeatureCardMedia
-            src="/branding/vital-seed-logo.png"
+            src="/images/vital-seed/vital-seed-orb.png"
             alt="Vital Seed Giving"
             fallback={
               <Sparkles className="h-[86px] w-[86px] text-[#B0267A]" strokeWidth={1.1} aria-hidden="true" />
@@ -184,7 +184,7 @@ export function AttendeeEventLobbyBelowHero({
               alt="Hallelujah Anyhow"
               width={180}
               height={120}
-              className="h-auto w-[180px] shrink-0 object-contain"
+              className="h-auto w-auto max-w-[180px] shrink-0 object-contain"
               style={{ width: "auto", height: "auto", maxWidth: 180, maxHeight: 120 }}
             />
             <div className="ml-3 flex min-w-0 flex-col">

@@ -20,7 +20,7 @@ const NAV_ITEMS: readonly NavItemConfig[] = [
     label: "Live",
     href: "/experience/live",
     icon: Radio,
-    match: ["/dashboard/live", "/experience/live", "/dashboard", "/live", "/experience"],
+    match: ["/dashboard/live", "/experience/live", "/live", "/experience"],
   },
   {
     label: "Music",

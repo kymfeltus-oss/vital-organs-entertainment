@@ -28,7 +28,7 @@ export function BrandIcon({
   height,
   alt,
   fallback,
-  className = "object-contain",
+  className = "h-auto w-auto max-h-full max-w-full object-contain",
 }: {
   src: string;
   width: number;
@@ -73,7 +73,7 @@ export function FeatureCardMedia({
         height={size}
         alt={alt}
         fallback={fallback}
-        className="h-[86px] w-[86px] object-contain"
+        className="h-auto w-auto max-h-[86px] max-w-[86px] object-contain"
       />
     </div>
   );

@@ -58,38 +58,88 @@ function backdropCoverScale(
   return Math.max(boxWidth / naturalWidth, boxHeight / naturalHeight);
 }
 
-/** Map normalized art row (0–1) to viewport px when backdrop uses object-fit: fill. */
-export function backdropFillRowTopPx(
-  img: HTMLImageElement | null | undefined,
+function backdropObjectScale(
+  boxWidth: number,
+  boxHeight: number,
+  naturalWidth: number,
+  naturalHeight: number,
+  objectFit: string,
+): number {
+  if (objectFit === "contain") {
+    return Math.min(boxWidth / naturalWidth, boxHeight / naturalHeight);
+  }
+  if (objectFit === "fill") {
+    return Math.max(boxWidth / naturalWidth, boxHeight / naturalHeight);
+  }
+  return backdropCoverScale(boxWidth, boxHeight, naturalWidth, naturalHeight);
+}
+
+function backdropCoverScaleForViewport(viewportWidth: number, viewportHeight: number): number {
+  const { width, height } = CONCERT_BACKDROP;
+  return Math.max(viewportWidth / width, viewportHeight / height);
+}
+
+export type DashboardBackdropMedia = HTMLVideoElement | HTMLImageElement;
+
+export function queryDashboardBackdropMedia(): HTMLVideoElement | null {
+  if (typeof document === "undefined") return null;
+  return document.querySelector<HTMLVideoElement>('[data-backdrop-variant="mobile"]');
+}
+
+export function getBackdropNaturalDimensions(media: DashboardBackdropMedia): {
+  width: number;
+  height: number;
+} {
+  if (media instanceof HTMLVideoElement) {
+    return { width: media.videoWidth, height: media.videoHeight };
+  }
+  return { width: media.naturalWidth, height: media.naturalHeight };
+}
+
+export function isDashboardBackdropMediaReady(media: DashboardBackdropMedia | null | undefined): boolean {
+  if (!media || media.clientHeight <= 0) return false;
+  const { width, height } = getBackdropNaturalDimensions(media);
+  if (width > 0 && height > 0) return true;
+  if (media instanceof HTMLVideoElement) {
+    return media.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
+  }
+  return media.complete;
+}
+
+function backdropFillRowTopPx(
+  media: DashboardBackdropMedia | null | undefined,
   rowYN: number,
 ): number {
-  if (!img) return 0;
-  const rect = img.getBoundingClientRect();
+  if (!media) return 0;
+  const rect = media.getBoundingClientRect();
   if (rect.height <= 0) return 0;
   return rect.top + rowYN * rect.height;
 }
 
+/** Map normalized art row (0–1) to viewport px for object-fit cover/contain/fill. */
 export function backdropCoverRowTopPx(
-  img: HTMLImageElement | null | undefined,
+  media: DashboardBackdropMedia | null | undefined,
   rowYN: number,
 ): number {
-  if (!img) return 0;
-  const style = window.getComputedStyle(img);
+  if (!media) return 0;
+  const style = window.getComputedStyle(media);
   if (style.objectFit === "fill") {
-    return backdropFillRowTopPx(img, rowYN);
+    return backdropFillRowTopPx(media, rowYN);
   }
 
-  const { naturalWidth, naturalHeight, clientWidth, clientHeight } = img;
+  const { width: naturalWidth, height: naturalHeight } = getBackdropNaturalDimensions(media);
+  const { clientWidth, clientHeight } = media;
   if (!naturalWidth || !naturalHeight || !clientWidth || !clientHeight) return 0;
 
-  const scale = backdropCoverScale(
+  const scale = backdropObjectScale(
     clientWidth,
     clientHeight,
     naturalWidth,
     naturalHeight,
+    style.objectFit,
   );
   const renderedH = naturalHeight * scale;
-  const rect = img.getBoundingClientRect();
+  const rect = media.getBoundingClientRect();
   const { posY } = parseObjectPosition(style.objectPosition);
   const offsetY = (clientHeight - renderedH) * posY;
 
@@ -147,50 +197,64 @@ function backdropScale(viewportWidth: number, viewportHeight: number): number {
   return Math.max(viewportWidth / width, boxHeight / height);
 }
 
-function backdropFillScaleY(viewportHeight: number): number {
-  return viewportHeight / CONCERT_BACKDROP.height;
+export function concertBeamTopPx(viewportWidth: number, viewportHeight: number): number {
+  const scale = backdropCoverScaleForViewport(viewportWidth, viewportHeight);
+  return CONCERT_BACKDROP.beamYN * CONCERT_BACKDROP.height * scale;
 }
 
 export function resolveActiveBackdropVariant(): BackdropVariant {
   return "mobile";
 }
 
-export function concertBeamTopPx(viewportWidth: number, viewportHeight: number): number {
-  return CONCERT_BACKDROP.beamYN * CONCERT_BACKDROP.height * backdropFillScaleY(viewportHeight);
+export function concertBeamTopFromBackdropMedia(media: DashboardBackdropMedia): number {
+  return backdropCoverRowTopPx(media, CONCERT_BACKDROP.beamYN);
 }
 
+/** @deprecated Use concertBeamTopFromBackdropMedia */
 export function concertBeamTopFromBackdropImg(img: HTMLImageElement): number {
-  return backdropCoverRowTopPx(img, CONCERT_BACKDROP.beamYN);
+  return concertBeamTopFromBackdropMedia(img);
 }
 
-function rowTopFromBackdropImg(
-  img: HTMLImageElement,
+function rowTopFromBackdropMedia(
+  media: DashboardBackdropMedia,
   rowKey: "beamYN" | "cardRowYN" | "heroStackAnchorYN",
 ): number {
   const rowYN = CONCERT_BACKDROP[rowKey];
-  const { naturalWidth, naturalHeight } = img;
+  const { width: naturalWidth, height: naturalHeight } = getBackdropNaturalDimensions(media);
   if (!naturalWidth || !naturalHeight) {
     const vh = window.innerHeight;
     const vw = window.innerWidth;
     return rowYN * CONCERT_BACKDROP.height * backdropScale(vw, vh);
   }
-  return backdropCoverRowTopPx(img, rowYN);
+  return backdropCoverRowTopPx(media, rowYN);
 }
 
+export function concertCardRowTopFromBackdropMedia(media: DashboardBackdropMedia): number {
+  return rowTopFromBackdropMedia(media, "cardRowYN");
+}
+
+/** @deprecated Use concertCardRowTopFromBackdropMedia */
 export function concertCardRowTopFromBackdropImg(img: HTMLImageElement): number {
-  return rowTopFromBackdropImg(img, "cardRowYN");
+  return concertCardRowTopFromBackdropMedia(img);
 }
 
-export function concertCardRowTopPx(_viewportWidth: number, viewportHeight: number): number {
-  return CONCERT_BACKDROP.cardRowYN * CONCERT_BACKDROP.height * backdropFillScaleY(viewportHeight);
+export function concertCardRowTopPx(viewportWidth: number, viewportHeight: number): number {
+  const scale = backdropCoverScaleForViewport(viewportWidth, viewportHeight);
+  return CONCERT_BACKDROP.cardRowYN * CONCERT_BACKDROP.height * scale;
 }
 
+export function concertHeroStackAnchorTopFromBackdropMedia(media: DashboardBackdropMedia): number {
+  return rowTopFromBackdropMedia(media, "heroStackAnchorYN");
+}
+
+/** @deprecated Use concertHeroStackAnchorTopFromBackdropMedia */
 export function concertHeroStackAnchorTopFromBackdropImg(img: HTMLImageElement): number {
-  return rowTopFromBackdropImg(img, "heroStackAnchorYN");
+  return concertHeroStackAnchorTopFromBackdropMedia(img);
 }
 
-export function concertHeroStackAnchorTopPx(_viewportWidth: number, viewportHeight: number): number {
-  return CONCERT_BACKDROP.heroStackAnchorYN * CONCERT_BACKDROP.height * backdropFillScaleY(viewportHeight);
+export function concertHeroStackAnchorTopPx(viewportWidth: number, viewportHeight: number): number {
+  const scale = backdropCoverScaleForViewport(viewportWidth, viewportHeight);
+  return CONCERT_BACKDROP.heroStackAnchorYN * CONCERT_BACKDROP.height * scale;
 }
 
 export function dashboardHeroStackTopPx(anchorTopPx: number): number {

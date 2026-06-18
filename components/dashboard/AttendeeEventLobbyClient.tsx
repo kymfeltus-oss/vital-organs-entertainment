@@ -97,7 +97,7 @@ export default function AttendeeEventLobbyClient({
               alt="300 Awakening"
               width={150}
               height={88}
-              className="mx-auto h-auto w-[150px] object-contain"
+              className="mx-auto h-auto w-auto max-w-[150px] object-contain"
               style={{ width: "auto", height: "auto", maxWidth: 150, maxHeight: 88 }}
               priority
             />

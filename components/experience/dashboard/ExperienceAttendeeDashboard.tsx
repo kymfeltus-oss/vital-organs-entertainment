@@ -22,11 +22,11 @@ export default function ExperienceAttendeeDashboard({
   }, [initialProfile]);
 
   useEffect(() => {
-    for (const href of AWAKENING_PRELOAD_ASSETS) {
+    for (const asset of AWAKENING_PRELOAD_ASSETS) {
       const link = document.createElement("link");
       link.rel = "preload";
-      link.as = "image";
-      link.href = href;
+      link.as = asset.as;
+      link.href = asset.href;
       document.head.appendChild(link);
     }
 

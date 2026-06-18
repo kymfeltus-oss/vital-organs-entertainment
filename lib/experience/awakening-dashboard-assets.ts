@@ -1,10 +1,10 @@
-/** Experience dashboard — single mobile layout backdrop + route targets. */
+/** Experience dashboard — mobile video backdrop + route targets. */
 
-/** Source art dimensions — keep in sync with `public/awakening/dashboard-concert-bg.png`. */
-/** Art aspect ≈ 390×844 mobile design canvas; rendered with object-fit: fill to 100dvh. */
+/** Fallback art dimensions until video metadata loads — tune if export size differs. */
+/** Portrait plate; rendered with object-fit: contain + object-position: center top. */
 export const AWAKENING_CONCERT_BACKDROP_ART = {
-  width: 853,
-  height: 1844,
+  width: 941,
+  height: 1672,
 } as const;
 
 export const AWAKENING_MOBILE_DASHBOARD_VIEWPORT = {
@@ -13,7 +13,7 @@ export const AWAKENING_MOBILE_DASHBOARD_VIEWPORT = {
 } as const;
 
 export const AWAKENING_ASSETS = {
-  background: "/awakening/dashboard-concert-bg.png",
+  background: "/awakening/dashboard-concert-bg%20mobile.mp4",
   routes: {
     enterExperience: "/experience/live",
     watchStory: "/",
@@ -60,6 +60,6 @@ export const AWAKENING_DASHBOARD_CARDS_MOBILE = [
 ] as const;
 
 export const AWAKENING_PRELOAD_ASSETS = [
-  AWAKENING_ASSETS.background,
-  "/branding/awakening-lockup.png",
+  { href: AWAKENING_ASSETS.background, as: "video" as const },
+  { href: "/branding/awakening-lockup.png", as: "image" as const },
 ] as const;

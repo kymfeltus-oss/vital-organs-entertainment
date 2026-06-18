@@ -24,8 +24,14 @@ export default async function ExperienceHubPage() {
 
   return (
     <>
-      {AWAKENING_PRELOAD_ASSETS.map((href) => (
-        <link key={href} rel="preload" as="image" href={href} fetchPriority="high" />
+      {AWAKENING_PRELOAD_ASSETS.map((asset) => (
+        <link
+          key={asset.href}
+          rel="preload"
+          as={asset.as}
+          href={asset.href}
+          fetchPriority="high"
+        />
       ))}
       <ExperienceAttendeeDashboard
         initialProfile={profile}

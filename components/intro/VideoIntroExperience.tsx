@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import IntroAmbientFxLayer from "@/components/intro/IntroAmbientFxLayer";
 import { fetchAccessContext } from "@/lib/access";
 import { buildPersonaHubUrl, DEFAULT_ATTENDEE_NEXT } from "@/lib/auth/routing";
 
@@ -189,8 +188,6 @@ export default function VideoIntroExperience() {
           ) : null}
         </div>
       </div>
-
-      <IntroAmbientFxLayer />
 
       <button
         type="button"

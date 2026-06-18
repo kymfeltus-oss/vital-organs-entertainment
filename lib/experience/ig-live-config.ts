@@ -3,7 +3,7 @@
 export const IG_LIVE_CREATOR = {
   name: "IAN CRAIG",
   subtitle: "300 Awakening",
-  avatarSrc: "/branding/vital-seed-logo.png",
+  avatarSrc: "/images/vital-seed/vital-seed-orb.png",
   exitHref: "/experience",
 } as const;
 

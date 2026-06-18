@@ -90,11 +90,7 @@ export default function DashboardHeroSection({
           </p>
         )}
 
-        {eventPhase === "ended" && (
-          <p className="mb-1 text-[10px] font-extrabold uppercase tracking-[0.24em] text-[#D4D4D8]">
-            Experience Ended
-          </p>
-        )}
+    
 
         <div className="relative mt-1 h-[42px] w-full max-w-[300px]">
           <Image src={pillSrc} alt={pillAlt} fill className="object-contain" />

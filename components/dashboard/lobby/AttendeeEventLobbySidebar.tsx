@@ -85,7 +85,7 @@ function HarvestCard() {
             className="flex h-10 items-center justify-center gap-2 rounded-[11px] bg-[#050406] text-[11px] font-black uppercase tracking-[0.2em] text-white transition hover:bg-[#0B090A]"
           >
             <BrandIcon
-              src="/icons/heart-neon.png"
+              src="/images/vital-seed/heart-icon.png"
               width={14}
               height={14}
               alt=""
@@ -147,7 +147,7 @@ export default function AttendeeEventLobbySidebar() {
           alt="300 Awakening"
           width={220}
           height={128}
-          className="mx-auto h-auto w-full max-w-[220px] object-contain"
+          className="mx-auto h-auto w-auto max-w-[220px] object-contain"
           style={{ width: "auto", height: "auto", maxWidth: 220 }}
         />
       </div>

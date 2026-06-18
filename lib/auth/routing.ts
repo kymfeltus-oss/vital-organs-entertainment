@@ -46,10 +46,16 @@ export function buildPersonaHubUrl(nextPath?: string | null): string {
   );
 }
 
+export function resolveAttendeeDestination(nextPath: string): string {
+  const sanitized = sanitizeNextPath(nextPath, DEFAULT_ATTENDEE_NEXT);
+  if (sanitized === "/dashboard") return DEFAULT_ATTENDEE_NEXT;
+  return sanitized;
+}
+
 export function buildAttendeeGateUrl(nextPath?: string | null): string {
   return buildGateUrl(
     ATTENDEE_GATE_PATH,
-    sanitizeNextPath(nextPath, DEFAULT_ATTENDEE_NEXT),
+    resolveAttendeeDestination(nextPath ?? DEFAULT_ATTENDEE_NEXT),
     { persona: "attendee" },
   );
 }
@@ -73,10 +79,6 @@ export function isTeamProtectedPath(pathname: string): boolean {
   return TEAM_PROTECTED_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
-}
-
-export function resolveAttendeeDestination(nextPath: string): string {
-  return sanitizeNextPath(nextPath, DEFAULT_ATTENDEE_NEXT);
 }
 
 /** Resolve the team destination after gate auth (no redundant query params). */

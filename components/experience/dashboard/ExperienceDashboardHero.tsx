@@ -32,7 +32,7 @@ export default function ExperienceDashboardHero({
         className="dashboard-hero-headline-block dashboard-hero-headline-block--mobile-fixed pointer-events-none text-center"
       >
         <div className="dashboard-hero-copy-stack pointer-events-auto flex flex-col items-center gap-2">
-          {(showTimer || isLoading || eventPhase === "ended") && (
+          {(showTimer || isLoading) && (
             <div className="mx-auto w-full max-w-[min(100%,16rem)] px-2">
               <LobbyCountdownTimer
                 config={config}
@@ -45,11 +45,6 @@ export default function ExperienceDashboardHero({
               {eventPhase === "waiting" && showTimer ? (
                 <p className="mt-1 font-ui text-[0.5rem] font-bold uppercase tracking-[0.18em] text-brand-muted">
                   {config.status_label}
-                </p>
-              ) : null}
-              {eventPhase === "ended" ? (
-                <p className="mt-1 font-ui text-[0.5rem] font-bold uppercase tracking-[0.18em] text-brand-muted">
-                  Experience Ended
                 </p>
               ) : null}
             </div>
