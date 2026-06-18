@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, RotateCcw, Save } from "lucide-react";
 import DashboardHeroSection from "@/components/dashboard/DashboardHeroSection";
+import { shouldShowCountdownTimer } from "@/lib/experience/countdown-display";
 import {
   computeEventCountdownPhase,
   DEFAULT_COUNTDOWN_CONFIG,
@@ -311,6 +312,7 @@ export default function CountdownAdminClient({
             countdown={previewCountdown}
             eventPhase={previewPhase}
             showLiveSignal={previewPhase === "live"}
+            showTimer={shouldShowCountdownTimer(form, false)}
             ctaLabel={previewCta.label}
             ctaHref={previewCta.href}
             ctaDisabled={previewCta.disabled}
