@@ -1192,12 +1192,99 @@ html {
   isolation: isolate;
 }
 
-.intro-flash-ambience {
+.intro-flash-ambience--back {
   position: absolute;
   inset: 0;
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
+}
+
+.intro-flash-fx-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.intro-flash-fx-overlay--mobile .intro-flash-orb--blue {
+  top: 4%;
+  left: -18%;
+  width: clamp(14rem, 58vw, 22rem);
+  height: clamp(14rem, 58vw, 22rem);
+  background: radial-gradient(circle, rgba(0, 168, 255, 0.72) 0%, transparent 70%);
+  filter: blur(28px);
+}
+
+.intro-flash-fx-overlay--mobile .intro-flash-orb--pink {
+  right: -16%;
+  bottom: 14%;
+  width: clamp(12rem, 52vw, 20rem);
+  height: clamp(12rem, 52vw, 20rem);
+  background: radial-gradient(circle, rgba(255, 0, 140, 0.62) 0%, transparent 72%);
+  filter: blur(26px);
+}
+
+.intro-flash-fx-overlay--mobile .intro-flash-orb--indigo {
+  top: 32%;
+  left: 58%;
+  width: clamp(9rem, 34vw, 14rem);
+  height: clamp(9rem, 34vw, 14rem);
+  background: radial-gradient(circle, rgba(91, 66, 255, 0.5) 0%, transparent 74%);
+  filter: blur(24px);
+}
+
+.intro-flash-ember {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.intro-flash-ember--a {
+  top: 18%;
+  left: 12%;
+  width: 6px;
+  height: 6px;
+  background: #00a8ff;
+  box-shadow: 0 0 16px 4px rgba(0, 168, 255, 0.85);
+  animation: intro-flash-ember-drift-a 11s ease-in-out infinite;
+}
+
+.intro-flash-ember--b {
+  top: 26%;
+  right: 14%;
+  width: 5px;
+  height: 5px;
+  background: #ff008c;
+  box-shadow: 0 0 14px 3px rgba(255, 0, 140, 0.8);
+  animation: intro-flash-ember-drift-b 13s ease-in-out infinite;
+}
+
+@keyframes intro-flash-ember-drift-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate3d(10px, -18px, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes intro-flash-ember-drift-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate3d(-12px, -22px, 0);
+    opacity: 0.95;
+  }
 }
 
 .intro-flash-orb {
@@ -1332,6 +1419,38 @@ html {
   animation-duration: 10.8s;
 }
 
+.intro-flash-particle--10 {
+  left: 8%;
+  top: 56%;
+  color: #00a8ff;
+  animation-delay: 2.2s;
+  animation-duration: 9.8s;
+}
+
+.intro-flash-particle--11 {
+  left: 72%;
+  top: 74%;
+  color: #ff008c;
+  animation-delay: 1.4s;
+  animation-duration: 8.6s;
+}
+
+.intro-flash-particle--12 {
+  left: 34%;
+  top: 38%;
+  color: #5b42ff;
+  animation-delay: 4.6s;
+  animation-duration: 10.2s;
+}
+
+.intro-flash-particle--13 {
+  left: 88%;
+  top: 48%;
+  color: #00a8ff;
+  animation-delay: 0.6s;
+  animation-duration: 9.4s;
+}
+
 .intro-flash-vignette {
   position: absolute;
   inset: 0;
@@ -1340,7 +1459,7 @@ html {
     transparent 42%,
     rgba(0, 0, 0, 0.55) 100%
   );
-  opacity: 0.55;
+  opacity: 0.35;
 }
 
 @keyframes intro-flash-orb-drift-a {
@@ -1444,7 +1563,7 @@ html {
 
 .intro-flash-enter-hit {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   margin: 0;
   padding: 0;
   border: 0;
@@ -1472,6 +1591,26 @@ html {
   cursor: wait;
 }
 
+@media (max-width: 767px) {
+  .intro-flash-fx-overlay--mobile .intro-flash-particle {
+    width: 5px;
+    height: 5px;
+    box-shadow: 0 0 14px currentColor, 0 0 22px currentColor;
+  }
+
+  .intro-flash-fx-overlay--mobile .intro-flash-ember--a {
+    width: 7px;
+    height: 7px;
+    box-shadow: 0 0 20px 5px rgba(0, 168, 255, 0.9);
+  }
+
+  .intro-flash-fx-overlay--mobile .intro-flash-ember--b {
+    width: 6px;
+    height: 6px;
+    box-shadow: 0 0 18px 4px rgba(255, 0, 140, 0.88);
+  }
+}
+
 @media (min-width: 768px) {
   .intro-flash-orb--blue {
     filter: blur(72px);
@@ -1495,7 +1634,8 @@ html {
   .intro-flash-motion,
   .intro-flash-motion--mobile,
   .intro-flash-orb,
-  .intro-flash-particle {
+  .intro-flash-particle,
+  .intro-flash-ember {
     animation: none !important;
   }
 
@@ -1505,6 +1645,10 @@ html {
 
   .intro-flash-particle {
     opacity: 0.35;
+  }
+
+  .intro-flash-ember {
+    opacity: 0.4;
   }
 }
 

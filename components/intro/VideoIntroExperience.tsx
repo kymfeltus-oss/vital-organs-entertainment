@@ -11,7 +11,8 @@ const INTRO_MUSIC_SRC = "/intro-music.m4a";
 const MOBILE_INTRO_MEDIA_QUERY = "(max-width: 767px)";
 const EXIT_MS = 520;
 
-const INTRO_SPARK_COUNT = 10;
+const INTRO_SPARK_COUNT_MOBILE = 14;
+const INTRO_SPARK_COUNT_DESKTOP = 10;
 
 type IntroViewport = "mobile" | "desktop";
 
@@ -122,18 +123,7 @@ export default function VideoIntroExperience() {
         isExiting ? "opacity-0" : "opacity-100"
       }`}
     >
-      <div className="intro-flash-ambience" aria-hidden="true">
-        <div className="intro-flash-orb intro-flash-orb--blue" />
-        <div className="intro-flash-orb intro-flash-orb--pink" />
-        <div className="intro-flash-orb intro-flash-orb--indigo" />
-        <div className="intro-flash-sparkfield">
-          {Array.from({ length: INTRO_SPARK_COUNT }, (_, index) => (
-            <span
-              key={index}
-              className={`intro-flash-particle intro-flash-particle--${index}`}
-            />
-          ))}
-        </div>
+      <div className="intro-flash-ambience intro-flash-ambience--back" aria-hidden="true">
         <div className="intro-flash-vignette" />
       </div>
 
@@ -150,6 +140,31 @@ export default function VideoIntroExperience() {
               className="intro-flash-art"
             />
           </div>
+        </div>
+      </div>
+
+      <div
+        className={`intro-flash-fx-overlay intro-flash-fx-overlay--${viewport}`}
+        aria-hidden="true"
+      >
+        <div className="intro-flash-orb intro-flash-orb--blue" />
+        <div className="intro-flash-orb intro-flash-orb--pink" />
+        <div className="intro-flash-orb intro-flash-orb--indigo" />
+        <div className="intro-flash-ember intro-flash-ember--a" />
+        <div className="intro-flash-ember intro-flash-ember--b" />
+        <div className="intro-flash-sparkfield">
+          {Array.from(
+            {
+              length:
+                viewport === "mobile" ? INTRO_SPARK_COUNT_MOBILE : INTRO_SPARK_COUNT_DESKTOP,
+            },
+            (_, index) => (
+              <span
+                key={index}
+                className={`intro-flash-particle intro-flash-particle--${index}`}
+              />
+            ),
+          )}
         </div>
       </div>
 
