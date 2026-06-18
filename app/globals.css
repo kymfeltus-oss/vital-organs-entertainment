@@ -1192,9 +1192,214 @@ html {
   isolation: isolate;
 }
 
+.intro-flash-ambience {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.intro-flash-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.intro-flash-orb--blue {
+  top: -8%;
+  left: -12%;
+  width: clamp(12rem, 42vw, 28rem);
+  height: clamp(12rem, 42vw, 28rem);
+  background: radial-gradient(circle, rgba(0, 168, 255, 0.42) 0%, transparent 68%);
+  filter: blur(42px);
+  animation: intro-flash-orb-drift-a 16s ease-in-out infinite alternate;
+}
+
+.intro-flash-orb--pink {
+  right: -10%;
+  bottom: 8%;
+  width: clamp(10rem, 36vw, 24rem);
+  height: clamp(10rem, 36vw, 24rem);
+  background: radial-gradient(circle, rgba(255, 0, 140, 0.36) 0%, transparent 70%);
+  filter: blur(38px);
+  animation: intro-flash-orb-drift-b 19s ease-in-out infinite alternate;
+}
+
+.intro-flash-orb--indigo {
+  top: 38%;
+  left: 42%;
+  width: clamp(8rem, 24vw, 16rem);
+  height: clamp(8rem, 24vw, 16rem);
+  background: radial-gradient(circle, rgba(91, 66, 255, 0.28) 0%, transparent 72%);
+  filter: blur(34px);
+  animation: intro-flash-orb-drift-c 22s ease-in-out infinite alternate;
+}
+
+.intro-flash-sparkfield {
+  position: absolute;
+  inset: 0;
+}
+
+.intro-flash-particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  opacity: 0;
+  animation: intro-flash-spark-rise 9s ease-in-out infinite;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.intro-flash-particle--0 {
+  left: 11%;
+  top: 78%;
+  color: #00a8ff;
+  animation-delay: 0s;
+  animation-duration: 8.5s;
+}
+
+.intro-flash-particle--1 {
+  left: 24%;
+  top: 64%;
+  color: #ff008c;
+  animation-delay: 1.2s;
+  animation-duration: 10s;
+}
+
+.intro-flash-particle--2 {
+  left: 38%;
+  top: 82%;
+  color: #00a8ff;
+  animation-delay: 2.4s;
+  animation-duration: 9.5s;
+}
+
+.intro-flash-particle--3 {
+  left: 52%;
+  top: 70%;
+  color: #8a2be2;
+  animation-delay: 0.8s;
+  animation-duration: 11s;
+}
+
+.intro-flash-particle--4 {
+  left: 66%;
+  top: 86%;
+  color: #ff008c;
+  animation-delay: 3.1s;
+  animation-duration: 8.8s;
+}
+
+.intro-flash-particle--5 {
+  left: 78%;
+  top: 58%;
+  color: #00a8ff;
+  animation-delay: 1.8s;
+  animation-duration: 10.4s;
+}
+
+.intro-flash-particle--6 {
+  left: 18%;
+  top: 44%;
+  color: #ff008c;
+  animation-delay: 4s;
+  animation-duration: 9.2s;
+}
+
+.intro-flash-particle--7 {
+  left: 84%;
+  top: 36%;
+  color: #5b42ff;
+  animation-delay: 2.6s;
+  animation-duration: 11.5s;
+}
+
+.intro-flash-particle--8 {
+  left: 46%;
+  top: 52%;
+  color: #00a8ff;
+  animation-delay: 5.2s;
+  animation-duration: 8.2s;
+}
+
+.intro-flash-particle--9 {
+  left: 58%;
+  top: 28%;
+  color: #ff008c;
+  animation-delay: 3.8s;
+  animation-duration: 10.8s;
+}
+
+.intro-flash-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 85% 78% at 50% 46%,
+    transparent 42%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+  opacity: 0.55;
+}
+
+@keyframes intro-flash-orb-drift-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate3d(6%, 4%, 0) scale(1.08);
+    opacity: 0.85;
+  }
+}
+
+@keyframes intro-flash-orb-drift-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate3d(-5%, -6%, 0) scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes intro-flash-orb-drift-c {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate3d(4%, -5%, 0) scale(1.12);
+    opacity: 0.62;
+  }
+}
+
+@keyframes intro-flash-spark-rise {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0) scale(0.6);
+  }
+  18% {
+    opacity: 0.85;
+  }
+  72% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -42px, 0) scale(1);
+  }
+}
+
 .intro-flash-stage {
   position: absolute;
   inset: 0;
+  z-index: 1;
   overflow: hidden;
 }
 
@@ -1263,10 +1468,39 @@ html {
   cursor: wait;
 }
 
+@media (min-width: 768px) {
+  .intro-flash-orb--blue {
+    filter: blur(72px);
+  }
+
+  .intro-flash-orb--pink {
+    filter: blur(64px);
+  }
+
+  .intro-flash-orb--indigo {
+    filter: blur(56px);
+  }
+
+  .intro-flash-particle {
+    width: 4px;
+    height: 4px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .intro-flash-motion,
-  .intro-flash-motion--mobile {
+  .intro-flash-motion--mobile,
+  .intro-flash-orb,
+  .intro-flash-particle {
     animation: none !important;
+  }
+
+  .intro-flash-orb {
+    opacity: 0.45;
+  }
+
+  .intro-flash-particle {
+    opacity: 0.35;
   }
 }
 

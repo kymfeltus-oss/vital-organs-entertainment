@@ -11,6 +11,8 @@ const INTRO_MUSIC_SRC = "/intro-music.m4a";
 const MOBILE_INTRO_MEDIA_QUERY = "(max-width: 767px)";
 const EXIT_MS = 520;
 
+const INTRO_SPARK_COUNT = 10;
+
 type IntroViewport = "mobile" | "desktop";
 
 function pickIntroViewport(): IntroViewport {
@@ -120,6 +122,21 @@ export default function VideoIntroExperience() {
         isExiting ? "opacity-0" : "opacity-100"
       }`}
     >
+      <div className="intro-flash-ambience" aria-hidden="true">
+        <div className="intro-flash-orb intro-flash-orb--blue" />
+        <div className="intro-flash-orb intro-flash-orb--pink" />
+        <div className="intro-flash-orb intro-flash-orb--indigo" />
+        <div className="intro-flash-sparkfield">
+          {Array.from({ length: INTRO_SPARK_COUNT }, (_, index) => (
+            <span
+              key={index}
+              className={`intro-flash-particle intro-flash-particle--${index}`}
+            />
+          ))}
+        </div>
+        <div className="intro-flash-vignette" />
+      </div>
+
       <div className="intro-flash-stage" aria-hidden="true">
         <div
           className={`intro-flash-motion intro-flash-motion--${viewport}`}
