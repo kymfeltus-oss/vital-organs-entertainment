@@ -977,6 +977,18 @@ html {
   }
 }
 
+@keyframes intro-ambient-orb-float {
+  0%,
+  100% {
+    opacity: calc(var(--intro-peak-opacity, 0.3) * 0.55);
+    transform: translate3d(0, 0, 0) scale(0.92);
+  }
+  50% {
+    opacity: var(--intro-peak-opacity, 0.3);
+    transform: translate3d(var(--intro-drift-x, 0), var(--intro-drift-y, 0), 0) scale(1.06);
+  }
+}
+
 .intro-ambient-layer {
   contain: layout style paint;
   transform: translate3d(0, 0, 0);
@@ -986,6 +998,42 @@ html {
 .intro-ambient-particle-field {
   position: absolute;
   inset: 0;
+}
+
+.intro-ambient-orb-field {
+  position: absolute;
+  inset: 0;
+}
+
+.intro-ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+  will-change: transform, opacity;
+  transform: translate3d(-50%, -50%, 0);
+  animation: intro-ambient-orb-float ease-in-out infinite;
+  background: radial-gradient(
+    circle at 35% 35%,
+    color-mix(in srgb, currentColor 72%, #ffffff 28%) 0%,
+    color-mix(in srgb, currentColor 42%, transparent 58%) 42%,
+    transparent 72%
+  );
+  box-shadow:
+    0 0 24px color-mix(in srgb, currentColor 45%, transparent),
+    0 0 48px color-mix(in srgb, currentColor 22%, transparent);
+  filter: blur(0.5px);
+}
+
+.intro-ambient-orb--blue {
+  color: rgba(0, 168, 255, 0.9);
+}
+
+.intro-ambient-orb--purple {
+  color: rgba(138, 46, 255, 0.88);
+}
+
+.intro-ambient-orb--pink {
+  color: rgba(255, 47, 175, 0.86);
 }
 
 .intro-ambient-particle {
@@ -1004,8 +1052,12 @@ html {
   background: rgba(0, 168, 255, 0.88);
 }
 
+.intro-ambient-particle--purple {
+  background: rgba(138, 46, 255, 0.86);
+}
+
 .intro-ambient-particle--pink {
-  background: rgba(255, 0, 140, 0.85);
+  background: rgba(255, 47, 175, 0.85);
 }
 
 .intro-ambient-flare {
@@ -1022,8 +1074,9 @@ html {
     transparent 0%,
     rgba(0, 168, 255, 0.15) 18%,
     rgba(0, 168, 255, 0.55) 42%,
-    rgba(255, 0, 140, 0.5) 58%,
-    rgba(255, 0, 140, 0.15) 82%,
+    rgba(138, 46, 255, 0.42) 50%,
+    rgba(255, 47, 175, 0.5) 58%,
+    rgba(255, 47, 175, 0.15) 82%,
     transparent 100%
   );
 }
@@ -1234,12 +1287,18 @@ html {
   }
 
   .intro-ambient-particle,
+  .intro-ambient-orb,
   .intro-ambient-flare {
     animation: none !important;
   }
 
   .intro-ambient-particle {
     opacity: 0.35;
+  }
+
+  .intro-ambient-orb {
+    opacity: 0.22;
+    transform: translate3d(-50%, -50%, 0) scale(1);
   }
 
   .intro-ambient-flare {
