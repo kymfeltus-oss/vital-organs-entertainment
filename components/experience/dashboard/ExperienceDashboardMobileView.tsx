@@ -33,11 +33,7 @@ export default function ExperienceDashboardMobileView({
         data-dashboard-layer="mobile"
         className="relative z-10 h-full min-h-0 flex-1 overflow-hidden overscroll-none"
       >
-        <ExperienceDashboardContent
-          profile={profile}
-          onProfileChange={onProfileChange}
-          initialCountdownConfig={initialCountdownConfig}
-        />
+        <ExperienceDashboardContent initialCountdownConfig={initialCountdownConfig} />
       </div>
     </div>
   );

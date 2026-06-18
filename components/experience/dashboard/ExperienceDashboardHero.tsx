@@ -8,21 +8,16 @@ import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
 import { AWAKENING_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
-import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
-
 type ExperienceDashboardHeroProps = {
-  profile: AttendeeProfileSnapshot;
   initialCountdownConfig?: EventCountdownConfig;
 };
 
 export default function ExperienceDashboardHero({
-  profile,
   initialCountdownConfig,
 }: ExperienceDashboardHeroProps) {
   const { config, countdown, eventPhase, isLoading, showTimer } = useLobbyCountdown({
     initialConfig: initialCountdownConfig,
   });
-  const welcomeLine = `Welcome ${profile.headerDisplayName}`;
   const headlineBlockRef = useRef<HTMLDivElement>(null);
 
   return (
@@ -31,12 +26,6 @@ export default function ExperienceDashboardHero({
       aria-label="Experience dashboard hero"
     >
       <ExperienceDashboardMobileHeroLayout headlineBlockRef={headlineBlockRef} />
-
-      <div className="dashboard-hero-topbar pointer-events-none relative mx-auto w-full max-w-[calc(100%-3.25rem)] pr-14">
-        <div className="dashboard-hero-welcome mx-auto text-center">
-          <h1 className="dashboard-hero-welcome-title pointer-events-auto">{welcomeLine}</h1>
-        </div>
-      </div>
 
       <div
         ref={headlineBlockRef}

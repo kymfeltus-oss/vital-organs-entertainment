@@ -19,7 +19,7 @@ export function normalizeBackdropVariant(
 
 export const BACKDROP_HEIGHT_SCALE = 1;
 
-export const HERO_STACK_LAYOUT_VERSION = 40;
+export const HERO_STACK_LAYOUT_VERSION = 41;
 
 export const HERO_STACK_LIFT_PX = 148;
 
@@ -58,11 +58,27 @@ function backdropCoverScale(
   return Math.max(boxWidth / naturalWidth, boxHeight / naturalHeight);
 }
 
+/** Map normalized art row (0–1) to viewport px when backdrop uses object-fit: fill. */
+export function backdropFillRowTopPx(
+  img: HTMLImageElement | null | undefined,
+  rowYN: number,
+): number {
+  if (!img) return 0;
+  const rect = img.getBoundingClientRect();
+  if (rect.height <= 0) return 0;
+  return rect.top + rowYN * rect.height;
+}
+
 export function backdropCoverRowTopPx(
   img: HTMLImageElement | null | undefined,
   rowYN: number,
 ): number {
   if (!img) return 0;
+  const style = window.getComputedStyle(img);
+  if (style.objectFit === "fill") {
+    return backdropFillRowTopPx(img, rowYN);
+  }
+
   const { naturalWidth, naturalHeight, clientWidth, clientHeight } = img;
   if (!naturalWidth || !naturalHeight || !clientWidth || !clientHeight) return 0;
 
@@ -74,8 +90,6 @@ export function backdropCoverRowTopPx(
   );
   const renderedH = naturalHeight * scale;
   const rect = img.getBoundingClientRect();
-
-  const style = window.getComputedStyle(img);
   const { posY } = parseObjectPosition(style.objectPosition);
   const offsetY = (clientHeight - renderedH) * posY;
 
@@ -133,12 +147,16 @@ function backdropScale(viewportWidth: number, viewportHeight: number): number {
   return Math.max(viewportWidth / width, boxHeight / height);
 }
 
+function backdropFillScaleY(viewportHeight: number): number {
+  return viewportHeight / CONCERT_BACKDROP.height;
+}
+
 export function resolveActiveBackdropVariant(): BackdropVariant {
   return "mobile";
 }
 
 export function concertBeamTopPx(viewportWidth: number, viewportHeight: number): number {
-  return CONCERT_BACKDROP.beamYN * CONCERT_BACKDROP.height * backdropScale(viewportWidth, viewportHeight);
+  return CONCERT_BACKDROP.beamYN * CONCERT_BACKDROP.height * backdropFillScaleY(viewportHeight);
 }
 
 export function concertBeamTopFromBackdropImg(img: HTMLImageElement): number {
@@ -163,16 +181,16 @@ export function concertCardRowTopFromBackdropImg(img: HTMLImageElement): number 
   return rowTopFromBackdropImg(img, "cardRowYN");
 }
 
-export function concertCardRowTopPx(viewportWidth: number, viewportHeight: number): number {
-  return CONCERT_BACKDROP.cardRowYN * CONCERT_BACKDROP.height * backdropScale(viewportWidth, viewportHeight);
+export function concertCardRowTopPx(_viewportWidth: number, viewportHeight: number): number {
+  return CONCERT_BACKDROP.cardRowYN * CONCERT_BACKDROP.height * backdropFillScaleY(viewportHeight);
 }
 
 export function concertHeroStackAnchorTopFromBackdropImg(img: HTMLImageElement): number {
   return rowTopFromBackdropImg(img, "heroStackAnchorYN");
 }
 
-export function concertHeroStackAnchorTopPx(viewportWidth: number, viewportHeight: number): number {
-  return CONCERT_BACKDROP.heroStackAnchorYN * CONCERT_BACKDROP.height * backdropScale(viewportWidth, viewportHeight);
+export function concertHeroStackAnchorTopPx(_viewportWidth: number, viewportHeight: number): number {
+  return CONCERT_BACKDROP.heroStackAnchorYN * CONCERT_BACKDROP.height * backdropFillScaleY(viewportHeight);
 }
 
 export function dashboardHeroStackTopPx(anchorTopPx: number): number {

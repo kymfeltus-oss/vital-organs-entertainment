@@ -6,7 +6,7 @@ import IntroAmbientFxLayer from "@/components/intro/IntroAmbientFxLayer";
 import { fetchAccessContext } from "@/lib/access";
 import { buildPersonaHubUrl, DEFAULT_ATTENDEE_NEXT } from "@/lib/auth/routing";
 
-const INTRO_VIDEO_SRC = "/mobile%20intro.mp4";
+const INTRO_VIDEO_SRC = "/intro%20mobile.mp4";
 const EXIT_MS = 520;
 
 export default function VideoIntroExperience() {
@@ -149,13 +149,8 @@ export default function VideoIntroExperience() {
         onClick={() => void handleEnter()}
         disabled={isNavigating}
         aria-label="Let's get awakened — enter experience"
-        className="intro-flash-enter-btn touch-target text-brand-enter"
-      >
-        <span className="intro-flash-enter-btn-glow" aria-hidden="true" />
-        <span className="intro-flash-enter-btn-label">
-          {isNavigating ? "Opening…" : "Let's Get Awakened"}
-        </span>
-      </button>
+        className="intro-flash-enter-hit touch-target"
+      />
     </div>
   );
 }

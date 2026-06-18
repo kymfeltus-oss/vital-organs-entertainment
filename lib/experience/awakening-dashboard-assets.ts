@@ -1,9 +1,15 @@
 /** Experience dashboard — single mobile layout backdrop + route targets. */
 
 /** Source art dimensions — keep in sync with `public/awakening/dashboard-concert-bg.png`. */
+/** Art aspect ≈ 390×844 mobile design canvas; rendered with object-fit: fill to 100dvh. */
 export const AWAKENING_CONCERT_BACKDROP_ART = {
   width: 853,
   height: 1844,
+} as const;
+
+export const AWAKENING_MOBILE_DASHBOARD_VIEWPORT = {
+  width: 390,
+  height: 844,
 } as const;
 
 export const AWAKENING_ASSETS = {
