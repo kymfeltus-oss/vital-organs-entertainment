@@ -8,15 +8,40 @@ import { buildPersonaHubUrl, DEFAULT_ATTENDEE_NEXT } from "@/lib/auth/routing";
 const INTRO_IMAGE_DESKTOP = "/desktop%20intro.png";
 const INTRO_IMAGE_MOBILE = "/mobile%20intro.png";
 const INTRO_MUSIC_SRC = "/intro-music.m4a";
+const MOBILE_INTRO_MEDIA_QUERY = "(max-width: 767px)";
 const EXIT_MS = 520;
+
+type IntroViewport = "mobile" | "desktop";
+
+function pickIntroViewport(): IntroViewport {
+  if (typeof window === "undefined") return "mobile";
+  return window.matchMedia(MOBILE_INTRO_MEDIA_QUERY).matches ? "mobile" : "desktop";
+}
 
 export default function VideoIntroExperience() {
   const router = useRouter();
   const musicRef = useRef<HTMLAudioElement>(null);
-  const [desktopSrc, setDesktopSrc] = useState(INTRO_IMAGE_DESKTOP);
+  const [viewport, setViewport] = useState<IntroViewport>("mobile");
+  const [imageSrc, setImageSrc] = useState(INTRO_IMAGE_MOBILE);
   const [isExiting, setIsExiting] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
-  const [introReady, setIntroReady] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(MOBILE_INTRO_MEDIA_QUERY);
+
+    const syncIntroSurface = () => {
+      const nextViewport = pickIntroViewport();
+      setViewport(nextViewport);
+      setImageSrc(nextViewport === "mobile" ? INTRO_IMAGE_MOBILE : INTRO_IMAGE_DESKTOP);
+    };
+
+    syncIntroSurface();
+    mediaQuery.addEventListener("change", syncIntroSurface);
+
+    return () => {
+      mediaQuery.removeEventListener("change", syncIntroSurface);
+    };
+  }, []);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -32,14 +57,6 @@ export default function VideoIntroExperience() {
     if (!audio) return;
     audio.volume = 1;
     audio.load();
-  }, []);
-
-  const handleIntroImageLoad = useCallback(() => {
-    setIntroReady(true);
-  }, []);
-
-  const handleDesktopImageError = useCallback(() => {
-    setDesktopSrc(INTRO_IMAGE_MOBILE);
   }, []);
 
   const stopIntroMusic = useCallback(() => {
@@ -91,6 +108,12 @@ export default function VideoIntroExperience() {
     }, EXIT_MS);
   }, [engageIntroMusic, isNavigating, router]);
 
+  const handleImageError = useCallback(() => {
+    setImageSrc((current) =>
+      current === INTRO_IMAGE_DESKTOP ? INTRO_IMAGE_MOBILE : current,
+    );
+  }, []);
+
   return (
     <div
       className={`intro-flash-root fixed inset-0 z-50 h-dvh w-full overflow-hidden bg-brand-black transition-opacity duration-500 ease-out ${
@@ -98,27 +121,19 @@ export default function VideoIntroExperience() {
       }`}
     >
       <div className="intro-flash-stage" aria-hidden="true">
-        <img
-          src={INTRO_IMAGE_MOBILE}
-          alt=""
-          decoding="async"
-          fetchPriority="high"
-          onLoad={handleIntroImageLoad}
-          className={`intro-flash-art intro-flash-art--mobile md:hidden ${
-            introReady ? "is-ready" : ""
-          }`}
-        />
-        <img
-          src={desktopSrc}
-          alt=""
-          decoding="async"
-          fetchPriority="high"
-          onLoad={handleIntroImageLoad}
-          onError={handleDesktopImageError}
-          className={`intro-flash-art intro-flash-art--desktop hidden md:block ${
-            introReady ? "is-ready" : ""
-          }`}
-        />
+        <div
+          className={`intro-flash-motion intro-flash-motion--${viewport}`}
+        >
+          <img
+            key={imageSrc}
+            src={imageSrc}
+            alt=""
+            decoding="async"
+            fetchPriority="high"
+            onError={handleImageError}
+            className={`intro-flash-art intro-flash-art--${viewport}`}
+          />
+        </div>
       </div>
 
       <audio
@@ -130,23 +145,13 @@ export default function VideoIntroExperience() {
         className="sr-only"
       />
 
-      {!introReady ? (
-        <span className="pointer-events-none absolute inset-0 block bg-brand-black" aria-hidden="true" />
-      ) : null}
-
-      <div className="intro-flash-enter-wrap pb-safe">
-        <button
-          type="button"
-          onClick={() => void handleEnter()}
-          disabled={isNavigating}
-          className="intro-flash-enter touch-target font-ui"
-        >
-          Let&apos;s Get Awakened
-          <span aria-hidden="true" className="intro-flash-enter-chevron">
-            &gt;
-          </span>
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => void handleEnter()}
+        disabled={isNavigating}
+        aria-label="Let's get awakened — enter experience"
+        className={`intro-flash-enter-hit intro-flash-enter-hit--${viewport}`}
+      />
     </div>
   );
 }
