@@ -6,7 +6,6 @@ import { useEffect, useRef } from "react";
 import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
 import {
   AWAKENING_ASSETS,
-  AWAKENING_CREATOR_STREAM_SRC,
   AWAKENING_DASHBOARD_BUTTON_GRID,
   AWAKENING_DASHBOARD_CONTAINER,
 } from "@/lib/experience/awakening-dashboard-assets";
@@ -21,7 +20,6 @@ export default function ExperienceDashboardInterfaceLayer({
   initialCountdownConfig,
 }: ExperienceDashboardInterfaceLayerProps) {
   const backgroundRef = useRef<HTMLVideoElement>(null);
-  const creatorRef = useRef<HTMLVideoElement>(null);
 
   const { config, countdown, eventPhase, isLoading, showTimer } = useLobbyCountdown({
     initialConfig: initialCountdownConfig,
@@ -48,15 +46,6 @@ export default function ExperienceDashboardInterfaceLayer({
       video.removeEventListener("loadeddata", tryPlay);
       video.pause();
     };
-  }, []);
-
-  useEffect(() => {
-    const video = creatorRef.current;
-    if (!video || !AWAKENING_CREATOR_STREAM_SRC) return;
-
-    video.src = AWAKENING_CREATOR_STREAM_SRC;
-    video.playsInline = true;
-    void video.play().catch(() => {});
   }, []);
 
   return (
@@ -92,51 +81,25 @@ export default function ExperienceDashboardInterfaceLayer({
           </div>
         ) : null}
 
-        <div className="experience-dashboard-upper-zone">
-          <div className="experience-dashboard-creator-slot">
-            {AWAKENING_CREATOR_STREAM_SRC ? (
-              <video
-                ref={creatorRef}
-                className="experience-dashboard-creator-video"
-                controls
-                autoPlay
-                playsInline
-                aria-label="Creator portrait stream"
+        <nav className="experience-dashboard-button-grid" aria-label="Dashboard shortcuts">
+          {AWAKENING_DASHBOARD_BUTTON_GRID.map((button) => (
+            <Link
+              key={button.id}
+              href={button.href}
+              className="experience-dashboard-button-grid__link touch-target"
+              aria-label={button.ariaLabel}
+            >
+              <Image
+                src={button.src}
+                alt=""
+                width={210}
+                height={111}
+                className="experience-dashboard-button-grid__img"
+                draggable={false}
               />
-            ) : (
-              <video
-                ref={creatorRef}
-                className="experience-dashboard-creator-video experience-dashboard-creator-video--idle"
-                controls
-                playsInline
-                preload="none"
-                aria-label="Creator portrait stream placeholder"
-              />
-            )}
-          </div>
-        </div>
-
-        <div className="experience-dashboard-lower-zone">
-          <nav className="experience-dashboard-button-grid" aria-label="Dashboard shortcuts">
-            {AWAKENING_DASHBOARD_BUTTON_GRID.map((button) => (
-              <Link
-                key={button.id}
-                href={button.href}
-                className="experience-dashboard-button-grid__link touch-target"
-                aria-label={button.ariaLabel}
-              >
-                <Image
-                  src={button.src}
-                  alt=""
-                  width={210}
-                  height={111}
-                  className="experience-dashboard-button-grid__img"
-                  draggable={false}
-                />
-              </Link>
-            ))}
-          </nav>
-        </div>
+            </Link>
+          ))}
+        </nav>
       </div>
     </div>
   );

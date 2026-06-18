@@ -18,18 +18,8 @@ export const AWAKENING_DASHBOARD_CONTAINER = {
   aspectHeight: 16,
 } as const;
 
-/** Tall creator portrait slot — centered in the upper half of the dashboard. */
-export const AWAKENING_CREATOR_SLOT = {
-  maxHeightPercent: 46,
-  aspectWidth: 9,
-  aspectHeight: 16,
-} as const;
-
 /** PNG button grid scale relative to native art (0.75 = compact but legible on mobile). */
 export const AWAKENING_DASHBOARD_BUTTON_GRID_SCALE = 0.75 as const;
-
-/** Wire creator talking-head stream URL when the event feed is live. */
-export const AWAKENING_CREATOR_STREAM_SRC: string | null = null;
 
 export const AWAKENING_ASSETS = {
   background: "/awakening/dashboard-concert-bg%20mobile.mp4",
