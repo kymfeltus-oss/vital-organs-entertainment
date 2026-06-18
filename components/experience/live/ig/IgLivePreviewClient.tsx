@@ -8,7 +8,7 @@ import { BroadcastHealthProvider } from "@/lib/parable/BroadcastHealthContext";
 export default function IgLivePreviewClient() {
   return (
     <BroadcastHealthProvider surface="experience">
-      <LiveStreamReactionsProvider enabled>
+      <LiveStreamReactionsProvider enabled={false}>
         <LiveExperienceStreamProvider enabled={false}>
           <IgLiveShell preview showPaywall={false} />
         </LiveExperienceStreamProvider>

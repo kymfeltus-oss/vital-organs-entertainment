@@ -10,41 +10,6 @@ import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const allCookies = request.cookies.getAll();
-  const cookieHeaderBytes = allCookies.reduce(
-    (total, cookie) => total + cookie.name.length + (cookie.value?.length ?? 0) + 2,
-    0,
-  );
-  const authCookieNames = allCookies
-    .filter(({ name }) => /^sb-.*-auth-token(\.\d+)?$/.test(name))
-    .map(({ name }) => name);
-
-  // #region agent log
-  fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "baf5b9",
-    },
-    body: JSON.stringify({
-      sessionId: "baf5b9",
-      runId: "431-debug",
-      hypothesisId: "H1",
-      location: "proxy.ts:entry",
-      message: "Incoming request cookie footprint",
-      data: {
-        pathname,
-        cookieCount: allCookies.length,
-        cookieHeaderBytes,
-        authCookieCount: authCookieNames.length,
-        authCookieNames,
-        nearLimit: cookieHeaderBytes > 12000,
-        overLimit: cookieHeaderBytes > 16384,
-      },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
 
   if (
     pathname.startsWith("/email-gate") ||
@@ -94,85 +59,38 @@ export async function proxy(request: NextRequest) {
         cookiesToSet.forEach(({ name, value, options }) => {
           response.cookies.set(name, value, options);
         });
-
-        // #region agent log
-        fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "baf5b9",
-          },
-          body: JSON.stringify({
-            sessionId: "baf5b9",
-            runId: "431-debug",
-            hypothesisId: "H2",
-            location: "proxy.ts:setAll",
-            message: "Supabase cookie refresh",
-            data: {
-              pathname,
-              incomingCookieNames: cookiesToSet.map((cookie) => cookie.name),
-              deletedStaleAuthChunks: request.cookies
-                .getAll()
-                .filter(
-                  ({ name }) =>
-                    /^sb-.*-auth-token(\.\d+)?$/.test(name) && !incomingNames.has(name),
-                )
-                .map(({ name }) => name),
-            },
-            timestamp: Date.now(),
-          }),
-        }).catch(() => {});
-        // #endregion
       },
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch (authError) {
+    const cause =
+      authError instanceof Error &&
+      "cause" in authError &&
+      authError.cause instanceof Error
+        ? authError.cause.message
+        : authError instanceof Error
+          ? authError.message
+          : "unknown";
+
+    if (/ENOTFOUND|fetch failed|Failed to fetch|ECONNREFUSED|ETIMEDOUT/i.test(cause)) {
+      request.cookies.getAll().forEach(({ name }) => {
+        if (/^sb-.*-auth-token(\.\d+)?$/.test(name)) {
+          response.cookies.delete(name);
+        }
+      });
+    }
+  }
 
   if (user) {
-    // #region agent log
-    fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "baf5b9",
-      },
-      body: JSON.stringify({
-        sessionId: "baf5b9",
-        runId: "431-debug",
-        hypothesisId: "H3",
-        location: "proxy.ts:authenticated",
-        message: "Authenticated proxy pass-through",
-        data: { pathname, userIdPresent: Boolean(user.id) },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
     return response;
   }
 
   const nextPath = `${pathname}${request.nextUrl.search}`;
-
-  // #region agent log
-  fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "baf5b9",
-    },
-    body: JSON.stringify({
-      sessionId: "baf5b9",
-      runId: "431-debug",
-      hypothesisId: "H4",
-      location: "proxy.ts:redirect",
-      message: "Unauthenticated redirect to gate",
-      data: { pathname, nextPath },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
 
   if (isTeamRoute) {
     const redirectUrl = new URL(buildTeamGateUrl(nextPath), request.url);

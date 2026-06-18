@@ -5,49 +5,20 @@ import { useRouter } from "next/navigation";
 import { fetchAccessContext } from "@/lib/access";
 import { buildPersonaHubUrl, DEFAULT_ATTENDEE_NEXT } from "@/lib/auth/routing";
 
-const INTRO_VIDEO_DESKTOP = "/intro-video.mp4";
-const INTRO_VIDEO_MOBILE = "/intro-video%20mobile.mp4";
-/** Soundtrack at public/intro-music.m4a — video tracks stay silent. */
+const INTRO_IMAGE_DESKTOP = "/desktop%20intro.png";
+const INTRO_IMAGE_MOBILE = "/mobile%20intro.png";
 const INTRO_MUSIC_SRC = "/intro-music.m4a";
-const MOBILE_INTRO_MEDIA_QUERY = "(max-width: 767px)";
 const EXIT_MS = 520;
-
-function silenceVideoElement(video: HTMLVideoElement) {
-  video.muted = true;
-  video.defaultMuted = true;
-  video.volume = 0;
-}
-
-function pickIntroVideoSrc(): string {
-  if (typeof window === "undefined") {
-    return INTRO_VIDEO_DESKTOP;
-  }
-
-  return window.matchMedia(MOBILE_INTRO_MEDIA_QUERY).matches
-    ? INTRO_VIDEO_MOBILE
-    : INTRO_VIDEO_DESKTOP;
-}
-
-function isMobileIntroViewport(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia(MOBILE_INTRO_MEDIA_QUERY).matches;
-}
 
 export default function VideoIntroExperience() {
   const router = useRouter();
-  const videoRef = useRef<HTMLVideoElement>(null);
   const musicRef = useRef<HTMLAudioElement>(null);
-  const musicEngagedRef = useRef(false);
-  const skipContinueOnceRef = useRef(false);
-  const isMobileIntroRef = useRef(false);
-  const [videoSrc, setVideoSrc] = useState<string | null>(null);
+  const [desktopSrc, setDesktopSrc] = useState(INTRO_IMAGE_DESKTOP);
   const [isExiting, setIsExiting] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
-  const [videoReady, setVideoReady] = useState(false);
+  const [introReady, setIntroReady] = useState(false);
 
   useEffect(() => {
-    isMobileIntroRef.current = isMobileIntroViewport();
-
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
@@ -63,101 +34,30 @@ export default function VideoIntroExperience() {
     audio.load();
   }, []);
 
-  useEffect(() => {
-    const mediaQuery = window.matchMedia(MOBILE_INTRO_MEDIA_QUERY);
-
-    const syncVideoSrc = () => {
-      setVideoReady(false);
-      setVideoSrc(pickIntroVideoSrc());
-    };
-
-    syncVideoSrc();
-    mediaQuery.addEventListener("change", syncVideoSrc);
-
-    return () => {
-      mediaQuery.removeEventListener("change", syncVideoSrc);
-    };
+  const handleIntroImageLoad = useCallback(() => {
+    setIntroReady(true);
   }, []);
 
-  useEffect(() => {
-    if (!videoSrc) return;
-
-    const video = videoRef.current;
-    if (!video) return;
-
-    setVideoReady(false);
-    silenceVideoElement(video);
-    video.load();
-
-    const tryPlay = () => {
-      silenceVideoElement(video);
-      void video.play().catch(() => {
-        /* Autoplay blocked — muted inline playback should still succeed on retry. */
-      });
-    };
-
-    const onCanPlay = () => setVideoReady(true);
-
-    if (video.readyState >= 2) {
-      tryPlay();
-      setVideoReady(true);
-    }
-
-    video.addEventListener("loadeddata", tryPlay);
-    video.addEventListener("canplay", onCanPlay);
-
-    return () => {
-      video.removeEventListener("loadeddata", tryPlay);
-      video.removeEventListener("canplay", onCanPlay);
-    };
-  }, [videoSrc]);
+  const handleDesktopImageError = useCallback(() => {
+    setDesktopSrc(INTRO_IMAGE_MOBILE);
+  }, []);
 
   const stopIntroMusic = useCallback(() => {
     const audio = musicRef.current;
     if (!audio) return;
     audio.pause();
     audio.currentTime = 0;
-    musicEngagedRef.current = false;
   }, []);
 
   const engageIntroMusic = useCallback(() => {
     const audio = musicRef.current;
-    if (!audio) return false;
-
-    if (!audio.paused && audio.currentTime > 0) {
-      musicEngagedRef.current = true;
-      return true;
-    }
+    if (!audio) return;
 
     audio.volume = 1;
-
-    try {
-      const playAttempt = audio.play();
-      musicEngagedRef.current = true;
-      if (playAttempt) {
-        void playAttempt.catch(() => {
-          musicEngagedRef.current = false;
-        });
-      }
-      return true;
-    } catch {
-      musicEngagedRef.current = false;
-      return false;
-    }
+    void audio.play().catch(() => {
+      /* Autoplay may require the enter tap — navigation still proceeds. */
+    });
   }, []);
-
-  useEffect(() => {
-    if (!videoReady || isMobileIntroRef.current) return;
-    engageIntroMusic();
-  }, [engageIntroMusic, videoReady]);
-
-  const handleIntroTouchStart = useCallback(() => {
-    if (!isMobileIntroRef.current || musicEngagedRef.current) return;
-
-    engageIntroMusic();
-    // iOS requires a user gesture for audio; first tap starts music only.
-    skipContinueOnceRef.current = true;
-  }, [engageIntroMusic]);
 
   useEffect(() => {
     return () => {
@@ -165,19 +65,10 @@ export default function VideoIntroExperience() {
     };
   }, [stopIntroMusic]);
 
-  const handleContinue = useCallback(async () => {
+  const handleEnter = useCallback(async () => {
     if (isNavigating) return;
 
-    if (skipContinueOnceRef.current) {
-      skipContinueOnceRef.current = false;
-      return;
-    }
-
-    if (isMobileIntroRef.current && !musicEngagedRef.current) {
-      engageIntroMusic();
-      return;
-    }
-
+    engageIntroMusic();
     setIsNavigating(true);
 
     const reducedMotion =
@@ -201,33 +92,34 @@ export default function VideoIntroExperience() {
   }, [engageIntroMusic, isNavigating, router]);
 
   return (
-    <button
-      type="button"
-      onClick={() => void handleContinue()}
-      onTouchStart={handleIntroTouchStart}
-      disabled={isNavigating}
-      aria-label="Continue to 300 Awakening experience"
-      className={`fixed inset-0 z-50 block h-dvh w-full cursor-pointer overflow-hidden border-0 bg-brand-black p-0 transition-opacity duration-500 ease-out ${
+    <div
+      className={`intro-flash-root fixed inset-0 z-50 h-dvh w-full overflow-hidden bg-brand-black transition-opacity duration-500 ease-out ${
         isExiting ? "opacity-0" : "opacity-100"
       }`}
     >
-      {videoSrc ? (
-        <video
-          key={videoSrc}
-          ref={videoRef}
-          src={videoSrc}
-          autoPlay
-          loop
-          muted
-          playsInline
-          controls={false}
-          preload="auto"
-          aria-hidden="true"
-          className={`pointer-events-none absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ${
-            videoReady ? "opacity-100" : "opacity-0"
+      <div className="intro-flash-stage" aria-hidden="true">
+        <img
+          src={INTRO_IMAGE_MOBILE}
+          alt=""
+          decoding="async"
+          fetchPriority="high"
+          onLoad={handleIntroImageLoad}
+          className={`intro-flash-art intro-flash-art--mobile md:hidden ${
+            introReady ? "is-ready" : ""
           }`}
         />
-      ) : null}
+        <img
+          src={desktopSrc}
+          alt=""
+          decoding="async"
+          fetchPriority="high"
+          onLoad={handleIntroImageLoad}
+          onError={handleDesktopImageError}
+          className={`intro-flash-art intro-flash-art--desktop hidden md:block ${
+            introReady ? "is-ready" : ""
+          }`}
+        />
+      </div>
 
       <audio
         ref={musicRef}
@@ -238,9 +130,23 @@ export default function VideoIntroExperience() {
         className="sr-only"
       />
 
-      {!videoReady ? (
+      {!introReady ? (
         <span className="pointer-events-none absolute inset-0 block bg-brand-black" aria-hidden="true" />
       ) : null}
-    </button>
+
+      <div className="intro-flash-enter-wrap pb-safe">
+        <button
+          type="button"
+          onClick={() => void handleEnter()}
+          disabled={isNavigating}
+          className="intro-flash-enter touch-target font-ui"
+        >
+          Let&apos;s Get Awakened
+          <span aria-hidden="true" className="intro-flash-enter-chevron">
+            &gt;
+          </span>
+        </button>
+      </div>
+    </div>
   );
 }

@@ -24,7 +24,7 @@ export const AWAKENING_ASSETS = {
   routes: {
     /** Live attendee room — same target as lobby + nav Live tab */
     enterExperience: "/experience/live",
-    /** Cinematic intro / Ian's story (root VideoIntroExperience) */
+    /** Intro flash splash (root VideoIntroExperience) */
     watchStory: "/",
     giving: "/experience/giving",
     liveRoom: "/experience/live",
