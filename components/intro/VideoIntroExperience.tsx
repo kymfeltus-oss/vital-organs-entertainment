@@ -1,50 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
+import IntroAmbientFxLayer from "@/components/intro/IntroAmbientFxLayer";
 import { fetchAccessContext } from "@/lib/access";
 import { buildPersonaHubUrl, DEFAULT_ATTENDEE_NEXT } from "@/lib/auth/routing";
 
-const INTRO_IMAGE_DESKTOP = "/desktop%20intro.png";
-const INTRO_IMAGE_MOBILE = "/mobile%20intro.png";
+const INTRO_IMAGE_SRC = "/mobile%20intro.png";
 const INTRO_MUSIC_SRC = "/intro-music.m4a";
-const MOBILE_INTRO_MEDIA_QUERY = "(max-width: 767px)";
 const EXIT_MS = 520;
-
-const INTRO_SPARK_COUNT_MOBILE = 14;
-const INTRO_SPARK_COUNT_DESKTOP = 10;
-
-type IntroViewport = "mobile" | "desktop";
-
-function pickIntroViewport(): IntroViewport {
-  if (typeof window === "undefined") return "mobile";
-  return window.matchMedia(MOBILE_INTRO_MEDIA_QUERY).matches ? "mobile" : "desktop";
-}
 
 export default function VideoIntroExperience() {
   const router = useRouter();
   const musicRef = useRef<HTMLAudioElement>(null);
-  const [viewport, setViewport] = useState<IntroViewport>("mobile");
-  const [imageSrc, setImageSrc] = useState(INTRO_IMAGE_MOBILE);
   const [isExiting, setIsExiting] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia(MOBILE_INTRO_MEDIA_QUERY);
-
-    const syncIntroSurface = () => {
-      const nextViewport = pickIntroViewport();
-      setViewport(nextViewport);
-      setImageSrc(nextViewport === "mobile" ? INTRO_IMAGE_MOBILE : INTRO_IMAGE_DESKTOP);
-    };
-
-    syncIntroSurface();
-    mediaQuery.addEventListener("change", syncIntroSurface);
-
-    return () => {
-      mediaQuery.removeEventListener("change", syncIntroSurface);
-    };
-  }, []);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -111,12 +81,6 @@ export default function VideoIntroExperience() {
     }, EXIT_MS);
   }, [engageIntroMusic, isNavigating, router]);
 
-  const handleImageError = useCallback(() => {
-    setImageSrc((current) =>
-      current === INTRO_IMAGE_DESKTOP ? INTRO_IMAGE_MOBILE : current,
-    );
-  }, []);
-
   return (
     <div
       className={`intro-flash-root fixed inset-0 z-50 h-dvh w-full overflow-hidden bg-brand-black transition-opacity duration-500 ease-out ${
@@ -128,45 +92,20 @@ export default function VideoIntroExperience() {
       </div>
 
       <div className="intro-flash-stage" aria-hidden="true">
-        <div className={`intro-flash-motion intro-flash-motion--${viewport}`}>
-          <div className={`intro-flash-frame intro-flash-frame--${viewport}`}>
+        <div className="intro-flash-motion">
+          <div className="intro-flash-frame">
             <img
-              key={imageSrc}
-              src={imageSrc}
+              src={INTRO_IMAGE_SRC}
               alt=""
               decoding="async"
               fetchPriority="high"
-              onError={handleImageError}
               className="intro-flash-art"
             />
           </div>
         </div>
       </div>
 
-      <div
-        className={`intro-flash-fx-overlay intro-flash-fx-overlay--${viewport}`}
-        aria-hidden="true"
-      >
-        <div className="intro-flash-orb intro-flash-orb--blue" />
-        <div className="intro-flash-orb intro-flash-orb--pink" />
-        <div className="intro-flash-orb intro-flash-orb--indigo" />
-        <div className="intro-flash-ember intro-flash-ember--a" />
-        <div className="intro-flash-ember intro-flash-ember--b" />
-        <div className="intro-flash-sparkfield">
-          {Array.from(
-            {
-              length:
-                viewport === "mobile" ? INTRO_SPARK_COUNT_MOBILE : INTRO_SPARK_COUNT_DESKTOP,
-            },
-            (_, index) => (
-              <span
-                key={index}
-                className={`intro-flash-particle intro-flash-particle--${index}`}
-              />
-            ),
-          )}
-        </div>
-      </div>
+      <IntroAmbientFxLayer />
 
       <audio
         ref={musicRef}
@@ -182,7 +121,7 @@ export default function VideoIntroExperience() {
         onClick={() => void handleEnter()}
         disabled={isNavigating}
         aria-label="Let's get awakened — enter experience"
-        className={`intro-flash-enter-hit intro-flash-enter-hit--${viewport}`}
+        className="intro-flash-enter-hit"
       />
     </div>
   );
