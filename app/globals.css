@@ -1412,10 +1412,6 @@ html {
   will-change: transform;
 }
 
-.intro-flash-motion--desktop {
-  /* desktop frame centers via object-position */
-}
-
 .intro-flash-motion--mobile {
   animation:
     intro-flash-ken-burns 18s ease-in-out infinite alternate,
