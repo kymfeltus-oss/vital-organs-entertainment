@@ -143,7 +143,7 @@ export default function AttendeeEventLobbySidebar() {
     <aside className="hidden h-dvh min-h-0 w-full max-w-[260px] shrink-0 flex-col border-r border-white/6 bg-[#050406] px-4 py-5 lg:flex">
       <div className="shrink-0 px-0.5">
         <Image
-          src="/branding/300-awakening-logo.png"
+          src="/branding/awakening-lockup.png"
           alt="300 Awakening"
           width={220}
           height={128}

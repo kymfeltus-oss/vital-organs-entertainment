@@ -1,49 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import {
-  AWAKENING_DASHBOARD_CARD_ASPECT,
-  AWAKENING_DASHBOARD_CARDS,
-  AWAKENING_DASHBOARD_CARDS_MOBILE,
-} from "@/lib/experience/awakening-dashboard-assets";
+import { AWAKENING_DASHBOARD_CARDS_MOBILE } from "@/lib/experience/awakening-dashboard-assets";
 
-type ExperienceDashboardCardRowProps = {
-  variant?: "mobile" | "desktop";
-};
-
-export default function ExperienceDashboardCardRow({
-  variant = "desktop",
-}: ExperienceDashboardCardRowProps) {
-  const cards =
-    variant === "mobile" ? AWAKENING_DASHBOARD_CARDS_MOBILE : AWAKENING_DASHBOARD_CARDS;
-
+/** Transparent tap targets over baked-in card art on the dashboard backdrop. */
+export default function ExperienceDashboardCardRow() {
   return (
-    <div
-      className="dashboard-hero-card-row pointer-events-auto"
-      style={
-        {
-          "--dashboard-card-aspect": AWAKENING_DASHBOARD_CARD_ASPECT,
-        } as React.CSSProperties
-      }
-    >
-      {cards.map((card) => (
+    <div className="dashboard-hero-card-row" aria-label="Dashboard shortcuts">
+      {AWAKENING_DASHBOARD_CARDS_MOBILE.map((card) => (
         <Link
           key={card.id}
           href={card.href}
-          className="dashboard-hero-card-row-link touch-target"
-          aria-label={card.label}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={card.src}
-            alt=""
-            width={card.width}
-            height={card.height}
-            decoding="async"
-            draggable={false}
-            className="dashboard-hero-card-row-img"
-          />
-        </Link>
+          className="dashboard-hero-mobile-card-hit touch-target"
+          aria-label={card.ariaLabel}
+        />
       ))}
     </div>
   );

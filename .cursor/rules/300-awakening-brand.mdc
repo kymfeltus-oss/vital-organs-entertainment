@@ -11,26 +11,32 @@ You are a senior frontend engineer enforcing the strict visual guidelines for Ia
 
 Source of truth: `lib/design-tokens.ts` and `@theme` tokens in `app/globals.css`.
 
-- **OLED Black Background:** `#000000` — use `bg-brand-black` or `bg-black`. Never use light grays or default Tailwind dark modes.
-- **Dark Panel / Cards:** `#090B13` — use `bg-brand-panel` or `.glass-panel`.
-- **Electric Blue Accent:** `#00A8FF` — use `text-brand-blue`, `border-brand-blue`, `bg-brand-blue`, or `.neon-blue-glow`. This is the approved neon electric blue.
-- **Neon Magenta Pink Accent:** `#FF008C` — use `text-brand-pink`, `border-brand-pink`, `bg-brand-pink`, or `.neon-pink-glow`.
-- **Electric Purple (gradients / rings):** `#8A2BE2` — use `text-brand-purple` or gradient stops.
-- **Brand Indigo (gradient mid-stop):** `#5B42FF` — gradient use only; prefer `--gradient-brand`.
+- **Background Black:** `#07070A` — use `bg-brand-black`. Not pure `#000000`.
+- **Dark Panel / Cards:** `#0C0C10` — use `bg-brand-panel` or `.glass-panel`.
+- **Electric Blue Accent:** `#00A8FF` — use `text-brand-blue`, `border-brand-blue`, `bg-brand-blue`, or `.neon-blue-glow`.
+- **Neon Purple:** `#8A2EFF` — use `text-brand-purple`, gradient mid-stop, or `.neon-purple-glow`.
+- **Neon Pink:** `#FF2FAF` — use `text-brand-pink`, `border-brand-pink`, `bg-brand-pink`, or `.neon-pink-glow`.
+- **White Glow:** `#FFFFFF` — primary text on dark surfaces.
 - **Borders:** `rgba(255,255,255,0.08)` — use `border-brand-border`.
 - **Muted text:** `rgba(255,255,255,0.68)` — use `text-brand-muted`.
 
 Primary brand gradient:
 
 ```css
-linear-gradient(90deg, #00A8FF 0%, #5B42FF 50%, #FF008C 100%)
+linear-gradient(90deg, #00A8FF 0%, #8A2EFF 50%, #FF2FAF 100%)
 ```
 
-Use `.brand-gradient-border` or `BRAND_GRADIENTS.brand` — never invent alternate accent gradients.
+Use `.brand-gradient-border`, `.text-brand-gradient`, or `BRAND_GRADIENTS.brand` — never invent alternate accent gradients.
+
+Glow tiers (desktop):
+
+- Blue: `0 0 15px #00A8FF, 0 0 30px #00A8FF, 0 0 60px #00A8FF`
+- Purple: `0 0 15px #8A2EFF, 0 0 30px #8A2EFF, 0 0 60px #8A2EFF`
+- Pink: `0 0 15px #FF2FAF, 0 0 30px #FF2FAF, 0 0 60px #FF2FAF`
 
 ### Deprecated (do not use in new code)
 
-- `#1E40AF`, `#B0267A`, `#0B090A`, `#050406`, `#111111`
+- `#FF008C`, `#5B42FF`, `#8A2BE2`, `#1E40AF`, `#B0267A`, `#0B090A`, `#050406`, `#111111`, pure `#000000` page backgrounds
 - Legacy PageShell cyan `#00B8FF`
 - Generic Tailwind `cyan-*` scale and `#00F0FF` (use `#00A8FF` instead)
 
@@ -38,17 +44,25 @@ Use `.brand-gradient-border` or `BRAND_GRADIENTS.brand` — never invent alterna
 
 Fonts are loaded in `app/layout.tsx` via `next/font`:
 
-| Role | Font | Utility |
-|------|------|---------|
-| Major headlines | Bebas Neue | `.font-headline` |
-| UI labels / buttons | Montserrat | `.font-ui` |
-| Body copy | Inter | `.font-body` (default on body) |
-| Card / event titles | Oswald | `.font-card-title` |
+| Role | Font | Weight | Utility |
+|------|------|--------|---------|
+| AWAKENING lockup | Bebas Neue | 400 | `.text-brand-lockup` / `.font-headline` |
+| IAN CRAIG & byline | Montserrat | 300 | `.text-brand-byline` |
+| Tagline (LIVE. EMPOWER. TRANSFORM.) | Montserrat | 600 | `.text-brand-tagline` |
+| Enter / UI buttons | Montserrat | 500 | `.text-brand-enter` / `.font-ui` |
+| Body copy | Inter | 400 | `.font-body` (default on body) |
+| Card / event titles | Oswald | 500+ | `.font-card-title` |
 
-- Headlines: uppercase, wide tracking (`tracking-widest` / `tracking-[0.18em]`).
-- Body: readable white or `text-brand-muted`.
-- Use `clamp()` for headline sizes — never fixed desktop-only px on primary layouts.
-- **Forbidden:** serif fonts, playful type, warm primary tones (orange, yellow, green, red) except analytics indicators.
+Tracking:
+
+- Lockup: `+18` to `+30` → `letter-spacing: 0.22em` (default)
+- Byline: `+12` → `0.12em`
+- Tagline: `+4` → `0.04em`
+- Enter: `+10` → `0.10em`
+
+Headlines: ALL CAPS. Body: readable white or `text-brand-muted`. Use `clamp()` for headline sizes.
+
+**Forbidden:** serif fonts, playful type, warm primary tones (orange, yellow, green, red) except analytics indicators.
 
 ## 📱 LAYOUT & STABILITY
 
@@ -61,6 +75,6 @@ Fonts are loaded in `app/layout.tsx` via `next/font`:
 
 - Desktop: `.effects-heavy` (blur, glow permitted).
 - Mobile / reduced motion: `.effects-lite` or `@media (prefers-reduced-motion: reduce)`.
-- Do not stack heavy blur, dual glow, particles, and `mix-blend-mode: screen` on mobile without an lite tier fallback.
+- Do not stack heavy blur, dual glow, particles, and `mix-blend-mode: screen` on mobile without a lite tier fallback.
 
-Verify every layout block against these constraints. Override external themes to match OLED black, `#00A8FF`, `#FF008C`, and premium glass panel styling.
+Verify every layout block against these constraints. Override external themes to match `#07070A`, `#00A8FF`, `#8A2EFF`, `#FF2FAF`, and premium glass panel styling.

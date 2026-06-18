@@ -20,9 +20,9 @@ export default function ExperienceDashboardMobileView({
   return (
     <div
       data-dashboard-shell="mobile"
-      className="relative flex h-dvh max-h-dvh min-h-0 w-full max-w-[100vw] flex-col overflow-hidden overscroll-none bg-brand-black md:hidden"
+      className="relative flex h-dvh max-h-dvh min-h-0 w-full max-w-[100vw] flex-col overflow-hidden overscroll-none bg-brand-black"
     >
-      <ExperienceDashboardBackdrop variant="mobile" />
+      <ExperienceDashboardBackdrop />
 
       <ExperienceDashboardMobileFixedChrome
         profile={profile}
@@ -36,7 +36,6 @@ export default function ExperienceDashboardMobileView({
         <ExperienceDashboardContent
           profile={profile}
           onProfileChange={onProfileChange}
-          variant="mobile"
           initialCountdownConfig={initialCountdownConfig}
         />
       </div>

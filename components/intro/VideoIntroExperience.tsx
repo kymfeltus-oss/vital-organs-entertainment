@@ -149,7 +149,7 @@ export default function VideoIntroExperience() {
         onClick={() => void handleEnter()}
         disabled={isNavigating}
         aria-label="Let's get awakened — enter experience"
-        className="intro-flash-enter-btn touch-target font-ui"
+        className="intro-flash-enter-btn touch-target text-brand-enter"
       >
         <span className="intro-flash-enter-btn-glow" aria-hidden="true" />
         <span className="intro-flash-enter-btn-label">

@@ -1,58 +1,30 @@
 import { AWAKENING_CONCERT_BACKDROP_ART } from "@/lib/experience/awakening-dashboard-assets";
 
-/** Match baked-in concert flare row — normalized Y (0–1) in each backdrop asset. */
-export type BackdropVariant = "mobile" | "desktop";
+/** Single mobile-first dashboard backdrop — normalized Y (0–1) in the asset. */
+export type BackdropVariant = "mobile";
 
-const CONCERT_BACKDROP: Record<
-  BackdropVariant,
-  {
-    width: number;
-    height: number;
-    beamYN: number;
-    /** Center performer upper chest — headline top anchors here (below face). */
-    heroStackAnchorYN: number;
-    cardRowYN: number;
-  }
-> = {
-  desktop: {
-    width: AWAKENING_CONCERT_BACKDROP_ART.desktop.width,
-    height: AWAKENING_CONCERT_BACKDROP_ART.desktop.height,
-    beamYN: 0.576,
-    heroStackAnchorYN: 0.538,
-    cardRowYN: 0.655,
-  },
-  mobile: {
-    width: AWAKENING_CONCERT_BACKDROP_ART.mobile.width,
-    height: AWAKENING_CONCERT_BACKDROP_ART.mobile.height,
-    beamYN: 0.512,
-    heroStackAnchorYN: 0.478,
-    cardRowYN: 0.618,
-  },
-};
+const CONCERT_BACKDROP = {
+  width: AWAKENING_CONCERT_BACKDROP_ART.width,
+  height: AWAKENING_CONCERT_BACKDROP_ART.height,
+  beamYN: 0.512,
+  heroStackAnchorYN: 0.478,
+  cardRowYN: 0.618,
+} as const;
 
 export function normalizeBackdropVariant(
-  variant: string | undefined | null,
+  _variant: string | undefined | null,
 ): BackdropVariant {
-  return variant === "mobile" ? "mobile" : "desktop";
+  return "mobile";
 }
 
-function getBackdropConfig(variant: string | undefined | null) {
-  return CONCERT_BACKDROP[normalizeBackdropVariant(variant)];
-}
-
-/** Concert lineup backdrop height as a fraction of the viewport (smaller = smaller people). */
 export const BACKDROP_HEIGHT_SCALE = 1;
 
-export const HERO_STACK_LAYOUT_VERSION = 39;
+export const HERO_STACK_LAYOUT_VERSION = 40;
 
-export const HERO_STACK_LIFT_PX: Record<BackdropVariant, number> = {
-  mobile: 148,
-  desktop: 228,
-};
+export const HERO_STACK_LIFT_PX = 148;
 
 type ObjectPositionFractions = { posX: number; posY: number };
 
-/** Parse computed object-position into 0–1 fractions (left/top = 0, center = 0.5). */
 export function parseObjectPosition(value: string): ObjectPositionFractions {
   const parts = value.trim().split(/\s+/);
   const axis = (token: string, defaultCenter: boolean): number => {
@@ -73,7 +45,6 @@ export function parseObjectPosition(value: string): ObjectPositionFractions {
   return { posX: axis(parts[0], true), posY: axis(parts[1], false) };
 }
 
-/** Effective backdrop box height — matches `--backdrop-height-scale` on the img. */
 export function backdropContainerHeightPx(viewportHeight: number): number {
   return viewportHeight * BACKDROP_HEIGHT_SCALE;
 }
@@ -87,10 +58,6 @@ function backdropCoverScale(
   return Math.max(boxWidth / naturalWidth, boxHeight / naturalHeight);
 }
 
-/**
- * Map a normalized Y row (0–1) in the source asset to viewport `top` px.
- * Accounts for object-fit: cover, object-position crop, and element box size.
- */
 export function backdropCoverRowTopPx(
   img: HTMLImageElement | null | undefined,
   rowYN: number,
@@ -115,7 +82,6 @@ export function backdropCoverRowTopPx(
   return rect.top + offsetY + rowYN * renderedH;
 }
 
-/** Metrics for debugging cover crop / beam stability. */
 export function backdropCoverMetrics(img: HTMLImageElement | null | undefined) {
   if (!img) {
     return {
@@ -142,7 +108,6 @@ export function backdropCoverMetrics(img: HTMLImageElement | null | undefined) {
       : 0;
   const renderedH = naturalHeight * scale;
   const overflowY = Math.max(0, renderedH - clientHeight);
-  const estimatedTopCropPx = Math.round(overflowY * posY);
 
   return {
     objectFit: style.objectFit,
@@ -150,117 +115,74 @@ export function backdropCoverMetrics(img: HTMLImageElement | null | undefined) {
     posX,
     posY,
     scale: Number(scale.toFixed(4)),
-    overflow: { x: Math.round(Math.max(0, naturalWidth * scale - clientWidth)), y: Math.round(overflowY) },
-    estimatedTopCropPx,
-    topPreserved: estimatedTopCropPx <= 4,
+    overflow: {
+      x: Math.round(Math.max(0, naturalWidth * scale - clientWidth)),
+      y: Math.round(overflowY),
+    },
+    estimatedTopCropPx: Math.round(overflowY * posY),
+    topPreserved: Math.round(overflowY * posY) <= 4,
     heightScale: BACKDROP_HEIGHT_SCALE,
     expectedClientH: Math.round(window.innerHeight * BACKDROP_HEIGHT_SCALE),
     clientHeightDelta: Math.round(clientHeight - window.innerHeight * BACKDROP_HEIGHT_SCALE),
   };
 }
 
-function backdropScale(
-  viewportWidth: number,
-  viewportHeight: number,
-  variant: string | undefined | null,
-): number {
-  const { width, height } = getBackdropConfig(variant);
+function backdropScale(viewportWidth: number, viewportHeight: number): number {
+  const { width, height } = CONCERT_BACKDROP;
   const boxHeight = backdropContainerHeightPx(viewportHeight);
   return Math.max(viewportWidth / width, boxHeight / height);
 }
 
 export function resolveActiveBackdropVariant(): BackdropVariant {
-  if (typeof window === "undefined") return "desktop";
-  return window.matchMedia("(min-width: 768px)").matches ? "desktop" : "mobile";
+  return "mobile";
 }
 
-export function concertBeamTopPx(
-  variant: string | undefined | null,
-  viewportWidth: number,
-  viewportHeight: number,
-): number {
-  const { height, beamYN } = getBackdropConfig(variant);
-  return beamYN * height * backdropScale(viewportWidth, viewportHeight, variant);
+export function concertBeamTopPx(viewportWidth: number, viewportHeight: number): number {
+  return CONCERT_BACKDROP.beamYN * CONCERT_BACKDROP.height * backdropScale(viewportWidth, viewportHeight);
 }
 
-export function concertBeamTopFromBackdropImg(
-  img: HTMLImageElement,
-  variant: string | undefined | null,
-): number {
-  const { beamYN } = getBackdropConfig(variant);
-  return backdropCoverRowTopPx(img, beamYN);
+export function concertBeamTopFromBackdropImg(img: HTMLImageElement): number {
+  return backdropCoverRowTopPx(img, CONCERT_BACKDROP.beamYN);
 }
 
 function rowTopFromBackdropImg(
   img: HTMLImageElement,
-  variant: string | undefined | null,
   rowKey: "beamYN" | "cardRowYN" | "heroStackAnchorYN",
 ): number {
-  const rowYN = getBackdropConfig(variant)[rowKey];
+  const rowYN = CONCERT_BACKDROP[rowKey];
   const { naturalWidth, naturalHeight } = img;
   if (!naturalWidth || !naturalHeight) {
     const vh = window.innerHeight;
     const vw = window.innerWidth;
-    return rowYN * getBackdropConfig(variant).height * backdropScale(vw, vh, variant);
+    return rowYN * CONCERT_BACKDROP.height * backdropScale(vw, vh);
   }
   return backdropCoverRowTopPx(img, rowYN);
 }
 
-export function concertCardRowTopFromBackdropImg(
-  img: HTMLImageElement,
-  variant: string | undefined | null,
-): number {
-  return rowTopFromBackdropImg(img, variant, "cardRowYN");
+export function concertCardRowTopFromBackdropImg(img: HTMLImageElement): number {
+  return rowTopFromBackdropImg(img, "cardRowYN");
 }
 
-export function concertCardRowTopPx(
-  variant: string | undefined | null,
-  viewportWidth: number,
-  viewportHeight: number,
-): number {
-  const { height, cardRowYN } = getBackdropConfig(variant);
-  return cardRowYN * height * backdropScale(viewportWidth, viewportHeight, variant);
+export function concertCardRowTopPx(viewportWidth: number, viewportHeight: number): number {
+  return CONCERT_BACKDROP.cardRowYN * CONCERT_BACKDROP.height * backdropScale(viewportWidth, viewportHeight);
 }
 
-export function concertHeroStackAnchorTopFromBackdropImg(
-  img: HTMLImageElement,
-  variant: string | undefined | null,
-): number {
-  return rowTopFromBackdropImg(img, variant, "heroStackAnchorYN");
+export function concertHeroStackAnchorTopFromBackdropImg(img: HTMLImageElement): number {
+  return rowTopFromBackdropImg(img, "heroStackAnchorYN");
 }
 
-export function concertHeroStackAnchorTopPx(
-  variant: string | undefined | null,
-  viewportWidth: number,
-  viewportHeight: number,
-): number {
-  const { height, heroStackAnchorYN } = getBackdropConfig(variant);
-  return heroStackAnchorYN * height * backdropScale(viewportWidth, viewportHeight, variant);
+export function concertHeroStackAnchorTopPx(viewportWidth: number, viewportHeight: number): number {
+  return CONCERT_BACKDROP.heroStackAnchorYN * CONCERT_BACKDROP.height * backdropScale(viewportWidth, viewportHeight);
 }
 
-/** Headline stack top — anchor marks upper chest; copy starts just below. */
-export function dashboardHeroStackTopPx(
-  anchorTopPx: number,
-  variant: string | undefined | null,
-): number {
-  const v = normalizeBackdropVariant(variant);
-  const gapBelowAnchor = v === "mobile" ? 10 : 14;
-  return Math.round(anchorTopPx + gapBelowAnchor - HERO_STACK_LIFT_PX[v]);
+export function dashboardHeroStackTopPx(anchorTopPx: number): number {
+  return Math.round(anchorTopPx + 10 - HERO_STACK_LIFT_PX);
 }
 
-/** Lowest allowed on screen (largest `top` px) — keeps copy from sliding up onto the face. */
-export function dashboardHeroFaceFloorTopPx(
-  anchorTopPx: number,
-  variant: string | undefined | null,
-): number {
-  const v = normalizeBackdropVariant(variant);
-  /** Chin sits above the chest anchor (smaller `top` px). */
-  const chestToChinPx = v === "mobile" ? 32 : 38;
-  const gapBelowChinPx = v === "mobile" ? 6 : 8;
-  return Math.round(anchorTopPx - chestToChinPx + gapBelowChinPx);
+export function dashboardHeroFaceFloorTopPx(anchorTopPx: number): number {
+  return Math.round(anchorTopPx - 32 + 6);
 }
 
-/** Place headline so CTAs sit above the baked-in card icon row in the backdrop. */
 export function dashboardHeadlineBlockTopPx(
   cardRowTopPx: number,
   extentBelowHeadlineCenterPx: number,
@@ -269,19 +191,14 @@ export function dashboardHeadlineBlockTopPx(
   return Math.round(cardRowTopPx - clearancePx - extentBelowHeadlineCenterPx);
 }
 
-export function concertBeamMeta(
-  variant: string | undefined | null,
-  viewportWidth: number,
-  viewportHeight: number,
-) {
-  const config = getBackdropConfig(variant);
-  const scale = backdropScale(viewportWidth, viewportHeight, variant);
+export function concertBeamMeta(viewportWidth: number, viewportHeight: number) {
+  const scale = backdropScale(viewportWidth, viewportHeight);
   return {
-    variant: normalizeBackdropVariant(variant),
-    beamYN: config.beamYN,
-    beamSourceY: Math.round(config.beamYN * config.height),
+    variant: "mobile" as const,
+    beamYN: CONCERT_BACKDROP.beamYN,
+    beamSourceY: Math.round(CONCERT_BACKDROP.beamYN * CONCERT_BACKDROP.height),
     scale: Number(scale.toFixed(4)),
-    beamTopPx: Math.round(config.beamYN * config.height * scale),
-    asset: { width: config.width, height: config.height },
+    beamTopPx: Math.round(CONCERT_BACKDROP.beamYN * CONCERT_BACKDROP.height * scale),
+    asset: { width: CONCERT_BACKDROP.width, height: CONCERT_BACKDROP.height },
   };
 }

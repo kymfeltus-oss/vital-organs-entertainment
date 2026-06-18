@@ -93,7 +93,7 @@ export default function AttendeeEventLobbyClient({
         <main className={`${DEVICE_FIT_SCROLL} px-[clamp(1rem,3vw,1.5rem)] pt-5 pb-5 md:pb-32 lg:pb-5`}>
           <div className="mb-4 lg:hidden">
             <Image
-              src="/branding/300-awakening-logo.png"
+              src="/branding/awakening-lockup.png"
               alt="300 Awakening"
               width={150}
               height={88}

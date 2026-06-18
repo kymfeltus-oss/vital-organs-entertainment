@@ -1,8 +1,10 @@
-/** Official 300 Awakening / Vital Organs experience assets — do not substitute. */
+/** Official Awakening / Vital Organs experience assets — do not substitute. */
 
 export const EXPERIENCE_BRAND_ASSETS = {
-  logo: "/images/logo.png",
-  emblem: "/branding/300-awakening-emblem.png",
+  lockup: "/branding/awakening-lockup.png",
+  wordmark: "/branding/awakening-wordmark.png",
+  logo: "/branding/awakening-lockup.png",
+  emblem: "/branding/awakening-lockup.png",
   countdownFrame: "/ui/countdown-frame.png",
   hallelujahCover: "/images/hallelujah-anyhow-cover.png",
 } as const;

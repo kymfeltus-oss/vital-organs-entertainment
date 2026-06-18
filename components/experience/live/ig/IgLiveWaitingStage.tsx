@@ -49,8 +49,8 @@ export default function IgLiveWaitingStage({
             aria-hidden="true"
           />
           <Image
-            src={EXPERIENCE_BRAND_ASSETS.emblem}
-            alt="300 Awakening"
+            src={EXPERIENCE_BRAND_ASSETS.lockup}
+            alt="Awakening"
             fill
             priority
             sizes="(max-width: 768px) 22vw, 112px"
