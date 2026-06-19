@@ -11,7 +11,32 @@ const nextConfig = {
     return [
       {
         source: "/dashboard/live",
-        destination: "/experience/live/ig",
+        destination: "/live",
+        permanent: false,
+      },
+      {
+        source: "/experience/live",
+        destination: "/live",
+        permanent: false,
+      },
+      {
+        source: "/experience/live/ig",
+        destination: "/live",
+        permanent: true,
+      },
+      {
+        source: "/experience/live/ig/:path*",
+        destination: "/live",
+        permanent: true,
+      },
+      {
+        source: "/login",
+        destination: "/email-gate/attendee",
+        permanent: false,
+      },
+      {
+        source: "/create-account",
+        destination: "/email-gate/attendee/create-account",
         permanent: false,
       },
       {
@@ -27,21 +52,6 @@ const nextConfig = {
       {
         source: "/email-gate/guest",
         destination: "/email-gate/attendee",
-        permanent: false,
-      },
-      {
-        source: "/prayer",
-        destination: "/experience/prayer",
-        permanent: false,
-      },
-      {
-        source: "/giving",
-        destination: "/experience/giving",
-        permanent: false,
-      },
-      {
-        source: "/music",
-        destination: "/experience/music",
         permanent: false,
       },
     ];

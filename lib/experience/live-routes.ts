@@ -1,5 +1,5 @@
-/** Canonical attendee live experience — Viewer POV Go Live layouts. */
-export const EXPERIENCE_LIVE_PATH = "/experience/live/ig";
+/** Canonical attendee live experience — Viewer POV Go Live at /live. */
+export const EXPERIENCE_LIVE_PATH = "/live";
 
 /** Legacy `/experience/live` and aliases forward here. */
 export function experienceLivePathWithQuery(searchParams: URLSearchParams): string {

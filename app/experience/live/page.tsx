@@ -5,7 +5,7 @@ type ExperienceLiveLegacyPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-/** Legacy live URL — attendee experience lives at `/experience/live/ig`. */
+/** Legacy live URL — attendee experience lives at `/live`. */
 export default async function ExperienceLiveLegacyPage({
   searchParams,
 }: ExperienceLiveLegacyPageProps) {

@@ -33,10 +33,12 @@ export default async function ExperienceHubPage() {
           fetchPriority="high"
         />
       ))}
-      <ExperienceAttendeeDashboard
-        initialProfile={profile}
-        initialCountdownConfig={initialCountdownConfig}
-      />
+      <main id="main-content" className="min-h-dvh w-full">
+        <ExperienceAttendeeDashboard
+          initialProfile={profile}
+          initialCountdownConfig={initialCountdownConfig}
+        />
+      </main>
     </>
   );
 }

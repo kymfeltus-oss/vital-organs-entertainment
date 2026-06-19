@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node --max-http-header-size=32768 node_modules/next/dist/bin/next dev",
     "build": "next build",
+    "build:bottom-nav": "python scripts/build-bottom-nav-canvas.py",
     "build:mobile": "node scripts/build-mobile.mjs",
     "sync:profile-initials": "node scripts/sync-user-profile-initials.mjs",
     "start": "next start",

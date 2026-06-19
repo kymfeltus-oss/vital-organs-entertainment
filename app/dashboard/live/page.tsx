@@ -5,7 +5,7 @@ type DashboardLivePageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-/** Legacy attendee live entry — forwards to `/experience/live/ig`. */
+/** Legacy attendee live entry — forwards to `/live`. */
 export default async function LiveRoomPage({ searchParams }: DashboardLivePageProps) {
   const params = await searchParams;
   redirect(experienceLivePathFromRecord(params));

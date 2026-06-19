@@ -89,10 +89,10 @@ export const AWAKENING_ASSETS = {
   routes: {
     enterExperience: EXPERIENCE_LIVE_PATH,
     watchStory: "/",
-    giving: "/experience/giving",
+    giving: "/giving",
     liveRoom: EXPERIENCE_LIVE_PATH,
-    music: "/experience/music",
-    prayer: "/experience/prayer",
+    music: "/music",
+    prayer: "/prayer",
   },
 } as const;
 

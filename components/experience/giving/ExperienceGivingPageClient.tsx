@@ -4,9 +4,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import ExperienceGivingArtboard from "@/components/experience/giving/ExperienceGivingArtboard";
 import ExperienceGivingMobileOverlay from "@/components/experience/giving/ExperienceGivingMobileOverlay";
-import VitalSeedOverlay from "@/components/vital-seed/VitalSeedOverlay";
 import { getClientAppUrl } from "@/lib/client-api";
 import {
   GIVING_MOBILE_ART,
@@ -17,10 +15,7 @@ import {
   parseAmountDollars,
   sanitizeAmountInput,
 } from "@/lib/vital-seed/custom-amount";
-import {
-  VITAL_SEED_GIVING_ASSETS,
-  VITAL_SEED_GIVING_DESKTOP_ART,
-} from "@/lib/vital-seed/giving-assets";
+import { VITAL_SEED_GIVING_ASSETS } from "@/lib/vital-seed/giving-assets";
 
 const MIN_GIFT_CENTS = 50;
 
@@ -115,21 +110,6 @@ function ExperienceGivingPageContent() {
     }
   }, [customAmount, selectedAmount, selectedFrequency]);
 
-  const desktopOverlayProps = {
-    amountRaw: customAmount || (selectedAmount != null ? String(selectedAmount) : ""),
-    amountDisplay: "",
-    onAmountChange: (next: string) => handleCustomAmountChange(next),
-    onQuickAmount: (value: number | "custom") => {
-      if (value === "custom") {
-        setSelectedAmount(null);
-        setCustomAmount("");
-        return;
-      }
-      handleSelectAmount(value);
-    },
-    onSowSeed: () => void handleGiveNow(),
-  };
-
   return (
     <>
       <section
@@ -137,17 +117,7 @@ function ExperienceGivingPageContent() {
         className="relative flex min-h-dvh w-full flex-col overflow-x-hidden bg-brand-black pt-safe pb-safe"
         aria-label="Vital Seed giving"
       >
-        <ExperienceGivingArtboard
-          artWidth={VITAL_SEED_GIVING_DESKTOP_ART.width}
-          artHeight={VITAL_SEED_GIVING_DESKTOP_ART.height}
-          backgroundSrc={VITAL_SEED_GIVING_ASSETS.desktopBackground}
-          visibleClassName="hidden flex-1 lg:flex"
-          scaleMode="cover"
-        >
-          <VitalSeedOverlay {...desktopOverlayProps} />
-        </ExperienceGivingArtboard>
-
-        <div className="vital-giving-stage flex flex-1 lg:hidden">
+        <div className="vital-giving-stage flex flex-1">
           <div className="vital-giving-artboard vital-giving-artboard--mobile">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

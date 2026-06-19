@@ -1,24 +1,42 @@
-/** Routes where global navigation is hidden (full-bleed cinematic / gate flows) */
-export const NAV_HIDDEN_ROUTES = [
+/** Routes where global navigation is hidden (full-bleed cinematic / gate / live flows). */
+
+const NAV_HIDDEN_EXACT = [
   "/",
-  "/email-gate",
+  "/intro",
+  "/login",
+  "/create-account",
   "/test-suite",
+] as const;
+
+const NAV_HIDDEN_PREFIXES = [
+  "/intro/",
+  "/login/",
+  "/create-account/",
+  "/live",
+  "/watch",
+  "/stream",
+  "/studio",
   "/ops",
+  "/email-gate",
   "/experience/live",
   "/dashboard/live",
 ] as const;
 
-/** Exact paths only — event lobby uses its own sidebar + mobile nav */
-export const NAV_HIDDEN_EXACT_ROUTES = ["/experience"] as const;
-
-export type NavHiddenRoute = (typeof NAV_HIDDEN_ROUTES)[number];
+function matchesHiddenPrefix(pathname: string, prefix: string): boolean {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
 
 export function isNavHiddenRoute(pathname: string): boolean {
-  if (NAV_HIDDEN_EXACT_ROUTES.some((route) => pathname === route)) {
+  if ((NAV_HIDDEN_EXACT as readonly string[]).includes(pathname)) {
     return true;
   }
 
-  return NAV_HIDDEN_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
+  if (pathname.includes("/create-account")) {
+    return true;
+  }
+
+  return NAV_HIDDEN_PREFIXES.some((prefix) => matchesHiddenPrefix(pathname, prefix));
 }
+
+/** @deprecated Use isNavHiddenRoute — kept for existing imports. */
+export type NavHiddenRoute = string;

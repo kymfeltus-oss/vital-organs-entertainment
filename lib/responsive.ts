@@ -41,11 +41,9 @@ export const DEVICE_FIT_SCROLL =
 export const LOBBY_GRID =
   "grid min-h-dvh grid-cols-1 lg:grid-cols-[minmax(14rem,260px)_minmax(0,1fr)_minmax(16rem,360px)]";
 
-/** Content offset when global navigation is present (desktop sidebar only) */
-export const CONTENT_WITH_NAV = "md:pl-64";
-
-/** Left sidebar width on desktop (matches navigation w-64) */
-export const NAV_SIDEBAR_WIDTH = "16rem";
+/** Content offset when bottom navigation is present (64px bar + 16px float gap) */
+export const CONTENT_WITH_NAV =
+  "pb-[calc(64px+16px+env(safe-area-inset-bottom))]";
 
 /** Dashboard card grid — scales with viewport */
 export const CARD_GRID_DASHBOARD =

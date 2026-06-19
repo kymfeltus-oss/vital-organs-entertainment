@@ -5,7 +5,7 @@ type ExperienceHoldingRoomPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-/** Legacy holding room URL — pre-live waiting now lives on the live IG route. */
+/** Legacy holding room URL — pre-live waiting now lives on `/live`. */
 export default async function ExperienceHoldingRoomPage({
   searchParams,
 }: ExperienceHoldingRoomPageProps) {

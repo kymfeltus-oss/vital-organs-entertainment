@@ -1,22 +1,14 @@
-import type { Metadata } from "next";
-import { Suspense } from "react";
-import LiveExperienceClient from "@/components/experience/live/LiveExperienceClient";
-import LightweightLiveLoading from "@/components/live/LightweightLiveLoading";
-import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
+import { redirect } from "next/navigation";
+import { experienceLivePathFromRecord } from "@/lib/experience/live-routes";
 
-export const metadata: Metadata = {
-  title: "300 Awakening Live Experience | Vital Organs Entertainment",
-  description:
-    "Join the 300 Awakening Live Experience — premium live viewing from Vital Organs Entertainment.",
+type ExperienceLiveIgLegacyPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-/** Attendee live experience — holding room, then Viewer POV Go Live when concert begins. */
-export default async function ExperienceLiveIgPage() {
-  const initialCountdownConfig = await loadActiveCountdownConfig();
-
-  return (
-    <Suspense fallback={<LightweightLiveLoading />}>
-      <LiveExperienceClient initialCountdownConfig={initialCountdownConfig} />
-    </Suspense>
-  );
+/** Legacy URL — attendee live experience is at `/live` only. */
+export default async function ExperienceLiveIgLegacyPage({
+  searchParams,
+}: ExperienceLiveIgLegacyPageProps) {
+  const params = await searchParams;
+  redirect(experienceLivePathFromRecord(params));
 }

@@ -1,0 +1,18 @@
+{
+  "canvas": {
+    "width": 1290,
+    "height": 192
+  },
+  "pill": {
+    "width": 797,
+    "height": 168,
+    "offsetX": 246,
+    "offsetY": 12
+  },
+  "hotspotInsetPercent": {
+    "left": 19.0698,
+    "width": 61.7829,
+    "top": 6.25,
+    "height": 87.5
+  }
+}

@@ -43,7 +43,7 @@ function clearCheckoutSuccessParam(): void {
 }
 
 /**
- * Server-backed live access gate for `/experience/live/ig`.
+ * Server-backed live access gate for `/live`.
  * Post-checkout returns (`?success=true`) enter activating_pass and poll
  * /api/access/live until the Stripe webhook fulfills the ticket order.
  */

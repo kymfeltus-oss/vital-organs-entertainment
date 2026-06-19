@@ -1,5 +1,9 @@
-import { redirect } from "next/navigation";
+import ExperienceGivingPageClient from "@/components/experience/giving/ExperienceGivingPageClient";
 
 export default function GivingPage() {
-  redirect("/experience/giving");
+  return (
+    <main id="main-content" className="min-h-dvh w-full">
+      <ExperienceGivingPageClient />
+    </main>
+  );
 }
