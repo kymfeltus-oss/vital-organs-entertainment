@@ -484,137 +484,6 @@ html {
   color: var(--exp-magenta);
 }
 
-.experience-live-root .exp-chat-name-blue {
-  color: #3b82f6;
-}
-
-.experience-live-root .exp-chat-name-frost {
-  color: #60a5fa;
-}
-
-.experience-live-root .exp-chat-name-pink {
-  color: #ec4899;
-}
-
-.experience-live-root .exp-chat-name-blossom {
-  color: #f472b6;
-}
-
-.experience-live-root .exp-chat-name-purple {
-  color: #a855f7;
-}
-
-.experience-live-root .exp-chat-name-orchid {
-  color: #c084fc;
-}
-
-.experience-live-root .exp-chat-name-rose {
-  color: #f43f5e;
-}
-
-.experience-live-stage-mobile {
-  width: 100%;
-  /* Live player is 21:9 — height follows width; legacy 16:9 cap caused clipping */
-  max-height: none;
-}
-
-/* Device-fit: mobile portrait — stage, chat, and dock share one dvh stack */
-@media (max-width: 767px) and (orientation: portrait) {
-  .experience-live-device-stack {
-    display: grid;
-    grid-template-rows: minmax(0, 0.4fr) minmax(0, 1fr);
-    min-height: 0;
-  }
-
-  .experience-live-stage-mobile {
-    min-height: 0;
-    height: 100%;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .experience-live-stage-fit {
-    min-height: 0;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .experience-live-stage-fit .experience-stream-stage {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .experience-player-fit {
-    aspect-ratio: auto !important;
-    flex: 1;
-    min-height: 0;
-    height: auto;
-  }
-
-  .experience-live-selector-slot {
-    display: none;
-  }
-
-  .experience-live-poll-panel {
-    flex-shrink: 0;
-  }
-
-  .experience-waiting-hero {
-    min-height: 0 !important;
-    flex: 1;
-    height: 100%;
-  }
-}
-
-/* Device-fit: tablet/desktop — stage and chat columns fill grid height */
-@media (min-width: 768px) {
-  .experience-live-device-stack {
-    min-height: 0;
-  }
-
-  .experience-live-stage-mobile {
-    min-height: 0;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .experience-live-stage-fit {
-    min-height: 0;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-}
-
-@supports not (height: 100dvh) {
-  .device-fit-viewport {
-    height: 100vh;
-    max-height: 100vh;
-  }
-
-  .device-fit-page {
-    min-height: 100vh;
-  }
-
-  .device-fit-scroll {
-    height: 100vh;
-    max-height: 100vh;
-  }
-}
-
-/* Full-width slot under player for selector, polls, and live metrics */
-.experience-live-interactive {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-}
-
 .experience-stream-stage {
   position: relative;
   background: var(--exp-bg);
@@ -639,13 +508,6 @@ html {
   z-index: 1;
 }
 
-.experience-live-badge {
-  background: rgba(11, 9, 10, 0.72);
-  border: 1px solid rgba(239, 68, 68, 0.5);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
 .experience-glass-chip {
   background: rgba(17, 17, 17, 0.82);
   border: 1px solid var(--exp-border);
@@ -658,36 +520,6 @@ html {
   border: 1px solid var(--exp-border);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-}
-
-.experience-glass-composer {
-  background: rgba(17, 17, 17, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-
-.experience-chat-column {
-  background: linear-gradient(
-    180deg,
-    rgba(30, 64, 175, 0.1) 0%,
-    var(--exp-panel) 14%,
-    var(--exp-panel) 100%
-  );
-  border-top: 1px solid rgba(30, 64, 175, 0.28);
-}
-
-@media (min-width: 768px) {
-  .experience-chat-column {
-    border-top: none;
-    border-left: 1px solid rgba(30, 64, 175, 0.28);
-    background: linear-gradient(
-      90deg,
-      rgba(30, 64, 175, 0.08) 0%,
-      var(--exp-panel) 12%,
-      var(--exp-panel) 100%
-    );
-  }
 }
 
 .experience-tab {
@@ -718,89 +550,6 @@ html {
     inset 0 0 0 1px rgba(30, 64, 175, 0.2);
 }
 
-.experience-chat-pin {
-  background: linear-gradient(
-    135deg,
-    rgba(30, 64, 175, 0.28) 0%,
-    rgba(176, 38, 122, 0.12) 48%,
-    rgba(17, 17, 17, 0.94) 100%
-  );
-  border: 1px solid rgba(30, 64, 175, 0.55);
-  box-shadow:
-    0 0 28px rgba(30, 64, 175, 0.28),
-    inset 0 0 0 1px rgba(176, 38, 122, 0.15);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-
-.experience-chat-giving {
-  margin-inline: 0.125rem;
-  border-radius: 0.5rem;
-  border: 1px solid rgba(74, 222, 128, 0.35);
-  background: linear-gradient(
-    90deg,
-    rgba(74, 222, 128, 0.14) 0%,
-    rgba(17, 17, 17, 0.72) 100%
-  );
-  box-shadow:
-    0 0 22px rgba(74, 222, 128, 0.18),
-    inset 0 0 0 1px rgba(176, 38, 122, 0.08);
-}
-
-.experience-chat-prayer {
-  border-left: 2px solid rgba(30, 64, 175, 0.65);
-  padding-left: 0.5rem;
-  background: rgba(30, 64, 175, 0.07);
-}
-
-.experience-chat-broadcast {
-  border: 1px solid rgba(30, 64, 175, 0.55);
-  background: rgba(30, 64, 175, 0.1);
-  box-shadow: 0 0 18px rgba(30, 64, 175, 0.2);
-}
-
-.experience-reaction-tray button {
-  border: 1px solid var(--exp-border);
-  background: rgba(17, 17, 17, 0.88);
-}
-
-.experience-reaction-tray button:hover:not(:disabled) {
-  border-color: rgba(30, 64, 175, 0.5);
-  background: rgba(30, 64, 175, 0.12);
-}
-
-.experience-dock-bar {
-  background: rgba(11, 9, 10, 0.94);
-  border-top: 1px solid var(--exp-border);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.55);
-}
-
-.experience-dock-give {
-  transform: translateY(-0.4rem);
-  border: 1px solid transparent;
-  background:
-    linear-gradient(var(--exp-panel), var(--exp-panel)) padding-box,
-    linear-gradient(135deg, var(--exp-blue) 0%, var(--exp-magenta) 100%) border-box;
-  box-shadow:
-    0 0 26px rgba(30, 64, 175, 0.4),
-    0 8px 22px rgba(0, 0, 0, 0.5);
-}
-
-.experience-dock-active {
-  color: #93c5fd;
-  background: rgba(30, 64, 175, 0.16);
-}
-
-.experience-drawer-sheet {
-  background: rgba(17, 17, 17, 0.98);
-  border: 1px solid var(--exp-border);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 -24px 80px rgba(0, 0, 0, 0.72);
-}
-
 .experience-send-btn {
   background: var(--exp-blue);
   color: #ffffff;
@@ -816,16 +565,8 @@ html {
   background: rgba(17, 17, 17, 0.96);
 }
 
-.experience-waiting-hero {
-  background: var(--exp-bg);
-}
-
 .experience-emblem-glow-blue {
   background: rgba(30, 64, 175, 0.22);
-}
-
-.experience-emblem-glow-magenta {
-  background: rgba(176, 38, 122, 0.14);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -833,40 +574,6 @@ html {
     animation: none;
     opacity: 0;
   }
-}
-
-@keyframes experience-action-sheet-in {
-  from {
-    transform: translateY(100%);
-    opacity: 0.6;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes experience-action-backdrop-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.experience-action-sheet {
-  animation: experience-action-sheet-in 280ms ease-out forwards;
-}
-
-@media (min-width: 768px) {
-  .experience-action-sheet {
-    animation: experience-action-backdrop-in 200ms ease-out forwards;
-  }
-}
-
-.experience-action-backdrop {
-  animation: experience-action-backdrop-in 200ms ease-out forwards;
 }
 
 @keyframes live-waveform-pulse {
@@ -3513,25 +3220,6 @@ html {
   background: #07070a;
 }
 
-.ig-live-root--desktop {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(18rem, 1fr);
-}
-
-.ig-live-preview-video {
-  width: 1080px;
-  height: 1920px;
-  max-width: 100%;
-  aspect-ratio: 9 / 16;
-  background-image:
-    linear-gradient(165deg, rgba(0, 168, 255, 0.12) 0%, rgba(0, 0, 0, 0.92) 45%, rgba(255, 47, 175, 0.08) 100%),
-    url("/awakening/dashboard-concert-bg.png");
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center top;
-  background-color: #000000;
-}
-
 .ig-live-video-stage .experience-player-fit {
   position: absolute;
   inset: 0;
@@ -3596,11 +3284,6 @@ html {
   to {
     transform: translateY(0);
   }
-}
-
-.ig-live-glass-sidebar {
-  background: linear-gradient(180deg, rgba(9, 11, 19, 0.72) 0%, rgba(0, 0, 0, 0.9) 100%);
-  backdrop-filter: blur(24px);
 }
 
 @media (prefers-reduced-motion: reduce) {

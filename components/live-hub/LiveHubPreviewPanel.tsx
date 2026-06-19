@@ -13,6 +13,7 @@ import {
 import LiveHubPreviewPlayer from "@/components/live-hub/LiveHubPreviewPlayer";
 import type { OpsLivePreviewPayload } from "@/lib/live-hub/preview";
 import { fetchOpsLivePreview } from "@/lib/live-hub/preview-client";
+import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { VMIX_OPERATOR_GUIDANCE } from "@/lib/live-hub/readiness";
 import type { VmixState } from "@/lib/live-hub/vmix/types";
 import { isVmixReachable } from "@/lib/live-hub/vmix/types";
@@ -259,7 +260,7 @@ export default function LiveHubPreviewPanel({
 
       <div className="mt-3 flex flex-wrap gap-2">
         <Link
-          href="/experience/live"
+          href={EXPERIENCE_LIVE_PATH}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-full border border-[#1E40AF]/50 bg-[#1E40AF]/10 px-3 py-2 text-[0.55rem] font-bold uppercase tracking-[0.12em] text-[#93c5fd] transition hover:border-[#1E40AF] hover:bg-[#1E40AF]/20"

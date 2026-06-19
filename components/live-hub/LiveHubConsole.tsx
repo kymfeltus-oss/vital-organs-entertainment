@@ -22,6 +22,7 @@ import LiveHubAudioHealthLog from "@/components/live-hub/LiveHubAudioHealthLog";
 import LiveHubStatusStrip from "@/components/live-hub/LiveHubStatusStrip";
 import LiveHubStreamPanels from "@/components/live-hub/LiveHubStreamPanels";
 import OperatorWebcamPreview from "@/components/live-hub/OperatorWebcamPreview";
+import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import {
   useLiveHubDesktop,
   useLiveHubDesktopReady,
@@ -789,7 +790,7 @@ export default function LiveHubConsole({
                   onRunRehearsal={() => void runVmixAction("refresh_state")}
                   onTestStream={openPreviewForTest}
                   onShareStream={() => {
-                    const url = `${window.location.origin}/experience/live`;
+                    const url = `${window.location.origin}${EXPERIENCE_LIVE_PATH}`;
                     void navigator.clipboard?.writeText(url);
                     pushTimeline("readiness", "Share Link Copied", url);
                   }}

@@ -6,6 +6,7 @@ import {
   fetchLiveAccessEvaluation,
   type LiveAccessEvaluation,
 } from "@/lib/access";
+import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 
 export const PASS_ACTIVATION_POLL_INTERVAL_MS = 1_500;
 export const PASS_ACTIVATION_MAX_ATTEMPTS = 20;
@@ -35,14 +36,14 @@ function resolvePhase(evaluation: LiveAccessEvaluation): LiveAccessPhase {
 
 function clearCheckoutSuccessParam(): void {
   const url = new URL(window.location.href);
-  url.pathname = "/experience/live";
+  url.pathname = EXPERIENCE_LIVE_PATH;
   url.searchParams.delete("success");
   const query = url.searchParams.toString();
   window.history.replaceState({}, "", query ? `${url.pathname}?${query}` : url.pathname);
 }
 
 /**
- * Server-backed live access gate for /experience/live.
+ * Server-backed live access gate for `/experience/live/ig`.
  * Post-checkout returns (`?success=true`) enter activating_pass and poll
  * /api/access/live until the Stripe webhook fulfills the ticket order.
  */

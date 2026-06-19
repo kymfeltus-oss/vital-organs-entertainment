@@ -16,7 +16,7 @@ export default function ExperienceSelector({
   return (
     <div className="w-full min-w-0 max-w-full px-0.5">
       <div
-        className="grid w-full grid-cols-2 gap-1.5 md:grid-cols-4"
+        className="grid w-full grid-cols-2 gap-1.5"
         role="tablist"
         aria-label="Broadcast experience views"
       >

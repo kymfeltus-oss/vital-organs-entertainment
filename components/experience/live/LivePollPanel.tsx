@@ -26,7 +26,7 @@ export default function LivePollPanel() {
 
   return (
     <section
-      className="experience-live-poll-panel experience-glass-panel my-1 w-full shrink-0 rounded-xl border border-white/5 bg-[#111111]/60 p-3 md:my-0 md:p-4"
+      className="experience-live-poll-panel experience-glass-panel my-1 w-full shrink-0 rounded-xl border border-white/5 bg-[#111111]/60 p-3"
       aria-live="polite"
     >
       <div className="mb-2.5 flex items-center gap-2">

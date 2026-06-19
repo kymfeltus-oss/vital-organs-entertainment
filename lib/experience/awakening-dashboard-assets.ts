@@ -1,5 +1,7 @@
 /** Experience dashboard — mobile video backdrop + route targets. */
 
+import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
+
 /** Fixed mobile dashboard artboard — logo lives in the flat background plate. */
 export const AWAKENING_DASHBOARD_ARTBOARD = {
   width: 1080,
@@ -85,10 +87,10 @@ export const AWAKENING_ASSETS = {
   ianCraigStoryPoster: "/awakening/300_dashboard_assets/ian%20craig%20story.png",
   ianCraigStoryVideo: null as string | null,
   routes: {
-    enterExperience: "/experience/live",
+    enterExperience: EXPERIENCE_LIVE_PATH,
     watchStory: "/",
     giving: "/experience/giving",
-    liveRoom: "/experience/live",
+    liveRoom: EXPERIENCE_LIVE_PATH,
     music: "/experience/music",
     prayer: "/experience/prayer",
   },

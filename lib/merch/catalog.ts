@@ -1,3 +1,5 @@
+import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
+
 export type MerchProduct = {
   id: string;
   title: string;
@@ -275,15 +277,15 @@ export function getMerchCheckoutPaths(productId: string): {
 } {
   if (productId === LIVE_PASS_PRODUCT_ID || isEventTicketTierId(productId)) {
     return {
-      successPath: "/experience/live?success=true",
-      cancelPath: "/experience/live?canceled=true",
+      successPath: `${EXPERIENCE_LIVE_PATH}?success=true`,
+      cancelPath: `${EXPERIENCE_LIVE_PATH}?canceled=true`,
     };
   }
 
   if (isSeedPackProductId(productId)) {
     return {
-      successPath: "/experience/live?seeds=success",
-      cancelPath: "/experience/live?seeds=canceled",
+      successPath: `${EXPERIENCE_LIVE_PATH}?seeds=success`,
+      cancelPath: `${EXPERIENCE_LIVE_PATH}?seeds=canceled`,
     };
   }
 

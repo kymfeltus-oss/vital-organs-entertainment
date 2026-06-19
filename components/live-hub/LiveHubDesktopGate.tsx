@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Monitor, ArrowLeft } from "lucide-react";
+import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 
 export default function LiveHubDesktopGate() {
   return (
@@ -35,7 +36,7 @@ export default function LiveHubDesktopGate() {
             Ops Command Center
           </Link>
           <Link
-            href="/experience/live"
+            href={EXPERIENCE_LIVE_PATH}
             className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/15 bg-[#0B090A] px-6 py-2.5 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-zinc-300 transition hover:border-[#B0267A]/50 hover:text-white"
           >
             Attendee Live Page

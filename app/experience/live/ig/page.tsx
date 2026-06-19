@@ -1,29 +1,22 @@
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import LiveExperienceClient from "@/components/experience/live/LiveExperienceClient";
+import LightweightLiveLoading from "@/components/live/LightweightLiveLoading";
+import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
 
-type IgLiveLegacyPageProps = {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+export const metadata: Metadata = {
+  title: "300 Awakening Live Experience | Vital Organs Entertainment",
+  description:
+    "Join the 300 Awakening Live Experience — premium live viewing from Vital Organs Entertainment.",
 };
 
-function buildQueryString(params: Record<string, string | string[] | undefined>): string {
-  const query = new URLSearchParams();
+/** Attendee live experience — holding room, IG viewport, Fellowship Chat. */
+export default async function ExperienceLiveIgPage() {
+  const initialCountdownConfig = await loadActiveCountdownConfig();
 
-  for (const [key, value] of Object.entries(params)) {
-    if (value === undefined) continue;
-    if (Array.isArray(value)) {
-      for (const entry of value) {
-        query.append(key, entry);
-      }
-      continue;
-    }
-    query.set(key, value);
-  }
-
-  const serialized = query.toString();
-  return serialized ? `?${serialized}` : "";
-}
-
-/** Legacy IG preview URL — attendee live is unified at `/experience/live`. */
-export default async function IgLiveLegacyRedirectPage({ searchParams }: IgLiveLegacyPageProps) {
-  const params = await searchParams;
-  redirect(`/experience/live${buildQueryString(params)}`);
+  return (
+    <Suspense fallback={<LightweightLiveLoading />}>
+      <LiveExperienceClient initialCountdownConfig={initialCountdownConfig} />
+    </Suspense>
+  );
 }

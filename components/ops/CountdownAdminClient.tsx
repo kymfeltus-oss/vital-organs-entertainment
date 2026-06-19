@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, RotateCcw, Save } from "lucide-react";
 import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
 import { shouldShowCountdownTimer } from "@/lib/experience/countdown-display";
+import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import {
   computeEventCountdownPhase,
   DEFAULT_COUNTDOWN_CONFIG,
@@ -67,7 +68,7 @@ export default function CountdownAdminClient({
     if (previewPhase === "waiting") {
       return { label: form.cta_label_waiting, disabled: true, href: undefined };
     }
-    return { label: form.cta_label_live, disabled: false, href: "/experience/live" };
+    return { label: form.cta_label_live, disabled: false, href: EXPERIENCE_LIVE_PATH };
   }, [form.cta_label_live, form.cta_label_waiting, previewPhase]);
 
   const updateField = useCallback(

@@ -11,6 +11,7 @@ import { LiveExperienceStreamProvider } from "@/lib/experience/LiveExperienceStr
 import { LiveStreamReactionsProvider } from "@/lib/experience/LiveStreamReactionsContext";
 import { useAttendeeLiveState } from "@/lib/experience/useAttendeeLiveState";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
+import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
 import {
   BroadcastHealthProvider,
@@ -82,7 +83,7 @@ function LiveExperienceClientInner({
     void refreshSeedBalance();
 
     const url = new URL(window.location.href);
-    url.pathname = "/experience/live";
+    url.pathname = EXPERIENCE_LIVE_PATH;
     url.searchParams.delete("seeds");
     const query = url.searchParams.toString();
     window.history.replaceState({}, "", query ? `${url.pathname}?${query}` : url.pathname);

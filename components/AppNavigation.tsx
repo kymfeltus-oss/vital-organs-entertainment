@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -18,7 +18,7 @@ type NavItemConfig = {
 const NAV_ITEMS: readonly NavItemConfig[] = [
   {
     label: "Live",
-    href: "/experience/live",
+    href: EXPERIENCE_LIVE_PATH,
     icon: Radio,
     match: ["/dashboard/live", "/experience/live", "/live", "/experience"],
   },

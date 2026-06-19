@@ -15,7 +15,7 @@ type AttendeeStreamPlayerProps = {
   showPaywall: boolean;
   paywallOverlay?: ReactNode;
   onExperienceUnavailable?: (requested: AttendeeExperienceKey) => void;
-  /** Render inside StreamStageChrome wrapper (no outer frame). */
+  /** Render without the default stream stage frame wrapper. */
   embedded?: boolean;
 };
 
@@ -256,7 +256,7 @@ export default function AttendeeStreamPlayer({
   const playerShellClass = `experience-player-fit relative aspect-[21/9] w-full overflow-hidden bg-[#0B090A] ${
     embedded
       ? ""
-      : "experience-stream-stage rounded-none md:rounded-xl md:border md:border-white/8"
+      : "experience-stream-stage rounded-none"
   }`;
 
   if (showPaywall) {

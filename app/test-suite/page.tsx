@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 
 export default function TestSuitePage() {
   const [logs, setLogs] = useState<string[]>([]);
@@ -138,13 +139,13 @@ export default function TestSuitePage() {
               Go to `/email-gate`
             </Link>
             <Link
-              href="/experience/live"
+              href={EXPERIENCE_LIVE_PATH}
               className="rounded border border-white/5 bg-white/5 p-2 hover:bg-white/10"
             >
-              Go to `/experience/live`
+              Go to `{EXPERIENCE_LIVE_PATH}`
             </Link>
             <Link
-              href="/experience/live?success=true"
+              href={`${EXPERIENCE_LIVE_PATH}?success=true`}
               className="rounded border border-white/5 bg-white/5 p-2 hover:bg-white/10"
             >
               Test Stripe Hook Retry (`?success=true`)

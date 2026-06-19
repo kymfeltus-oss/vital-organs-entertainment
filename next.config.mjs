@@ -11,7 +11,7 @@ const nextConfig = {
     return [
       {
         source: "/dashboard/live",
-        destination: "/experience/live",
+        destination: "/experience/live/ig",
         permanent: false,
       },
       {
