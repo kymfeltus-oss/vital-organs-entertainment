@@ -5,16 +5,18 @@
     "height": 192
   },
   "pill": {
-    "width": 911,
+    "width": 1290,
     "height": 192,
-    "offsetX": 189,
+    "offsetX": 0,
     "offsetY": 0
   },
   "hotspotInsetPercent": {
-    "left": 14.6512,
-    "width": 70.6202,
+    "left": 0.0,
+    "width": 100.0,
     "top": 0.0,
     "height": 100.0
   },
+  "layout": "full-width-single-layer",
+  "haloDuplicationPixels": 193,
   "greenPixelsRemaining": 0
 }

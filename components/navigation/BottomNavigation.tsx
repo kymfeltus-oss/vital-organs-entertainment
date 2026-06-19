@@ -23,26 +23,41 @@ export default function BottomNavigation() {
 
     const probe = new window.Image();
     probe.onload = () => {
+      const artImg = frame.querySelector(".bottom-nav__art") as HTMLImageElement | null;
+      const artStyles = artImg ? getComputedStyle(artImg) : null;
+      const frameAspect = rect.width / rect.height;
+      const artAspect = probe.naturalWidth / probe.naturalHeight;
+
       // #region agent log
       fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "baf5b9" },
         body: JSON.stringify({
           sessionId: "baf5b9",
-          runId: "nav-blueprint-verify",
-          hypothesisId: "NAV-ASSET-SIZE",
+          runId: "nav-distortion-debug",
+          hypothesisId: "NAV-H3",
           location: "BottomNavigation.tsx:assetProbe",
-          message: "bottom nav asset dimensions",
+          message: "bottom nav render metrics",
           data: {
             pathname,
+            loadedSrc: probe.src,
             naturalWidth: probe.naturalWidth,
             naturalHeight: probe.naturalHeight,
-            artboard: BOTTOM_MENU_ARTBOARD,
             assetMatchesArtboard:
               probe.naturalWidth === BOTTOM_MENU_ARTBOARD.width &&
               probe.naturalHeight === BOTTOM_MENU_ARTBOARD.height,
+            fullWidthAsset: probe.naturalWidth === 1290 && probe.naturalHeight === 192,
             frameHeight: Math.round(rect.height),
             frameWidth: Math.round(rect.width),
+            frameAspect: Number(frameAspect.toFixed(4)),
+            artAspect: Number(artAspect.toFixed(4)),
+            aspectMismatch: Math.abs(frameAspect - artAspect) > 0.02,
+            artClientWidth: artImg?.clientWidth ?? null,
+            artClientHeight: artImg?.clientHeight ?? null,
+            objectFit: artStyles?.objectFit ?? null,
+            frameBorderRadius: styles.borderRadius,
+            frameOverflow: styles.overflow,
+            devicePixelRatio: window.devicePixelRatio,
           },
           timestamp: Date.now(),
         }),

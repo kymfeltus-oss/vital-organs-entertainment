@@ -1,5 +1,6 @@
 /** Bottom menu PNG artboard — hotspot rects are percentage-based on full image. */
-export const BOTTOM_MENU_BAR_SRC = "/bottom-menu-bar/bottom-menu-bar.png";
+export const BOTTOM_MENU_BAR_SRC =
+  "/bottom-menu-bar/bottom-menu-bar.png?v=single-layer-2";
 
 export const BOTTOM_MENU_ARTBOARD = {
   width: 1290,
@@ -32,13 +33,13 @@ function matchesPrefix(path: string) {
   return (pathname: string) => pathname === path || pathname.startsWith(`${path}/`);
 }
 
-/** Pill inset on 1290×192 banner after green crop (see build-bottom-nav-canvas.py + meta.json). */
+/** Full-width capsule on 1290×192 banner (see build-bottom-nav-canvas.py + meta.json). */
 export const BOTTOM_NAV_PILL_INSET = {
-  left: (189 / BOTTOM_MENU_ARTBOARD.width) * 100,
-  width: (911 / BOTTOM_MENU_ARTBOARD.width) * 100,
+  left: 0,
+  width: 100,
 } as const;
 
-/** Six equal columns inside the pill artwork. */
+/** Six equal columns across the full-width capsule. */
 const COLUMN_WIDTH = BOTTOM_NAV_PILL_INSET.width / 6;
 
 export const BOTTOM_NAV_HOTSPOTS: readonly BottomNavHotspot[] = [
