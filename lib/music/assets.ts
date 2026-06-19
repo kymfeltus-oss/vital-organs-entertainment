@@ -1,5 +1,10 @@
 /** Music page — mobile artboard + interactive action targets. */
 
+import {
+  ATTENDEE_DASHBOARD_PATH,
+  MOBILE_ARTBOARD_BACK_HOTSPOT,
+} from "@/lib/navigation/back-to-dashboard";
+
 export const APPLE_MUSIC_SINGLE_URL =
   "https://music.apple.com/us/artist/ian-craig-300/1643247247";
 
@@ -26,34 +31,39 @@ export type MusicPageAction = {
 /** Percentage hit targets on the mobile artboard (1080×1920). */
 export const MUSIC_PAGE_ACTIONS: readonly MusicPageAction[] = [
   {
-    id: "apple-music",
-    label: "Purchase on Apple Music",
+    id: "back",
+    label: MOBILE_ARTBOARD_BACK_HOTSPOT.label,
+    href: ATTENDEE_DASHBOARD_PATH,
+    left: MOBILE_ARTBOARD_BACK_HOTSPOT.left,
+    top: MOBILE_ARTBOARD_BACK_HOTSPOT.top,
+    width: MOBILE_ARTBOARD_BACK_HOTSPOT.width,
+    height: MOBILE_ARTBOARD_BACK_HOTSPOT.height,
+  },
+  {
+    id: "apple-music-cover",
+    label: "Buy on Apple Music",
     href: APPLE_MUSIC_SINGLE_URL,
     external: true,
-    left: "14%",
-    top: "84.8%",
-    width: "72%",
-    height: "8.5%",
+    left: "5%",
+    top: "44.5%",
+    width: "48%",
+    height: "5.5%",
   },
   {
-    id: "vital-seed",
-    label: "Sow a Vital Seed",
-    href: "/experience/giving",
-    left: "4.5%",
-    top: "88.4%",
-    width: "44%",
-    height: "10.5%",
-  },
-  {
-    id: "join-movement",
-    label: "Join the Movement",
-    href: "/experience/join-movement",
-    left: "51.5%",
-    top: "88.4%",
-    width: "44%",
-    height: "10.5%",
+    id: "apple-music",
+    label: "Get it on Apple Music",
+    href: APPLE_MUSIC_SINGLE_URL,
+    external: true,
+    left: "5%",
+    top: "69.5%",
+    width: "90%",
+    height: "13.5%",
   },
 ] as const;
 
-/** Actions visible on the current mobile single layout (movement cards live on desktop art). */
-export const MUSIC_MOBILE_VISIBLE_ACTION_IDS = ["apple-music"] as const;
+/** Hotspots aligned to `background image mobile.png`. */
+export const MUSIC_MOBILE_VISIBLE_ACTION_IDS = [
+  "back",
+  "apple-music-cover",
+  "apple-music",
+] as const;

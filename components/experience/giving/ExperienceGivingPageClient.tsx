@@ -24,7 +24,7 @@ function ExperienceGivingPageContent() {
   const searchParams = useSearchParams();
   const successParam = searchParams.get("success") === "true";
 
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(25);
   const [customAmount, setCustomAmount] = useState("");
   const [selectedFrequency, setSelectedFrequency] =
     useState<GivingFrequency>("one_time");
@@ -49,11 +49,6 @@ function ExperienceGivingPageContent() {
     if (sanitized.trim()) {
       setSelectedAmount(null);
     }
-    setError(null);
-  }, []);
-
-  const handleSelectFrequency = useCallback((frequency: GivingFrequency) => {
-    setSelectedFrequency(frequency);
     setError(null);
   }, []);
 
@@ -133,12 +128,10 @@ function ExperienceGivingPageContent() {
             <ExperienceGivingMobileOverlay
               selectedAmount={selectedAmount}
               customAmount={customAmount}
-              selectedFrequency={selectedFrequency}
               isLoading={isLoading}
               error={error}
               onSelectAmount={handleSelectAmount}
               onCustomAmountChange={handleCustomAmountChange}
-              onSelectFrequency={handleSelectFrequency}
               onGiveNow={() => void handleGiveNow()}
             />
           </div>

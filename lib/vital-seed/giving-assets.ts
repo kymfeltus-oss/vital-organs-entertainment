@@ -11,6 +11,6 @@ export const VITAL_SEED_GIVING_DESKTOP_ART = {
 } as const;
 
 export const VITAL_SEED_GIVING_MOBILE_ART = {
-  width: 941,
-  height: 1672,
+  width: 853,
+  height: 1844,
 } as const;

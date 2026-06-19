@@ -7,6 +7,7 @@ import BuySeedsOverlay from "@/components/buy-seeds/BuySeedsOverlay";
 import { getClientAppUrl } from "@/lib/client-api";
 import { getMerchProduct } from "@/lib/merch/catalog";
 import { BUY_SEEDS_ASSETS, BUY_SEEDS_MOBILE_ART } from "@/lib/seeds/assets";
+import { SEED_ECONOMY_PACKS } from "@/lib/merch/catalog";
 import { useMerchCheckout } from "@/lib/useMerchCheckout";
 
 export default function BuySeedsPageClient() {
@@ -16,6 +17,10 @@ export default function BuySeedsPageClient() {
 
   const [balance, setBalance] = useState<number | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(true);
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState(0);
+  const [selectedProductId, setSelectedProductId] = useState(
+    SEED_ECONOMY_PACKS[0]?.productId ?? "",
+  );
   const [activeProductId, setActiveProductId] = useState<string | null>(null);
   const [showThankYou, setShowThankYou] = useState(successParam);
 
@@ -71,6 +76,17 @@ export default function BuySeedsPageClient() {
     [clearError, startCheckout],
   );
 
+  const handleSelectPack = useCallback((slotIndex: number, productId: string) => {
+    setSelectedSlotIndex(slotIndex);
+    setSelectedProductId(productId);
+    clearError();
+  }, [clearError]);
+
+  const handleContinue = useCallback(() => {
+    if (!selectedProductId) return;
+    void handleBuyPack(selectedProductId);
+  }, [handleBuyPack, selectedProductId]);
+
   return (
     <>
       <div className="buy-seeds-page buy-seeds-page--mobile">
@@ -97,10 +113,12 @@ export default function BuySeedsPageClient() {
           <BuySeedsOverlay
             balance={balance}
             balanceLoading={balanceLoading}
+            selectedSlotIndex={selectedSlotIndex}
             isSubmitting={isSubmitting}
             activeProductId={activeProductId}
             errorMessage={errorMessage}
-            onBuyPack={(product) => void handleBuyPack(product.id)}
+            onSelectPack={handleSelectPack}
+            onContinue={handleContinue}
           />
         </div>
       </div>
