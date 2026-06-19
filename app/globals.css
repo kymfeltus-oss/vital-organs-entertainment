@@ -2026,14 +2026,14 @@ html {
 
 .experience-dashboard-overlay__stack {
   position: absolute;
-  top: calc(var(--dash-story-top-y, 800) / var(--dash-artboard-h, 1920) * 100cqh);
+  top: calc(var(--dash-story-top-y, 792) / var(--dash-artboard-h, 1920) * 100cqh);
   right: calc(var(--dash-safe-right, 40) / var(--dash-artboard-w, 1080) * 100cqw);
   left: calc(var(--dash-safe-left, 40) / var(--dash-artboard-w, 1080) * 100cqw);
   padding-bottom: calc(var(--dash-safe-bottom, 52) / var(--dash-artboard-h, 1920) * 100cqh);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: calc(var(--dash-stack-gap, 28) / var(--dash-artboard-h, 1920) * 100cqh);
+  gap: calc(var(--dash-stack-gap, 20) / var(--dash-artboard-h, 1920) * 100cqh);
   pointer-events: none;
 }
 
@@ -2049,7 +2049,7 @@ html {
 
 .experience-dashboard-overlay__story {
   display: block;
-  width: calc(var(--dash-card-scale, 0.85) * 100%);
+  width: calc(var(--dash-story-scale, 0.92) * 100%);
   max-width: 100%;
   flex-shrink: 0;
   transition:
@@ -2086,8 +2086,8 @@ html {
   box-sizing: border-box;
   margin-top: calc(var(--dash-grid-top-offset, 0) / var(--dash-artboard-h, 1920) * 100cqh);
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  row-gap: calc(var(--dash-grid-row-gap, 28) / var(--dash-artboard-h, 1920) * 100cqh);
-  column-gap: calc(var(--dash-grid-col-gap, 20) / var(--dash-artboard-w, 1080) * 100cqw);
+  row-gap: calc(var(--dash-grid-row-gap, 20) / var(--dash-artboard-h, 1920) * 100cqh);
+  column-gap: calc(var(--dash-grid-col-gap, 18) / var(--dash-artboard-w, 1080) * 100cqw);
   pointer-events: auto;
 }
 
@@ -2121,17 +2121,80 @@ html {
 
 @supports not (height: 1cqh) {
   .experience-dashboard-overlay__stack {
-    top: 41.67%;
+    top: 41.25%;
     right: 3.7%;
     left: 3.7%;
-    gap: 1.46%;
+    gap: 1.04%;
   }
 
   .experience-dashboard-overlay__grid {
     margin-top: 0;
-    row-gap: 1.46%;
-    column-gap: 1.85%;
+    row-gap: 1.04%;
+    column-gap: 1.67%;
   }
+}
+
+.dashboard-mobile-fixed-chrome {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: clamp(0.5rem, 2vw, 0.75rem);
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+  padding-inline: max(1rem, calc(40 / 1080 * 100vw));
+  padding-bottom: 0.35rem;
+}
+
+.dashboard-mobile-fixed-chrome__lead {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: flex-start;
+  gap: clamp(0.55rem, 2.5vw, 0.75rem);
+}
+
+.dashboard-mobile-fixed-chrome__menu {
+  margin-top: 0.2rem;
+}
+
+.dashboard-mobile-fixed-chrome__welcome {
+  min-width: 0;
+  flex: 1;
+  padding-top: 0.05rem;
+}
+
+.dashboard-mobile-fixed-chrome__welcome-label {
+  margin: 0;
+  font-size: clamp(0.52rem, 2.2vw, 0.62rem);
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.dashboard-mobile-fixed-chrome__welcome-lines {
+  margin-top: 0.2rem;
+  justify-content: flex-start;
+}
+
+.dashboard-mobile-fixed-chrome__welcome-lines::before,
+.dashboard-mobile-fixed-chrome__welcome-lines::after {
+  width: clamp(1.25rem, 5vw, 2.5rem);
+}
+
+.dashboard-mobile-fixed-chrome__welcome-lines .dashboard-hero-welcome-title {
+  max-width: min(100%, 11rem);
+  font-size: clamp(1.35rem, 5.5vw, 1.85rem);
+  text-align: left;
+}
+
+.dashboard-mobile-fixed-chrome__profile {
+  flex-shrink: 0;
+  padding-top: 0.15rem;
+  padding-inline-end: 0;
 }
 
 .experience-dashboard-top-zone {
