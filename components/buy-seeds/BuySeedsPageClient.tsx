@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import BuySeedsOverlay from "@/components/buy-seeds/BuySeedsOverlay";
 import { getClientAppUrl } from "@/lib/client-api";
 import { getMerchProduct } from "@/lib/merch/catalog";
-import { BUY_SEEDS_ART, BUY_SEEDS_ASSETS } from "@/lib/seeds/assets";
+import { BUY_SEEDS_ASSETS, BUY_SEEDS_MOBILE_ART } from "@/lib/seeds/assets";
 import { useMerchCheckout } from "@/lib/useMerchCheckout";
 
 export default function BuySeedsPageClient() {
@@ -73,22 +73,22 @@ export default function BuySeedsPageClient() {
 
   return (
     <>
-      <div className="buy-seeds-page">
+      <div className="buy-seeds-page buy-seeds-page--mobile">
         <div
           className="buy-seeds-page__stage"
           style={
             {
-              "--buy-seeds-art-w": BUY_SEEDS_ART.width,
-              "--buy-seeds-art-h": BUY_SEEDS_ART.height,
+              "--buy-seeds-art-w": BUY_SEEDS_MOBILE_ART.width,
+              "--buy-seeds-art-h": BUY_SEEDS_MOBILE_ART.height,
             } as CSSProperties
           }
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={BUY_SEEDS_ASSETS.background}
+            src={BUY_SEEDS_ASSETS.mobileBackground}
             alt="Buy Vital Seeds — coin packs for live concert emotes"
-            width={BUY_SEEDS_ART.width}
-            height={BUY_SEEDS_ART.height}
+            width={BUY_SEEDS_MOBILE_ART.width}
+            height={BUY_SEEDS_MOBILE_ART.height}
             className="buy-seeds-page__bg"
             loading="eager"
             decoding="async"

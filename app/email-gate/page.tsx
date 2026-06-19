@@ -1,20 +1,29 @@
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
-import PersonaHubClient from "@/components/auth/PersonaHubClient";
+import EmailGatePageClient from "@/components/email-gate/EmailGatePageClient";
+import { DEVICE_FIT_PAGE } from "@/lib/responsive";
 
-function PersonaHubFallback() {
+export const dynamic = "force-dynamic";
+
+function EmailGateFallback() {
   return (
-    <main className="flex min-h-dvh w-full items-center justify-center bg-brand-black text-brand-muted">
+    <div className="flex min-h-dvh w-full items-center justify-center bg-brand-black text-brand-muted">
       <Loader2 className="h-5 w-5 animate-spin text-brand-blue" aria-hidden="true" />
       <span className="sr-only">Loading entry hub</span>
-    </main>
+    </div>
   );
 }
 
 export default function EmailGatePage() {
   return (
-    <Suspense fallback={<PersonaHubFallback />}>
-      <PersonaHubClient />
-    </Suspense>
+    <main
+      id="main-content"
+      className={`${DEVICE_FIT_PAGE} flex min-h-0 flex-1 flex-col overflow-x-hidden bg-brand-black pt-safe`}
+      aria-label="Entry hub"
+    >
+      <Suspense fallback={<EmailGateFallback />}>
+        <EmailGatePageClient />
+      </Suspense>
+    </main>
   );
 }

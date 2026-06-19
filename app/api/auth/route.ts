@@ -3,6 +3,11 @@ import { generateGuestEmail, generateGuestPassword } from "@/lib/access";
 import {
   CREATE_ACCOUNT_MIN_PASSWORD_LENGTH,
 } from "@/lib/auth/create-account-validation";
+import {
+  DEFAULT_ATTENDEE_NEXT,
+  resolveAttendeeDestination,
+} from "@/lib/auth/routing";
+import { buildAuthCallbackUrl } from "@/lib/auth/server";
 import { isValidUsStateCode } from "@/lib/auth/us-states";
 import { syncUserProfileIdentity } from "@/lib/auth/sync-attendee-profile";
 import { normalizePhoneDigits, isValidPhone } from "@/lib/auth/validation";
@@ -21,6 +26,7 @@ type AuthRequestBody = {
   phone?: string;
   city?: string;
   state?: string;
+  next?: string;
 };
 
 function normalizeNamePart(value: string | undefined): string {
@@ -29,20 +35,6 @@ function normalizeNamePart(value: string | undefined): string {
 
 function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-}
-
-function resolveRequestOrigin(request: Request): string {
-  const forwardedProto = request.headers
-    .get("x-forwarded-proto")
-    ?.split(",")[0]
-    ?.trim();
-  const host = request.headers.get("host")?.trim();
-
-  if (forwardedProto && host) {
-    return `${forwardedProto}://${host}`;
-  }
-
-  return new URL(request.url).origin;
 }
 
 export async function POST(request: Request) {
@@ -131,7 +123,9 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "A valid US state is required." }, { status: 400 });
       }
 
-      const origin = resolveRequestOrigin(request);
+      const signupNext = resolveAttendeeDestination(
+        body.next ?? DEFAULT_ATTENDEE_NEXT,
+      );
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -144,7 +138,7 @@ export async function POST(request: Request) {
             city,
             state,
           },
-          emailRedirectTo: `${origin}/auth/callback?next=/experience`,
+          emailRedirectTo: buildAuthCallbackUrl(signupNext, request),
         },
       });
 

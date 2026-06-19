@@ -145,7 +145,10 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(serializeCreateAccountPayload(values)),
+        body: JSON.stringify({
+          ...serializeCreateAccountPayload(values),
+          next: nextPath,
+        }),
       });
 
       const result = (await response.json()) as { success?: boolean; error?: string };
