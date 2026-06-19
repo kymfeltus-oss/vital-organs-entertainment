@@ -18,8 +18,8 @@ export const AWAKENING_DASHBOARD_CONTAINER = {
   aspectHeight: 16,
 } as const;
 
-/** PNG button grid at half native art size in the bottom third. */
-export const AWAKENING_DASHBOARD_BUTTON_GRID_SCALE = 0.5 as const;
+/** PNG button grid — near full native art width on mobile. */
+export const AWAKENING_DASHBOARD_BUTTON_GRID_SCALE = 1 as const;
 
 /** Wire creator portrait stream URL when the event feed is live. */
 export const AWAKENING_CREATOR_STREAM_SRC: string | null = null;

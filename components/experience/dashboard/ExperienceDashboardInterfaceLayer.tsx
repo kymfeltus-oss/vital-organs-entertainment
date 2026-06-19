@@ -99,8 +99,8 @@ export default function ExperienceDashboardInterfaceLayer({
                 <img
                   src={button.src}
                   alt=""
-                  width={140}
-                  height={74}
+                  width={280}
+                  height={148}
                   className="experience-dashboard-button-grid__img"
                   loading="eager"
                   decoding="async"
