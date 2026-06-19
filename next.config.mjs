@@ -10,6 +10,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: "/experience",
+        destination: "/attendee-dashboard",
+        permanent: true,
+      },
+      {
         source: "/dashboard/live",
         destination: "/live",
         permanent: false,
@@ -30,29 +35,29 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: "/login",
-        destination: "/email-gate/attendee",
-        permanent: false,
+        source: "/email-gate/attendee/create-account",
+        destination: "/create-account",
+        permanent: true,
       },
       {
-        source: "/create-account",
-        destination: "/email-gate/attendee/create-account",
-        permanent: false,
+        source: "/email-gate/attendee",
+        destination: "/login",
+        permanent: true,
       },
       {
         source: "/email-gate/login",
-        destination: "/email-gate/attendee",
-        permanent: false,
+        destination: "/login",
+        permanent: true,
       },
       {
         source: "/email-gate/signup",
-        destination: "/email-gate/attendee",
-        permanent: false,
+        destination: "/login",
+        permanent: true,
       },
       {
         source: "/email-gate/guest",
-        destination: "/email-gate/attendee",
-        permanent: false,
+        destination: "/login",
+        permanent: true,
       },
     ];
   },

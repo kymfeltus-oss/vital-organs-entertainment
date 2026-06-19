@@ -11,6 +11,7 @@ import {
   formatPovCurrency,
   formatPovViewerCount,
 } from "@/lib/experience/live-pov-mock";
+import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 
 const NAME_CLASS = {
   blue: "text-brand-blue",
@@ -74,7 +75,7 @@ export default function ViewerPovGoLiveDesktop() {
           </div>
 
           <Link
-            href="/experience"
+            href={ATTENDEE_DASHBOARD_PATH}
             className="touch-target flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm transition hover:bg-black/65"
             aria-label="Close live stream"
           >

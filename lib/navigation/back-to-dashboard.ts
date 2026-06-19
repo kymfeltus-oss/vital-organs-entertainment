@@ -1,5 +1,5 @@
 /** Attendee dashboard hub — bottom nav Home tab; `/dashboard` redirects here. */
-export const ATTENDEE_DASHBOARD_PATH = "/experience" as const;
+export const ATTENDEE_DASHBOARD_PATH = "/attendee-dashboard" as const;
 
 /** Shared top-left chevron hotspot on mobile artboard PNGs (853×1844 / 1080×1920). */
 export const MOBILE_ARTBOARD_BACK_HOTSPOT = {

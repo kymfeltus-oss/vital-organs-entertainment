@@ -12,6 +12,7 @@ import {
 import { createPortal } from "react-dom";
 import { PERSONA_HUB_PATH } from "@/lib/auth/routing";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
+import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 import { cn } from "@/lib/utils";
 
 export type AwakeningMenuItem = {
@@ -22,13 +23,13 @@ export type AwakeningMenuItem = {
 };
 
 export const AWAKENING_MENU_ITEMS: AwakeningMenuItem[] = [
-  { id: "home", label: "Home", href: "/experience", match: "exact" },
+  { id: "home", label: "Home", href: ATTENDEE_DASHBOARD_PATH, match: "exact" },
   { id: "live", label: "Live Room", href: EXPERIENCE_LIVE_PATH, match: "prefix" },
   { id: "seed", label: "Vital Seed", href: "/experience/giving", match: "prefix" },
   { id: "music", label: "Music", href: "/experience/music", match: "prefix" },
   { id: "prayer", label: "Prayer", href: "/experience/prayer", match: "prefix" },
-  { id: "profile", label: "Profile", href: "/experience?view=profile" },
-  { id: "settings", label: "Settings", href: "/experience?view=settings" },
+  { id: "profile", label: "Profile", href: `${ATTENDEE_DASHBOARD_PATH}?view=profile` },
+  { id: "settings", label: "Settings", href: `${ATTENDEE_DASHBOARD_PATH}?view=settings` },
 ];
 
 type AwakeningMenuButtonProps = {

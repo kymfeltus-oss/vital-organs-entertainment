@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
+import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 
-/** Legacy attendee home — forwards to the cinematic `/experience` hub. */
+/** Legacy attendee home — forwards to the attendee dashboard hub. */
 export default function DashboardPage() {
-  redirect("/experience");
+  redirect(ATTENDEE_DASHBOARD_PATH);
 }

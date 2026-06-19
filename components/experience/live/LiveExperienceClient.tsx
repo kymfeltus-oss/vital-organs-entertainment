@@ -49,7 +49,7 @@ function LiveExperienceClientInner({
       return;
     }
 
-    if (eventPhase !== "waiting" && wasPreConcertRef.current) {
+    if (eventPhase === "live" && wasPreConcertRef.current) {
       setOpeningLiveRoom(true);
       const timerId = window.setTimeout(() => setOpeningLiveRoom(false), GOING_LIVE_MS);
       wasPreConcertRef.current = false;
@@ -81,8 +81,9 @@ function LiveExperienceClientInner({
 
   if (phase === "locked") {
     return (
-      <main className="experience-live-root flex min-h-dvh w-full flex-col items-center justify-center px-4 pb-safe text-white">
-        <div className="w-full max-w-lg rounded-2xl border border-white/8 bg-brand-panel p-8 text-center">
+      <main className="live-access-page experience-live-root pb-safe pt-safe text-white">
+        <div className="live-access-page__track">
+        <div className="w-full rounded-2xl border border-white/8 bg-brand-panel p-8 text-center">
           <p className="font-ui text-[0.6rem] font-bold uppercase tracking-[0.24em] text-brand-blue">
             Vital Organs Entertainment
           </p>
@@ -99,12 +100,12 @@ function LiveExperienceClientInner({
             Get Your Pass
           </Link>
         </div>
+        </div>
       </main>
     );
   }
 
-  const concertHasBegun = eventPhase !== "waiting";
-  const showLiveRoom = concertHasBegun && !openingLiveRoom;
+  const showLiveRoom = eventPhase === "live" && !openingLiveRoom;
 
   if (!showLiveRoom) {
     if (openingLiveRoom) {

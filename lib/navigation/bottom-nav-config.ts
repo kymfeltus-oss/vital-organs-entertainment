@@ -6,6 +6,8 @@
  * Never crop, resize, git-show, or python-process that PNG.
  */
 
+import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
+
 export const BOTTOM_MENU_BAR_SRC =
   "/bottom-menu-bar/bottom-menu-bar.png?v=1290x250-user-2";
 
@@ -49,10 +51,10 @@ export const BOTTOM_NAV_HOTSPOTS: readonly BottomNavHotspot[] = [
   {
     id: "home",
     label: "Home",
-    href: "/experience",
+    href: ATTENDEE_DASHBOARD_PATH,
     left: TAB_WIDTH * 0,
     width: TAB_WIDTH,
-    isActive: matchesExact("/experience"),
+    isActive: matchesExact(ATTENDEE_DASHBOARD_PATH),
   },
   {
     id: "live",

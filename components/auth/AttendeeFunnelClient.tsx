@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import AttendeeAuthArtboard from "@/components/auth/AttendeeAuthArtboard";
 import AttendeeAuthLoginPlate from "@/components/auth/AttendeeAuthLoginPlate";
 import EmailGateShell, {
   gateFieldClass,
@@ -10,6 +9,7 @@ import EmailGateShell, {
 } from "@/components/auth/EmailGateShell";
 import OtpVerificationPlaceholder from "@/components/auth/OtpVerificationPlaceholder";
 import {
+  AUTH_NEXT_COOKIE,
   buildAttendeeGateUrl,
   buildCreateAccountUrl,
   buildPersonaHubUrl,
@@ -62,6 +62,7 @@ export default function AttendeeFunnelClient({
   const guestFormValid = isValidEmail(email) && isValidPhone(phone);
 
   const handleAuthSuccess = () => {
+    document.cookie = `${AUTH_NEXT_COOKIE}=; path=/; max-age=0`;
     window.location.assign(destination);
   };
 
@@ -217,7 +218,7 @@ export default function AttendeeFunnelClient({
   }
 
   return (
-    <AttendeeAuthArtboard>
+    <div className="flex min-h-dvh w-full flex-1 flex-col items-center justify-center bg-brand-black px-4 pb-safe pt-safe">
       <AttendeeAuthLoginPlate
         createAccountHref={buildCreateAccountUrl(destination)}
         email={email}
@@ -241,11 +242,11 @@ export default function AttendeeFunnelClient({
       {displayError ? (
         <p
           role="alert"
-          className="auth-attendee-error font-body text-sm text-brand-pink"
+          className="mt-4 max-w-[min(100%,24rem)] text-center font-body text-sm text-brand-pink"
         >
           {displayError}
         </p>
       ) : null}
-    </AttendeeAuthArtboard>
+    </div>
   );
 }

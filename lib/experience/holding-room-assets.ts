@@ -1,8 +1,8 @@
-/** Pre-live holding room — 1080×1920 artboard overlays (flat bg + UI frames). */
+/** Pre-live holding room — 852×1846 artboard overlays (flat bg + UI frames). */
 
 export const HOLDING_ROOM_ARTBOARD = {
-  width: 1080,
-  height: 1920,
+  width: 852,
+  height: 1846,
 } as const;
 
 export const HOLDING_ROOM_SAFE_AREA = {

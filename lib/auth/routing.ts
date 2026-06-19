@@ -1,14 +1,17 @@
-export const PERSONA_HUB_PATH = "/email-gate";
-export const ATTENDEE_GATE_PATH = "/email-gate/attendee";
-export const CREATE_ACCOUNT_PATH = "/email-gate/attendee/create-account";
-export const TEAM_GATE_PATH = "/email-gate/team";
+import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 
-export const DEFAULT_ATTENDEE_NEXT = "/experience";
+export const PERSONA_HUB_PATH = "/email-gate";
+export const ATTENDEE_GATE_PATH = "/login";
+export const CREATE_ACCOUNT_PATH = "/create-account";
+export const TEAM_GATE_PATH = "/email-gate/team";
+export const AUTH_NEXT_COOKIE = "auth_next";
+
+export const DEFAULT_ATTENDEE_NEXT = ATTENDEE_DASHBOARD_PATH;
 export const DEFAULT_TEAM_NEXT = "/dashboard/broadcast";
 export const DEFAULT_OPS_NEXT = "/ops/live-hub";
 
 const ATTENDEE_PROTECTED_EXACT = new Set(["/dashboard"]);
-const ATTENDEE_PROTECTED_PREFIXES = ["/experience"];
+const ATTENDEE_PROTECTED_PREFIXES = ["/experience", ATTENDEE_DASHBOARD_PATH];
 
 const TEAM_PROTECTED_PREFIXES = ["/ops", "/dashboard/broadcast"];
 
@@ -49,24 +52,25 @@ export function buildPersonaHubUrl(nextPath?: string | null): string {
 
 export function resolveAttendeeDestination(nextPath: string): string {
   const sanitized = sanitizeNextPath(nextPath, DEFAULT_ATTENDEE_NEXT);
-  if (sanitized === "/dashboard") return DEFAULT_ATTENDEE_NEXT;
+  if (sanitized === "/dashboard" || sanitized === "/experience") {
+    return DEFAULT_ATTENDEE_NEXT;
+  }
   return sanitized;
 }
 
-export function buildAttendeeGateUrl(nextPath?: string | null): string {
-  return buildGateUrl(
-    ATTENDEE_GATE_PATH,
-    resolveAttendeeDestination(nextPath ?? DEFAULT_ATTENDEE_NEXT),
-    { persona: "attendee" },
-  );
+export function buildAttendeeGateUrl(_nextPath?: string | null): string {
+  return ATTENDEE_GATE_PATH;
 }
 
-export function buildCreateAccountUrl(nextPath?: string | null): string {
-  return buildGateUrl(
-    CREATE_ACCOUNT_PATH,
-    resolveAttendeeDestination(nextPath ?? DEFAULT_ATTENDEE_NEXT),
-    { persona: "attendee" },
-  );
+export function buildCreateAccountUrl(_nextPath?: string | null): string {
+  return CREATE_ACCOUNT_PATH;
+}
+
+/** Client-only — stash return path before navigating to `/login` without query params. */
+export function setAuthNextCookie(nextPath: string): void {
+  if (typeof document === "undefined") return;
+  const safePath = resolveAttendeeDestination(nextPath);
+  document.cookie = `${AUTH_NEXT_COOKIE}=${encodeURIComponent(safePath)}; path=/; max-age=600; samesite=lax`;
 }
 
 export function buildTeamGateUrl(nextPath?: string | null): string {

@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { Heart, Loader2, LogOut, Music, Newspaper, Radio } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { PERSONA_HUB_PATH } from "@/lib/auth/routing";
+import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 
 type NavItemConfig = {
   label: string;
@@ -21,7 +22,7 @@ const NAV_ITEMS: readonly NavItemConfig[] = [
     label: "Live",
     href: EXPERIENCE_LIVE_PATH,
     icon: Radio,
-    match: ["/dashboard/live", "/experience/live", "/live", "/experience"],
+    match: ["/dashboard/live", "/experience/live", "/live", ATTENDEE_DASHBOARD_PATH, "/experience"],
   },
   {
     label: "Music",

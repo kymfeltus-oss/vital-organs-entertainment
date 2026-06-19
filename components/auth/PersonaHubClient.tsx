@@ -7,6 +7,7 @@ import {
   buildAttendeeGateUrl,
   buildTeamGateUrl,
   sanitizeNextPath,
+  setAuthNextCookie,
   DEFAULT_ATTENDEE_NEXT,
   DEFAULT_TEAM_NEXT,
 } from "@/lib/auth/routing";
@@ -27,6 +28,7 @@ export default function PersonaHubClient() {
       <div className="flex flex-col gap-3">
         <Link
           href={attendeeHref}
+          onClick={() => setAuthNextCookie(attendeeNext)}
           className="flex min-h-11 items-center justify-center rounded-lg border border-brand-border px-4 py-2 text-sm text-white"
         >
           Attendee — log in or create account

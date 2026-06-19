@@ -4,16 +4,24 @@ import {
   AWAKENING_AUTH_LOGIN_ART,
 } from "@/lib/experience/awakening-auth-assets";
 
+type AuthArtboardSpec = {
+  width: number;
+  height: number;
+};
+
 type AttendeeAuthArtboardProps = {
   children: ReactNode;
   /** Background plate — defaults to attendee login PNG. */
   backgroundSrc?: string;
+  /** Artboard pixel size — must match the PNG aspect ratio. */
+  artboard?: AuthArtboardSpec;
   scrollable?: boolean;
 };
 
 export default function AttendeeAuthArtboard({
   children,
   backgroundSrc = AWAKENING_AUTH_ASSETS.attendeeLoginPlate,
+  artboard = AWAKENING_AUTH_LOGIN_ART,
   scrollable = false,
 }: AttendeeAuthArtboardProps) {
   return (
@@ -24,8 +32,8 @@ export default function AttendeeAuthArtboard({
         className="auth-attendee-artboard"
         style={
           {
-            "--auth-art-w": AWAKENING_AUTH_LOGIN_ART.width,
-            "--auth-art-h": AWAKENING_AUTH_LOGIN_ART.height,
+            "--auth-art-w": artboard.width,
+            "--auth-art-h": artboard.height,
           } as CSSProperties
         }
       >
@@ -33,8 +41,8 @@ export default function AttendeeAuthArtboard({
         <img
           src={backgroundSrc}
           alt=""
-          width={AWAKENING_AUTH_LOGIN_ART.width}
-          height={AWAKENING_AUTH_LOGIN_ART.height}
+          width={artboard.width}
+          height={artboard.height}
           className="auth-attendee-artboard__img"
           loading="eager"
           decoding="async"
@@ -45,3 +53,5 @@ export default function AttendeeAuthArtboard({
     </div>
   );
 }
+
+export type { AuthArtboardSpec };

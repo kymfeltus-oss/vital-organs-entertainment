@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ChevronRight, Play } from "lucide-react";
+import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 import { cn } from "@/lib/utils";
 
 type AwakeningHeroCTAProps = {
@@ -47,7 +48,7 @@ export default function AwakeningHeroCTA({ variant = "desktop" }: AwakeningHeroC
         )}
       >
         <Link
-          href="/experience"
+          href={ATTENDEE_DASHBOARD_PATH}
           className={cn(
             "group relative flex w-full items-center justify-center overflow-hidden rounded-full border border-white/20 bg-black/55 font-headline tracking-[0.14em] text-white shadow-[inset_0_0_18px_rgba(255,255,255,0.12),0_0_24px_rgba(30,64,175,0.85),0_0_34px_rgba(176,38,122,0.75)] transition hover:scale-[1.02]",
             isMobile ? "h-12 px-4 text-[0.95rem]" : "h-16 max-w-md px-8 text-3xl tracking-[0.18em]",

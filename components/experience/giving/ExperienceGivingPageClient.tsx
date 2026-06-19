@@ -126,7 +126,6 @@ function ExperienceGivingPageContent() {
               draggable={false}
             />
             <ExperienceGivingMobileOverlay
-              selectedAmount={selectedAmount}
               customAmount={customAmount}
               isLoading={isLoading}
               error={error}

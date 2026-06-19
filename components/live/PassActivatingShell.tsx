@@ -6,17 +6,17 @@ type PassActivatingShellProps = {
 
 export default function PassActivatingShell({ attempt }: PassActivatingShellProps) {
   return (
-    <main className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-[#0B090A] px-6 pt-safe pb-safe text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(30,64,175,0.2),transparent_68%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(176,38,122,0.12),transparent_55%)]" />
-      <div className="relative z-10 w-full max-w-md animate-pulse text-center [animation-duration:2s]">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#1E40AF]/50 bg-[#1E40AF]/10 shadow-[0_0_30px_rgba(30,64,175,0.35)]">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1E40AF]" />
+    <main className="live-access-page relative overflow-hidden pt-safe pb-safe text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,168,255,0.12),transparent_68%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,0,140,0.08),transparent_55%)]" />
+      <div className="live-access-page__track relative z-10 animate-pulse text-center [animation-duration:2s]">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-brand-blue/50 bg-brand-blue/10 neon-blue-glow">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-blue" />
         </div>
-        <p className="mt-8 text-[0.65rem] font-bold uppercase tracking-[0.32em] text-[#1E40AF]">
+        <p className="mt-8 font-ui text-[0.65rem] font-bold uppercase tracking-[0.32em] text-brand-blue">
           Activating Your Pass
         </p>
-        <h1 className="mt-4 text-xl font-bold uppercase tracking-widest text-white md:text-2xl">
+        <h1 className="mt-4 font-headline text-xl uppercase tracking-widest text-white">
           Securing Your Concert Access
         </h1>
         <p className="mt-4 text-sm text-zinc-400">

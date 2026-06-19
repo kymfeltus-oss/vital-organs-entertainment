@@ -1,44 +1,7 @@
-import ExperienceAttendeeDashboard from "@/components/experience/dashboard/ExperienceAttendeeDashboard";
-import { hydrateAuthMetadataFromAttendee } from "@/lib/auth/sync-attendee-profile";
-import { getUserFromSession } from "@/lib/auth/session";
-import { fetchAttendeeProfileRecord } from "@/lib/experience/fetch-attendee-profile";
-import { buildAttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
-import { AWAKENING_PRELOAD_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
-import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
+import { redirect } from "next/navigation";
+import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 
-export const revalidate = 0;
-
-export default async function ExperienceHubPage() {
-  let user = await getUserFromSession();
-  let attendeeRecord = user ? await fetchAttendeeProfileRecord(user.id) : null;
-
-  if (user) {
-    user = await hydrateAuthMetadataFromAttendee(user);
-    if (!attendeeRecord) {
-      attendeeRecord = await fetchAttendeeProfileRecord(user.id);
-    }
-  }
-
-  const profile = buildAttendeeProfileSnapshot(user, attendeeRecord);
-  const initialCountdownConfig = await loadActiveCountdownConfig();
-
-  return (
-    <>
-      {AWAKENING_PRELOAD_ASSETS.map((asset) => (
-        <link
-          key={asset.href}
-          rel="preload"
-          as={asset.as}
-          href={asset.href}
-          fetchPriority="high"
-        />
-      ))}
-      <main id="main-content" className="min-h-dvh w-full">
-        <ExperienceAttendeeDashboard
-          initialProfile={profile}
-          initialCountdownConfig={initialCountdownConfig}
-        />
-      </main>
-    </>
-  );
+/** Legacy home path — canonical attendee hub is `/attendee-dashboard`. */
+export default function LegacyExperienceHomePage() {
+  redirect(ATTENDEE_DASHBOARD_PATH);
 }

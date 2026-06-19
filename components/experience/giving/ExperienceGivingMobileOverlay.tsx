@@ -9,7 +9,6 @@ import {
 import { VITAL_SEED_OVERLAY_HIT_CLASS } from "@/lib/vital-seed/giving-overlay-props";
 
 type ExperienceGivingMobileOverlayProps = {
-  selectedAmount: number | null;
   customAmount: string;
   isLoading: boolean;
   error: string | null;
@@ -34,7 +33,6 @@ function rectStyle(rect: {
 }
 
 export default function ExperienceGivingMobileOverlay({
-  selectedAmount,
   customAmount,
   isLoading,
   error,
@@ -42,26 +40,22 @@ export default function ExperienceGivingMobileOverlay({
   onCustomAmountChange,
   onGiveNow,
 }: ExperienceGivingMobileOverlayProps) {
-  const hasCustomAmount = customAmount.trim().length > 0;
-
   return (
-    <div className="experience-giving-overlay pointer-events-none absolute inset-0 z-10">
-      {GIVING_MOBILE_AMOUNT_SLOTS.map((slot) => {
-        const isSelected = !hasCustomAmount && selectedAmount === slot.amount;
-
-        return (
-          <button
-            key={slot.amount}
-            type="button"
-            aria-label={`Select $${slot.amount} gift`}
-            aria-pressed={isSelected}
-            disabled={isLoading}
-            onClick={() => onSelectAmount(slot.amount)}
-            className={`${VITAL_SEED_OVERLAY_HIT_CLASS} experience-giving-hit`}
-            style={rectStyle(slot)}
-          />
-        );
-      })}
+    <div
+      className="experience-giving-overlay pointer-events-none absolute inset-0 z-2"
+      aria-label="Giving controls"
+    >
+      {GIVING_MOBILE_AMOUNT_SLOTS.map((slot) => (
+        <button
+          key={slot.amount}
+          type="button"
+          aria-label={`Select $${slot.amount} gift`}
+          disabled={isLoading}
+          onClick={() => onSelectAmount(slot.amount)}
+          className={VITAL_SEED_OVERLAY_HIT_CLASS}
+          style={rectStyle(slot)}
+        />
+      ))}
 
       <label
         className="artboard-field-slot experience-giving-custom-label"
@@ -73,11 +67,11 @@ export default function ExperienceGivingMobileOverlay({
           inputMode="decimal"
           autoComplete="off"
           aria-label="Enter custom gift amount"
-          placeholder=""
+          placeholder=" "
           disabled={isLoading}
           value={customAmount}
           onChange={(event) => onCustomAmountChange(event.target.value)}
-          className="artboard-field-slot__control experience-giving-custom-input font-ui text-[clamp(0.85rem,3.8cqw,1.05rem)] font-semibold tracking-wide text-white"
+          className="artboard-field-slot__control experience-giving-custom-input font-ui text-[clamp(0.85rem,3.8cqw,1.05rem)] font-semibold tracking-wide"
         />
       </label>
 
@@ -96,7 +90,7 @@ export default function ExperienceGivingMobileOverlay({
         aria-label="Give now — continue to secure checkout"
         disabled={isLoading}
         onClick={onGiveNow}
-        className={`${VITAL_SEED_OVERLAY_HIT_CLASS} experience-giving-hit experience-giving-give-hit${
+        className={`${VITAL_SEED_OVERLAY_HIT_CLASS}${
           isLoading ? " experience-giving-hit--loading" : ""
         }`}
         style={rectStyle(GIVING_MOBILE_GIVE_NOW_SLOT)}

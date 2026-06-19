@@ -1,7 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
-  buildAttendeeGateUrl,
+  ATTENDEE_GATE_PATH,
+  AUTH_NEXT_COOKIE,
   buildTeamGateUrl,
   isAttendeeProtectedPath,
   isTeamProtectedPath,
@@ -13,6 +14,8 @@ export async function proxy(request: NextRequest) {
 
   if (
     pathname.startsWith("/email-gate") ||
+    pathname === ATTENDEE_GATE_PATH ||
+    pathname === "/create-account" ||
     pathname.startsWith("/api/") ||
     pathname.startsWith("/auth/") ||
     pathname === "/"
@@ -97,14 +100,21 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  const redirectUrl = new URL(buildAttendeeGateUrl(nextPath), request.url);
-  return NextResponse.redirect(redirectUrl);
+  const redirectUrl = new URL(ATTENDEE_GATE_PATH, request.url);
+  const redirectResponse = NextResponse.redirect(redirectUrl);
+  redirectResponse.cookies.set(AUTH_NEXT_COOKIE, nextPath, {
+    path: "/",
+    maxAge: 60 * 10,
+    sameSite: "lax",
+  });
+  return redirectResponse;
 }
 
 export const config = {
   matcher: [
     "/dashboard",
     "/dashboard/:path*",
+    "/attendee-dashboard",
     "/experience",
     "/experience/:path*",
     "/ops",

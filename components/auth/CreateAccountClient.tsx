@@ -11,7 +11,10 @@ import {
   type CreateAccountFormValues,
 } from "@/lib/auth/create-account-validation";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
-import { AWAKENING_AUTH_ASSETS } from "@/lib/experience/awakening-auth-assets";
+import {
+  AWAKENING_AUTH_ASSETS,
+  AWAKENING_AUTH_SIGNUP_ART,
+} from "@/lib/experience/awakening-auth-assets";
 
 type CreateAccountClientProps = {
   nextPath: string;
@@ -133,6 +136,7 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
     <>
       <AttendeeAuthArtboard
         backgroundSrc={AWAKENING_AUTH_ASSETS.attendeeSignupPlate}
+        artboard={AWAKENING_AUTH_SIGNUP_ART}
         scrollable
       >
         <AttendeeAuthSignupPlate

@@ -8,6 +8,7 @@ import {
   POV_MOCK_CREATOR,
   formatPovViewerCount,
 } from "@/lib/experience/live-pov-mock";
+import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 
 const NAME_CLASS = {
   blue: "text-brand-blue",
@@ -19,7 +20,7 @@ export default function ViewerPovGoLiveMobile() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-brand-black">
+    <div className="relative h-full w-full overflow-hidden bg-brand-black">
       {/* Full-screen simulated live camera — sole background layer */}
       <div
         className="absolute inset-0 z-0 h-full w-full bg-gradient-to-b from-[#1a0a2e] via-[#2d1045] to-[#0a1628]"
@@ -65,7 +66,7 @@ export default function ViewerPovGoLiveMobile() {
         </button>
 
         <Link
-          href="/experience"
+          href={ATTENDEE_DASHBOARD_PATH}
           className="touch-target flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60"
           aria-label="Close live stream"
         >
