@@ -2025,7 +2025,7 @@ html {
   width: 100%;
   align-items: flex-start;
   justify-content: center;
-  padding-top: clamp(3.25rem, 10.5vh, 5rem);
+  padding-top: clamp(17.25rem, 12.5vh, 6rem);
   pointer-events: none;
 }
 
@@ -2033,13 +2033,13 @@ html {
   display: flex;
   width: 100%;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   flex-shrink: 0;
 }
 
 .experience-dashboard-welcome-header {
   display: block;
-  width: min(92%, 20rem);
+  width: min(52%, 20rem);
   height: auto;
   filter:
     drop-shadow(0 0 12px rgb(138 43 226 / 0.45))
