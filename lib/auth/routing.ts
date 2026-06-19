@@ -1,5 +1,6 @@
 export const PERSONA_HUB_PATH = "/email-gate";
 export const ATTENDEE_GATE_PATH = "/email-gate/attendee";
+export const CREATE_ACCOUNT_PATH = "/email-gate/attendee/create-account";
 export const TEAM_GATE_PATH = "/email-gate/team";
 
 export const DEFAULT_ATTENDEE_NEXT = "/experience";
@@ -55,6 +56,14 @@ export function resolveAttendeeDestination(nextPath: string): string {
 export function buildAttendeeGateUrl(nextPath?: string | null): string {
   return buildGateUrl(
     ATTENDEE_GATE_PATH,
+    resolveAttendeeDestination(nextPath ?? DEFAULT_ATTENDEE_NEXT),
+    { persona: "attendee" },
+  );
+}
+
+export function buildCreateAccountUrl(nextPath?: string | null): string {
+  return buildGateUrl(
+    CREATE_ACCOUNT_PATH,
     resolveAttendeeDestination(nextPath ?? DEFAULT_ATTENDEE_NEXT),
     { persona: "attendee" },
   );

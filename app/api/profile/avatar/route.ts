@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     }
 
     if (file.size > PROFILE_AVATAR_MAX_BYTES) {
-      return NextResponse.json({ error: "Profile photo must be 2 MB or smaller." }, { status: 400 });
+      return NextResponse.json({ error: "Profile photo must be 5 MB or smaller." }, { status: 400 });
     }
 
     const supabase = await createServerSupabaseClient();

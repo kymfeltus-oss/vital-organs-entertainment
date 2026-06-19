@@ -7,6 +7,9 @@ export type AttendeeProfileUpdate = {
   lastName: string;
   avatarUrl?: string | null;
   email?: string;
+  phone?: string | null;
+  city?: string | null;
+  state?: string | null;
 };
 
 export function normalizeProfileName(value: string): string {
@@ -29,6 +32,18 @@ export async function persistAttendeeProfileUpdate(
 
   if (input.avatarUrl !== undefined) {
     userMetadata.avatar_url = input.avatarUrl;
+  }
+
+  if (input.phone !== undefined) {
+    userMetadata.phone = input.phone;
+  }
+
+  if (input.city !== undefined) {
+    userMetadata.city = input.city;
+  }
+
+  if (input.state !== undefined) {
+    userMetadata.state = input.state;
   }
 
   let nextAuthEmail: string | undefined;
@@ -80,6 +95,18 @@ export async function persistAttendeeProfileUpdate(
 
   if (input.avatarUrl !== undefined) {
     attendeeUpdate.avatar_url = input.avatarUrl;
+  }
+
+  if (input.phone !== undefined) {
+    attendeeUpdate.phone = input.phone;
+  }
+
+  if (input.city !== undefined) {
+    attendeeUpdate.city = input.city;
+  }
+
+  if (input.state !== undefined) {
+    attendeeUpdate.state = input.state;
   }
 
   const { error: attendeeError } = await admin

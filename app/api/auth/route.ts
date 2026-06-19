@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { generateGuestEmail, generateGuestPassword } from "@/lib/access";
+import {
+  CREATE_ACCOUNT_MIN_PASSWORD_LENGTH,
+} from "@/lib/auth/create-account-validation";
+import { isValidUsStateCode } from "@/lib/auth/us-states";
 import { syncUserProfileIdentity } from "@/lib/auth/sync-attendee-profile";
+import { normalizePhoneDigits, isValidPhone } from "@/lib/auth/validation";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
@@ -10,9 +15,12 @@ type AuthRequestBody = {
   action?: AuthAction;
   email?: string;
   password?: string;
+  confirmPassword?: string;
   firstName?: string;
   lastName?: string;
   phone?: string;
+  city?: string;
+  state?: string;
 };
 
 function normalizeNamePart(value: string | undefined): string {
@@ -83,14 +91,22 @@ export async function POST(request: Request) {
     if (action === "signup") {
       const email = body.email?.trim().toLowerCase();
       const password = body.password;
+      const confirmPassword = body.confirmPassword;
       const firstName = normalizeNamePart(body.firstName);
       const lastName = normalizeNamePart(body.lastName);
+      const phone = normalizePhoneDigits(body.phone ?? "");
+      const city = body.city?.trim() ?? "";
+      const state = body.state?.trim().toUpperCase() ?? "";
 
-      if (!email || !password || password.length < 8 || !isValidEmail(email)) {
+      if (!email || !password || password.length < CREATE_ACCOUNT_MIN_PASSWORD_LENGTH || !isValidEmail(email)) {
         return NextResponse.json(
-          { error: "Valid email and an 8+ character password are required." },
+          { error: `Valid email and a ${CREATE_ACCOUNT_MIN_PASSWORD_LENGTH}+ character password are required.` },
           { status: 400 },
         );
+      }
+
+      if (confirmPassword !== undefined && confirmPassword !== password) {
+        return NextResponse.json({ error: "Passwords do not match." }, { status: 400 });
       }
 
       if (!firstName || !lastName) {
@@ -98,6 +114,21 @@ export async function POST(request: Request) {
           { error: "First and last name are required to create an account." },
           { status: 400 },
         );
+      }
+
+      if (!phone || !isValidPhone(phone)) {
+        return NextResponse.json(
+          { error: "A valid 10-digit US phone number is required." },
+          { status: 400 },
+        );
+      }
+
+      if (!city) {
+        return NextResponse.json({ error: "City is required." }, { status: 400 });
+      }
+
+      if (!state || !isValidUsStateCode(state)) {
+        return NextResponse.json({ error: "A valid US state is required." }, { status: 400 });
       }
 
       const origin = resolveRequestOrigin(request);
@@ -109,6 +140,9 @@ export async function POST(request: Request) {
             is_guest: false,
             first_name: firstName,
             last_name: lastName,
+            phone,
+            city,
+            state,
           },
           emailRedirectTo: `${origin}/auth/callback?next=/experience`,
         },

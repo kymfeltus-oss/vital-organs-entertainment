@@ -3,6 +3,12 @@ import { parseNameFieldsFromMetadata } from "@/lib/experience/user-profile-displ
 import { parseAvatarUrl } from "@/lib/profile/attendee-profile";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
+function parseOptionalText(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
 function hasCompleteName(firstName: string, lastName: string): boolean {
   return Boolean(firstName && lastName);
 }
@@ -11,8 +17,11 @@ function hasCompleteName(firstName: string, lastName: string): boolean {
 export async function syncAttendeeProfileFromAuthUser(user: User): Promise<void> {
   const { firstName, lastName } = parseNameFieldsFromMetadata(user.user_metadata);
   const avatarUrl = parseAvatarUrl(user.user_metadata);
+  const phone = parseOptionalText(user.user_metadata?.phone);
+  const city = parseOptionalText(user.user_metadata?.city);
+  const state = parseOptionalText(user.user_metadata?.state);
 
-  if (!firstName && !lastName && !avatarUrl) {
+  if (!firstName && !lastName && !avatarUrl && !phone && !city && !state) {
     return;
   }
 
@@ -23,6 +32,9 @@ export async function syncAttendeeProfileFromAuthUser(user: User): Promise<void>
       first_name: firstName || null,
       last_name: lastName || null,
       avatar_url: avatarUrl,
+      phone,
+      city,
+      state,
     })
     .eq("id", user.id);
 

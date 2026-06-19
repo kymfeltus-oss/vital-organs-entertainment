@@ -10,8 +10,9 @@ import EmailGateShell, {
 } from "@/components/auth/EmailGateShell";
 import OtpVerificationPlaceholder from "@/components/auth/OtpVerificationPlaceholder";
 import {
-  buildPersonaHubUrl,
   buildAttendeeGateUrl,
+  buildCreateAccountUrl,
+  buildPersonaHubUrl,
   resolveAttendeeDestination,
 } from "@/lib/auth/routing";
 import {
@@ -23,7 +24,7 @@ import {
   phoneValidationState,
 } from "@/lib/auth/validation";
 
-type AttendeeTab = "login" | "signup" | "guest";
+type AttendeeTab = "login" | "guest";
 
 type AttendeeFunnelClientProps = {
   nextPath: string;
@@ -44,8 +45,6 @@ export default function AttendeeFunnelClient({
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
   const [phoneTouched, setPhoneTouched] = useState(false);
@@ -72,10 +71,6 @@ export default function AttendeeFunnelClient({
       setError("Enter your email and password.");
       return;
     }
-    if (activeTab === "signup" && (!firstName.trim() || !lastName.trim())) {
-      setError("First and last name are required.");
-      return;
-    }
 
     setStatus("submitting");
     setError(null);
@@ -86,15 +81,9 @@ export default function AttendeeFunnelClient({
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          action: activeTab === "signup" ? "signup" : "login",
+          action: "login",
           email: email.trim().toLowerCase(),
           password,
-          ...(activeTab === "signup"
-            ? {
-                firstName: firstName.trim(),
-                lastName: lastName.trim(),
-              }
-            : {}),
         }),
       });
 
@@ -230,30 +219,18 @@ export default function AttendeeFunnelClient({
   return (
     <AttendeeAuthArtboard>
       <AttendeeAuthLoginPlate
-        mode={activeTab}
+        createAccountHref={buildCreateAccountUrl(destination)}
         email={email}
         password={password}
-        firstName={firstName}
-        lastName={lastName}
         showPassword={showPassword}
         rememberMe={rememberMe}
         isSubmitting={status === "submitting"}
         onEmailChange={setEmail}
         onPasswordChange={setPassword}
-        onFirstNameChange={setFirstName}
-        onLastNameChange={setLastName}
         onEmailBlur={() => setEmailTouched(true)}
         onToggleShowPassword={() => setShowPassword((current) => !current)}
         onRememberMeChange={setRememberMe}
         onSubmit={(event) => void handleCredentialSubmit(event)}
-        onCreateAccount={() => {
-          setActiveTab("signup");
-          setError(null);
-        }}
-        onBackToLogin={() => {
-          setActiveTab("login");
-          setError(null);
-        }}
         onGuest={() => {
           setActiveTab("guest");
           setGuestStep("form");
