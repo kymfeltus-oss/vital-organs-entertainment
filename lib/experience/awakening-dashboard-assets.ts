@@ -32,19 +32,25 @@ export const AWAKENING_DASHBOARD_OVERLAY_LAYOUT = {
   artboardWidth: AWAKENING_DASHBOARD_ARTBOARD.width,
   artboardHeight: AWAKENING_DASHBOARD_ARTBOARD.height,
   safeArea: {
-    top: 80,
+    top: 60,
     right: 40,
-    bottom: 60,
+    bottom: 50,
     left: 40,
   },
   /** Baked AWAKENING logo + glow clear zone ends at this Y. */
-  logoClearBottomY: 608,
+  logoClearBottomY: 672,
   /** Minimum space between logo clear zone and Ian Craig story card. */
-  logoToStoryMinGap: 32,
+  logoToStoryMinGap: 28,
   /** Uniform scale for all five overlay cards (~15% reduction). */
   cardScale: AWAKENING_DASHBOARD_BUTTON_GRID_SCALE,
-  stackGap: 28,
-  gridGap: 20,
+  /** Ian Craig story card → 2×2 grid (vertical). */
+  stackGap: 22,
+  /** Music/Live ↔ Vital/Prayer row gap (vertical, ~25% tighter than prior 20px). */
+  gridRowGap: 15,
+  /** Music↔Live and Vital↔Prayer column gap (horizontal, unchanged). */
+  gridColumnGap: 20,
+  /** Nudge button grid downward after gap tightening. */
+  gridTopOffset: 12,
 } as const;
 
 export const AWAKENING_DASHBOARD_STORY_TOP_Y =

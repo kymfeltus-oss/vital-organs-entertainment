@@ -2020,14 +2020,14 @@ html {
 
 .experience-dashboard-overlay__stack {
   position: absolute;
-  top: calc(var(--dash-story-top-y, 640) / var(--dash-artboard-h, 1920) * 100cqh);
+  top: calc(var(--dash-story-top-y, 700) / var(--dash-artboard-h, 1920) * 100cqh);
   right: calc(var(--dash-safe-right, 40) / var(--dash-artboard-w, 1080) * 100cqw);
-  bottom: calc(var(--dash-safe-bottom, 60) / var(--dash-artboard-h, 1920) * 100cqh);
+  bottom: calc(var(--dash-safe-bottom, 50) / var(--dash-artboard-h, 1920) * 100cqh);
   left: calc(var(--dash-safe-left, 40) / var(--dash-artboard-w, 1080) * 100cqw);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: calc(var(--dash-stack-gap, 28) / var(--dash-artboard-h, 1920) * 100cqh);
+  gap: calc(var(--dash-stack-gap, 22) / var(--dash-artboard-h, 1920) * 100cqh);
   pointer-events: none;
 }
 
@@ -2078,8 +2078,10 @@ html {
   max-width: 100%;
   flex-shrink: 0;
   box-sizing: border-box;
+  margin-top: calc(var(--dash-grid-top-offset, 12) / var(--dash-artboard-h, 1920) * 100cqh);
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: calc(var(--dash-grid-gap, 20) / var(--dash-artboard-w, 1080) * 100cqw);
+  row-gap: calc(var(--dash-grid-row-gap, 15) / var(--dash-artboard-h, 1920) * 100cqh);
+  column-gap: calc(var(--dash-grid-col-gap, 20) / var(--dash-artboard-w, 1080) * 100cqw);
   pointer-events: auto;
 }
 
@@ -2113,14 +2115,16 @@ html {
 
 @supports not (height: 1cqh) {
   .experience-dashboard-overlay__stack {
-    top: 33.33%;
+    top: 36.46%;
     right: 3.7%;
     left: 3.7%;
-    gap: 1.46%;
+    gap: 1.15%;
   }
 
   .experience-dashboard-overlay__grid {
-    gap: 1.85%;
+    margin-top: 0.63%;
+    row-gap: 0.78%;
+    column-gap: 1.85%;
   }
 }
 
