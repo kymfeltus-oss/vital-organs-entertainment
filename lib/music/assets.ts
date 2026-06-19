@@ -1,14 +1,15 @@
 /** Music page — mobile artboard + interactive action targets. */
 
-export const APPLE_MUSIC_SINGLE_URL = "https://music.apple.com/";
+export const APPLE_MUSIC_SINGLE_URL =
+  "https://music.apple.com/us/artist/ian-craig-300/1643247247";
 
 export const MUSIC_ASSETS = {
   mobileBackground: "/music/background%20image%20mobile.png",
 } as const;
 
 export const MUSIC_MOBILE_ART = {
-  width: 853,
-  height: 1844,
+  width: 1080,
+  height: 1920,
 } as const;
 
 export type MusicPageAction = {
@@ -22,17 +23,17 @@ export type MusicPageAction = {
   height: string;
 };
 
-/** Percentage hit targets on the mobile artboard (853×1844). */
+/** Percentage hit targets on the mobile artboard (1080×1920). */
 export const MUSIC_PAGE_ACTIONS: readonly MusicPageAction[] = [
   {
     id: "apple-music",
     label: "Purchase on Apple Music",
     href: APPLE_MUSIC_SINGLE_URL,
     external: true,
-    left: "6%",
-    top: "86.2%",
-    width: "88%",
-    height: "9.5%",
+    left: "14%",
+    top: "84.8%",
+    width: "72%",
+    height: "8.5%",
   },
   {
     id: "vital-seed",

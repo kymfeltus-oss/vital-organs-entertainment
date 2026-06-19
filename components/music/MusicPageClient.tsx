@@ -1,12 +1,21 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import MusicOverlay from "@/components/music/MusicOverlay";
 import { MUSIC_ASSETS, MUSIC_MOBILE_ART } from "@/lib/music/assets";
 
 export default function MusicPageClient() {
   return (
     <div className="music-page">
-      <div className="music-page__stage">
+      <div
+        className="music-page__stage"
+        style={
+          {
+            "--music-art-w": MUSIC_MOBILE_ART.width,
+            "--music-art-h": MUSIC_MOBILE_ART.height,
+          } as CSSProperties
+        }
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={MUSIC_ASSETS.mobileBackground}
