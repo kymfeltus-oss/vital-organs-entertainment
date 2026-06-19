@@ -1,4 +1,4 @@
-/** Canonical attendee live experience — IG-style viewport + Fellowship Chat. */
+/** Canonical attendee live experience — Viewer POV Go Live layouts. */
 export const EXPERIENCE_LIVE_PATH = "/experience/live/ig";
 
 /** Legacy `/experience/live` and aliases forward here. */

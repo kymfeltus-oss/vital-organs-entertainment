@@ -1,29 +1,17 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
 import GoingLiveTransition from "@/components/experience/live/GoingLiveTransition";
-import IgLiveShell from "@/components/experience/live/ig/IgLiveShell";
+import ViewerPovGoLiveShell from "@/components/experience/live/pov/ViewerPovGoLiveShell";
 import PassActivatingShell from "@/components/live/PassActivatingShell";
-import { LiveExperienceStreamProvider } from "@/lib/experience/LiveExperienceStreamContext";
-import { LiveStreamReactionsProvider } from "@/lib/experience/LiveStreamReactionsContext";
-import { useAttendeeLiveState } from "@/lib/experience/useAttendeeLiveState";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
-import {
-  BroadcastHealthProvider,
-  useBroadcastHealth,
-} from "@/lib/parable/BroadcastHealthContext";
+import { BroadcastHealthProvider } from "@/lib/parable/BroadcastHealthContext";
 import { useLiveAccessVerification } from "@/lib/useLiveAccessVerification";
 import { useLiveSeedWallet } from "@/lib/useLiveSeedWallet";
-
-const StreamPaywallOverlay = dynamic(
-  () => import("@/components/live/StreamPaywallOverlay"),
-  { ssr: false },
-);
 
 const GOING_LIVE_MS = 1_400;
 
@@ -44,11 +32,9 @@ export default function LiveExperienceClient({
 function LiveExperienceClientInner({
   initialCountdownConfig,
 }: LiveExperienceClientProps) {
-  const health = useBroadcastHealth();
   const { phase, verificationAttempt } = useLiveAccessVerification();
-  const { isLive: streamIsLive } = useAttendeeLiveState();
   const { refresh: refreshSeedBalance } = useLiveSeedWallet();
-  const { config, countdown, eventPhase, isLoading: countdownLoading } = useLobbyCountdown({
+  const { eventPhase, isLoading: countdownLoading } = useLobbyCountdown({
     initialConfig: initialCountdownConfig,
   });
 
@@ -119,9 +105,6 @@ function LiveExperienceClientInner({
 
   const concertHasBegun = eventPhase !== "waiting";
   const showLiveRoom = concertHasBegun && !openingLiveRoom;
-  const showPaywall = phase === "guest_hub";
-  const paywallOverlay = showPaywall ? <StreamPaywallOverlay /> : undefined;
-  const shellMode = streamIsLive ? "live" : "waiting";
 
   if (!showLiveRoom) {
     if (openingLiveRoom) {
@@ -135,20 +118,5 @@ function LiveExperienceClientInner({
     );
   }
 
-  return (
-    <LiveStreamReactionsProvider enabled={streamIsLive && !health.safeMode}>
-      <LiveExperienceStreamProvider enabled={streamIsLive}>
-        <IgLiveShell
-          mode={shellMode}
-          showPaywall={showPaywall}
-          paywallOverlay={paywallOverlay}
-          waiting={{
-            countdown,
-            countdownConfig: config,
-            countdownLoading,
-          }}
-        />
-      </LiveExperienceStreamProvider>
-    </LiveStreamReactionsProvider>
-  );
+  return <ViewerPovGoLiveShell />;
 }

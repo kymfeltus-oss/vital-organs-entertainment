@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     "Join the 300 Awakening Live Experience — premium live viewing from Vital Organs Entertainment.",
 };
 
-/** Attendee live experience — holding room, IG viewport, Fellowship Chat. */
+/** Attendee live experience — holding room, then Viewer POV Go Live when concert begins. */
 export default async function ExperienceLiveIgPage() {
   const initialCountdownConfig = await loadActiveCountdownConfig();
 
