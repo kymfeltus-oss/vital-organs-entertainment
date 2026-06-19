@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, type CSSProperties } from "react";
-import HoldingRoomDynamicOverlays from "@/components/experience/holding-room/HoldingRoomDynamicOverlays";
+import HoldingRoomContent from "@/components/experience/holding-room/HoldingRoomContent";
 import { shouldShowCountdownTimer } from "@/lib/experience/countdown-display";
 import {
   HOLDING_ROOM_ARTBOARD,
@@ -40,7 +40,6 @@ function ExperienceHoldingRoomPageContent({
           } as CSSProperties
         }
       >
-        {/* Layer 1 — approved flat background (never modified in code) */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={HOLDING_ROOM_ASSETS.mobileBackground}
@@ -53,11 +52,7 @@ function ExperienceHoldingRoomPageContent({
           draggable={false}
         />
 
-        <HoldingRoomDynamicOverlays
-          config={config}
-          countdown={countdown}
-          showCountdown={showCountdown}
-        />
+        <HoldingRoomContent countdown={countdown} showCountdown={showCountdown} />
       </div>
     </div>
   );
