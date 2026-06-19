@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
 import {
   AWAKENING_ASSETS,
   AWAKENING_CONCERT_BACKDROP_ART,
   AWAKENING_DASHBOARD_BUTTON_GRID,
+  AWAKENING_DASHBOARD_OVERLAY_LAYOUT,
+  AWAKENING_DASHBOARD_STORY_TOP_Y,
 } from "@/lib/experience/awakening-dashboard-assets";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
@@ -49,7 +51,23 @@ export default function ExperienceDashboardInterfaceLayer({
 
   return (
     <div className="experience-dashboard-container">
-      <div className="experience-dashboard-artboard">
+      <div
+        className="experience-dashboard-artboard"
+        style={
+          {
+            "--dash-story-top-y": AWAKENING_DASHBOARD_STORY_TOP_Y,
+            "--dash-safe-top": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.safeArea.top,
+            "--dash-safe-right": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.safeArea.right,
+            "--dash-safe-bottom": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.safeArea.bottom,
+            "--dash-safe-left": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.safeArea.left,
+            "--dash-card-scale": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.cardScale,
+            "--dash-stack-gap": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.stackGap,
+            "--dash-grid-gap": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridGap,
+            "--dash-artboard-h": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.artboardHeight,
+            "--dash-artboard-w": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.artboardWidth,
+          } as CSSProperties
+        }
+      >
         <video
           ref={backgroundRef}
           src={AWAKENING_ASSETS.background}

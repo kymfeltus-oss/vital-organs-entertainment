@@ -2020,12 +2020,14 @@ html {
 
 .experience-dashboard-overlay__stack {
   position: absolute;
-  top: calc(590 / 1920 * 100cqh);
-  right: 3.5%;
-  left: 3.5%;
+  top: calc(var(--dash-story-top-y, 640) / var(--dash-artboard-h, 1920) * 100cqh);
+  right: calc(var(--dash-safe-right, 40) / var(--dash-artboard-w, 1080) * 100cqw);
+  bottom: calc(var(--dash-safe-bottom, 60) / var(--dash-artboard-h, 1920) * 100cqh);
+  left: calc(var(--dash-safe-left, 40) / var(--dash-artboard-w, 1080) * 100cqw);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  align-items: center;
+  gap: calc(var(--dash-stack-gap, 28) / var(--dash-artboard-h, 1920) * 100cqh);
   pointer-events: none;
 }
 
@@ -2041,7 +2043,8 @@ html {
 
 .experience-dashboard-overlay__story {
   display: block;
-  width: 100%;
+  width: calc(var(--dash-card-scale, 0.85) * 100%);
+  max-width: 100%;
   flex-shrink: 0;
   transition:
     transform 0.22s ease,
@@ -2071,11 +2074,12 @@ html {
 
 .experience-dashboard-overlay__grid {
   display: grid;
-  width: 100%;
+  width: calc(var(--dash-card-scale, 0.85) * 100%);
+  max-width: 100%;
   flex-shrink: 0;
   box-sizing: border-box;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(0.5rem, 1.5cqw, 0.85rem);
+  gap: calc(var(--dash-grid-gap, 20) / var(--dash-artboard-w, 1080) * 100cqw);
   pointer-events: auto;
 }
 
@@ -2109,7 +2113,14 @@ html {
 
 @supports not (height: 1cqh) {
   .experience-dashboard-overlay__stack {
-    top: 30.73%;
+    top: 33.33%;
+    right: 3.7%;
+    left: 3.7%;
+    gap: 1.46%;
+  }
+
+  .experience-dashboard-overlay__grid {
+    gap: 1.85%;
   }
 }
 
@@ -2273,23 +2284,36 @@ html {
   display: flex;
   flex: 1;
   width: 100%;
+  height: 100%;
   min-height: 0;
-  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  container-type: size;
+  container-name: music-viewport;
 }
 
 .music-page__stage {
   position: relative;
-  width: 100%;
-  height: 100%;
-  min-height: 100%;
+  width: min(100cqw, calc(100cqh * 853 / 1844));
+  height: min(100cqh, calc(100cqw * 1844 / 853));
+  max-width: 100%;
+  max-height: 100%;
+  flex-shrink: 0;
+  container-type: size;
+  container-name: music-artboard;
 }
 
 .music-page__bg {
   position: absolute;
   inset: 0;
+  z-index: 1;
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center top;
   pointer-events: none;
   user-select: none;
@@ -2307,6 +2331,13 @@ html {
   position: absolute;
   min-height: 44px;
   pointer-events: auto;
+}
+
+@supports not (width: 1cqw) {
+  .music-page__stage {
+    width: min(100%, calc(100dvh * 853 / 1844));
+    height: min(100dvh, calc(100vw * 1844 / 853));
+  }
 }
 
 .dashboard-hero-mobile-card-hits {

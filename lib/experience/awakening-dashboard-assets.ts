@@ -24,8 +24,32 @@ export const AWAKENING_DASHBOARD_CONTAINER = {
   aspectHeight: 16,
 } as const;
 
-/** PNG button grid — near full native art width on mobile. */
-export const AWAKENING_DASHBOARD_BUTTON_GRID_SCALE = 1 as const;
+/** PNG button grid — scaled overlay footprint on mobile artboard. */
+export const AWAKENING_DASHBOARD_BUTTON_GRID_SCALE = 0.85 as const;
+
+/** Overlay layout — native 1080×1920 artboard coordinates (px). */
+export const AWAKENING_DASHBOARD_OVERLAY_LAYOUT = {
+  artboardWidth: AWAKENING_DASHBOARD_ARTBOARD.width,
+  artboardHeight: AWAKENING_DASHBOARD_ARTBOARD.height,
+  safeArea: {
+    top: 80,
+    right: 40,
+    bottom: 60,
+    left: 40,
+  },
+  /** Baked AWAKENING logo + glow clear zone ends at this Y. */
+  logoClearBottomY: 608,
+  /** Minimum space between logo clear zone and Ian Craig story card. */
+  logoToStoryMinGap: 32,
+  /** Uniform scale for all five overlay cards (~15% reduction). */
+  cardScale: AWAKENING_DASHBOARD_BUTTON_GRID_SCALE,
+  stackGap: 28,
+  gridGap: 20,
+} as const;
+
+export const AWAKENING_DASHBOARD_STORY_TOP_Y =
+  AWAKENING_DASHBOARD_OVERLAY_LAYOUT.logoClearBottomY +
+  AWAKENING_DASHBOARD_OVERLAY_LAYOUT.logoToStoryMinGap;
 
 /** Wire creator portrait stream URL when the event feed is live. */
 export const AWAKENING_CREATOR_STREAM_SRC: string | null = null;
