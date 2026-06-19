@@ -74,26 +74,51 @@ export default function ExperienceDashboardInterfaceLayer({
           </div>
         ) : null}
 
-        <div className="experience-dashboard-bottom-zone">
-          <nav
-            className="dashboard-tactical-button-grid experience-dashboard-button-grid"
-            aria-label="Dashboard shortcuts"
+        <main className="experience-dashboard-board" aria-label="300 Awakening dashboard">
+          <header className="experience-dashboard-board__logo">
+            <img
+              src={AWAKENING_ASSETS.logo}
+              alt="300 Awakening"
+              width={320}
+              height={120}
+              className="experience-dashboard-board__logo-img"
+              loading="eager"
+              decoding="async"
+              draggable={false}
+            />
+          </header>
+
+          <Link
+            href={AWAKENING_ASSETS.routes.watchStory}
+            className="experience-dashboard-board__story touch-target"
+            aria-label="Watch Ian Craig's healing journey"
           >
-            {AWAKENING_DASHBOARD_BUTTON_GRID.map((button, index) => (
+            <img
+              src={AWAKENING_ASSETS.ianCraigStoryPoster}
+              alt=""
+              width={1536}
+              height={1024}
+              className="experience-dashboard-board__story-img"
+              loading="eager"
+              decoding="async"
+              draggable={false}
+            />
+          </Link>
+
+          <nav className="experience-dashboard-board__grid" aria-label="Dashboard shortcuts">
+            {AWAKENING_DASHBOARD_BUTTON_GRID.map((button) => (
               <Link
                 key={button.id}
                 href={button.href}
-                className={`experience-dashboard-button-grid__link touch-target ${
-                  index % 2 === 0 ? "btn-cell-blue" : "btn-cell-magenta"
-                }`}
+                className="experience-dashboard-board__card touch-target"
                 aria-label={button.ariaLabel}
               >
                 <img
                   src={button.src}
                   alt=""
-                  width={280}
-                  height={280}
-                  className="experience-dashboard-button-grid__img"
+                  width={512}
+                  height={512}
+                  className="experience-dashboard-board__card-img"
                   loading="eager"
                   decoding="async"
                   draggable={false}
@@ -101,7 +126,7 @@ export default function ExperienceDashboardInterfaceLayer({
               </Link>
             ))}
           </nav>
-        </div>
+        </main>
       </div>
     </div>
   );
