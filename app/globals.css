@@ -2027,7 +2027,7 @@ html {
 .experience-dashboard-overlay__stack {
   position: absolute;
   /* Map artboard Y coords via width — matches object-fit:contain video plate (avoids scroll-height cqh drift). */
-  top: calc(var(--dash-story-top-y, 640) / var(--dash-artboard-w, 1080) * 100cqw);
+  top: calc(var(--dash-story-top-y, 656) / var(--dash-artboard-w, 1080) * 100cqw);
   right: calc(var(--dash-safe-right, 40) / var(--dash-artboard-w, 1080) * 100cqw);
   left: calc(var(--dash-safe-left, 40) / var(--dash-artboard-w, 1080) * 100cqw);
   padding-bottom: calc(var(--dash-safe-bottom, 52) / var(--dash-artboard-w, 1080) * 100cqw);
@@ -2122,7 +2122,7 @@ html {
 
 @supports not (width: 1cqw) {
   .experience-dashboard-overlay__stack {
-    top: calc(var(--dash-story-top-y, 640) / var(--dash-artboard-scroll-h, 2360) * 100%);
+    top: calc(var(--dash-story-top-y, 656) / var(--dash-artboard-scroll-h, 2360) * 100%);
     right: 3.7%;
     left: 3.7%;
     gap: calc(var(--dash-stack-gap, 20) / var(--dash-artboard-scroll-h, 2360) * 100%);
@@ -2142,60 +2142,21 @@ html {
   z-index: 60;
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: clamp(0.5rem, 2vw, 0.75rem);
+  justify-content: flex-end;
   padding-top: max(0.5rem, env(safe-area-inset-top));
   padding-inline: max(1rem, calc(40 / 1080 * 100vw));
   padding-bottom: 0.35rem;
 }
 
-.dashboard-mobile-fixed-chrome__lead {
+.dashboard-mobile-fixed-chrome__actions {
   display: flex;
-  min-width: 0;
-  flex: 1;
-  align-items: flex-start;
-  gap: clamp(0.55rem, 2.5vw, 0.75rem);
+  flex-shrink: 0;
+  align-items: center;
+  gap: clamp(0.55rem, 2.5vw, 0.85rem);
 }
 
 .dashboard-mobile-fixed-chrome__menu {
-  margin-top: 0.2rem;
-}
-
-.dashboard-mobile-fixed-chrome__welcome {
-  min-width: 0;
-  flex: 1;
-  padding-top: 0.05rem;
-}
-
-.dashboard-mobile-fixed-chrome__welcome-label {
-  margin: 0;
-  font-size: clamp(0.52rem, 2.2vw, 0.62rem);
-  font-weight: 600;
-  letter-spacing: 0.32em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.72);
-}
-
-.dashboard-mobile-fixed-chrome__welcome-lines {
-  margin-top: 0.2rem;
-  justify-content: flex-start;
-}
-
-.dashboard-mobile-fixed-chrome__welcome-lines::before,
-.dashboard-mobile-fixed-chrome__welcome-lines::after {
-  width: clamp(1.25rem, 5vw, 2.5rem);
-}
-
-.dashboard-mobile-fixed-chrome__welcome-lines .dashboard-hero-welcome-title {
-  max-width: min(100%, 11rem);
-  font-size: clamp(1.35rem, 5.5vw, 1.85rem);
-  text-align: left;
-}
-
-.dashboard-mobile-fixed-chrome__profile {
-  flex-shrink: 0;
-  padding-top: 0.15rem;
-  padding-inline-end: 0;
+  margin-top: 0;
 }
 
 .experience-dashboard-top-zone {
