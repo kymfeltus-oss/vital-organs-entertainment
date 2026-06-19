@@ -102,6 +102,30 @@ export const AWAKENING_DASHBOARD_BUTTON_ASSETS = {
   prayer: "/awakening/300_dashboard_assets/prayer_contact_button.png",
 } as const;
 
+/**
+ * Non-transparent visible art bounds inside each 1254×1254 PNG (px).
+ * Prayer is the reference tile; others carry extra baked-in black margin.
+ */
+export const AWAKENING_DASHBOARD_BUTTON_CONTENT_BBOX = {
+  music: { width: 1117, height: 1205 },
+  live: { width: 1128, height: 1161 },
+  giving: { width: 1120, height: 1201 },
+  prayer: { width: 1215, height: 1249 },
+} as const;
+
+const PRAYER_CONTENT_REF = AWAKENING_DASHBOARD_BUTTON_CONTENT_BBOX.prayer;
+
+/** Scale img to match prayer tile visual prominence (compensates PNG margin drift). */
+export function dashboardButtonVisualScale(
+  id: keyof typeof AWAKENING_DASHBOARD_BUTTON_CONTENT_BBOX,
+): number {
+  const bbox = AWAKENING_DASHBOARD_BUTTON_CONTENT_BBOX[id];
+  return Math.max(
+    PRAYER_CONTENT_REF.width / bbox.width,
+    PRAYER_CONTENT_REF.height / bbox.height,
+  );
+}
+
 /** 2×2 grid order: top-left → top-right → bottom-left → bottom-right. */
 export const AWAKENING_DASHBOARD_BUTTON_GRID = [
   {
@@ -109,24 +133,28 @@ export const AWAKENING_DASHBOARD_BUTTON_GRID = [
     href: AWAKENING_ASSETS.routes.music,
     src: AWAKENING_DASHBOARD_BUTTON_ASSETS.music,
     ariaLabel: "Music — Listen, download, and share",
+    imageVisualScale: dashboardButtonVisualScale("music"),
   },
   {
     id: "live",
     href: AWAKENING_ASSETS.routes.liveRoom,
     src: AWAKENING_DASHBOARD_BUTTON_ASSETS.live,
     ariaLabel: "Live Room — Enter the sanctuary stage",
+    imageVisualScale: dashboardButtonVisualScale("live"),
   },
   {
     id: "giving",
     href: AWAKENING_ASSETS.routes.giving,
     src: AWAKENING_DASHBOARD_BUTTON_ASSETS.giving,
     ariaLabel: "Vital Seed Giving — Every gift has a frequency",
+    imageVisualScale: dashboardButtonVisualScale("giving"),
   },
   {
     id: "prayer",
     href: AWAKENING_ASSETS.routes.prayer,
     src: AWAKENING_DASHBOARD_BUTTON_ASSETS.prayer,
     ariaLabel: "Prayer — Leave a message of hope",
+    imageVisualScale: dashboardButtonVisualScale("prayer"),
   },
 ] as const;
 

@@ -103,24 +103,22 @@ export default function ExperienceDashboardInterfaceLayer({
 
           <div className="experience-dashboard-overlay__stack dashboard-page">
             <div className="experience-dashboard-overlay__content-band dashboard-card-stack">
-              <div className="experience-dashboard-overlay__story-track">
-                <Link
-                  href={AWAKENING_ASSETS.routes.watchStory}
-                  className="experience-dashboard-overlay__story touch-target"
-                  aria-label="Watch Ian Craig's healing journey"
-                >
-                  <img
-                    src={AWAKENING_ASSETS.ianCraigStoryPoster}
-                    alt=""
-                    width={1536}
-                    height={1024}
-                    className="experience-dashboard-overlay__story-img"
-                    loading="eager"
-                    decoding="async"
-                    draggable={false}
-                  />
-                </Link>
-              </div>
+              <Link
+                href={AWAKENING_ASSETS.routes.watchStory}
+                className="experience-dashboard-overlay__story touch-target"
+                aria-label="Watch Ian Craig's healing journey"
+              >
+                <img
+                  src={AWAKENING_ASSETS.ianCraigStoryPoster}
+                  alt=""
+                  width={1536}
+                  height={1024}
+                  className="experience-dashboard-overlay__story-img"
+                  loading="eager"
+                  decoding="async"
+                  draggable={false}
+                />
+              </Link>
 
               <nav
                 className="dashboard-action-grid experience-dashboard-overlay__grid"
@@ -132,6 +130,7 @@ export default function ExperienceDashboardInterfaceLayer({
                     href={button.href}
                     src={button.src}
                     ariaLabel={button.ariaLabel}
+                    imageVisualScale={button.imageVisualScale}
                   />
                 ))}
               </nav>

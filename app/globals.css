@@ -2003,10 +2003,8 @@ html {
   container-name: dash-artboard;
   --dashboard-page-padding: 16px;
   --dashboard-card-gap: 12px;
-  --dashboard-track-width: min(
-    calc(100vw - (var(--dashboard-page-padding) * 2)),
-    calc(100cqw - (var(--dashboard-page-padding) * 2))
-  );
+  /* heroWidth = gridWidth = artboard content track inside page padding */
+  --dashboard-track-width: calc(100cqw - (var(--dashboard-page-padding) * 2));
 }
 
 .experience-dashboard-artboard__bg {
@@ -2045,26 +2043,26 @@ html {
   pointer-events: none;
 }
 
-/* Center-aligned content track — Ian Craig hero + 2×2 grid share one aligned column. */
-.dashboard-page {
-  width: 100%;
-  max-width: 100%;
+/* Single card system — page padding defines safe track; stack fills it exactly. */
+.experience-dashboard-overlay__stack.dashboard-page {
+  align-items: stretch;
   padding-inline: var(--dashboard-page-padding, 16px);
-  box-sizing: border-box;
   overflow: visible;
 }
 
-.dashboard-card-stack {
+.dashboard-card-stack,
+.experience-dashboard-overlay__content-band {
   display: flex;
-  width: var(--dashboard-track-width, 100%);
-  max-width: var(--dashboard-track-width, 100%);
-  margin-inline: auto;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
   flex-direction: column;
   align-items: stretch;
   gap: var(--dashboard-card-gap, 12px);
   flex-shrink: 0;
   pointer-events: none;
   overflow: visible;
+  box-sizing: border-box;
 }
 
 .dashboard-card {
@@ -2075,28 +2073,18 @@ html {
   border-radius: 1.5rem;
 }
 
-.experience-dashboard-overlay__content-band {
-  display: flex;
-  width: var(--dashboard-track-width, 100%);
-  max-width: var(--dashboard-track-width, 100%);
-  margin-inline: auto;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--dashboard-card-gap, 12px);
-  flex-shrink: 0;
-  pointer-events: none;
-  overflow: visible;
-}
-
-/* Hero + grid share identical track width for flush left/right edges */
-.experience-dashboard-overlay__story-track {
+.experience-dashboard-overlay__story {
+  display: block;
   width: 100%;
-  max-width: var(--dashboard-track-width, 100%);
-  margin-inline: auto;
+  max-width: 100%;
+  margin: 0;
   flex-shrink: 0;
   overflow: visible;
-  pointer-events: none;
   box-sizing: border-box;
+  transition:
+    transform 0.22s ease,
+    filter 0.22s ease;
+  pointer-events: auto;
 }
 
 .experience-dashboard-countdown-slot {
@@ -2106,19 +2094,6 @@ html {
   z-index: 14;
   width: min(68%, 10rem);
   transform: translateX(-50%);
-  pointer-events: auto;
-}
-
-.experience-dashboard-overlay__story {
-  display: block;
-  width: 100%;
-  max-width: var(--dashboard-track-width, 100%);
-  margin-inline: auto;
-  flex-shrink: 0;
-  overflow: visible;
-  transition:
-    transform 0.22s ease,
-    filter 0.22s ease;
   pointer-events: auto;
 }
 
@@ -2145,8 +2120,8 @@ html {
 .experience-dashboard-overlay__grid,
 .dashboard-action-grid {
   width: 100%;
-  max-width: var(--dashboard-track-width, 100%);
-  margin-inline: auto;
+  max-width: 100%;
+  margin: 0;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--dashboard-card-gap, 12px);
@@ -2165,7 +2140,7 @@ html {
   aspect-ratio: 1 / 1;
   padding: 0;
   border-radius: 18px;
-  overflow: hidden;
+  overflow: visible;
   text-decoration: none;
   transition:
     transform 0.22s ease,
@@ -2179,6 +2154,8 @@ html {
   height: 100%;
   object-fit: contain;
   object-position: center center;
+  transform: scale(var(--dash-action-art-scale, 1));
+  transform-origin: center center;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
@@ -2206,14 +2183,13 @@ html {
   }
 
   .experience-dashboard-overlay__content-band,
-  .dashboard-card-stack {
-    width: 100%;
-    max-width: 100%;
-    gap: var(--dashboard-card-gap, 12px);
-  }
-
+  .dashboard-card-stack,
+  .experience-dashboard-overlay__story,
   .experience-dashboard-overlay__grid,
   .dashboard-action-grid {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
     gap: var(--dashboard-card-gap, 12px);
   }
 }
