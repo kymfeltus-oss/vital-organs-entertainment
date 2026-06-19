@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
-import ExperienceDashboardStorySlot from "@/components/experience/dashboard/ExperienceDashboardStorySlot";
+import ExperienceDashboardHeroBanner from "@/components/experience/dashboard/ExperienceDashboardHeroBanner";
 import {
   AWAKENING_ASSETS,
   AWAKENING_DASHBOARD_BUTTON_GRID,
@@ -78,19 +78,8 @@ export default function ExperienceDashboardInterfaceLayer({
           </div>
         ) : null}
 
-        <div className="experience-dashboard-top-zone">
-          <header className="experience-dashboard-header-zone">
-            <div className="experience-dashboard-welcome-stack">
-              <p className="experience-dashboard-welcome-label font-ui">Welcome</p>
-              <h1 className="experience-dashboard-welcome-name font-headline">
-                {profile.headerDisplayName}
-              </h1>
-            </div>
-          </header>
-        </div>
-
-        <div className="experience-dashboard-middle-zone">
-          <ExperienceDashboardStorySlot />
+        <div className="experience-dashboard-hero-zone">
+          <ExperienceDashboardHeroBanner profile={profile} />
         </div>
 
         <div className="experience-dashboard-bottom-zone">
