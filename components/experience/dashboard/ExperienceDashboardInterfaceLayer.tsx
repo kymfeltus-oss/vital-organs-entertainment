@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
+import ExperienceDashboardStorySlot from "@/components/experience/dashboard/ExperienceDashboardStorySlot";
 import {
   AWAKENING_ASSETS,
   AWAKENING_DASHBOARD_BUTTON_GRID,
@@ -86,6 +87,10 @@ export default function ExperienceDashboardInterfaceLayer({
               </h1>
             </div>
           </header>
+        </div>
+
+        <div className="experience-dashboard-middle-zone">
+          <ExperienceDashboardStorySlot />
         </div>
 
         <div className="experience-dashboard-bottom-zone">

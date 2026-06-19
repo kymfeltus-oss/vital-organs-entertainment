@@ -27,6 +27,9 @@ export const AWAKENING_CREATOR_STREAM_SRC: string | null = null;
 export const AWAKENING_ASSETS = {
   background: "/awakening/dashboard-concert-bg%20mobile.mp4",
   welcomeHeader: "/awakening/300_dashboard_assets/welcome_header.png",
+  /** 3:2 story poster — swap to MP4 via `ianCraigStoryVideo` when ready. */
+  ianCraigStoryPoster: "/awakening/300_dashboard_assets/ian%20craig%20story.png",
+  ianCraigStoryVideo: null as string | null,
   routes: {
     enterExperience: "/experience/live",
     watchStory: "/",
@@ -110,6 +113,7 @@ export const AWAKENING_DASHBOARD_CARDS_MOBILE = [
 
 export const AWAKENING_PRELOAD_ASSETS = [
   { href: AWAKENING_ASSETS.background, as: "video" as const },
+  { href: AWAKENING_ASSETS.ianCraigStoryPoster, as: "image" as const },
   { href: "/branding/awakening-lockup.png", as: "image" as const },
   ...Object.values(AWAKENING_DASHBOARD_BUTTON_ASSETS).map((href) => ({
     href,
