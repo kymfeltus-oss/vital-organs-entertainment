@@ -2081,7 +2081,7 @@ html {
 
 .experience-dashboard-overlay__grid {
   display: grid;
-  width: calc(var(--dash-card-scale, 0.85) * 100%);
+  width: calc(var(--dash-story-scale, 0.92) * 100%);
   max-width: 100%;
   flex-shrink: 0;
   box-sizing: border-box;
@@ -2104,6 +2104,7 @@ html {
 .experience-dashboard-overlay__card-img {
   width: 100%;
   height: auto;
+  aspect-ratio: calc(1 / var(--dash-grid-card-height-scale, 1.05));
   display: block;
   object-fit: contain;
   pointer-events: none;

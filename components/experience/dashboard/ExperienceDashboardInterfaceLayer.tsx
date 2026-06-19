@@ -62,6 +62,7 @@ export default function ExperienceDashboardInterfaceLayer({
             "--dash-safe-left": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.safeArea.left,
             "--dash-card-scale": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.cardScale,
             "--dash-story-scale": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.storyCardScale,
+            "--dash-grid-card-height-scale": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridCardHeightScale,
             "--dash-stack-gap": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.stackGap,
             "--dash-grid-row-gap": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridRowGap,
             "--dash-grid-col-gap": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridColumnGap,

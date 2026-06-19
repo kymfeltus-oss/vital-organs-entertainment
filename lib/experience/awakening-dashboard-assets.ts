@@ -45,6 +45,8 @@ export const AWAKENING_DASHBOARD_OVERLAY_LAYOUT = {
   cardScale: AWAKENING_DASHBOARD_BUTTON_GRID_SCALE,
   /** Ian Craig story banner — slightly larger for readable copy. */
   storyCardScale: 0.92,
+  /** Grid matches story width; cells render slightly taller than square. */
+  gridCardHeightScale: 1.05,
   /** Ian Craig story card → Music/Live row (vertical). */
   stackGap: 20,
   /** Music/Live ↔ Vital/Prayer row gap (vertical). */
@@ -57,7 +59,7 @@ export const AWAKENING_DASHBOARD_OVERLAY_LAYOUT = {
    * Min artboard scroll height at 1080px reference width — ensures Vital/Prayer row
    * clears the bottom safe area (story top + cards + gaps + bottom inset).
    */
-  artboardScrollHeight: 2360,
+  artboardScrollHeight: 2380,
 } as const;
 
 export const AWAKENING_DASHBOARD_STORY_TOP_Y =
