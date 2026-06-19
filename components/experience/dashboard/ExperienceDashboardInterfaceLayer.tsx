@@ -3,22 +3,18 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
-import ExperienceDashboardHeroBanner from "@/components/experience/dashboard/ExperienceDashboardHeroBanner";
 import {
   AWAKENING_ASSETS,
   AWAKENING_DASHBOARD_BUTTON_GRID,
 } from "@/lib/experience/awakening-dashboard-assets";
-import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
 
 type ExperienceDashboardInterfaceLayerProps = {
-  profile: AttendeeProfileSnapshot;
   initialCountdownConfig?: EventCountdownConfig;
 };
 
 export default function ExperienceDashboardInterfaceLayer({
-  profile,
   initialCountdownConfig,
 }: ExperienceDashboardInterfaceLayerProps) {
   const backgroundRef = useRef<HTMLVideoElement>(null);
@@ -78,24 +74,25 @@ export default function ExperienceDashboardInterfaceLayer({
           </div>
         ) : null}
 
-        <div className="experience-dashboard-hero-zone">
-          <ExperienceDashboardHeroBanner profile={profile} />
-        </div>
-
         <div className="experience-dashboard-bottom-zone">
-          <nav className="experience-dashboard-button-grid" aria-label="Dashboard shortcuts">
-            {AWAKENING_DASHBOARD_BUTTON_GRID.map((button) => (
+          <nav
+            className="dashboard-tactical-button-grid experience-dashboard-button-grid"
+            aria-label="Dashboard shortcuts"
+          >
+            {AWAKENING_DASHBOARD_BUTTON_GRID.map((button, index) => (
               <Link
                 key={button.id}
                 href={button.href}
-                className="experience-dashboard-button-grid__link touch-target"
+                className={`experience-dashboard-button-grid__link touch-target ${
+                  index % 2 === 0 ? "btn-cell-blue" : "btn-cell-magenta"
+                }`}
                 aria-label={button.ariaLabel}
               >
                 <img
                   src={button.src}
                   alt=""
                   width={280}
-                  height={148}
+                  height={280}
                   className="experience-dashboard-button-grid__img"
                   loading="eager"
                   decoding="async"
