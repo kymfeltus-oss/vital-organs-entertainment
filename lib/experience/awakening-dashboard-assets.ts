@@ -45,8 +45,18 @@ export const AWAKENING_DASHBOARD_OVERLAY_LAYOUT = {
   cardScale: AWAKENING_DASHBOARD_BUTTON_GRID_SCALE,
   /** @deprecated Use 100% shared stack width — kept for artboard scroll math only. */
   storyCardScale: 1,
-  /** Uniform gutter between all five cards — story, rows, and columns (1080 artboard px). */
+  /** Horizontal padding track for story + button grid (px). */
+  contentTrackPadding: 16,
+  /** Uniform gutter between Ian Craig story and the 2×2 grid (1080 artboard px). */
   overlayCardGap: 20,
+  /** 2×2 grid gap — equal row and column spacing (px). */
+  gridCardGap: 14,
+  /** Shared story + action grid track width at 390px reference (390 − 2×16 padding). */
+  actionGridMaxWidth: 358,
+  /** Internal padding inside each action cell (px). */
+  actionCellPadding: 16,
+  /** Inner bottom inset for dashboard grid pill overlays (px). */
+  gridCardPillInset: 12,
   /** Extra nudge below story card — use overlayCardGap for primary rhythm. */
   gridTopOffset: 0,
   /**
@@ -95,24 +105,28 @@ export const AWAKENING_DASHBOARD_BUTTON_GRID = [
     href: AWAKENING_ASSETS.routes.music,
     src: AWAKENING_DASHBOARD_BUTTON_ASSETS.music,
     ariaLabel: "Music — Listen, download, and share",
+    pillLabel: "Apple Music",
   },
   {
     id: "live",
     href: AWAKENING_ASSETS.routes.liveRoom,
     src: AWAKENING_DASHBOARD_BUTTON_ASSETS.live,
     ariaLabel: "Live Room — Enter the sanctuary stage",
+    pillLabel: "Watch Live",
   },
   {
     id: "giving",
     href: AWAKENING_ASSETS.routes.giving,
     src: AWAKENING_DASHBOARD_BUTTON_ASSETS.giving,
     ariaLabel: "Vital Seed Giving — Every gift has a frequency",
+    pillLabel: "Read Now",
   },
   {
     id: "prayer",
     href: AWAKENING_ASSETS.routes.prayer,
     src: AWAKENING_DASHBOARD_BUTTON_ASSETS.prayer,
     ariaLabel: "Prayer — Leave a message of hope",
+    pillLabel: "Send a Request",
   },
 ] as const;
 

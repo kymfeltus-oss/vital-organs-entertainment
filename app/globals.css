@@ -2028,26 +2028,29 @@ html {
   position: absolute;
   /* Map artboard Y coords via width — matches object-fit:contain video plate (avoids scroll-height cqh drift). */
   top: calc(var(--dash-story-top-y, 664) / var(--dash-artboard-w, 1080) * 100cqw);
-  right: calc(var(--dash-safe-right, 40) / var(--dash-artboard-w, 1080) * 100cqw);
-  left: calc(var(--dash-safe-left, 40) / var(--dash-artboard-w, 1080) * 100cqw);
+  right: 0;
+  left: 0;
+  width: 100%;
   padding-bottom: calc(var(--dash-safe-bottom, 52) / var(--dash-artboard-w, 1080) * 100cqw);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: center;
   pointer-events: none;
 }
 
-/* Shared dashboard card column — Ian Craig + 2×2 grid share one width rhythm. */
+/* Center-aligned content track — story + 2×2 grid share one 16px padded column. */
 .dashboard-page {
   width: 100%;
-  padding-inline: calc(16 / var(--dash-artboard-w, 1080) * 100cqw);
+  max-width: 100%;
+  padding-inline: calc(var(--dash-content-track-padding, 16) * 1px);
   box-sizing: border-box;
 }
 
 .dashboard-card-stack {
   display: flex;
   width: 100%;
-  max-width: 100%;
+  max-width: min(100%, calc(var(--dash-action-grid-max, 358) * 1px));
   margin-inline: auto;
   flex-direction: column;
   align-items: stretch;
@@ -2117,41 +2120,78 @@ html {
 }
 
 .experience-dashboard-overlay__grid {
-  display: grid;
   width: 100%;
-  max-width: 100%;
+  max-width: min(100%, calc(var(--dash-action-grid-max, 358) * 1px));
   flex-shrink: 0;
   box-sizing: border-box;
-  margin: 0;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: repeat(2, minmax(0, 1fr));
-  gap: calc(var(--dash-overlay-card-gap, 20) / var(--dash-artboard-w, 1080) * 100cqw);
+  margin-inline: auto;
+  padding: 0;
   pointer-events: auto;
 }
 
-.experience-dashboard-overlay__card {
-  display: flex;
-  aspect-ratio: 1;
-  align-items: center;
-  justify-content: center;
+/* Master grid wrapper — story banner shares the same max track width via .dashboard-card-stack */
+.dashboard-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(var(--dash-grid-card-gap, 14) * 1px);
   width: 100%;
-  min-width: 0;
-  margin: 0;
+  max-width: min(100%, calc(var(--dash-action-grid-max, 358) * 1px));
+  box-sizing: border-box;
+}
+
+/* Individual action card cells */
+.action-cell {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: calc(var(--dash-action-cell-padding, 16) * 1px);
+  box-sizing: border-box;
+  background: rgb(10 4 22 / 0.4);
+  border-radius: 16px;
   overflow: hidden;
+  text-decoration: none;
   transition:
     transform 0.22s ease,
     filter 0.22s ease;
 }
 
-.experience-dashboard-overlay__card-img {
-  width: 100%;
-  height: 100%;
-  display: block;
+.action-cell img.main-graphic {
+  flex: 1 1 auto;
+  width: auto;
+  max-width: 85%;
+  height: auto;
+  max-height: 100%;
   object-fit: contain;
-  object-position: center;
+  object-position: center center;
+  margin: auto;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
+}
+
+.action-cell .pill-button {
+  width: 90%;
+  height: 32px;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  border-radius: 20px;
+  background: rgb(255 255 255 / 0.05);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .experience-dashboard-overlay__card:hover {
@@ -2166,8 +2206,13 @@ html {
 @supports not (width: 1cqw) {
   .experience-dashboard-overlay__stack {
     top: calc(var(--dash-story-top-y, 664) / var(--dash-artboard-scroll-h, 2360) * 100%);
-    right: 3.7%;
-    left: 3.7%;
+    right: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  .dashboard-page {
+    padding-inline: calc(var(--dash-content-track-padding, 16) * 1px);
   }
 
   .experience-dashboard-overlay__content-band {
@@ -2178,9 +2223,10 @@ html {
     gap: calc(var(--dash-overlay-card-gap, 20) / var(--dash-artboard-scroll-h, 2360) * 100%);
   }
 
-  .experience-dashboard-overlay__grid {
-    margin: 0;
-    gap: calc(var(--dash-overlay-card-gap, 20) / var(--dash-artboard-scroll-h, 2360) * 100%);
+  .experience-dashboard-overlay__grid,
+  .dashboard-action-grid {
+    margin-inline: auto;
+    gap: calc(var(--dash-grid-card-gap, 14) * 1px);
   }
 }
 
@@ -2338,14 +2384,14 @@ html {
 
 @media (prefers-reduced-motion: reduce) {
   .experience-dashboard-overlay__story,
-  .experience-dashboard-overlay__card {
+  .action-cell.experience-dashboard-overlay__card {
     transition: none;
   }
 
   .experience-dashboard-overlay__story:hover,
   .experience-dashboard-overlay__story:active,
-  .experience-dashboard-overlay__card:hover,
-  .experience-dashboard-overlay__card:active {
+  .action-cell.experience-dashboard-overlay__card:hover,
+  .action-cell.experience-dashboard-overlay__card:active {
     transform: none;
     filter: none;
   }
