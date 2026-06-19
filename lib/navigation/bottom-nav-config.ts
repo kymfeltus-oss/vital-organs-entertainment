@@ -1,10 +1,10 @@
 /** Bottom menu PNG artboard — hotspot rects are percentage-based on full image. */
 export const BOTTOM_MENU_BAR_SRC =
-  "/bottom-menu-bar/bottom-menu-bar.png?v=single-layer-2";
+  "/bottom-menu-bar/bottom-menu-bar.png?v=1893x341";
 
 export const BOTTOM_MENU_ARTBOARD = {
-  width: 1290,
-  height: 192,
+  width: 1893,
+  height: 341,
 } as const;
 
 export type BottomNavItemId =
@@ -33,7 +33,7 @@ function matchesPrefix(path: string) {
   return (pathname: string) => pathname === path || pathname.startsWith(`${path}/`);
 }
 
-/** Full-width capsule on 1290×192 banner (see build-bottom-nav-canvas.py + meta.json). */
+/** Full-width capsule on 1893×341 banner. */
 export const BOTTOM_NAV_PILL_INSET = {
   left: 0,
   width: 100,
