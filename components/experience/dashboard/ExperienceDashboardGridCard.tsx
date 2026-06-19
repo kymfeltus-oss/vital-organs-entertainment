@@ -17,7 +17,7 @@ export default function ExperienceDashboardGridCard({
   return (
     <Link
       href={href}
-      className="action-cell experience-dashboard-overlay__card touch-target"
+      className="dashboard-action-card action-cell experience-dashboard-overlay__card touch-target"
       aria-label={ariaLabel}
     >
       <img

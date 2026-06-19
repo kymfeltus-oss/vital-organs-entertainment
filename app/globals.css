@@ -2001,6 +2001,12 @@ html {
   flex-shrink: 0;
   container-type: size;
   container-name: dash-artboard;
+  --dashboard-page-padding: 16px;
+  --dashboard-card-gap: 12px;
+  --dashboard-track-width: min(
+    calc(100vw - (var(--dashboard-page-padding) * 2)),
+    calc(100cqw - (var(--dashboard-page-padding) * 2))
+  );
 }
 
 .experience-dashboard-artboard__bg {
@@ -2039,23 +2045,23 @@ html {
   pointer-events: none;
 }
 
-/* Center-aligned content track — story + 2×2 grid share one 16px padded column. */
+/* Center-aligned content track — Ian Craig hero + 2×2 grid share one aligned column. */
 .dashboard-page {
   width: 100%;
   max-width: 100%;
-  padding-inline: calc(var(--dash-content-track-padding, 16) * 1px);
+  padding-inline: var(--dashboard-page-padding, 16px);
   box-sizing: border-box;
   overflow: visible;
 }
 
 .dashboard-card-stack {
   display: flex;
-  width: 100%;
-  max-width: 100%;
+  width: var(--dashboard-track-width, 100%);
+  max-width: var(--dashboard-track-width, 100%);
   margin-inline: auto;
   flex-direction: column;
-  align-items: center;
-  gap: calc(var(--dash-overlay-card-gap, 20) / var(--dash-artboard-w, 1080) * 100cqw);
+  align-items: stretch;
+  gap: var(--dashboard-card-gap, 12px);
   flex-shrink: 0;
   pointer-events: none;
   overflow: visible;
@@ -2071,25 +2077,26 @@ html {
 
 .experience-dashboard-overlay__content-band {
   display: flex;
-  width: 100%;
-  max-width: 100%;
+  width: var(--dashboard-track-width, 100%);
+  max-width: var(--dashboard-track-width, 100%);
   margin-inline: auto;
   flex-direction: column;
-  align-items: center;
-  gap: calc(var(--dash-overlay-card-gap, 20) / var(--dash-artboard-w, 1080) * 100cqw);
+  align-items: stretch;
+  gap: var(--dashboard-card-gap, 12px);
   flex-shrink: 0;
   pointer-events: none;
   overflow: visible;
 }
 
+/* Hero + grid share identical track width for flush left/right edges */
 .experience-dashboard-overlay__story-track {
-  /* Span artboard width (cqw) — hero card wider than the inset action grid track. */
-  width: min(100cqw, calc(var(--dash-story-card-max, 400) * 1px));
-  max-width: min(100cqw, calc(var(--dash-story-card-max, 400) * 1px));
+  width: 100%;
+  max-width: var(--dashboard-track-width, 100%);
   margin-inline: auto;
   flex-shrink: 0;
   overflow: visible;
   pointer-events: none;
+  box-sizing: border-box;
 }
 
 .experience-dashboard-countdown-slot {
@@ -2105,7 +2112,7 @@ html {
 .experience-dashboard-overlay__story {
   display: block;
   width: 100%;
-  max-width: min(100%, calc(var(--dash-story-card-max, 400) * 1px));
+  max-width: var(--dashboard-track-width, 100%);
   margin-inline: auto;
   flex-shrink: 0;
   overflow: visible;
@@ -2135,39 +2142,29 @@ html {
   transform: translateY(0);
 }
 
-.experience-dashboard-overlay__grid {
+.experience-dashboard-overlay__grid,
+.dashboard-action-grid {
   width: 100%;
-  max-width: min(100%, calc(var(--dash-action-grid-max, 358) * 1px));
-  flex-shrink: 0;
-  box-sizing: border-box;
+  max-width: var(--dashboard-track-width, 100%);
   margin-inline: auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--dashboard-card-gap, 12px);
+  box-sizing: border-box;
+  flex-shrink: 0;
   padding: 0;
   pointer-events: auto;
 }
 
-/* Master grid wrapper — action grid uses a narrower track than the Ian Craig hero card */
-.dashboard-action-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: calc(var(--dash-grid-card-gap, 14) * 1px);
-  width: 100%;
-  max-width: min(100%, calc(var(--dash-action-grid-max, 358) * 1px));
-  box-sizing: border-box;
-}
-
-/* Individual action card cells */
+.dashboard-action-card,
 .action-cell {
   position: relative;
+  display: block;
   width: 100%;
+  min-width: 0;
   aspect-ratio: 1 / 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  padding: calc(var(--dash-action-cell-padding, 16) * 1px);
-  box-sizing: border-box;
-  background: rgb(10 4 22 / 0.4);
-  border-radius: 16px;
+  padding: 0;
+  border-radius: 18px;
   overflow: hidden;
   text-decoration: none;
   transition:
@@ -2175,15 +2172,13 @@ html {
     filter 0.22s ease;
 }
 
+.dashboard-action-card img,
 .action-cell img.main-graphic {
-  flex: 1 1 auto;
-  width: auto;
-  max-width: 85%;
-  height: auto;
-  max-height: 100%;
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   object-position: center center;
-  margin: auto;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
@@ -2207,26 +2202,19 @@ html {
   }
 
   .dashboard-page {
-    padding-inline: calc(var(--dash-content-track-padding, 16) * 1px);
+    padding-inline: var(--dashboard-page-padding, 16px);
   }
 
-  .experience-dashboard-overlay__content-band {
-    gap: calc(var(--dash-overlay-card-gap, 20) / var(--dash-artboard-scroll-h, 2360) * 100%);
-  }
-
+  .experience-dashboard-overlay__content-band,
   .dashboard-card-stack {
-    gap: calc(var(--dash-overlay-card-gap, 20) / var(--dash-artboard-scroll-h, 2360) * 100%);
+    width: 100%;
+    max-width: 100%;
+    gap: var(--dashboard-card-gap, 12px);
   }
 
   .experience-dashboard-overlay__grid,
   .dashboard-action-grid {
-    margin-inline: auto;
-    gap: calc(var(--dash-grid-card-gap, 14) * 1px);
-  }
-
-  .experience-dashboard-overlay__story-track {
-    width: min(100%, calc(var(--dash-story-card-max, 400) * 1px));
-    max-width: min(100%, calc(var(--dash-story-card-max, 400) * 1px));
+    gap: var(--dashboard-card-gap, 12px);
   }
 }
 
@@ -2384,12 +2372,15 @@ html {
 
 @media (prefers-reduced-motion: reduce) {
   .experience-dashboard-overlay__story,
+  .dashboard-action-card.experience-dashboard-overlay__card,
   .action-cell.experience-dashboard-overlay__card {
     transition: none;
   }
 
   .experience-dashboard-overlay__story:hover,
   .experience-dashboard-overlay__story:active,
+  .dashboard-action-card.experience-dashboard-overlay__card:hover,
+  .dashboard-action-card.experience-dashboard-overlay__card:active,
   .action-cell.experience-dashboard-overlay__card:hover,
   .action-cell.experience-dashboard-overlay__card:active {
     transform: none;

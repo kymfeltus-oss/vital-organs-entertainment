@@ -45,18 +45,20 @@ export const AWAKENING_DASHBOARD_OVERLAY_LAYOUT = {
   cardScale: AWAKENING_DASHBOARD_BUTTON_GRID_SCALE,
   /** @deprecated Use 100% shared stack width — kept for artboard scroll math only. */
   storyCardScale: 1,
-  /** Horizontal padding track for story + button grid (px). */
+  /** Horizontal page padding — safe inset from artboard edges (px). */
   contentTrackPadding: 16,
-  /** Uniform gutter between Ian Craig story and the 2×2 grid (1080 artboard px). */
-  overlayCardGap: 20,
-  /** 2×2 grid gap — equal row and column spacing (px). */
-  gridCardGap: 14,
-  /** 2×2 action grid track width at 390px reference (390 − 2×16 padding). */
+  /** Uniform gap — hero-to-grid, column, and row spacing (px). */
+  dashboardCardGap: 12,
+  /** @deprecated Use dashboardCardGap — kept for artboard scroll math fallbacks. */
+  overlayCardGap: 12,
+  /** @deprecated Use dashboardCardGap. */
+  gridCardGap: 12,
+  /** @deprecated Track width is computed in CSS — kept for legacy references. */
   actionGridMaxWidth: 358,
-  /** Ian Craig hero story card — wider than the action grid below (px). */
-  storyCardMaxWidth: 400,
-  /** Internal padding inside each action cell (px). */
-  actionCellPadding: 16,
+  /** @deprecated Track width is computed in CSS — kept for legacy references. */
+  storyCardMaxWidth: 358,
+  /** Internal padding inside each action cell — 0 when PNG includes full bleed art. */
+  actionCellPadding: 0,
   /** Inner bottom inset for dashboard grid pill overlays (px). */
   gridCardPillInset: 12,
   /** Extra nudge below story card — use overlayCardGap for primary rhythm. */
