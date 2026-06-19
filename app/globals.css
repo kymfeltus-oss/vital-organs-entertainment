@@ -1744,7 +1744,7 @@ html {
   width: 100%;
   padding-bottom: max(
     calc(var(--dash-safe-bottom, 52) / var(--dash-artboard-w, 1080) * 100cqw),
-    calc(var(--bottom-dock-display-h, 112px) + env(safe-area-inset-bottom, 0px))
+    calc(var(--bottom-dock-display-h, 199px) + env(safe-area-inset-bottom, 0px))
   );
   box-sizing: border-box;
   display: flex;
@@ -3489,13 +3489,11 @@ html {
 /* Bottom dock — PNG art + hotspots, locked to mobile app page track width */
 :root {
   --mobile-app-track-w: min(100vw, calc(100dvh * 1080 / 1920));
-  --bottom-dock-art-w: 3422;
-  --bottom-dock-art-h: 678;
-  /* Crop-aware height with touch-friendly floor so icons read at phone scale. */
-  --bottom-dock-display-h: clamp(
-    100px,
-    calc(var(--mobile-app-track-w) * var(--bottom-dock-art-h) / var(--bottom-dock-art-w)),
-    120px
+  --bottom-dock-art-w: 1756;
+  --bottom-dock-art-h: 896;
+  /* Match user PNG aspect exactly — contain only, never stretch/clamp. */
+  --bottom-dock-display-h: calc(
+    var(--mobile-app-track-w) * var(--bottom-dock-art-h) / var(--bottom-dock-art-w)
   );
 }
 
@@ -3530,7 +3528,7 @@ html {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: fill;
+  object-fit: contain;
   object-position: center bottom;
   pointer-events: none;
   user-select: none;
@@ -3538,7 +3536,8 @@ html {
 }
 
 .bottom-dock__hotspots {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 2;
   display: flex;
   align-items: stretch;
