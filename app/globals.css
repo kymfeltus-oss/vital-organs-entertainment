@@ -2027,7 +2027,7 @@ html {
 .experience-dashboard-overlay__stack {
   position: absolute;
   /* Map artboard Y coords via width — matches object-fit:contain video plate (avoids scroll-height cqh drift). */
-  top: calc(var(--dash-story-top-y, 656) / var(--dash-artboard-w, 1080) * 100cqw);
+  top: calc(var(--dash-story-top-y, 664) / var(--dash-artboard-w, 1080) * 100cqw);
   right: calc(var(--dash-safe-right, 40) / var(--dash-artboard-w, 1080) * 100cqw);
   left: calc(var(--dash-safe-left, 40) / var(--dash-artboard-w, 1080) * 100cqw);
   padding-bottom: calc(var(--dash-safe-bottom, 52) / var(--dash-artboard-w, 1080) * 100cqw);
@@ -2122,7 +2122,7 @@ html {
 
 @supports not (width: 1cqw) {
   .experience-dashboard-overlay__stack {
-    top: calc(var(--dash-story-top-y, 656) / var(--dash-artboard-scroll-h, 2360) * 100%);
+    top: calc(var(--dash-story-top-y, 664) / var(--dash-artboard-scroll-h, 2360) * 100%);
     right: 3.7%;
     left: 3.7%;
     gap: calc(var(--dash-stack-gap, 20) / var(--dash-artboard-scroll-h, 2360) * 100%);
