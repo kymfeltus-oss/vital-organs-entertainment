@@ -2034,7 +2034,17 @@ html {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: calc(var(--dash-stack-gap, 20) / var(--dash-artboard-w, 1080) * 100cqw);
+  pointer-events: none;
+}
+
+.experience-dashboard-overlay__content-band {
+  display: flex;
+  width: calc(var(--dash-story-scale, 0.96) * 100%);
+  max-width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(var(--dash-stack-gap, 16) / var(--dash-artboard-w, 1080) * 100cqw);
+  flex-shrink: 0;
   pointer-events: none;
 }
 
@@ -2050,7 +2060,7 @@ html {
 
 .experience-dashboard-overlay__story {
   display: block;
-  width: calc(var(--dash-story-scale, 0.92) * 100%);
+  width: 100%;
   max-width: 100%;
   flex-shrink: 0;
   transition:
@@ -2081,30 +2091,34 @@ html {
 
 .experience-dashboard-overlay__grid {
   display: grid;
-  width: calc(var(--dash-story-scale, 0.92) * 100%);
+  width: 100%;
   max-width: 100%;
   flex-shrink: 0;
   box-sizing: border-box;
   margin-top: calc(var(--dash-grid-top-offset, 0) / var(--dash-artboard-w, 1080) * 100cqw);
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  row-gap: calc(var(--dash-grid-row-gap, 20) / var(--dash-artboard-w, 1080) * 100cqw);
-  column-gap: calc(var(--dash-grid-col-gap, 18) / var(--dash-artboard-w, 1080) * 100cqw);
+  row-gap: calc(var(--dash-grid-row-gap, 10) / var(--dash-artboard-w, 1080) * 100cqw);
+  column-gap: calc(var(--dash-grid-col-gap, 8) / var(--dash-artboard-w, 1080) * 100cqw);
   pointer-events: auto;
 }
 
 .experience-dashboard-overlay__card {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   min-width: 0;
+  overflow: visible;
   transition:
     transform 0.22s ease,
     filter 0.22s ease;
 }
 
 .experience-dashboard-overlay__card-img {
-  width: 100%;
+  width: calc(100% * var(--dash-grid-card-image-scale, 1.06));
+  max-width: none;
   height: auto;
-  aspect-ratio: calc(1 / var(--dash-grid-card-height-scale, 1.05));
+  aspect-ratio: calc(1 / var(--dash-grid-card-height-scale, 1.08));
   display: block;
   object-fit: contain;
   pointer-events: none;

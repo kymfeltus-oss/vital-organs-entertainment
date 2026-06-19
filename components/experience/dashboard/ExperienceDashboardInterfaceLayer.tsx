@@ -63,6 +63,7 @@ export default function ExperienceDashboardInterfaceLayer({
             "--dash-card-scale": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.cardScale,
             "--dash-story-scale": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.storyCardScale,
             "--dash-grid-card-height-scale": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridCardHeightScale,
+            "--dash-grid-card-image-scale": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridCardImageScale,
             "--dash-stack-gap": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.stackGap,
             "--dash-grid-row-gap": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridRowGap,
             "--dash-grid-col-gap": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridColumnGap,
@@ -102,6 +103,7 @@ export default function ExperienceDashboardInterfaceLayer({
           ) : null}
 
           <div className="experience-dashboard-overlay__stack">
+            <div className="experience-dashboard-overlay__content-band">
             <Link
               href={AWAKENING_ASSETS.routes.watchStory}
               className="experience-dashboard-overlay__story touch-target"
@@ -140,6 +142,7 @@ export default function ExperienceDashboardInterfaceLayer({
                 </Link>
               ))}
             </nav>
+            </div>
           </div>
         </div>
       </div>
