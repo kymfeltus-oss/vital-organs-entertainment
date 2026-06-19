@@ -17,7 +17,7 @@ globs: public/bottom-menu-bar/**,lib/navigation/bottom-nav-config.ts,components/
 
 - Read pixel dimensions (readonly) to sync `BOTTOM_MENU_ARTBOARD` in `lib/navigation/bottom-nav-config.ts`.
 - Bump the `?v=` cache-bust query on `BOTTOM_MENU_BAR_SRC` when dimensions change.
-- Adjust CSS in `app/globals.css` (`.bottom-dock*`) for layout — use `object-fit: contain` and height from artboard aspect ratio only. Never `object-fit: fill` or height clamps that distort aspect.
+- Adjust CSS in `app/globals.css` (`.bottom-dock*`) — row height from **track width × PNG aspect** (1290×250), `object-fit: contain`, equal `flex: 1 1 0%` hotspots. Never `object-fit: cover` (clips icons) or a fixed 56px row on this asset.
 
 ## Hotspots
 

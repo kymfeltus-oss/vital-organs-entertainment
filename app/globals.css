@@ -1744,7 +1744,7 @@ html {
   width: 100%;
   padding-bottom: max(
     calc(var(--dash-safe-bottom, 52) / var(--dash-artboard-w, 1080) * 100cqw),
-    calc(var(--bottom-dock-display-h, 199px) + env(safe-area-inset-bottom, 0px))
+    calc(var(--bottom-dock-display-h, 76px) + env(safe-area-inset-bottom, 0px))
   );
   box-sizing: border-box;
   display: flex;
@@ -3486,12 +3486,12 @@ html {
   font-size: calc(100cqw * 11 / 941);
 }
 
-/* Bottom dock — PNG art + hotspots, locked to mobile app page track width */
+/* Bottom dock — proportional icon row (1290×250) + phone safe area */
 :root {
   --mobile-app-track-w: min(100vw, calc(100dvh * 1080 / 1920));
-  --bottom-dock-art-w: 1756;
-  --bottom-dock-art-h: 896;
-  /* Match user PNG aspect exactly — contain only, never stretch/clamp. */
+  --bottom-dock-art-w: 1290;
+  --bottom-dock-art-h: 250;
+  /* Match track width → PNG aspect so art is full-bleed without cover crop. */
   --bottom-dock-display-h: calc(
     var(--mobile-app-track-w) * var(--bottom-dock-art-h) / var(--bottom-dock-art-w)
   );
@@ -3528,6 +3528,7 @@ html {
   display: block;
   width: 100%;
   height: 100%;
+  /* Frame matches PNG aspect at track width — full width, no clip, no bunching. */
   object-fit: contain;
   object-position: center bottom;
   pointer-events: none;
@@ -3540,7 +3541,9 @@ html {
   inset: 0;
   z-index: 2;
   display: flex;
+  flex-direction: row;
   align-items: stretch;
+  justify-content: space-between;
   width: 100%;
   height: 100%;
   pointer-events: none;
@@ -3548,7 +3551,10 @@ html {
 
 .bottom-dock__hit {
   position: relative;
-  flex: 1 1 0;
+  flex: 1 1 0%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-width: 0;
   min-height: 44px;
   height: 100%;

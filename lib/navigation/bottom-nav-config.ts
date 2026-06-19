@@ -7,11 +7,11 @@
  */
 
 export const BOTTOM_MENU_BAR_SRC =
-  "/bottom-menu-bar/bottom-menu-bar.png?v=1756x896-user-1";
+  "/bottom-menu-bar/bottom-menu-bar.png?v=1290x250-user-2";
 
 export const BOTTOM_MENU_ARTBOARD = {
-  width: 1756,
-  height: 896,
+  width: 1290,
+  height: 250,
 } as const;
 
 export type BottomNavItemId =
@@ -40,8 +40,8 @@ function matchesPrefix(path: string) {
     pathname === path || pathname.startsWith(`${path}/`);
 }
 
-/** Page padding fallback — proportional dock height at ~390px track (1756×896 art). */
-export const BOTTOM_NAV_BAR_HEIGHT_PX = 199;
+/** Icon row height at ~390px track (1290×250 art) — safe area added in CSS. */
+export const BOTTOM_NAV_BAR_HEIGHT_PX = 76;
 
 const TAB_WIDTH = 100 / 5;
 
