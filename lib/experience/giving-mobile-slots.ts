@@ -1,7 +1,5 @@
 /** Percentage hit regions aligned to `/public/vital seed/mobile-main-background.png` (853×1844). */
 
-import { MOBILE_ARTBOARD_BACK_HOTSPOT } from "@/lib/navigation/back-to-dashboard";
-
 export type GivingFrequency = "one_time" | "monthly" | "weekly";
 
 export type GivingOverlayRect = {
@@ -15,8 +13,6 @@ export const GIVING_MOBILE_ART = {
   width: 853,
   height: 1844,
 } as const;
-
-export const GIVING_MOBILE_BACK_SLOT = MOBILE_ARTBOARD_BACK_HOTSPOT;
 
 export const GIVING_AMOUNT_PRESETS = [25, 50, 100, 250] as const;
 

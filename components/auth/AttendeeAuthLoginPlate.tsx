@@ -56,7 +56,7 @@ export default function AttendeeAuthLoginPlate({
         value={email}
         onChange={(event) => onEmailChange(event.target.value)}
         onBlur={onEmailBlur}
-        placeholder=" "
+        placeholder="Email or username"
         aria-label="Email or Username"
         className="auth-attendee-field"
         style={authRectStyle(loginPanels.email)}
@@ -68,7 +68,7 @@ export default function AttendeeAuthLoginPlate({
         autoComplete="current-password"
         value={password}
         onChange={(event) => onPasswordChange(event.target.value)}
-        placeholder=" "
+        placeholder="Password"
         aria-label="Password"
         className="auth-attendee-field auth-attendee-field--password"
         style={authRectStyle(loginPanels.password)}

@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
 import {
-  BUY_SEEDS_BACK_SLOT,
   BUY_SEEDS_CONTINUE_SLOT,
   BUY_SEEDS_ERROR_SLOT,
   BUY_SEEDS_PACK_SLOTS,
@@ -11,7 +9,6 @@ import {
   getMerchProduct,
   SEED_ECONOMY_PACKS,
 } from "@/lib/merch/catalog";
-import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 
 type BuySeedsOverlayProps = {
   selectedSlotIndex: number;
@@ -30,22 +27,10 @@ export default function BuySeedsOverlay({
   onSelectPack,
   onContinue,
 }: BuySeedsOverlayProps) {
-  const hitClassName = "buy-seeds-page__action touch-target";
+  const hitClassName = "buy-seeds-page__action";
 
   return (
     <div className="buy-seeds-page__overlay" aria-label="Buy Vital Seeds">
-      <Link
-        href={ATTENDEE_DASHBOARD_PATH}
-        aria-label={BUY_SEEDS_BACK_SLOT.label}
-        className={hitClassName}
-        style={{
-          left: BUY_SEEDS_BACK_SLOT.left,
-          top: BUY_SEEDS_BACK_SLOT.top,
-          width: BUY_SEEDS_BACK_SLOT.width,
-          height: BUY_SEEDS_BACK_SLOT.height,
-        }}
-      />
-
       <div className="buy-seeds-page__actions">
         {BUY_SEEDS_PACK_SLOTS.map((slot, index) => {
           const pack = SEED_ECONOMY_PACKS.find((item) => item.productId === slot.productId);
@@ -66,7 +51,7 @@ export default function BuySeedsOverlay({
               disabled={isSubmitting}
               aria-busy={isActive}
               onClick={() => onSelectPack(index, slot.productId)}
-              className={`${hitClassName}${isSelected ? " buy-seeds-page__action--selected" : ""}`}
+              className={hitClassName}
               style={{
                 left: slot.left,
                 top: slot.top,

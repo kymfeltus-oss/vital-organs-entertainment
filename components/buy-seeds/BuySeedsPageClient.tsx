@@ -54,7 +54,7 @@ export default function BuySeedsPageClient() {
 
   return (
     <>
-      <div className="buy-seeds-page buy-seeds-page--mobile">
+      <div className="buy-seeds-page">
         <div
           className="buy-seeds-page__stage"
           style={

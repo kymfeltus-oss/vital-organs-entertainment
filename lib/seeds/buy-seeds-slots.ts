@@ -1,5 +1,4 @@
 import { SEED_ECONOMY_PACKS } from "@/lib/merch/catalog";
-import { MOBILE_ARTBOARD_BACK_HOTSPOT } from "@/lib/navigation/back-to-dashboard";
 
 export type BuySeedsOverlayRect = {
   left: string;
@@ -14,14 +13,6 @@ export type BuySeedsPackSlot = BuySeedsOverlayRect & {
 };
 
 /** Percentage hit targets on seeds-coins-background.png (853×1844). */
-export const BUY_SEEDS_BACK_SLOT: BuySeedsOverlayRect & { label: string } = {
-  label: MOBILE_ARTBOARD_BACK_HOTSPOT.label,
-  left: MOBILE_ARTBOARD_BACK_HOTSPOT.left,
-  top: MOBILE_ARTBOARD_BACK_HOTSPOT.top,
-  width: MOBILE_ARTBOARD_BACK_HOTSPOT.width,
-  height: MOBILE_ARTBOARD_BACK_HOTSPOT.height,
-};
-
 export const BUY_SEEDS_CONTINUE_SLOT: BuySeedsOverlayRect & { label: string } = {
   label: "Continue to payment",
   left: "5.5%",

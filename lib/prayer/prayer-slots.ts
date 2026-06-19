@@ -1,5 +1,4 @@
 import { PRAYER_CONTACT, PRAYER_SOCIAL_LINKS } from "@/lib/prayer/contact";
-import { MOBILE_ARTBOARD_BACK_HOTSPOT } from "@/lib/navigation/back-to-dashboard";
 
 export type PrayerActionSlot = {
   id: string;
@@ -11,9 +10,6 @@ export type PrayerActionSlot = {
   width: string;
   height: string;
 };
-
-/** Top-left chevron — routes to attendee dashboard. */
-export const PRAYER_BACK_SLOT = MOBILE_ARTBOARD_BACK_HOTSPOT;
 
 /** Percentage hit targets on the 853×1844 artboard — tune against prayer.png. */
 export const PRAYER_PRIMARY_ACTIONS: readonly PrayerActionSlot[] = [

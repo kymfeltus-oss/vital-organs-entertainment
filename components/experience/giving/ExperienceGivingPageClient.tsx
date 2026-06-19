@@ -109,7 +109,7 @@ function ExperienceGivingPageContent() {
     <>
       <section
         id="sow-seed"
-        className="relative flex min-h-dvh w-full flex-col overflow-x-hidden bg-brand-black pt-safe pb-safe"
+        className="relative flex min-h-dvh w-full flex-col overflow-x-hidden bg-brand-black pb-safe"
         aria-label="Vital Seed giving"
       >
         <div className="vital-giving-stage flex flex-1">

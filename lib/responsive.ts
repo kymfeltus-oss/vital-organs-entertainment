@@ -50,6 +50,9 @@ export const MOBILE_APP_TRACK_WIDTH =
 /** Content offset when PNG bottom dock is present (display height + safe area). */
 export const CONTENT_WITH_NAV = `pb-[calc(${BOTTOM_NAV_BAR_HEIGHT_PX}px+env(safe-area-inset-bottom))]`;
 
+/** Menu-screen pages use a transparent PNG overlay header — no content top inset. */
+export const CONTENT_WITH_MENU_HEADER = "";
+
 /** Dashboard card grid — scales with viewport */
 export const CARD_GRID_DASHBOARD =
   "grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6";

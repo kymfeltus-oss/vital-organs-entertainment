@@ -1,14 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import {
   GIVING_MOBILE_AMOUNT_SLOTS,
-  GIVING_MOBILE_BACK_SLOT,
   GIVING_MOBILE_CUSTOM_AMOUNT_SLOT,
   GIVING_MOBILE_ERROR_SLOT,
   GIVING_MOBILE_GIVE_NOW_SLOT,
 } from "@/lib/experience/giving-mobile-slots";
-import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 import { VITAL_SEED_OVERLAY_HIT_CLASS } from "@/lib/vital-seed/giving-overlay-props";
 
 type ExperienceGivingMobileOverlayProps = {
@@ -28,6 +25,7 @@ function rectStyle(rect: {
   height: string;
 }) {
   return {
+    position: "absolute" as const,
     left: rect.left,
     top: rect.top,
     width: rect.width,
@@ -48,13 +46,6 @@ export default function ExperienceGivingMobileOverlay({
 
   return (
     <div className="experience-giving-overlay pointer-events-none absolute inset-0 z-10">
-      <Link
-        href={ATTENDEE_DASHBOARD_PATH}
-        aria-label={GIVING_MOBILE_BACK_SLOT.label}
-        className={`${VITAL_SEED_OVERLAY_HIT_CLASS} experience-giving-hit absolute touch-target border-0 p-0`}
-        style={rectStyle(GIVING_MOBILE_BACK_SLOT)}
-      />
-
       {GIVING_MOBILE_AMOUNT_SLOTS.map((slot) => {
         const isSelected = !hasCustomAmount && selectedAmount === slot.amount;
 
@@ -66,16 +57,14 @@ export default function ExperienceGivingMobileOverlay({
             aria-pressed={isSelected}
             disabled={isLoading}
             onClick={() => onSelectAmount(slot.amount)}
-            className={`${VITAL_SEED_OVERLAY_HIT_CLASS} experience-giving-hit experience-giving-amount-hit absolute touch-target border-0 p-0${
-              isSelected ? " experience-giving-hit--active" : ""
-            }`}
+            className={`${VITAL_SEED_OVERLAY_HIT_CLASS} experience-giving-hit`}
             style={rectStyle(slot)}
           />
         );
       })}
 
       <label
-        className="experience-giving-custom-label pointer-events-auto absolute"
+        className="artboard-field-slot experience-giving-custom-label"
         style={rectStyle(GIVING_MOBILE_CUSTOM_AMOUNT_SLOT)}
       >
         <span className="sr-only">Enter custom gift amount</span>
@@ -88,7 +77,7 @@ export default function ExperienceGivingMobileOverlay({
           disabled={isLoading}
           value={customAmount}
           onChange={(event) => onCustomAmountChange(event.target.value)}
-          className="experience-giving-custom-input h-full w-full touch-target border-0 bg-transparent p-0 text-center font-ui text-[clamp(0.85rem,3.8cqw,1.05rem)] font-semibold tracking-wide text-white outline-none placeholder:text-white/40"
+          className="artboard-field-slot__control experience-giving-custom-input font-ui text-[clamp(0.85rem,3.8cqw,1.05rem)] font-semibold tracking-wide text-white"
         />
       </label>
 
@@ -107,7 +96,7 @@ export default function ExperienceGivingMobileOverlay({
         aria-label="Give now — continue to secure checkout"
         disabled={isLoading}
         onClick={onGiveNow}
-        className={`${VITAL_SEED_OVERLAY_HIT_CLASS} experience-giving-hit experience-giving-give-hit absolute touch-target border-0 p-0${
+        className={`${VITAL_SEED_OVERLAY_HIT_CLASS} experience-giving-hit experience-giving-give-hit${
           isLoading ? " experience-giving-hit--loading" : ""
         }`}
         style={rectStyle(GIVING_MOBILE_GIVE_NOW_SLOT)}

@@ -9,6 +9,7 @@ import {
   useState,
   type MouseEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { PERSONA_HUB_PATH } from "@/lib/auth/routing";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { cn } from "@/lib/utils";
@@ -56,8 +57,13 @@ export default function AwakeningMenuButton({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const closeMenu = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -126,68 +132,78 @@ export default function AwakeningMenuButton({
         </span>
       </button>
 
-      <button
-        type="button"
-        aria-label="Close menu backdrop"
-        className={cn(
-          "awakening-menu-backdrop",
-          open && "awakening-menu-backdrop--open",
-        )}
-        onClick={closeMenu}
-        tabIndex={open ? 0 : -1}
-      />
+      {mounted
+        ? createPortal(
+            <>
+              <button
+                type="button"
+                aria-label="Close menu backdrop"
+                className={cn(
+                  "awakening-menu-backdrop",
+                  open && "awakening-menu-backdrop--open",
+                )}
+                onClick={closeMenu}
+                tabIndex={open ? 0 : -1}
+              />
 
-      <aside
-        id={panelId}
-        className={cn("awakening-menu-panel", open && "awakening-menu-panel--open")}
-        aria-hidden={!open}
-        inert={!open ? true : undefined}
-      >
-        <div className="awakening-menu-panel-header">
-          <p className="font-ui text-[0.62rem] font-semibold uppercase tracking-[0.38em] text-[#1E40AF]">
-            300 Awakening
-          </p>
-          <p className="font-headline mt-1 text-lg uppercase tracking-[0.14em] text-white">
-            Menu
-          </p>
-        </div>
+              <aside
+                id={panelId}
+                className={cn(
+                  "awakening-menu-panel",
+                  open && "awakening-menu-panel--open",
+                )}
+                aria-hidden={!open}
+                inert={!open ? true : undefined}
+              >
+                <div className="awakening-menu-panel-header">
+                  <p className="font-ui text-[0.62rem] font-semibold uppercase tracking-[0.38em] text-brand-blue">
+                    300 Awakening
+                  </p>
+                  <p className="font-headline mt-1 text-lg uppercase tracking-[0.14em] text-white">
+                    Menu
+                  </p>
+                </div>
 
-        <nav aria-label="Awakening menu" className="awakening-menu-nav">
-          <ul className="flex flex-col gap-1">
-            {items.map((item) => {
-              const active = isMenuItemActive(pathname, item);
+                <nav aria-label="Awakening menu" className="awakening-menu-nav">
+                  <ul className="flex flex-col gap-1">
+                    {items.map((item) => {
+                      const active = isMenuItemActive(pathname, item);
 
-              return (
-                <li key={item.id}>
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "awakening-menu-link font-ui",
-                      active && "awakening-menu-link--active",
-                    )}
-                    onClick={closeMenu}
+                      return (
+                        <li key={item.id}>
+                          <Link
+                            href={item.href}
+                            className={cn(
+                              "awakening-menu-link font-ui",
+                              active && "awakening-menu-link--active",
+                            )}
+                            onClick={closeMenu}
+                            tabIndex={open ? 0 : -1}
+                          >
+                            {item.label}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </nav>
+
+                <div className="awakening-menu-footer">
+                  <button
+                    type="button"
+                    className="awakening-menu-logout font-ui"
+                    onClick={(event) => void handleLogout(event)}
+                    disabled={isLoggingOut}
                     tabIndex={open ? 0 : -1}
                   >
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        <div className="awakening-menu-footer">
-          <button
-            type="button"
-            className="awakening-menu-logout font-ui"
-            onClick={(event) => void handleLogout(event)}
-            disabled={isLoggingOut}
-            tabIndex={open ? 0 : -1}
-          >
-            {isLoggingOut ? "Signing out…" : "Logout"}
-          </button>
-        </div>
-      </aside>
+                    {isLoggingOut ? "Signing out…" : "Logout"}
+                  </button>
+                </div>
+              </aside>
+            </>,
+            document.body,
+          )
+        : null}
     </>
   );
 }

@@ -81,7 +81,7 @@ function LiveExperienceClientInner({
 
   if (phase === "locked") {
     return (
-      <main className="experience-live-root flex min-h-dvh w-full flex-col items-center justify-center px-4 pt-safe pb-safe text-white">
+      <main className="experience-live-root flex min-h-dvh w-full flex-col items-center justify-center px-4 pb-safe text-white">
         <div className="w-full max-w-lg rounded-2xl border border-white/8 bg-brand-panel p-8 text-center">
           <p className="font-ui text-[0.6rem] font-bold uppercase tracking-[0.24em] text-brand-blue">
             Vital Organs Entertainment
@@ -112,7 +112,7 @@ function LiveExperienceClientInner({
     }
 
     return (
-      <main className="relative flex min-h-dvh w-full flex-col overflow-x-hidden bg-brand-black pt-safe pb-safe">
+      <main className="relative flex min-h-dvh w-full flex-col overflow-x-hidden bg-brand-black pb-safe">
         <ExperienceHoldingRoomPageClient initialCountdownConfig={initialCountdownConfig} />
       </main>
     );

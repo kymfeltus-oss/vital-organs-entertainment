@@ -6,11 +6,20 @@ import {
 
 type AttendeeAuthArtboardProps = {
   children: ReactNode;
+  /** Background plate — defaults to attendee login PNG. */
+  backgroundSrc?: string;
+  scrollable?: boolean;
 };
 
-export default function AttendeeAuthArtboard({ children }: AttendeeAuthArtboardProps) {
+export default function AttendeeAuthArtboard({
+  children,
+  backgroundSrc = AWAKENING_AUTH_ASSETS.attendeeLoginPlate,
+  scrollable = false,
+}: AttendeeAuthArtboardProps) {
   return (
-    <div className="auth-attendee-stage auth-attendee-page--mobile">
+    <div
+      className={`auth-attendee-stage${scrollable ? " auth-attendee-stage--scroll" : ""}`}
+    >
       <div
         className="auth-attendee-artboard"
         style={
@@ -22,7 +31,7 @@ export default function AttendeeAuthArtboard({ children }: AttendeeAuthArtboardP
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={AWAKENING_AUTH_ASSETS.attendeeLoginPlate}
+          src={backgroundSrc}
           alt=""
           width={AWAKENING_AUTH_LOGIN_ART.width}
           height={AWAKENING_AUTH_LOGIN_ART.height}

@@ -2,6 +2,8 @@ import AttendeeFunnelClient from "@/components/auth/AttendeeFunnelClient";
 import { DEFAULT_ATTENDEE_NEXT, resolveAttendeeDestination } from "@/lib/auth/routing";
 import { DEVICE_FIT_PAGE } from "@/lib/responsive";
 
+export const dynamic = "force-dynamic";
+
 type AttendeeGatePageProps = {
   searchParams: Promise<{ next?: string; error?: string }>;
 };
