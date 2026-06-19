@@ -7,6 +7,7 @@ import {
   BOTTOM_MENU_ARTBOARD,
   BOTTOM_MENU_BAR_SRC,
   BOTTOM_NAV_HOTSPOTS,
+  BOTTOM_NAV_PILL_INSET,
 } from "@/lib/navigation/bottom-nav-config";
 
 export default function BottomNavigation() {
@@ -92,8 +93,8 @@ export default function BottomNavigation() {
           artImgSrc: artImg?.currentSrc ?? null,
           hotspotsWidth: hotspotsRect ? Math.round(hotspotsRect.width) : null,
           hotspotsLeft: hotspotsRect ? Math.round(hotspotsRect.left - rect.left) : null,
-          pillInsetLeftPct: (246 / BOTTOM_MENU_ARTBOARD.width) * 100,
-          pillInsetWidthPct: (797 / BOTTOM_MENU_ARTBOARD.width) * 100,
+          pillInsetLeftPct: BOTTOM_NAV_PILL_INSET.left,
+          pillInsetWidthPct: BOTTOM_NAV_PILL_INSET.width,
           artboard: BOTTOM_MENU_ARTBOARD,
         },
         timestamp: Date.now(),

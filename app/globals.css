@@ -3331,16 +3331,16 @@ html {
   font-size: calc(100cqw * 11 / 941);
 }
 
-/* Bottom navigation — 1290×192 chroma-key strip, clipped floating pill */
+/* Bottom navigation — 1290×192 cropped pill banner (20:3, no chroma green) */
 :root {
   --bottom-nav-art-w: 1290;
   --bottom-nav-art-h: 192;
   --bottom-nav-frame-h: 64px;
   --bottom-nav-frame-max-w: 430px;
   --bottom-nav-float-bottom: 16px;
-  /* Pill inset on full chroma canvas (246px / 797px on 1290px artboard ≈ 19% / 62%) */
-  --bottom-nav-pill-left: 19.069767%;
-  --bottom-nav-pill-width: 61.782946%;
+  /* Pill inset after green crop + letterbox fit (189px / 911px on 1290px artboard) */
+  --bottom-nav-pill-left: 14.651163%;
+  --bottom-nav-pill-width: 70.620155%;
 }
 
 .bottom-nav {
@@ -3373,7 +3373,7 @@ html {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: fill !important;
+  object-fit: contain !important;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;

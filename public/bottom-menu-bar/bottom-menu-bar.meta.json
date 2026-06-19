@@ -1,18 +1,20 @@
 {
+  "source": "bottom-menu-barb.png",
   "canvas": {
     "width": 1290,
     "height": 192
   },
   "pill": {
-    "width": 797,
-    "height": 168,
-    "offsetX": 246,
-    "offsetY": 12
+    "width": 911,
+    "height": 192,
+    "offsetX": 189,
+    "offsetY": 0
   },
   "hotspotInsetPercent": {
-    "left": 19.0698,
-    "width": 61.7829,
-    "top": 6.25,
-    "height": 87.5
-  }
+    "left": 14.6512,
+    "width": 70.6202,
+    "top": 0.0,
+    "height": 100.0
+  },
+  "greenPixelsRemaining": 0
 }

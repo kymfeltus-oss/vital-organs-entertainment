@@ -32,13 +32,13 @@ function matchesPrefix(path: string) {
   return (pathname: string) => pathname === path || pathname.startsWith(`${path}/`);
 }
 
-/** Chroma inset around centered pill on 1290×192 canvas (see build-bottom-nav-canvas.py). */
-const BOTTOM_NAV_PILL_INSET = {
-  left: (246 / BOTTOM_MENU_ARTBOARD.width) * 100,
-  width: (797 / BOTTOM_MENU_ARTBOARD.width) * 100,
+/** Pill inset on 1290×192 banner after green crop (see build-bottom-nav-canvas.py + meta.json). */
+export const BOTTOM_NAV_PILL_INSET = {
+  left: (189 / BOTTOM_MENU_ARTBOARD.width) * 100,
+  width: (911 / BOTTOM_MENU_ARTBOARD.width) * 100,
 } as const;
 
-/** Six equal columns inside the pill artwork (not the green margins). */
+/** Six equal columns inside the pill artwork. */
 const COLUMN_WIDTH = BOTTOM_NAV_PILL_INSET.width / 6;
 
 export const BOTTOM_NAV_HOTSPOTS: readonly BottomNavHotspot[] = [
