@@ -2001,6 +2001,7 @@ html {
   height: 100%;
   box-sizing: border-box;
   grid-template-rows: auto minmax(0, 1fr);
+  row-gap: clamp(1.25rem, 4.5vh, 2.25rem);
   overflow: hidden;
   pointer-events: none;
   padding:
@@ -2025,7 +2026,7 @@ html {
   width: 100%;
   align-items: flex-start;
   justify-content: center;
-  padding-top: clamp(17.25rem, 12.5vh, 6rem);
+  padding-top: clamp(3rem, 10vh, 4.75rem);
   pointer-events: none;
 }
 
@@ -2056,7 +2057,7 @@ html {
   min-height: 0;
   align-items: flex-end;
   justify-content: center;
-  padding-bottom: clamp(1rem, 5vh, 2rem);
+  padding-bottom: clamp(1.25rem, 7vh, 3rem);
   pointer-events: none;
 }
 
