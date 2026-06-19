@@ -1,36 +1,52 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState, type CSSProperties } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import ExperienceGivingMobileOverlay from "@/components/experience/giving/ExperienceGivingMobileOverlay";
+import MobileArtboardTopChrome from "@/components/navigation/MobileArtboardTopChrome";
 import { getClientAppUrl } from "@/lib/client-api";
 import {
-  GIVING_MOBILE_ART,
+  GIVING_MOBILE_ART_NATIVE,
+  GIVING_MOBILE_DEFAULT_AMOUNT,
   type GivingFrequency,
 } from "@/lib/experience/giving-mobile-slots";
+import { mobileArtboardStageStyle } from "@/lib/responsive";
 import {
   amountToCents,
   parseAmountDollars,
   sanitizeAmountInput,
 } from "@/lib/vital-seed/custom-amount";
 import { VITAL_SEED_GIVING_ASSETS } from "@/lib/vital-seed/giving-assets";
+import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
 const MIN_GIFT_CENTS = 50;
 
-function ExperienceGivingPageContent() {
+type ExperienceGivingPageContentProps = {
+  initialProfile: AttendeeProfileSnapshot;
+};
+
+function ExperienceGivingPageContent({
+  initialProfile,
+}: ExperienceGivingPageContentProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const successParam = searchParams.get("success") === "true";
 
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(25);
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(
+    GIVING_MOBILE_DEFAULT_AMOUNT,
+  );
+  const [activePreset, setActivePreset] = useState<number | null>(
+    GIVING_MOBILE_DEFAULT_AMOUNT,
+  );
   const [customAmount, setCustomAmount] = useState("");
   const [selectedFrequency, setSelectedFrequency] =
     useState<GivingFrequency>("one_time");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showThankYou, setShowThankYou] = useState(successParam);
+  const [profile, setProfile] = useState(initialProfile);
 
   useEffect(() => {
     if (!successParam) return;
@@ -38,32 +54,34 @@ function ExperienceGivingPageContent() {
   }, [successParam, pathname]);
 
   const handleSelectAmount = useCallback((amount: number) => {
+    setActivePreset(amount);
     setSelectedAmount(amount);
     setCustomAmount("");
+    setError(null);
+  }, []);
+
+  const handleCustomAmountFocus = useCallback(() => {
+    setActivePreset(null);
     setError(null);
   }, []);
 
   const handleCustomAmountChange = useCallback((value: string) => {
     const sanitized = sanitizeAmountInput(value);
     setCustomAmount(sanitized);
-    if (sanitized.trim()) {
-      setSelectedAmount(null);
-    }
+    setActivePreset(null);
+
+    const parsed = parseAmountDollars(sanitized);
+    setSelectedAmount(parsed);
     setError(null);
   }, []);
 
   const handleGiveNow = useCallback(async () => {
-    const dollarsFromCustom = parseAmountDollars(customAmount);
-    const dollars =
-      dollarsFromCustom ??
-      (selectedAmount != null && selectedAmount > 0 ? selectedAmount : null);
-
-    if (dollars == null) {
+    if (selectedAmount == null || selectedAmount <= 0) {
       setError("Please select or enter an amount.");
       return;
     }
 
-    const amountInCents = amountToCents(dollars);
+    const amountInCents = amountToCents(selectedAmount);
 
     if (!Number.isFinite(amountInCents) || amountInCents < MIN_GIFT_CENTS) {
       setError("Please enter a valid gift amount.");
@@ -103,7 +121,7 @@ function ExperienceGivingPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [customAmount, selectedAmount, selectedFrequency]);
+  }, [selectedAmount, selectedFrequency]);
 
   return (
     <>
@@ -113,25 +131,39 @@ function ExperienceGivingPageContent() {
         aria-label="Vital Seed giving"
       >
         <div className="vital-giving-stage flex flex-1">
-          <div className="vital-giving-artboard vital-giving-artboard--mobile">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={VITAL_SEED_GIVING_ASSETS.mobileBackground}
-              alt="Vital Seed giving"
-              width={GIVING_MOBILE_ART.width}
-              height={GIVING_MOBILE_ART.height}
-              className="vital-giving-artboard__img"
-              loading="eager"
-              decoding="async"
-              draggable={false}
-            />
-            <ExperienceGivingMobileOverlay
-              customAmount={customAmount}
-              isLoading={isLoading}
-              error={error}
-              onSelectAmount={handleSelectAmount}
-              onCustomAmountChange={handleCustomAmountChange}
-              onGiveNow={() => void handleGiveNow()}
+          <div
+            className="vital-giving-artboard vital-giving-artboard--mobile"
+            style={
+              mobileArtboardStageStyle({ native: GIVING_MOBILE_ART_NATIVE }) as CSSProperties
+            }
+          >
+            <div className="mobile-artboard-art-fit vital-giving-artboard__art-fit">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={VITAL_SEED_GIVING_ASSETS.mobileBackground}
+                alt="Vital Seed giving"
+                width={GIVING_MOBILE_ART_NATIVE.width}
+                height={GIVING_MOBILE_ART_NATIVE.height}
+                className="vital-giving-artboard__img"
+                loading="eager"
+                decoding="async"
+                draggable={false}
+              />
+              <ExperienceGivingMobileOverlay
+                selectedAmount={selectedAmount}
+                activePreset={activePreset}
+                customAmount={customAmount}
+                isLoading={isLoading}
+                error={error}
+                onSelectAmount={handleSelectAmount}
+                onCustomAmountChange={handleCustomAmountChange}
+                onCustomAmountFocus={handleCustomAmountFocus}
+                onGiveNow={() => void handleGiveNow()}
+              />
+            </div>
+            <MobileArtboardTopChrome
+              profile={profile}
+              onProfileChange={setProfile}
             />
           </div>
         </div>
@@ -186,10 +218,12 @@ function ExperienceGivingPageContent() {
   );
 }
 
-export default function ExperienceGivingPageClient() {
+export default function ExperienceGivingPageClient({
+  initialProfile,
+}: ExperienceGivingPageContentProps) {
   return (
     <Suspense fallback={null}>
-      <ExperienceGivingPageContent />
+      <ExperienceGivingPageContent initialProfile={initialProfile} />
     </Suspense>
   );
 }

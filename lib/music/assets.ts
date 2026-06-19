@@ -4,6 +4,7 @@ import {
   ATTENDEE_DASHBOARD_PATH,
   MOBILE_ARTBOARD_BACK_HOTSPOT,
 } from "@/lib/navigation/back-to-dashboard";
+import { MOBILE_ARTBOARD_REF } from "@/lib/responsive";
 
 export const APPLE_MUSIC_SINGLE_URL =
   "https://music.apple.com/us/artist/ian-craig-300/1643247247";
@@ -12,9 +13,12 @@ export const MUSIC_ASSETS = {
   mobileBackground: "/music/background%20image%20mobile.png",
 } as const;
 
-export const MUSIC_MOBILE_ART = {
-  width: 1080,
-  height: 1920,
+export const MUSIC_MOBILE_ART = MOBILE_ARTBOARD_REF;
+
+/** Native PNG plate — background image mobile.png (853×1844). */
+export const MUSIC_MOBILE_ART_NATIVE = {
+  width: 853,
+  height: 1844,
 } as const;
 
 export type MusicPageAction = {

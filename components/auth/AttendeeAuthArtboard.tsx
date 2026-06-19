@@ -3,6 +3,7 @@ import {
   AWAKENING_AUTH_ASSETS,
   AWAKENING_AUTH_LOGIN_ART,
 } from "@/lib/experience/awakening-auth-assets";
+import { mobileArtboardStageStyle } from "@/lib/responsive";
 
 type AuthArtboardSpec = {
   width: number;
@@ -31,24 +32,29 @@ export default function AttendeeAuthArtboard({
       <div
         className="auth-attendee-artboard"
         style={
-          {
-            "--auth-art-w": artboard.width,
-            "--auth-art-h": artboard.height,
-          } as CSSProperties
+          mobileArtboardStageStyle({
+            native: artboard,
+            extra: {
+              "--auth-art-w": artboard.width,
+              "--auth-art-h": artboard.height,
+            },
+          }) as CSSProperties
         }
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={backgroundSrc}
-          alt=""
-          width={artboard.width}
-          height={artboard.height}
-          className="auth-attendee-artboard__img"
-          loading="eager"
-          decoding="async"
-          draggable={false}
-        />
-        <div className="auth-attendee-overlay">{children}</div>
+        <div className="mobile-artboard-art-fit">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={backgroundSrc}
+            alt=""
+            width={artboard.width}
+            height={artboard.height}
+            className="auth-attendee-artboard__img"
+            loading="eager"
+            decoding="async"
+            draggable={false}
+          />
+          <div className="auth-attendee-overlay">{children}</div>
+        </div>
       </div>
     </div>
   );

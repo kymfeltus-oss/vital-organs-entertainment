@@ -1,10 +1,14 @@
-/** Email gate persona hub — mobile artboard (853×1844). */
+import { MOBILE_ARTBOARD_REF } from "@/lib/responsive";
+
+/** Email gate persona hub — dashboard track (1080×1920) + native PNG plate. */
 
 export const EMAIL_GATE_ASSETS = {
   background: "/email-gate/email-gate-background.png",
 } as const;
 
-export const EMAIL_GATE_MOBILE_ART = {
+export const EMAIL_GATE_MOBILE_ART = MOBILE_ARTBOARD_REF;
+
+export const EMAIL_GATE_MOBILE_ART_NATIVE = {
   width: 853,
   height: 1844,
 } as const;

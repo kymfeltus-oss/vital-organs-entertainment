@@ -1,3 +1,5 @@
+import { MOBILE_ARTBOARD_REF } from "@/lib/responsive";
+
 /** Vital Seed giving background plates (`/public/images/vital-seed/`). */
 
 export const VITAL_SEED_GIVING_ASSETS = {
@@ -10,7 +12,9 @@ export const VITAL_SEED_GIVING_DESKTOP_ART = {
   height: 1024,
 } as const;
 
-export const VITAL_SEED_GIVING_MOBILE_ART = {
+export const VITAL_SEED_GIVING_MOBILE_ART = MOBILE_ARTBOARD_REF;
+
+export const VITAL_SEED_GIVING_MOBILE_ART_NATIVE = {
   width: 853,
   height: 1844,
 } as const;

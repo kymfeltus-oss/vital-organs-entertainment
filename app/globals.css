@@ -7,6 +7,8 @@ html {
 }
 
 :root {
+  /* 9:16 mobile content track — shared by artboard pages + bottom dock */
+  --mobile-app-track-w: min(100vw, calc(100dvh * 1080 / 1920));
   --gradient-brand: linear-gradient(90deg, #00a8ff 0%, #8a2eff 50%, #ff2faf 100%);
   --gradient-brand-soft: linear-gradient(
     90deg,
@@ -1702,9 +1704,15 @@ html {
 .experience-dashboard-artboard {
   position: relative;
   width: var(--mobile-app-track-w);
-  min-height: min(100dvh, calc(var(--mobile-app-track-w) * 1920 / 1080));
+  min-height: min(
+    100dvh,
+    calc(var(--mobile-app-track-w) * var(--mobile-art-h, 1920) / var(--mobile-art-w, 1080))
+  );
   height: max(
-    min(100dvh, calc(var(--mobile-app-track-w) * 1920 / 1080)),
+    min(
+      100dvh,
+      calc(var(--mobile-app-track-w) * var(--mobile-art-h, 1920) / var(--mobile-art-w, 1080))
+    ),
     calc(
       var(--mobile-app-track-w) * var(--dash-artboard-scroll-h, 2320) /
         var(--dash-artboard-w, 1080)
@@ -2092,6 +2100,60 @@ html {
   }
 }
 
+/* Shared mobile artboard stage — dashboard track (1080×1920) on every tab page */
+.music-page__stage,
+.buy-seeds-page__stage,
+.holding-room-page__stage,
+.prayer-page__stage,
+.email-gate-page__stage,
+.email-gate-page--mobile .email-gate-page__stage,
+.live-pov-page__stage,
+.vital-giving-artboard--mobile,
+.auth-attendee-artboard {
+  width: var(--mobile-app-track-w);
+  max-width: 100vw;
+  flex-shrink: 0;
+  height: min(100dvh, calc(var(--mobile-app-track-w) * 1920 / 1080));
+}
+
+/* Native PNG plate — object-fit:contain box centered in the dashboard stage. */
+.mobile-artboard-art-fit {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  z-index: 1;
+  transform: translateX(-50%);
+  width: min(
+    100%,
+    calc(
+      100% * var(--mobile-art-native-w, 1080) * var(--mobile-art-h, 1920) /
+        (var(--mobile-art-native-h, 1920) * var(--mobile-art-w, 1080))
+    )
+  );
+  height: min(
+    100%,
+    calc(
+      100% * var(--mobile-art-native-h, 1920) * var(--mobile-art-w, 1080) /
+        (var(--mobile-art-native-w, 1080) * var(--mobile-art-h, 1920))
+    )
+  );
+}
+
+.mobile-artboard-art-fit > img,
+.mobile-artboard-art-fit > video {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center top;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
 /* Experience music — mobile artboard, interactive overlays */
 .music-page {
   position: relative;
@@ -2110,10 +2172,7 @@ html {
 
 .music-page__stage {
   position: relative;
-  width: var(--mobile-app-track-w);
-  height: min(100dvh, calc(var(--mobile-app-track-w) * var(--music-art-h, 1920) / var(--music-art-w, 1080)));
-  max-width: 100vw;
-  flex-shrink: 0;
+  container-type: inline-size;
 }
 
 .music-page__bg {
@@ -2146,11 +2205,10 @@ html {
 @supports not (width: 1cqw) {
   .music-page__stage {
     width: var(--mobile-app-track-w);
-    height: min(100dvh, calc(var(--mobile-app-track-w) * var(--music-art-h, 1920) / var(--music-art-w, 1080)));
   }
 }
 
-/* Buy Seeds — mobile artboard only (853×1844), capped to app track on all viewports */
+/* Buy Seeds — mobile artboard only (1080×1920), capped to app track on all viewports */
 .buy-seeds-page {
   position: relative;
   display: flex;
@@ -2168,13 +2226,6 @@ html {
 
 .buy-seeds-page__stage {
   position: relative;
-  width: var(--mobile-app-track-w);
-  height: min(
-    100dvh,
-    calc(var(--mobile-app-track-w) * var(--buy-seeds-art-h, 1844) / var(--buy-seeds-art-w, 853))
-  );
-  max-width: 100vw;
-  flex-shrink: 0;
   container-type: inline-size;
 }
 
@@ -2196,27 +2247,67 @@ html {
   position: absolute;
   inset: 0;
   z-index: 2;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
 }
 
 .buy-seeds-page__actions {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
   pointer-events: none;
+}
+
+.buy-seeds-page__radio {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border-radius: 9999px;
+  pointer-events: none;
+  transform: translate(-12%, -12%);
+}
+
+.buy-seeds-page__radio--idle {
+  border: 1.5px solid rgb(255 255 255 / 0.28);
+  background: rgb(0 0 0 / 0.35);
+}
+
+.buy-seeds-page__radio--selected {
+  border: 2px solid #ff008c;
+  background: rgb(255 0 140 / 0.18);
+  box-shadow:
+    0 0 14px rgb(255 0 140 / 0.55),
+    inset 0 0 10px rgb(255 255 255 / 0.12);
+}
+
+.buy-seeds-page__radio-dot {
+  width: 42%;
+  height: 42%;
+  border-radius: 9999px;
+  background: #ffffff;
+  box-shadow: 0 0 10px rgb(255 255 255 / 0.85);
 }
 
 .buy-seeds-page__action {
   position: absolute;
+  z-index: 4;
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
   min-height: 0;
   min-width: 0;
   pointer-events: auto;
-  border: 0;
+  border: none;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
   outline: none;
+  appearance: none;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
@@ -2226,12 +2317,14 @@ html {
 .buy-seeds-page__action:active,
 .buy-seeds-page__action:focus,
 .buy-seeds-page__action:focus-visible {
+  border: none;
   background: transparent;
   box-shadow: none;
   outline: none;
 }
 
 .buy-seeds-page__action--primary {
+  z-index: 5;
   border-radius: 0;
 }
 
@@ -2263,14 +2356,10 @@ html {
 @supports not (width: 1cqw) {
   .buy-seeds-page__stage {
     width: var(--mobile-app-track-w);
-    height: min(
-      100dvh,
-      calc(var(--mobile-app-track-w) * var(--buy-seeds-art-h, 1844) / var(--buy-seeds-art-w, 853))
-    );
   }
 }
 
-/* Prayer page — mobile-only 853×1844 artboard, edge-to-edge width */
+/* Prayer page — mobile artboard capped to app track */
 .prayer-page {
   position: relative;
   display: flex;
@@ -2279,8 +2368,8 @@ html {
   max-width: 100vw;
   min-height: 0;
   margin: 0;
-  align-items: stretch;
-  justify-content: flex-start;
+  align-items: flex-start;
+  justify-content: center;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -2290,12 +2379,6 @@ html {
 
 .prayer-page__stage {
   position: relative;
-  width: 100%;
-  max-width: 100vw;
-  height: auto;
-  aspect-ratio: var(--prayer-art-w, 853) / var(--prayer-art-h, 1844);
-  min-height: calc(100vw * var(--prayer-art-h, 1844) / var(--prayer-art-w, 853));
-  flex-shrink: 0;
   container-type: inline-size;
 }
 
@@ -2306,7 +2389,7 @@ html {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center top;
   pointer-events: none;
   user-select: none;
@@ -2327,12 +2410,6 @@ html {
   pointer-events: auto;
 }
 
-@supports not (aspect-ratio: 853 / 1844) {
-  .prayer-page__stage {
-    height: calc(100vw * var(--prayer-art-h, 1844) / var(--prayer-art-w, 853));
-  }
-}
-
 /* Email gate persona hub — PNG artboard + entry path hotspots */
 .email-gate-page {
   position: relative;
@@ -2342,8 +2419,8 @@ html {
   max-width: 100vw;
   min-height: 0;
   margin: 0;
-  align-items: stretch;
-  justify-content: flex-start;
+  align-items: flex-start;
+  justify-content: center;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -2351,25 +2428,8 @@ html {
   background-color: #000000;
 }
 
-.email-gate-page--mobile .email-gate-page__stage {
-  position: relative;
-  width: 100%;
-  max-width: 100vw;
-  height: auto;
-  aspect-ratio: 853 / 1844;
-  min-height: calc(100vw * 1844 / 853);
-  flex-shrink: 0;
-  container-type: inline-size;
-}
-
 .email-gate-page__stage {
   position: relative;
-  width: 100%;
-  max-width: 100vw;
-  height: auto;
-  aspect-ratio: var(--email-gate-art-w, 853) / var(--email-gate-art-h, 1844);
-  min-height: calc(100vw * var(--email-gate-art-h, 1844) / var(--email-gate-art-w, 853));
-  flex-shrink: 0;
   container-type: inline-size;
 }
 
@@ -2380,7 +2440,7 @@ html {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center top;
   pointer-events: none;
   user-select: none;
@@ -2401,13 +2461,7 @@ html {
   pointer-events: auto;
 }
 
-@supports not (aspect-ratio: 853 / 1844) {
-  .email-gate-page--mobile .email-gate-page__stage {
-    height: calc(100vw * var(--email-gate-art-h, 1844) / var(--email-gate-art-w, 853));
-  }
-}
-
-/* Experience holding room — 1080×1920 artboard + layered UI overlays */
+/* Experience holding room — pre-live /live holding artboard */
 .holding-room-page {
   position: relative;
   display: flex;
@@ -2425,13 +2479,6 @@ html {
 
 .holding-room-page__stage {
   position: relative;
-  width: var(--mobile-app-track-w);
-  height: min(
-    100dvh,
-    calc(var(--mobile-app-track-w) * var(--holding-art-h, 1846) / var(--holding-art-w, 852))
-  );
-  max-width: 100vw;
-  flex-shrink: 0;
   container-type: inline-size;
   container-name: holding-artboard;
 }
@@ -2508,10 +2555,6 @@ html {
 @supports not (width: 1cqw) {
   .holding-room-page__stage {
     width: var(--mobile-app-track-w);
-    height: min(
-      100dvh,
-      calc(var(--mobile-app-track-w) * var(--holding-art-h, 1846) / var(--holding-art-w, 852))
-    );
   }
 
   .holding-room-page__countdown-grid {
@@ -2543,10 +2586,6 @@ html {
 
 .live-pov-page__stage {
   position: relative;
-  width: var(--mobile-app-track-w);
-  height: min(100dvh, calc(var(--mobile-app-track-w) * 1920 / 1080));
-  max-width: 100vw;
-  flex-shrink: 0;
   overflow: hidden;
 }
 
@@ -2904,9 +2943,61 @@ html {
   color: transparent;
 }
 
+/* Mobile artboard top chrome — profile orb + menu (Music / Buy Seeds / Giving) */
+.mobile-artboard-top-chrome {
+  position: absolute;
+  z-index: 12;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.mobile-artboard-top-chrome__actions {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(0.4rem, 2.2cqw, 0.75rem);
+}
+
+.mobile-artboard-top-chrome__menu {
+  margin-top: 0;
+}
+
 /* Experience giving — invisible hit targets over flat mobile background */
 .experience-giving-overlay {
   container-type: inline-size;
+}
+
+.experience-giving-overlay__amount-group {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  pointer-events: none;
+}
+
+.experience-giving-overlay__amount-hit {
+  position: absolute;
+  z-index: 2;
+  box-sizing: border-box;
+  border: none;
+  background: transparent;
+  outline: none;
+  appearance: none;
+}
+
+.experience-giving-overlay__amount-hit:hover,
+.experience-giving-overlay__amount-hit:active,
+.experience-giving-overlay__amount-hit:focus,
+.experience-giving-overlay__amount-hit:focus-visible {
+  border: none;
+  background: transparent;
+  outline: none;
+  box-shadow: none;
 }
 
 .experience-giving-overlay .artboard-hit-target,
@@ -2961,14 +3052,12 @@ html {
 
 .vital-giving-artboard--mobile {
   position: relative;
-  width: var(--mobile-app-track-w);
-  height: min(
-    100dvh,
-    calc(var(--mobile-app-track-w) * 1844 / 853)
-  );
-  max-width: 100vw;
-  flex-shrink: 0;
   container-type: inline-size;
+}
+
+.vital-giving-artboard__art-fit {
+  width: 100%;
+  height: 100%;
 }
 
 .vital-giving-artboard__img {
@@ -3502,7 +3591,6 @@ html {
 
 /* Bottom dock — proportional icon row (1290×250) + phone safe area */
 :root {
-  --mobile-app-track-w: min(100vw, calc(100dvh * 1080 / 1920));
   --bottom-dock-art-w: 1290;
   --bottom-dock-art-h: 250;
   /* Match track width → PNG aspect so art is full-bleed without cover crop. */
@@ -3930,7 +4018,7 @@ html {
   cursor: pointer;
 }
 
-/* Attendee auth — mobile artboard track only (853×1844 PNG + live overlays) */
+/* Attendee auth — dashboard track (1080×1920) + native PNG overlays */
 .auth-attendee-stage {
   position: relative;
   display: flex;
@@ -3952,24 +4040,32 @@ html {
   overflow-y: auto;
 }
 
+.auth-attendee-stage--scroll .mobile-artboard-art-fit {
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
+}
+
 .auth-attendee-stage--scroll .auth-attendee-artboard {
-  height: calc(
-    var(--mobile-app-track-w) * var(--auth-art-h, 1844) / var(--auth-art-w, 853)
+  height: max(
+    min(100dvh, calc(var(--mobile-app-track-w) * 1920 / 1080)),
+    calc(
+      var(--mobile-app-track-w) * var(--mobile-art-native-h, 1920) /
+        var(--mobile-art-native-w, 1080)
+    )
   );
-  min-height: calc(
-    var(--mobile-app-track-w) * var(--auth-art-h, 1844) / var(--auth-art-w, 853)
+  min-height: max(
+    min(100dvh, calc(var(--mobile-app-track-w) * 1920 / 1080)),
+    calc(
+      var(--mobile-app-track-w) * var(--mobile-art-native-h, 1920) /
+        var(--mobile-art-native-w, 1080)
+    )
   );
 }
 
 .auth-attendee-artboard {
   position: relative;
-  width: var(--mobile-app-track-w);
-  height: min(
-    100dvh,
-    calc(var(--mobile-app-track-w) * var(--auth-art-h, 1844) / var(--auth-art-w, 853))
-  );
-  max-width: 100vw;
-  flex-shrink: 0;
   container-type: inline-size;
 }
 
@@ -4165,8 +4261,8 @@ html {
   pointer-events: auto;
 }
 
-@supports not (aspect-ratio: 853 / 1844) {
+@supports not (aspect-ratio: 1080 / 1920) {
   .auth-attendee-artboard {
-    height: calc(var(--mobile-app-track-w) * var(--auth-art-h, 1844) / var(--auth-art-w, 853));
+    height: min(100dvh, calc(var(--mobile-app-track-w) * 1920 / 1080));
   }
 }

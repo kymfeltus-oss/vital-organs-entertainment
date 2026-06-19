@@ -13,6 +13,7 @@ import {
 } from "@/lib/experience/awakening-dashboard-assets";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
+import { MOBILE_ARTBOARD_REF, mobileArtboardStageStyle } from "@/lib/responsive";
 
 type ExperienceDashboardInterfaceLayerProps = {
   initialCountdownConfig?: EventCountdownConfig;
@@ -56,6 +57,7 @@ export default function ExperienceDashboardInterfaceLayer({
         className="experience-dashboard-artboard"
         style={
           {
+            ...mobileArtboardStageStyle({ native: MOBILE_ARTBOARD_REF }),
             "--dash-story-top-y": AWAKENING_DASHBOARD_STORY_TOP_Y,
             "--dash-safe-top": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.safeArea.top,
             "--dash-safe-right": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.safeArea.right,

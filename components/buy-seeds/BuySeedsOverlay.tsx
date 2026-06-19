@@ -1,64 +1,87 @@
 "use client";
 
+import { Fragment } from "react";
 import {
   BUY_SEEDS_CONTINUE_SLOT,
   BUY_SEEDS_ERROR_SLOT,
-  BUY_SEEDS_PACK_SLOTS,
+  BUY_SEEDS_PACKAGES,
+  type BuySeedsOverlayRect,
 } from "@/lib/seeds/buy-seeds-slots";
-import {
-  getMerchProduct,
-  SEED_ECONOMY_PACKS,
-} from "@/lib/merch/catalog";
+import { getMerchProduct } from "@/lib/merch/catalog";
 
 type BuySeedsOverlayProps = {
-  selectedSlotIndex: number;
+  selectedPackageId: string;
   isSubmitting: boolean;
   activeProductId: string | null;
   errorMessage: string | null;
-  onSelectPack: (slotIndex: number, productId: string) => void;
+  onSelectPackage: (packageId: string) => void;
   onContinue: () => void;
 };
 
+function slotStyle(rect: BuySeedsOverlayRect) {
+  return {
+    left: rect.left,
+    top: rect.top,
+    width: rect.width,
+    height: rect.height,
+  };
+}
+
 export default function BuySeedsOverlay({
-  selectedSlotIndex,
+  selectedPackageId,
   isSubmitting,
   activeProductId,
   errorMessage,
-  onSelectPack,
+  onSelectPackage,
   onContinue,
 }: BuySeedsOverlayProps) {
-  const hitClassName = "buy-seeds-page__action";
-
   return (
     <div className="buy-seeds-page__overlay" aria-label="Buy Vital Seeds">
-      <div className="buy-seeds-page__actions">
-        {BUY_SEEDS_PACK_SLOTS.map((slot, index) => {
-          const pack = SEED_ECONOMY_PACKS.find((item) => item.productId === slot.productId);
-          const product = getMerchProduct(slot.productId);
-          const isSelected = selectedSlotIndex === index;
-          const isActive = isSubmitting && activeProductId === slot.productId;
+      <div
+        className="buy-seeds-page__actions"
+        role="radiogroup"
+        aria-label="Choose a seed package"
+      >
+        {BUY_SEEDS_PACKAGES.map((pkg) => {
+          const product = getMerchProduct(pkg.productId);
+          const isSelected = selectedPackageId === pkg.packageId;
+          const isActive = isSubmitting && activeProductId === pkg.productId;
 
-          if (!pack || !product) {
+          if (!product) {
             return null;
           }
 
           return (
-            <button
-              key={`${slot.productId}-${index}`}
-              type="button"
-              aria-label={slot.label}
-              aria-pressed={isSelected}
-              disabled={isSubmitting}
-              aria-busy={isActive}
-              onClick={() => onSelectPack(index, slot.productId)}
-              className={hitClassName}
-              style={{
-                left: slot.left,
-                top: slot.top,
-                width: slot.width,
-                height: slot.height,
-              }}
-            />
+            <Fragment key={pkg.packageId}>
+              <span
+                className={`buy-seeds-page__radio${
+                  isSelected
+                    ? " buy-seeds-page__radio--selected"
+                    : " buy-seeds-page__radio--idle"
+                }`}
+                style={{
+                  left: pkg.radio.left,
+                  top: pkg.radio.top,
+                  width: pkg.radio.size,
+                  height: pkg.radio.size,
+                }}
+                aria-hidden="true"
+              >
+                {isSelected ? <span className="buy-seeds-page__radio-dot" /> : null}
+              </span>
+
+              <button
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                aria-label={pkg.label}
+                disabled={isSubmitting}
+                aria-busy={isActive}
+                onClick={() => onSelectPackage(pkg.packageId)}
+                className="buy-seeds-page__action buy-seeds-page__action--row"
+                style={slotStyle(pkg)}
+              />
+            </Fragment>
           );
         })}
 
@@ -66,12 +89,7 @@ export default function BuySeedsOverlay({
           <p
             className="buy-seeds-page__inline-error"
             role="alert"
-            style={{
-              left: BUY_SEEDS_ERROR_SLOT.left,
-              top: BUY_SEEDS_ERROR_SLOT.top,
-              width: BUY_SEEDS_ERROR_SLOT.width,
-              height: BUY_SEEDS_ERROR_SLOT.height,
-            }}
+            style={slotStyle(BUY_SEEDS_ERROR_SLOT)}
           >
             {errorMessage}
           </p>
@@ -80,18 +98,13 @@ export default function BuySeedsOverlay({
         <button
           type="button"
           aria-label={BUY_SEEDS_CONTINUE_SLOT.label}
-          disabled={isSubmitting || selectedSlotIndex < 0}
+          disabled={isSubmitting || !selectedPackageId}
           aria-busy={isSubmitting}
           onClick={onContinue}
-          className={`${hitClassName} buy-seeds-page__action--primary${
+          className={`buy-seeds-page__action buy-seeds-page__action--primary${
             isSubmitting ? " buy-seeds-page__action--loading" : ""
           }`}
-          style={{
-            left: BUY_SEEDS_CONTINUE_SLOT.left,
-            top: BUY_SEEDS_CONTINUE_SLOT.top,
-            width: BUY_SEEDS_CONTINUE_SLOT.width,
-            height: BUY_SEEDS_CONTINUE_SLOT.height,
-          }}
+          style={slotStyle(BUY_SEEDS_CONTINUE_SLOT)}
         />
       </div>
     </div>

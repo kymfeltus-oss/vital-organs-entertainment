@@ -47,6 +47,40 @@ export const LOBBY_GRID =
 export const MOBILE_APP_TRACK_WIDTH =
   "min(100vw, calc(100dvh * 1080 / 1920))" as const;
 
+/** Reference artboard used for track-width math (1080×1920). */
+export const MOBILE_ARTBOARD_REF = {
+  width: 1080,
+  height: 1920,
+} as const;
+
+export type MobileArtboardSize = {
+  width: number;
+  height: number;
+};
+
+/** Shared `--mobile-art-w` / `--mobile-art-h` for stage height (always dashboard ref). */
+export function mobileArtboardVars(size: MobileArtboardSize = MOBILE_ARTBOARD_REF): Record<string, number> {
+  return {
+    "--mobile-art-w": size.width,
+    "--mobile-art-h": size.height,
+  };
+}
+
+/** Stage style for tab pages — dashboard track + optional native PNG dimensions for art-fit. */
+export function mobileArtboardStageStyle(options?: {
+  native?: MobileArtboardSize;
+  extra?: Record<string, string | number>;
+}): Record<string, string | number> {
+  const native = options?.native ?? MOBILE_ARTBOARD_REF;
+
+  return {
+    ...mobileArtboardVars(MOBILE_ARTBOARD_REF),
+    "--mobile-art-native-w": native.width,
+    "--mobile-art-native-h": native.height,
+    ...options?.extra,
+  };
+}
+
 /** Content offset when PNG bottom dock is present (display height + safe area). */
 export const CONTENT_WITH_NAV = `pb-[calc(${BOTTOM_NAV_BAR_HEIGHT_PX}px+env(safe-area-inset-bottom))]`;
 

@@ -6,7 +6,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import BuySeedsOverlay from "@/components/buy-seeds/BuySeedsOverlay";
 import { getMerchProduct } from "@/lib/merch/catalog";
 import { BUY_SEEDS_ASSETS, BUY_SEEDS_MOBILE_ART } from "@/lib/seeds/assets";
-import { SEED_ECONOMY_PACKS } from "@/lib/merch/catalog";
+import {
+  BUY_SEEDS_DEFAULT_PACKAGE_ID,
+  getBuySeedsPackage,
+} from "@/lib/seeds/buy-seeds-slots";
+import { mobileArtboardStageStyle } from "@/lib/responsive";
 import { useMerchCheckout } from "@/lib/useMerchCheckout";
 
 export default function BuySeedsPageClient() {
@@ -14,10 +18,7 @@ export default function BuySeedsPageClient() {
   const searchParams = useSearchParams();
   const successParam = searchParams.get("success") === "true";
 
-  const [selectedSlotIndex, setSelectedSlotIndex] = useState(0);
-  const [selectedProductId, setSelectedProductId] = useState(
-    SEED_ECONOMY_PACKS[0]?.productId ?? "",
-  );
+  const [selectedPackageId, setSelectedPackageId] = useState(BUY_SEEDS_DEFAULT_PACKAGE_ID);
   const [activeProductId, setActiveProductId] = useState<string | null>(null);
   const [showThankYou, setShowThankYou] = useState(successParam);
 
@@ -41,28 +42,26 @@ export default function BuySeedsPageClient() {
     [clearError, startCheckout],
   );
 
-  const handleSelectPack = useCallback((slotIndex: number, productId: string) => {
-    setSelectedSlotIndex(slotIndex);
-    setSelectedProductId(productId);
-    clearError();
-  }, [clearError]);
+  const handleSelectPackage = useCallback(
+    (packageId: string) => {
+      setSelectedPackageId(packageId);
+      clearError();
+    },
+    [clearError],
+  );
 
   const handleContinue = useCallback(() => {
-    if (!selectedProductId) return;
-    void handleBuyPack(selectedProductId);
-  }, [handleBuyPack, selectedProductId]);
+    const selectedPackage = getBuySeedsPackage(selectedPackageId);
+    if (!selectedPackage) return;
+    void handleBuyPack(selectedPackage.productId);
+  }, [handleBuyPack, selectedPackageId]);
 
   return (
     <>
       <div className="buy-seeds-page">
         <div
           className="buy-seeds-page__stage"
-          style={
-            {
-              "--buy-seeds-art-w": BUY_SEEDS_MOBILE_ART.width,
-              "--buy-seeds-art-h": BUY_SEEDS_MOBILE_ART.height,
-            } as CSSProperties
-          }
+          style={mobileArtboardStageStyle() as CSSProperties}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -76,11 +75,11 @@ export default function BuySeedsPageClient() {
             draggable={false}
           />
           <BuySeedsOverlay
-            selectedSlotIndex={selectedSlotIndex}
+            selectedPackageId={selectedPackageId}
             isSubmitting={isSubmitting}
             activeProductId={activeProductId}
             errorMessage={errorMessage}
-            onSelectPack={handleSelectPack}
+            onSelectPackage={handleSelectPackage}
             onContinue={handleContinue}
           />
         </div>

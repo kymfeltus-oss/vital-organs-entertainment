@@ -1,6 +1,12 @@
+import { MOBILE_ARTBOARD_REF } from "@/lib/responsive";
+
 /** Pre-live holding room — flat background artboard + pure-code dynamic content slots. */
 
-export const HOLDING_ROOM_ARTBOARD = {
+/** Dashboard stage dimensions — same as home. */
+export const HOLDING_ROOM_ARTBOARD = MOBILE_ARTBOARD_REF;
+
+/** Native PNG plate for art-fit + overlay alignment. */
+export const HOLDING_ROOM_ART_NATIVE = {
   width: 852,
   height: 1846,
 } as const;
