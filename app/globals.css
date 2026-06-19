@@ -2208,36 +2208,26 @@ html {
   }
 }
 
-/* Buy Seeds — mobile artboard only (1080×1920), capped to app track on all viewports */
+/* Buy Seeds — flat PNG background + native package overlay */
 .buy-seeds-page {
-  position: relative;
   display: flex;
   flex: 1;
   width: 100%;
-  min-height: 100%;
-  height: auto;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: center;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
   background-color: #000000;
 }
 
 .buy-seeds-page__stage {
   position: relative;
+  width: var(--mobile-app-track-w);
+  max-width: 100vw;
+  flex-shrink: 0;
+  height: min(100dvh, calc(var(--mobile-app-track-w) * 1920 / 1080));
   container-type: inline-size;
 }
 
 .buy-seeds-page__bg {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center top;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
@@ -2246,13 +2236,13 @@ html {
 .buy-seeds-page__overlay {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 10;
   width: 100%;
   height: 100%;
   pointer-events: none;
 }
 
-.buy-seeds-page__actions {
+.buy-seeds-page__native-layer {
   position: relative;
   width: 100%;
   height: 100%;
@@ -2260,24 +2250,52 @@ html {
   pointer-events: none;
 }
 
-.buy-seeds-page__radio {
+.buy-seeds-package-row {
   position: absolute;
-  z-index: 3;
+  z-index: 2;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 8% minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 0.75fr);
+  align-items: center;
+  gap: clamp(0.2rem, 1.5cqw, 0.55rem);
+  padding-inline: clamp(0.45rem, 2.8cqw, 0.85rem);
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #ffffff;
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+}
+
+.buy-seeds-package-row:active {
+  opacity: 0.92;
+}
+
+.buy-seeds-package-row--selected {
+  /* Frame glow comes from PNG — selection shown via radio only. */
+}
+
+.buy-seeds-package-row__radio {
   display: flex;
+  width: clamp(0.85rem, 3.4cqw, 1.05rem);
+  height: clamp(0.85rem, 3.4cqw, 1.05rem);
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
   border-radius: 9999px;
   pointer-events: none;
-  transform: translate(-12%, -12%);
 }
 
-.buy-seeds-page__radio--idle {
+.buy-seeds-package-row__radio--idle {
   border: 1.5px solid rgb(255 255 255 / 0.28);
   background: rgb(0 0 0 / 0.35);
 }
 
-.buy-seeds-page__radio--selected {
+.buy-seeds-package-row__radio--selected {
   border: 2px solid #ff008c;
   background: rgb(255 0 140 / 0.18);
   box-shadow:
@@ -2285,7 +2303,7 @@ html {
     inset 0 0 10px rgb(255 255 255 / 0.12);
 }
 
-.buy-seeds-page__radio-dot {
+.buy-seeds-package-row__radio-dot {
   width: 42%;
   height: 42%;
   border-radius: 9999px;
@@ -2293,62 +2311,88 @@ html {
   box-shadow: 0 0 10px rgb(255 255 255 / 0.85);
 }
 
-.buy-seeds-page__action {
+.buy-seeds-package-row__seeds {
+  font-size: clamp(0.62rem, 2.85cqw, 0.82rem);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.buy-seeds-package-row__badge {
+  font-size: clamp(0.52rem, 2.35cqw, 0.68rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.buy-seeds-package-row__price {
+  font-size: clamp(0.62rem, 2.85cqw, 0.82rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #ffffff;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.buy-seeds-continue-btn {
   position: absolute;
-  z-index: 4;
+  z-index: 3;
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  min-height: 0;
-  min-width: 0;
-  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   border-radius: 0;
   background: transparent;
-  box-shadow: none;
-  outline: none;
-  appearance: none;
   cursor: pointer;
+  pointer-events: auto;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  appearance: none;
 }
 
-.buy-seeds-page__action:hover,
-.buy-seeds-page__action:active,
-.buy-seeds-page__action:focus,
-.buy-seeds-page__action:focus-visible {
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  outline: none;
+.buy-seeds-continue-btn__label {
+  font-size: clamp(0.62rem, 2.75cqw, 0.82rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 0 18px rgb(0 168 255 / 0.45);
+  white-space: nowrap;
 }
 
-.buy-seeds-page__action--primary {
-  z-index: 5;
-  border-radius: 0;
+.buy-seeds-continue-btn:active:not(:disabled) {
+  opacity: 0.9;
 }
 
-.buy-seeds-page__action--loading {
+.buy-seeds-continue-btn--loading {
   cursor: wait;
-  opacity: 1;
+}
+
+.buy-seeds-continue-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .buy-seeds-page__inline-error {
   position: absolute;
+  z-index: 4;
   margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: none;
   text-align: center;
-  font-family: var(--font-inter), sans-serif;
   font-size: clamp(0.62rem, 2.6cqw, 0.75rem);
   line-height: 1.2;
   color: #ff008c;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .buy-seeds-page__action--loading {
+  .buy-seeds-package-row:active,
+  .buy-seeds-continue-btn:active:not(:disabled) {
     opacity: 1;
   }
 }
@@ -2967,8 +3011,14 @@ html {
   margin-top: 0;
 }
 
-/* Experience giving — invisible hit targets over flat mobile background */
+/* Experience giving — card PNG overlays on mobile-main-background.png */
 .experience-giving-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
   container-type: inline-size;
 }
 
@@ -2980,14 +3030,47 @@ html {
   pointer-events: none;
 }
 
-.experience-giving-overlay__amount-hit {
+.experience-giving-overlay__amount-slot {
   position: absolute;
   z-index: 2;
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: transparent;
+  pointer-events: none;
+}
+
+.experience-giving-overlay__amount-card-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  object-position: center;
+  border-radius: 0;
+  background: transparent;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.experience-giving-overlay__amount-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
   border: none;
+  border-radius: 0;
   background: transparent;
   outline: none;
   appearance: none;
+  overflow: visible;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .experience-giving-overlay__amount-hit:hover,
@@ -3055,9 +3138,12 @@ html {
   container-type: inline-size;
 }
 
+/* Native 853×1844 plate — width/height come from .mobile-artboard-art-fit vars. */
 .vital-giving-artboard__art-fit {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .vital-giving-artboard__img {

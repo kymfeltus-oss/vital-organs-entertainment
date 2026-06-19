@@ -1,30 +1,30 @@
 "use client";
 
-import { Fragment } from "react";
 import {
   BUY_SEEDS_CONTINUE_SLOT,
   BUY_SEEDS_ERROR_SLOT,
-  BUY_SEEDS_PACKAGES,
-  type BuySeedsOverlayRect,
-} from "@/lib/seeds/buy-seeds-slots";
+  seedPackages,
+  type SeedPackageId,
+} from "@/lib/seeds/assets";
 import { getMerchProduct } from "@/lib/merch/catalog";
 
 type BuySeedsOverlayProps = {
-  selectedPackageId: string;
+  selectedPackageId: SeedPackageId;
   isSubmitting: boolean;
   activeProductId: string | null;
   errorMessage: string | null;
-  onSelectPackage: (packageId: string) => void;
+  onSelectPackage: (packageId: SeedPackageId) => void;
   onContinue: () => void;
 };
 
-function slotStyle(rect: BuySeedsOverlayRect) {
-  return {
-    left: rect.left,
-    top: rect.top,
-    width: rect.width,
-    height: rect.height,
-  };
+function badgeClassName(badge: string): string {
+  if (badge === "BEST VALUE") {
+    return "text-brand-purple";
+  }
+  if (badge.startsWith("SAVE")) {
+    return "text-brand-blue";
+  }
+  return "text-brand-pink";
 }
 
 export default function BuySeedsOverlay({
@@ -38,11 +38,11 @@ export default function BuySeedsOverlay({
   return (
     <div className="buy-seeds-page__overlay" aria-label="Buy Vital Seeds">
       <div
-        className="buy-seeds-page__actions"
+        className="buy-seeds-page__native-layer"
         role="radiogroup"
         aria-label="Choose a seed package"
       >
-        {BUY_SEEDS_PACKAGES.map((pkg) => {
+        {seedPackages.map((pkg) => {
           const product = getMerchProduct(pkg.productId);
           const isSelected = selectedPackageId === pkg.packageId;
           const isActive = isSubmitting && activeProductId === pkg.productId;
@@ -52,44 +52,61 @@ export default function BuySeedsOverlay({
           }
 
           return (
-            <Fragment key={pkg.packageId}>
+            <button
+              key={pkg.packageId}
+              type="button"
+              role="radio"
+              aria-checked={isSelected}
+              aria-label={`${pkg.seeds} Seeds — ${pkg.badge} — ${pkg.price}`}
+              disabled={isSubmitting}
+              aria-busy={isActive}
+              onClick={() => onSelectPackage(pkg.packageId)}
+              className={`buy-seeds-package-row touch-target${
+                isSelected ? " buy-seeds-package-row--selected" : ""
+              }`}
+              style={{
+                left: pkg.left,
+                top: pkg.top,
+                width: pkg.width,
+                height: pkg.height,
+              }}
+            >
               <span
-                className={`buy-seeds-page__radio${
+                className={
                   isSelected
-                    ? " buy-seeds-page__radio--selected"
-                    : " buy-seeds-page__radio--idle"
-                }`}
-                style={{
-                  left: pkg.radio.left,
-                  top: pkg.radio.top,
-                  width: pkg.radio.size,
-                  height: pkg.radio.size,
-                }}
+                    ? "buy-seeds-package-row__radio buy-seeds-package-row__radio--selected"
+                    : "buy-seeds-package-row__radio buy-seeds-package-row__radio--idle"
+                }
                 aria-hidden="true"
               >
-                {isSelected ? <span className="buy-seeds-page__radio-dot" /> : null}
+                {isSelected ? <span className="buy-seeds-package-row__radio-dot" /> : null}
               </span>
 
-              <button
-                type="button"
-                role="radio"
-                aria-checked={isSelected}
-                aria-label={pkg.label}
-                disabled={isSubmitting}
-                aria-busy={isActive}
-                onClick={() => onSelectPackage(pkg.packageId)}
-                className="buy-seeds-page__action buy-seeds-page__action--row"
-                style={slotStyle(pkg)}
-              />
-            </Fragment>
+              <span className="buy-seeds-package-row__seeds font-ui">
+                {pkg.seeds.toLocaleString()} Seeds
+              </span>
+
+              <span
+                className={`buy-seeds-package-row__badge font-ui uppercase tracking-wide ${badgeClassName(pkg.badge)}`}
+              >
+                {pkg.badge}
+              </span>
+
+              <span className="buy-seeds-package-row__price font-ui">{pkg.price}</span>
+            </button>
           );
         })}
 
         {errorMessage ? (
           <p
-            className="buy-seeds-page__inline-error"
+            className="buy-seeds-page__inline-error font-body"
             role="alert"
-            style={slotStyle(BUY_SEEDS_ERROR_SLOT)}
+            style={{
+              left: BUY_SEEDS_ERROR_SLOT.left,
+              top: BUY_SEEDS_ERROR_SLOT.top,
+              width: BUY_SEEDS_ERROR_SLOT.width,
+              height: BUY_SEEDS_ERROR_SLOT.height,
+            }}
           >
             {errorMessage}
           </p>
@@ -101,11 +118,18 @@ export default function BuySeedsOverlay({
           disabled={isSubmitting || !selectedPackageId}
           aria-busy={isSubmitting}
           onClick={onContinue}
-          className={`buy-seeds-page__action buy-seeds-page__action--primary${
-            isSubmitting ? " buy-seeds-page__action--loading" : ""
+          className={`buy-seeds-continue-btn touch-target font-ui${
+            isSubmitting ? " buy-seeds-continue-btn--loading" : ""
           }`}
-          style={slotStyle(BUY_SEEDS_CONTINUE_SLOT)}
-        />
+          style={{
+            left: BUY_SEEDS_CONTINUE_SLOT.left,
+            top: BUY_SEEDS_CONTINUE_SLOT.top,
+            width: BUY_SEEDS_CONTINUE_SLOT.width,
+            height: BUY_SEEDS_CONTINUE_SLOT.height,
+          }}
+        >
+          <span className="buy-seeds-continue-btn__label">Continue to Payment</span>
+        </button>
       </div>
     </div>
   );

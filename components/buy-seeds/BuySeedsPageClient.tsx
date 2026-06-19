@@ -5,11 +5,12 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import BuySeedsOverlay from "@/components/buy-seeds/BuySeedsOverlay";
 import { getMerchProduct } from "@/lib/merch/catalog";
-import { BUY_SEEDS_ASSETS, BUY_SEEDS_MOBILE_ART } from "@/lib/seeds/assets";
 import {
+  BUY_SEEDS_ASSETS,
   BUY_SEEDS_DEFAULT_PACKAGE_ID,
-  getBuySeedsPackage,
-} from "@/lib/seeds/buy-seeds-slots";
+  getSeedPackage,
+  type SeedPackageId,
+} from "@/lib/seeds/assets";
 import { mobileArtboardStageStyle } from "@/lib/responsive";
 import { useMerchCheckout } from "@/lib/useMerchCheckout";
 
@@ -18,7 +19,8 @@ export default function BuySeedsPageClient() {
   const searchParams = useSearchParams();
   const successParam = searchParams.get("success") === "true";
 
-  const [selectedPackageId, setSelectedPackageId] = useState(BUY_SEEDS_DEFAULT_PACKAGE_ID);
+  const [selectedPackageId, setSelectedPackageId] =
+    useState<SeedPackageId>(BUY_SEEDS_DEFAULT_PACKAGE_ID);
   const [activeProductId, setActiveProductId] = useState<string | null>(null);
   const [showThankYou, setShowThankYou] = useState(successParam);
 
@@ -43,7 +45,7 @@ export default function BuySeedsPageClient() {
   );
 
   const handleSelectPackage = useCallback(
-    (packageId: string) => {
+    (packageId: SeedPackageId) => {
       setSelectedPackageId(packageId);
       clearError();
     },
@@ -51,29 +53,28 @@ export default function BuySeedsPageClient() {
   );
 
   const handleContinue = useCallback(() => {
-    const selectedPackage = getBuySeedsPackage(selectedPackageId);
+    const selectedPackage = getSeedPackage(selectedPackageId);
     if (!selectedPackage) return;
     void handleBuyPack(selectedPackage.productId);
   }, [handleBuyPack, selectedPackageId]);
 
   return (
     <>
-      <div className="buy-seeds-page">
+      <div className="buy-seeds-page relative min-h-dvh overflow-hidden bg-brand-black">
         <div
-          className="buy-seeds-page__stage"
+          className="buy-seeds-page__stage relative mx-auto min-h-dvh w-full"
           style={mobileArtboardStageStyle() as CSSProperties}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={BUY_SEEDS_ASSETS.mobileBackground}
-            alt="Buy Vital Seeds — coin packs for live concert emotes"
-            width={BUY_SEEDS_MOBILE_ART.width}
-            height={BUY_SEEDS_MOBILE_ART.height}
-            className="buy-seeds-page__bg"
+            alt=""
+            className="buy-seeds-page__bg absolute inset-0 z-0 h-full w-full object-cover"
             loading="eager"
             decoding="async"
             draggable={false}
           />
+
           <BuySeedsOverlay
             selectedPackageId={selectedPackageId}
             isSubmitting={isSubmitting}
