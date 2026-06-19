@@ -1,208 +1,133 @@
 "use client";
 
-import {
-  Suspense,
-  useMemo,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import ExperienceGivingArtboard from "@/components/experience/giving/ExperienceGivingArtboard";
-import ExperienceGivingHotspots from "@/components/experience/giving/ExperienceGivingHotspots";
+import ExperienceGivingMobileOverlay from "@/components/experience/giving/ExperienceGivingMobileOverlay";
 import VitalSeedOverlay from "@/components/vital-seed/VitalSeedOverlay";
 import { getClientAppUrl } from "@/lib/client-api";
 import {
-  EXPERIENCE_GIVING_MOBILE_ART,
-} from "@/lib/experience/giving-hotspots";
+  GIVING_MOBILE_ART,
+  type GivingFrequency,
+} from "@/lib/experience/giving-mobile-slots";
 import {
-  appendKeypadKey,
-  formatKeypadAmountDisplay,
+  amountToCents,
   parseAmountDollars,
-  type KeypadKey,
+  sanitizeAmountInput,
 } from "@/lib/vital-seed/custom-amount";
 import {
   VITAL_SEED_GIVING_ASSETS,
   VITAL_SEED_GIVING_DESKTOP_ART,
 } from "@/lib/vital-seed/giving-assets";
 
+const MIN_GIFT_CENTS = 50;
+
 function ExperienceGivingPageContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const successParam = searchParams.get("success") === "true";
-  const mobileArtboardRef = useRef<HTMLDivElement>(null);
 
-  const [amountRaw, setAmountRaw] = useState("250");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
+  const [customAmount, setCustomAmount] = useState("");
+  const [selectedFrequency, setSelectedFrequency] =
+    useState<GivingFrequency>("one_time");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showThankYou, setShowThankYou] = useState(successParam);
-  const amountDisplay = useMemo(
-    () => formatKeypadAmountDisplay(amountRaw),
-    [amountRaw],
-  );
 
   useEffect(() => {
     if (!successParam) return;
     window.history.replaceState({}, "", pathname);
   }, [successParam, pathname]);
 
-  useEffect(() => {
-    const artboard = mobileArtboardRef.current;
-    if (!artboard) return;
-
-    const logLayout = (trigger: string) => {
-      const rect = artboard.getBoundingClientRect();
-      const img = artboard.querySelector("img");
-      const imgRect = img?.getBoundingClientRect();
-      // #region agent log
-      fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Debug-Session-Id": "baf5b9",
-        },
-        body: JSON.stringify({
-          sessionId: "baf5b9",
-          runId: "giving-layout",
-          hypothesisId: "B-E",
-          location: "ExperienceGivingPageClient.tsx:logLayout",
-          message: "Mobile giving artboard layout",
-          data: {
-            trigger,
-            artboardW: Math.round(rect.width),
-            artboardH: Math.round(rect.height),
-            imgW: imgRect ? Math.round(imgRect.width) : null,
-            imgH: imgRect ? Math.round(imgRect.height) : null,
-            viewportW: window.innerWidth,
-            viewportH: window.innerHeight,
-            artNativeW: EXPERIENCE_GIVING_MOBILE_ART.width,
-            artNativeH: EXPERIENCE_GIVING_MOBILE_ART.height,
-            bgSrc: VITAL_SEED_GIVING_ASSETS.mobileBackground,
-          },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
-    };
-
-    logLayout("mount");
-
-    const resizeObserver = new ResizeObserver(() => logLayout("resize"));
-    resizeObserver.observe(artboard);
-    window.addEventListener("orientationchange", () => logLayout("orientation"));
-
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener("orientationchange", () => logLayout("orientation"));
-    };
+  const handleSelectAmount = useCallback((amount: number) => {
+    setSelectedAmount(amount);
+    setCustomAmount("");
+    setError(null);
   }, []);
 
-  const handleQuickAmount = useCallback((value: number | "custom") => {
-    // #region agent log
-    fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "baf5b9",
-      },
-      body: JSON.stringify({
-        sessionId: "baf5b9",
-        runId: "giving-layout",
-        hypothesisId: "C-D",
-        location: "ExperienceGivingPageClient.tsx:handleQuickAmount",
-        message: "Quick give hotspot activated",
-        data: { value },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-
-    if (value === "custom") {
-      setAmountRaw("");
-      return;
+  const handleCustomAmountChange = useCallback((value: string) => {
+    const sanitized = sanitizeAmountInput(value);
+    setCustomAmount(sanitized);
+    if (sanitized.trim()) {
+      setSelectedAmount(null);
     }
-
-    setAmountRaw(String(value));
+    setError(null);
   }, []);
 
-  const handleKeypad = useCallback((value: string) => {
-    // #region agent log
-    fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "baf5b9",
-      },
-      body: JSON.stringify({
-        sessionId: "baf5b9",
-        runId: "giving-layout",
-        hypothesisId: "C-D",
-        location: "ExperienceGivingPageClient.tsx:handleKeypad",
-        message: "Keypad hotspot activated",
-        data: { value, amountBefore: amountRaw },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
+  const handleSelectFrequency = useCallback((frequency: GivingFrequency) => {
+    setSelectedFrequency(frequency);
+    setError(null);
+  }, []);
 
-    setAmountRaw((current) =>
-      appendKeypadKey(current, value as KeypadKey),
-    );
-  }, [amountRaw]);
+  const handleGiveNow = useCallback(async () => {
+    const dollarsFromCustom = parseAmountDollars(customAmount);
+    const dollars =
+      dollarsFromCustom ??
+      (selectedAmount != null && selectedAmount > 0 ? selectedAmount : null);
 
-  const handleGive = useCallback(async () => {
-    const dollars = parseAmountDollars(amountRaw);
-
-    if (!dollars || !Number.isFinite(dollars) || dollars <= 0) {
-      window.alert("Please select or enter a valid giving amount.");
+    if (dollars == null) {
+      setError("Please select or enter an amount.");
       return;
     }
 
-    const amountInCents = Math.round(dollars * 100);
+    const amountInCents = amountToCents(dollars);
 
-    if (amountInCents < 50) {
-      window.alert("Minimum transaction value not met.");
+    if (!Number.isFinite(amountInCents) || amountInCents < MIN_GIFT_CENTS) {
+      setError("Please enter a valid gift amount.");
       return;
     }
 
-    setIsSubmitting(true);
+    setIsLoading(true);
+    setError(null);
 
     try {
       const response = await fetch(`${getClientAppUrl()}/api/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ amountInCents }),
+        body: JSON.stringify({
+          amountInCents,
+          frequency: selectedFrequency,
+          source: "vital-seed-giving",
+        }),
       });
 
       const data = (await response.json()) as { url?: string; error?: string };
 
       if (response.status === 401) {
-        window.alert("Sign in at the email gate before giving.");
+        setError("Sign in at the email gate before giving.");
         return;
       }
 
       if (!response.ok || !data.url) {
-        window.alert(data.error ?? "Unable to start checkout. Please try again.");
+        setError(data.error ?? "Unable to start checkout. Please try again.");
         return;
       }
 
       window.location.href = data.url;
     } catch {
-      window.alert("Unable to reach checkout. Please try again.");
+      setError("Unable to reach checkout. Please try again.");
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
-  }, [amountRaw]);
+  }, [customAmount, selectedAmount, selectedFrequency]);
 
-  const overlayProps = {
-    amountDisplay,
-    amountRaw,
-    onAmountChange: setAmountRaw,
-    onQuickAmount: handleQuickAmount,
-    onSowSeed: () => void handleGive(),
+  const desktopOverlayProps = {
+    amountRaw: customAmount || (selectedAmount != null ? String(selectedAmount) : ""),
+    amountDisplay: "",
+    onAmountChange: (next: string) => handleCustomAmountChange(next),
+    onQuickAmount: (value: number | "custom") => {
+      if (value === "custom") {
+        setSelectedAmount(null);
+        setCustomAmount("");
+        return;
+      }
+      handleSelectAmount(value);
+    },
+    onSowSeed: () => void handleGiveNow(),
   };
 
   return (
@@ -219,35 +144,37 @@ function ExperienceGivingPageContent() {
           visibleClassName="hidden flex-1 lg:flex"
           scaleMode="cover"
         >
-          <VitalSeedOverlay {...overlayProps} />
+          <VitalSeedOverlay {...desktopOverlayProps} />
         </ExperienceGivingArtboard>
 
         <div className="vital-giving-stage flex flex-1 lg:hidden">
-          <div
-            ref={mobileArtboardRef}
-            className="vital-giving-artboard vital-giving-artboard--mobile"
-          >
+          <div className="vital-giving-artboard vital-giving-artboard--mobile">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={VITAL_SEED_GIVING_ASSETS.mobileBackground}
               alt="Vital Seed giving"
-              width={EXPERIENCE_GIVING_MOBILE_ART.width}
-              height={EXPERIENCE_GIVING_MOBILE_ART.height}
+              width={GIVING_MOBILE_ART.width}
+              height={GIVING_MOBILE_ART.height}
               className="vital-giving-artboard__img"
               loading="eager"
               decoding="async"
               draggable={false}
             />
-            <ExperienceGivingHotspots
-              variant="mobile"
-              onQuickAmount={handleQuickAmount}
-              onKeypad={handleKeypad}
-              onSowSeed={() => void handleGive()}
+            <ExperienceGivingMobileOverlay
+              selectedAmount={selectedAmount}
+              customAmount={customAmount}
+              selectedFrequency={selectedFrequency}
+              isLoading={isLoading}
+              error={error}
+              onSelectAmount={handleSelectAmount}
+              onCustomAmountChange={handleCustomAmountChange}
+              onSelectFrequency={handleSelectFrequency}
+              onGiveNow={() => void handleGiveNow()}
             />
           </div>
         </div>
 
-        {isSubmitting ? (
+        {isLoading ? (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60">
             <div className="flex items-center gap-3 rounded-2xl border border-brand-border bg-brand-panel px-6 py-4 text-sm font-bold uppercase tracking-[0.16em] text-white">
               <Loader2 className="h-5 w-5 animate-spin text-brand-blue" aria-hidden="true" />

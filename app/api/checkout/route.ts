@@ -7,8 +7,12 @@ import {
 } from "@/lib/checkout/server";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
+type DonationFrequency = "one_time" | "monthly" | "weekly";
+
 type DonationCheckoutBody = {
   amountInCents?: number;
+  frequency?: DonationFrequency;
+  source?: string;
 };
 
 const MIN_DONATION_CENTS = 50;
@@ -57,6 +61,14 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as DonationCheckoutBody;
     const amountInCents = body.amountInCents;
+    const frequency: DonationFrequency =
+      body.frequency === "monthly" || body.frequency === "weekly"
+        ? body.frequency
+        : "one_time";
+    const source =
+      typeof body.source === "string" && body.source.trim()
+        ? body.source.trim()
+        : "vital-seed-giving";
 
     if (
       typeof amountInCents !== "number" ||
@@ -64,16 +76,18 @@ export async function POST(request: NextRequest) {
       amountInCents < MIN_DONATION_CENTS
     ) {
       return NextResponse.json(
-        { error: "Minimum transaction value not met." },
+        { error: "Please enter a valid gift amount." },
         { status: 400 },
       );
     }
 
     const stripe = new Stripe(stripeSecretKey);
     const appUrl = getAppUrl(request);
+    const isRecurring = frequency === "monthly" || frequency === "weekly";
+    const recurringInterval = frequency === "weekly" ? "week" : "month";
 
     const session = await stripe.checkout.sessions.create({
-      mode: "payment",
+      mode: isRecurring ? "subscription" : "payment",
       payment_method_types: ["card", "link"],
       client_reference_id: buyer.userId,
       customer_email: buyer.email,
@@ -83,6 +97,9 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: "usd",
             unit_amount: amountInCents,
+            ...(isRecurring
+              ? { recurring: { interval: recurringInterval } }
+              : {}),
             product_data: {
               name: "Vital Seed Giving — Sound & Healing Partner Offering",
             },
@@ -90,10 +107,12 @@ export async function POST(request: NextRequest) {
         },
       ],
       metadata: {
-        checkout_type: "donation",
+        checkout_type: isRecurring ? "donation_recurring" : "donation",
         user_id: buyer.userId,
         email: buyer.email,
         amount_cents: String(amountInCents),
+        frequency,
+        source,
       },
       success_url: `${appUrl}/experience/giving?success=true`,
       cancel_url: `${appUrl}/experience/giving?canceled=true`,

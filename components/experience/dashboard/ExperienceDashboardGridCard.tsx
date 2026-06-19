@@ -6,15 +6,13 @@ type ExperienceDashboardGridCardProps = {
   href: string;
   src: string;
   ariaLabel: string;
-  pillLabel?: string;
 };
 
-/** Square action tile — centered graphic + bottom pill per dashboard-action-grid spec. */
+/** Square action tile — centered graphic per dashboard-action-grid spec. */
 export default function ExperienceDashboardGridCard({
   href,
   src,
   ariaLabel,
-  pillLabel,
 }: ExperienceDashboardGridCardProps) {
   return (
     <Link
@@ -32,11 +30,6 @@ export default function ExperienceDashboardGridCard({
         decoding="async"
         draggable={false}
       />
-      {pillLabel ? (
-        <span className="pill-button font-ui" aria-hidden="true">
-          {pillLabel}
-        </span>
-      ) : null}
     </Link>
   );
 }

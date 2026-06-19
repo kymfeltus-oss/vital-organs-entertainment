@@ -2057,6 +2057,7 @@ html {
   gap: calc(var(--dash-overlay-card-gap, 20) / var(--dash-artboard-w, 1080) * 100cqw);
   flex-shrink: 0;
   pointer-events: none;
+  overflow: visible;
 }
 
 .dashboard-card {
@@ -2070,12 +2071,14 @@ html {
 .experience-dashboard-overlay__content-band {
   display: flex;
   width: 100%;
-  max-width: 100%;
+  max-width: min(100%, calc(var(--dash-action-grid-max, 358) * 1px));
+  margin-inline: auto;
   flex-direction: column;
   align-items: stretch;
   gap: calc(var(--dash-overlay-card-gap, 20) / var(--dash-artboard-w, 1080) * 100cqw);
   flex-shrink: 0;
   pointer-events: none;
+  overflow: visible;
 }
 
 .experience-dashboard-countdown-slot {
@@ -2093,6 +2096,7 @@ html {
   width: 100%;
   max-width: 100%;
   flex-shrink: 0;
+  overflow: visible;
   transition:
     transform 0.22s ease,
     filter 0.22s ease;
@@ -2100,9 +2104,9 @@ html {
 }
 
 .experience-dashboard-overlay__story-img {
+  display: block;
   width: 100%;
   height: auto;
-  display: block;
   object-fit: contain;
   object-position: center;
   pointer-events: none;
@@ -2171,27 +2175,6 @@ html {
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
-}
-
-.action-cell .pill-button {
-  width: 90%;
-  height: 32px;
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  margin-top: auto;
-  border: 1px solid rgb(255 255 255 / 0.3);
-  border-radius: 20px;
-  background: rgb(255 255 255 / 0.05);
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  line-height: 1;
-  text-transform: uppercase;
-  white-space: nowrap;
-  pointer-events: none;
 }
 
 .experience-dashboard-overlay__card:hover {
@@ -2921,6 +2904,49 @@ html {
   .vital-seed-overlay-hit:active {
     transform: none;
     filter: brightness(1.08);
+  }
+}
+
+/* Experience giving — invisible hit targets over flat mobile background */
+.experience-giving-overlay {
+  container-type: inline-size;
+}
+
+.experience-giving-hit {
+  background: transparent;
+}
+
+.experience-giving-hit:focus-visible {
+  outline: 2px solid #00a8ff;
+  outline-offset: 2px;
+}
+
+.experience-giving-hit--active {
+  border-radius: 14px;
+  box-shadow:
+    inset 0 0 0 1px rgb(0 168 255 / 0.55),
+    0 0 14px rgb(0 168 255 / 0.35),
+    0 0 22px rgb(255 0 140 / 0.22);
+}
+
+.experience-giving-hit--loading {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.experience-giving-custom-input:focus-visible {
+  outline: 2px solid #00a8ff;
+  outline-offset: 1px;
+  border-radius: 8px;
+}
+
+.experience-giving-custom-input::placeholder {
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .experience-giving-hit--active {
+    box-shadow: inset 0 0 0 2px rgb(0 168 255 / 0.75);
   }
 }
 

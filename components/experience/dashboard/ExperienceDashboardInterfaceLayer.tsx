@@ -66,7 +66,6 @@ export default function ExperienceDashboardInterfaceLayer({
             "--dash-grid-card-gap": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridCardGap,
             "--dash-action-grid-max": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.actionGridMaxWidth,
             "--dash-action-cell-padding": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.actionCellPadding,
-            "--dash-grid-card-pill-inset": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridCardPillInset,
             "--dash-grid-top-offset": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridTopOffset,
             "--dash-artboard-scroll-h": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.artboardScrollHeight,
             "--dash-artboard-h": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.artboardHeight,
@@ -106,7 +105,7 @@ export default function ExperienceDashboardInterfaceLayer({
             <div className="experience-dashboard-overlay__content-band dashboard-card-stack">
               <Link
                 href={AWAKENING_ASSETS.routes.watchStory}
-                className="experience-dashboard-overlay__story dashboard-card touch-target"
+                className="experience-dashboard-overlay__story touch-target"
                 aria-label="Watch Ian Craig's healing journey"
               >
                 <img
@@ -131,7 +130,6 @@ export default function ExperienceDashboardInterfaceLayer({
                     href={button.href}
                     src={button.src}
                     ariaLabel={button.ariaLabel}
-                    pillLabel={"pillLabel" in button ? button.pillLabel : undefined}
                   />
                 ))}
               </nav>

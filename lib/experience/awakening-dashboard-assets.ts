@@ -105,28 +105,24 @@ export const AWAKENING_DASHBOARD_BUTTON_GRID = [
     href: AWAKENING_ASSETS.routes.music,
     src: AWAKENING_DASHBOARD_BUTTON_ASSETS.music,
     ariaLabel: "Music — Listen, download, and share",
-    pillLabel: "Apple Music",
   },
   {
     id: "live",
     href: AWAKENING_ASSETS.routes.liveRoom,
     src: AWAKENING_DASHBOARD_BUTTON_ASSETS.live,
     ariaLabel: "Live Room — Enter the sanctuary stage",
-    pillLabel: "Watch Live",
   },
   {
     id: "giving",
     href: AWAKENING_ASSETS.routes.giving,
     src: AWAKENING_DASHBOARD_BUTTON_ASSETS.giving,
     ariaLabel: "Vital Seed Giving — Every gift has a frequency",
-    pillLabel: "Read Now",
   },
   {
     id: "prayer",
     href: AWAKENING_ASSETS.routes.prayer,
     src: AWAKENING_DASHBOARD_BUTTON_ASSETS.prayer,
     ariaLabel: "Prayer — Leave a message of hope",
-    pillLabel: "Send a Request",
   },
 ] as const;
 
