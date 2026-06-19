@@ -2026,14 +2026,15 @@ html {
 
 .experience-dashboard-overlay__stack {
   position: absolute;
-  top: calc(var(--dash-story-top-y, 776) / var(--dash-artboard-h, 1920) * 100cqh);
+  /* Map artboard Y coords via width — matches object-fit:contain video plate (avoids scroll-height cqh drift). */
+  top: calc(var(--dash-story-top-y, 640) / var(--dash-artboard-w, 1080) * 100cqw);
   right: calc(var(--dash-safe-right, 40) / var(--dash-artboard-w, 1080) * 100cqw);
   left: calc(var(--dash-safe-left, 40) / var(--dash-artboard-w, 1080) * 100cqw);
-  padding-bottom: calc(var(--dash-safe-bottom, 52) / var(--dash-artboard-h, 1920) * 100cqh);
+  padding-bottom: calc(var(--dash-safe-bottom, 52) / var(--dash-artboard-w, 1080) * 100cqw);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: calc(var(--dash-stack-gap, 20) / var(--dash-artboard-h, 1920) * 100cqh);
+  gap: calc(var(--dash-stack-gap, 20) / var(--dash-artboard-w, 1080) * 100cqw);
   pointer-events: none;
 }
 
@@ -2084,9 +2085,9 @@ html {
   max-width: 100%;
   flex-shrink: 0;
   box-sizing: border-box;
-  margin-top: calc(var(--dash-grid-top-offset, 0) / var(--dash-artboard-h, 1920) * 100cqh);
+  margin-top: calc(var(--dash-grid-top-offset, 0) / var(--dash-artboard-w, 1080) * 100cqw);
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  row-gap: calc(var(--dash-grid-row-gap, 20) / var(--dash-artboard-h, 1920) * 100cqh);
+  row-gap: calc(var(--dash-grid-row-gap, 20) / var(--dash-artboard-w, 1080) * 100cqw);
   column-gap: calc(var(--dash-grid-col-gap, 18) / var(--dash-artboard-w, 1080) * 100cqw);
   pointer-events: auto;
 }
@@ -2119,17 +2120,17 @@ html {
   transform: scale(0.985);
 }
 
-@supports not (height: 1cqh) {
+@supports not (width: 1cqw) {
   .experience-dashboard-overlay__stack {
-    top: 40.42%;
+    top: calc(var(--dash-story-top-y, 640) / var(--dash-artboard-scroll-h, 2360) * 100%);
     right: 3.7%;
     left: 3.7%;
-    gap: 1.04%;
+    gap: calc(var(--dash-stack-gap, 20) / var(--dash-artboard-scroll-h, 2360) * 100%);
   }
 
   .experience-dashboard-overlay__grid {
     margin-top: 0;
-    row-gap: 1.04%;
+    row-gap: calc(var(--dash-grid-row-gap, 20) / var(--dash-artboard-scroll-h, 2360) * 100%);
     column-gap: 1.67%;
   }
 }
