@@ -2007,7 +2007,7 @@ html {
   padding:
     calc(env(safe-area-inset-top, 0px) + clamp(0.35rem, 1.5vh, 0.75rem))
     calc(env(safe-area-inset-right, 0px) + 16px)
-    calc(env(safe-area-inset-bottom, 0px) + clamp(0.5rem, 2vh, 1rem))
+    calc(env(safe-area-inset-bottom, 0px) + clamp(0.25rem, 1vh, 0.5rem))
     calc(env(safe-area-inset-left, 0px) + 16px);
 }
 
@@ -2057,16 +2057,16 @@ html {
   min-height: 0;
   align-items: flex-end;
   justify-content: center;
-  padding-bottom: clamp(1.25rem, 7vh, 3rem);
+  padding-bottom: clamp(0.25rem, 1vh, 0.5rem);
   pointer-events: none;
 }
 
 .experience-dashboard-button-grid {
   display: grid;
-  width: min(94vw, 22rem);
+  width: min(78vw, 17.5rem);
   flex-shrink: 0;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(0.55rem, 3vw, 0.85rem);
+  gap: clamp(0.4rem, 2.5vw, 0.65rem);
   pointer-events: auto;
 }
 
