@@ -50,11 +50,11 @@ export const AWAKENING_DASHBOARD_OVERLAY_LAYOUT = {
   /** Scales button PNG art inside cells (compensates transparent padding in assets). */
   gridCardImageScale: 1.06,
   /** Ian Craig story card → Music/Live row (vertical). */
-  stackGap: 16,
+  stackGap: 10,
   /** Music/Live ↔ Vital/Prayer row gap (vertical). */
-  gridRowGap: 10,
+  gridRowGap: 6,
   /** Music↔Live and Vital↔Prayer column gap (horizontal). */
-  gridColumnGap: 8,
+  gridColumnGap: 4,
   /** Extra nudge below story card — use stackGap for primary rhythm. */
   gridTopOffset: 0,
   /**

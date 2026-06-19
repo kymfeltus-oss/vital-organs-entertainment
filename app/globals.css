@@ -2043,7 +2043,7 @@ html {
   max-width: 100%;
   flex-direction: column;
   align-items: stretch;
-  gap: calc(var(--dash-stack-gap, 16) / var(--dash-artboard-w, 1080) * 100cqw);
+  gap: calc(var(--dash-stack-gap, 10) / var(--dash-artboard-w, 1080) * 100cqw);
   flex-shrink: 0;
   pointer-events: none;
 }
@@ -2097,8 +2097,8 @@ html {
   box-sizing: border-box;
   margin-top: calc(var(--dash-grid-top-offset, 0) / var(--dash-artboard-w, 1080) * 100cqw);
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  row-gap: calc(var(--dash-grid-row-gap, 10) / var(--dash-artboard-w, 1080) * 100cqw);
-  column-gap: calc(var(--dash-grid-col-gap, 8) / var(--dash-artboard-w, 1080) * 100cqw);
+  row-gap: calc(var(--dash-grid-row-gap, 6) / var(--dash-artboard-w, 1080) * 100cqw);
+  column-gap: calc(var(--dash-grid-col-gap, 4) / var(--dash-artboard-w, 1080) * 100cqw);
   pointer-events: auto;
 }
 
