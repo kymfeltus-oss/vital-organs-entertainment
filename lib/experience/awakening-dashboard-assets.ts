@@ -110,7 +110,6 @@ export const AWAKENING_DASHBOARD_CARDS_MOBILE = [
 
 export const AWAKENING_PRELOAD_ASSETS = [
   { href: AWAKENING_ASSETS.background, as: "video" as const },
-  { href: AWAKENING_ASSETS.welcomeHeader, as: "image" as const },
   { href: "/branding/awakening-lockup.png", as: "image" as const },
   ...Object.values(AWAKENING_DASHBOARD_BUTTON_ASSETS).map((href) => ({
     href,

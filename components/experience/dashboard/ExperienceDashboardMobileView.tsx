@@ -27,7 +27,10 @@ export default function ExperienceDashboardMobileView({
       />
 
       <div className="relative z-10 flex min-h-0 w-full flex-1">
-        <ExperienceDashboardContent initialCountdownConfig={initialCountdownConfig} />
+        <ExperienceDashboardContent
+          profile={profile}
+          initialCountdownConfig={initialCountdownConfig}
+        />
       </div>
     </div>
   );

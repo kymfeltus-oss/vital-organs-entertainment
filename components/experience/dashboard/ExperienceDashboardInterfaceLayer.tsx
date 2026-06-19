@@ -7,14 +7,17 @@ import {
   AWAKENING_ASSETS,
   AWAKENING_DASHBOARD_BUTTON_GRID,
 } from "@/lib/experience/awakening-dashboard-assets";
+import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
 
 type ExperienceDashboardInterfaceLayerProps = {
+  profile: AttendeeProfileSnapshot;
   initialCountdownConfig?: EventCountdownConfig;
 };
 
 export default function ExperienceDashboardInterfaceLayer({
+  profile,
   initialCountdownConfig,
 }: ExperienceDashboardInterfaceLayerProps) {
   const backgroundRef = useRef<HTMLVideoElement>(null);
@@ -76,14 +79,12 @@ export default function ExperienceDashboardInterfaceLayer({
 
         <div className="experience-dashboard-top-zone">
           <header className="experience-dashboard-header-zone">
-            <img
-              src={AWAKENING_ASSETS.welcomeHeader}
-              alt="Welcome"
-              className="experience-dashboard-welcome-header"
-              loading="eager"
-              decoding="async"
-              draggable={false}
-            />
+            <div className="experience-dashboard-welcome-stack">
+              <p className="experience-dashboard-welcome-label font-ui">Welcome</p>
+              <h1 className="experience-dashboard-welcome-name font-headline">
+                {profile.headerDisplayName}
+              </h1>
+            </div>
           </header>
         </div>
 

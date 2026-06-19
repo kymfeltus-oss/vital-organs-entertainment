@@ -2026,7 +2026,7 @@ html {
   width: 100%;
   align-items: flex-start;
   justify-content: center;
-  padding-top: clamp(3rem, 10vh, 4.75rem);
+  padding-top: clamp(5.5rem, 17vh, 7.5rem);
   pointer-events: none;
 }
 
@@ -2036,6 +2036,55 @@ html {
   flex-direction: column;
   align-items: flex-start;
   flex-shrink: 0;
+}
+
+.experience-dashboard-welcome-stack {
+  display: flex;
+  width: min(52%, 20rem);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(0.1rem, 0.6vh, 0.25rem);
+}
+
+.experience-dashboard-welcome-label {
+  margin: 0;
+  font-size: clamp(0.62rem, 2.1vw, 0.82rem);
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow:
+    0 0 8px rgba(255, 255, 255, 0.25),
+    0 1px 0 rgba(0, 0, 0, 0.45);
+}
+
+.experience-dashboard-welcome-name {
+  margin: 0;
+  width: 100%;
+  overflow: hidden;
+  font-size: clamp(2.35rem, 7.5vw, 3.5rem);
+  line-height: 0.92;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: linear-gradient(
+    180deg,
+    #f4fbff 0%,
+    #9fd4ff 28%,
+    #6b9fe8 52%,
+    #b89cff 78%,
+    #ffb8e8 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter:
+    drop-shadow(0 0 12px rgb(138 43 226 / 0.45))
+    drop-shadow(0 0 20px rgb(255 0 140 / 0.2))
+    drop-shadow(0 0 16px rgb(0 168 255 / 0.15));
+  pointer-events: none;
+  user-select: none;
 }
 
 .experience-dashboard-welcome-header {
