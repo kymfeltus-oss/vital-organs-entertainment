@@ -23,8 +23,8 @@ export default function ExperienceDashboardGridCard({
       <img
         src={src}
         alt=""
-        width={1254}
-        height={1254}
+        width={627}
+        height={627}
         className="main-graphic"
         loading="eager"
         decoding="async"

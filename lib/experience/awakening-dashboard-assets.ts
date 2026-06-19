@@ -96,10 +96,10 @@ export const AWAKENING_ASSETS = {
 
 /** PNG button art for the experience dashboard 2×2 grid. */
 export const AWAKENING_DASHBOARD_BUTTON_ASSETS = {
-  music: "/awakening/300_dashboard_assets/music_button.png",
-  live: "/awakening/300_dashboard_assets/live_button.png",
-  giving: "/awakening/300_dashboard_assets/vital_seed_giving_button.png",
-  prayer: "/awakening/300_dashboard_assets/prayer_contact_button.png",
+  music: "/awakening/300_dashboard_assets/music.png",
+  live: "/awakening/300_dashboard_assets/live.png",
+  giving: "/awakening/300_dashboard_assets/vital_seed.png",
+  prayer: "/awakening/300_dashboard_assets/prayer_contact.png",
 } as const;
 
 /** 2×2 grid order: top-left → top-right → bottom-left → bottom-right. */
