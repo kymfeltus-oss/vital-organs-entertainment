@@ -74,28 +74,42 @@ export default function ExperienceDashboardInterfaceLayer({
           </div>
         ) : null}
 
-        <nav className="experience-dashboard-button-grid" aria-label="Dashboard shortcuts">
-          {AWAKENING_DASHBOARD_BUTTON_GRID.map((button) => (
-            <Link
-              key={button.id}
-              href={button.href}
-              className="experience-dashboard-button-grid__link touch-target"
-              aria-label={button.ariaLabel}
-            >
-              {/* Native img — direct public asset path for reliable mobile loading */}
-              <img
-                src={button.src}
-                alt=""
-                width={210}
-                height={111}
-                className="experience-dashboard-button-grid__img"
-                loading="eager"
-                decoding="async"
-                draggable={false}
-              />
-            </Link>
-          ))}
-        </nav>
+        <div className="experience-dashboard-top-zone">
+          <header className="experience-dashboard-header-zone">
+            <img
+              src={AWAKENING_ASSETS.welcomeHeader}
+              alt="Welcome"
+              className="experience-dashboard-welcome-header"
+              loading="eager"
+              decoding="async"
+              draggable={false}
+            />
+          </header>
+        </div>
+
+        <div className="experience-dashboard-bottom-zone">
+          <nav className="experience-dashboard-button-grid" aria-label="Dashboard shortcuts">
+            {AWAKENING_DASHBOARD_BUTTON_GRID.map((button) => (
+              <Link
+                key={button.id}
+                href={button.href}
+                className="experience-dashboard-button-grid__link touch-target"
+                aria-label={button.ariaLabel}
+              >
+                <img
+                  src={button.src}
+                  alt=""
+                  width={140}
+                  height={74}
+                  className="experience-dashboard-button-grid__img"
+                  loading="eager"
+                  decoding="async"
+                  draggable={false}
+                />
+              </Link>
+            ))}
+          </nav>
+        </div>
       </div>
     </div>
   );

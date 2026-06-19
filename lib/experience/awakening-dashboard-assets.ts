@@ -18,11 +18,15 @@ export const AWAKENING_DASHBOARD_CONTAINER = {
   aspectHeight: 16,
 } as const;
 
-/** PNG button grid scale relative to native art (0.75 = compact but legible on mobile). */
-export const AWAKENING_DASHBOARD_BUTTON_GRID_SCALE = 0.75 as const;
+/** PNG button grid at half native art size in the bottom third. */
+export const AWAKENING_DASHBOARD_BUTTON_GRID_SCALE = 0.5 as const;
+
+/** Wire creator portrait stream URL when the event feed is live. */
+export const AWAKENING_CREATOR_STREAM_SRC: string | null = null;
 
 export const AWAKENING_ASSETS = {
   background: "/awakening/dashboard-concert-bg%20mobile.mp4",
+  welcomeHeader: "/awakening/300_dashboard_assets/welcome_header.png",
   routes: {
     enterExperience: "/experience/live",
     watchStory: "/",
@@ -106,6 +110,7 @@ export const AWAKENING_DASHBOARD_CARDS_MOBILE = [
 
 export const AWAKENING_PRELOAD_ASSETS = [
   { href: AWAKENING_ASSETS.background, as: "video" as const },
+  { href: AWAKENING_ASSETS.welcomeHeader, as: "image" as const },
   { href: "/branding/awakening-lockup.png", as: "image" as const },
   ...Object.values(AWAKENING_DASHBOARD_BUTTON_ASSETS).map((href) => ({
     href,
