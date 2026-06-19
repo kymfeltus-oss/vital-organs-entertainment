@@ -2026,7 +2026,7 @@ html {
 
 .experience-dashboard-overlay__stack {
   position: absolute;
-  top: calc(var(--dash-story-top-y, 792) / var(--dash-artboard-h, 1920) * 100cqh);
+  top: calc(var(--dash-story-top-y, 776) / var(--dash-artboard-h, 1920) * 100cqh);
   right: calc(var(--dash-safe-right, 40) / var(--dash-artboard-w, 1080) * 100cqw);
   left: calc(var(--dash-safe-left, 40) / var(--dash-artboard-w, 1080) * 100cqw);
   padding-bottom: calc(var(--dash-safe-bottom, 52) / var(--dash-artboard-h, 1920) * 100cqh);
@@ -2121,7 +2121,7 @@ html {
 
 @supports not (height: 1cqh) {
   .experience-dashboard-overlay__stack {
-    top: 41.25%;
+    top: 40.42%;
     right: 3.7%;
     left: 3.7%;
     gap: 1.04%;

@@ -40,7 +40,7 @@ export const AWAKENING_DASHBOARD_OVERLAY_LAYOUT = {
   /** Baked AWAKENING logo + glow clear zone ends at this Y. */
   logoClearBottomY: 768,
   /** Minimum space between logo clear zone and Ian Craig story card. */
-  logoToStoryMinGap: 24,
+  logoToStoryMinGap: 8,
   /** Uniform scale for 2×2 button cards. */
   cardScale: AWAKENING_DASHBOARD_BUTTON_GRID_SCALE,
   /** Ian Craig story banner — slightly larger for readable copy. */
