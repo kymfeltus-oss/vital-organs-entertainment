@@ -2204,33 +2204,6 @@ html {
   pointer-events: none;
 }
 
-.buy-seeds-page__balance {
-  position: absolute;
-  transform: none;
-  pointer-events: none;
-  text-align: left;
-}
-
-.buy-seeds-page__balance-label {
-  margin: 0;
-  font-family: var(--font-montserrat), sans-serif;
-  font-size: clamp(0.45rem, 2.4vw, 0.58rem);
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgb(255 255 255 / 0.55);
-}
-
-.buy-seeds-page__balance-value {
-  margin: 0.2rem 0 0;
-  font-family: var(--font-bebas-neue), sans-serif;
-  font-size: clamp(1.5rem, 7.5vw, 2.35rem);
-  line-height: 1;
-  letter-spacing: 0.06em;
-  color: #ffffff;
-  text-shadow: 0 0 18px rgb(0 168 255 / 0.25);
-}
-
 .buy-seeds-page__actions {
   position: absolute;
   inset: 0;
@@ -2243,9 +2216,11 @@ html {
   min-width: 44px;
   pointer-events: auto;
   border: 0;
-  border-radius: 999px;
+  border-radius: 14px;
   background: transparent;
-  transition: background-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .buy-seeds-page__action:hover {
@@ -2259,25 +2234,39 @@ html {
 
 .buy-seeds-page__action--selected {
   background: rgb(0 168 255 / 0.08);
-  box-shadow: inset 0 0 0 1px rgb(0 168 255 / 0.35);
+  box-shadow:
+    inset 0 0 0 1px rgb(0 168 255 / 0.55),
+    0 0 14px rgb(0 168 255 / 0.35),
+    0 0 22px rgb(255 0 140 / 0.18);
 }
 
-.buy-seeds-page__error {
+.buy-seeds-page__action--primary {
+  border-radius: 18px;
+}
+
+.buy-seeds-page__action--loading {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.buy-seeds-page__inline-error {
   position: absolute;
-  left: 50%;
-  bottom: 6%;
-  transform: translateX(-50%);
-  width: min(88%, 24rem);
   margin: 0;
-  padding: 0.75rem 1rem;
-  border-radius: 1rem;
-  border: 1px solid rgb(255 0 140 / 0.45);
-  background: rgb(9 11 19 / 0.92);
-  font-size: 0.75rem;
-  line-height: 1.45;
-  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
   text-align: center;
-  pointer-events: auto;
+  font-family: var(--font-inter), sans-serif;
+  font-size: clamp(0.62rem, 2.6cqw, 0.75rem);
+  line-height: 1.2;
+  color: #ff008c;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .buy-seeds-page__action--selected {
+    box-shadow: inset 0 0 0 2px rgb(0 168 255 / 0.75);
+  }
 }
 
 @supports not (aspect-ratio: 853 / 1844) {

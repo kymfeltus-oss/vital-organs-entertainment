@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import BuySeedsOverlay from "@/components/buy-seeds/BuySeedsOverlay";
-import { getClientAppUrl } from "@/lib/client-api";
 import { getMerchProduct } from "@/lib/merch/catalog";
 import { BUY_SEEDS_ASSETS, BUY_SEEDS_MOBILE_ART } from "@/lib/seeds/assets";
 import { SEED_ECONOMY_PACKS } from "@/lib/merch/catalog";
@@ -15,8 +14,6 @@ export default function BuySeedsPageClient() {
   const searchParams = useSearchParams();
   const successParam = searchParams.get("success") === "true";
 
-  const [balance, setBalance] = useState<number | null>(null);
-  const [balanceLoading, setBalanceLoading] = useState(true);
   const [selectedSlotIndex, setSelectedSlotIndex] = useState(0);
   const [selectedProductId, setSelectedProductId] = useState(
     SEED_ECONOMY_PACKS[0]?.productId ?? "",
@@ -26,42 +23,10 @@ export default function BuySeedsPageClient() {
 
   const { isSubmitting, errorMessage, startCheckout, clearError } = useMerchCheckout();
 
-  const loadBalance = useCallback(async () => {
-    setBalanceLoading(true);
-
-    try {
-      const response = await fetch(`${getClientAppUrl()}/api/live/seeds`, {
-        credentials: "include",
-      });
-
-      if (response.status === 401) {
-        setBalance(null);
-        return;
-      }
-
-      if (!response.ok) {
-        setBalance(null);
-        return;
-      }
-
-      const data = (await response.json()) as { balance?: number };
-      setBalance(typeof data.balance === "number" ? data.balance : 0);
-    } catch {
-      setBalance(null);
-    } finally {
-      setBalanceLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadBalance();
-  }, [loadBalance]);
-
   useEffect(() => {
     if (!successParam) return;
     window.history.replaceState({}, "", pathname);
-    void loadBalance();
-  }, [successParam, pathname, loadBalance]);
+  }, [successParam, pathname]);
 
   const handleBuyPack = useCallback(
     async (productId: string) => {
@@ -111,8 +76,6 @@ export default function BuySeedsPageClient() {
             draggable={false}
           />
           <BuySeedsOverlay
-            balance={balance}
-            balanceLoading={balanceLoading}
             selectedSlotIndex={selectedSlotIndex}
             isSubmitting={isSubmitting}
             activeProductId={activeProductId}

@@ -22,53 +22,56 @@ export const BUY_SEEDS_BACK_SLOT: BuySeedsOverlayRect & { label: string } = {
   height: MOBILE_ARTBOARD_BACK_HOTSPOT.height,
 };
 
-export const BUY_SEEDS_BALANCE_SLOT: BuySeedsOverlayRect = {
-  left: "12%",
-  top: "32.5%",
-  width: "38%",
-  height: "6.5%",
-};
-
 export const BUY_SEEDS_CONTINUE_SLOT: BuySeedsOverlayRect & { label: string } = {
   label: "Continue to payment",
-  left: "7%",
-  top: "64.5%",
-  width: "86%",
-  height: "6.5%",
+  left: "5.5%",
+  top: "66.8%",
+  width: "89%",
+  height: "7.2%",
 };
 
-/** Four package rows on the artboard — rows 3–4 map to the largest catalog pack. */
+export const BUY_SEEDS_ERROR_SLOT: BuySeedsOverlayRect = {
+  left: "5.5%",
+  top: "64.8%",
+  width: "89%",
+  height: "2%",
+};
+
+/**
+ * Four package rows on the artboard — labels match PNG tiers; checkout uses catalog packs.
+ * Rows 3–4 both map to the largest catalog pack until a fourth SKU exists.
+ */
 export const BUY_SEEDS_PACK_SLOTS: readonly BuySeedsPackSlot[] = [
   {
     productId: SEED_ECONOMY_PACKS[0].productId,
-    label: `${SEED_ECONOMY_PACKS[0].seedAmount.toLocaleString("en-US")} Seeds — $${SEED_ECONOMY_PACKS[0].price}`,
-    left: "7%",
-    top: "41%",
-    width: "86%",
-    height: "5.5%",
+    label: "100 Seeds — $1.99",
+    left: "5.5%",
+    top: "42.8%",
+    width: "89%",
+    height: "5.4%",
   },
   {
     productId: SEED_ECONOMY_PACKS[1].productId,
-    label: `${SEED_ECONOMY_PACKS[1].seedAmount.toLocaleString("en-US")} Seeds — $${SEED_ECONOMY_PACKS[1].price}`,
-    left: "7%",
-    top: "47%",
-    width: "86%",
-    height: "5.5%",
+    label: "300 Seeds — $4.99",
+    left: "5.5%",
+    top: "48.6%",
+    width: "89%",
+    height: "5.4%",
   },
   {
     productId: SEED_ECONOMY_PACKS[2].productId,
-    label: `${SEED_ECONOMY_PACKS[2].seedAmount.toLocaleString("en-US")} Seeds — $${SEED_ECONOMY_PACKS[2].price}`,
-    left: "7%",
-    top: "53%",
-    width: "86%",
-    height: "5.5%",
+    label: "600 Seeds — $8.99",
+    left: "5.5%",
+    top: "54.4%",
+    width: "89%",
+    height: "5.4%",
   },
   {
     productId: SEED_ECONOMY_PACKS[2].productId,
-    label: `${SEED_ECONOMY_PACKS[2].seedAmount.toLocaleString("en-US")} Seeds — $${SEED_ECONOMY_PACKS[2].price} (Best Value)`,
-    left: "7%",
-    top: "59%",
-    width: "86%",
-    height: "5.5%",
+    label: "1,200 Seeds — $15.99 (Best Value)",
+    left: "5.5%",
+    top: "60.2%",
+    width: "89%",
+    height: "5.4%",
   },
 ] as const;

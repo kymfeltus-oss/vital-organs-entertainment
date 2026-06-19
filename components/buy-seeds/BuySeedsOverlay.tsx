@@ -3,8 +3,8 @@
 import Link from "next/link";
 import {
   BUY_SEEDS_BACK_SLOT,
-  BUY_SEEDS_BALANCE_SLOT,
   BUY_SEEDS_CONTINUE_SLOT,
+  BUY_SEEDS_ERROR_SLOT,
   BUY_SEEDS_PACK_SLOTS,
 } from "@/lib/seeds/buy-seeds-slots";
 import {
@@ -14,8 +14,6 @@ import {
 import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 
 type BuySeedsOverlayProps = {
-  balance: number | null;
-  balanceLoading: boolean;
   selectedSlotIndex: number;
   isSubmitting: boolean;
   activeProductId: string | null;
@@ -25,8 +23,6 @@ type BuySeedsOverlayProps = {
 };
 
 export default function BuySeedsOverlay({
-  balance,
-  balanceLoading,
   selectedSlotIndex,
   isSubmitting,
   activeProductId,
@@ -34,8 +30,7 @@ export default function BuySeedsOverlay({
   onSelectPack,
   onContinue,
 }: BuySeedsOverlayProps) {
-  const hitClassName =
-    "buy-seeds-page__action touch-target rounded-[999px] bg-transparent transition hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue";
+  const hitClassName = "buy-seeds-page__action touch-target";
 
   return (
     <div className="buy-seeds-page__overlay" aria-label="Buy Vital Seeds">
@@ -50,24 +45,6 @@ export default function BuySeedsOverlay({
           height: BUY_SEEDS_BACK_SLOT.height,
         }}
       />
-
-      {balance !== null && !balanceLoading ? (
-        <div
-          className="buy-seeds-page__balance"
-          aria-live="polite"
-          style={{
-            left: BUY_SEEDS_BALANCE_SLOT.left,
-            top: BUY_SEEDS_BALANCE_SLOT.top,
-            width: BUY_SEEDS_BALANCE_SLOT.width,
-            height: BUY_SEEDS_BALANCE_SLOT.height,
-          }}
-        >
-          <p className="buy-seeds-page__balance-value">
-            {balance.toLocaleString("en-US")}
-            <span className="sr-only"> Vital Seeds</span>
-          </p>
-        </div>
-      ) : null}
 
       <div className="buy-seeds-page__actions">
         {BUY_SEEDS_PACK_SLOTS.map((slot, index) => {
@@ -100,13 +77,30 @@ export default function BuySeedsOverlay({
           );
         })}
 
+        {errorMessage ? (
+          <p
+            className="buy-seeds-page__inline-error"
+            role="alert"
+            style={{
+              left: BUY_SEEDS_ERROR_SLOT.left,
+              top: BUY_SEEDS_ERROR_SLOT.top,
+              width: BUY_SEEDS_ERROR_SLOT.width,
+              height: BUY_SEEDS_ERROR_SLOT.height,
+            }}
+          >
+            {errorMessage}
+          </p>
+        ) : null}
+
         <button
           type="button"
           aria-label={BUY_SEEDS_CONTINUE_SLOT.label}
           disabled={isSubmitting || selectedSlotIndex < 0}
           aria-busy={isSubmitting}
           onClick={onContinue}
-          className={hitClassName}
+          className={`${hitClassName} buy-seeds-page__action--primary${
+            isSubmitting ? " buy-seeds-page__action--loading" : ""
+          }`}
           style={{
             left: BUY_SEEDS_CONTINUE_SLOT.left,
             top: BUY_SEEDS_CONTINUE_SLOT.top,
@@ -115,12 +109,6 @@ export default function BuySeedsOverlay({
           }}
         />
       </div>
-
-      {errorMessage ? (
-        <p className="buy-seeds-page__error" role="alert">
-          {errorMessage}
-        </p>
-      ) : null}
     </div>
   );
 }

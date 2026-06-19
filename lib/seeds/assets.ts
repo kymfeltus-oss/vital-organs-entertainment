@@ -1,7 +1,7 @@
 /** Buy Seeds page — mobile-only artboard (no desktop variant). */
 
 export const BUY_SEEDS_ASSETS = {
-  mobileBackground: "/seeds/seeds-coins-background.png",
+  mobileBackground: "/seeds/seeds-coins-background.png?v=853x1844-user-3",
 } as const;
 
 export const BUY_SEEDS_MOBILE_ART = {
