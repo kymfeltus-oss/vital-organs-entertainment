@@ -130,7 +130,6 @@ export default function ExperienceDashboardInterfaceLayer({
                     href={button.href}
                     src={button.src}
                     ariaLabel={button.ariaLabel}
-                    imageVisualScale={button.imageVisualScale}
                   />
                 ))}
               </nav>

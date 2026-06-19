@@ -2002,7 +2002,7 @@ html {
   container-type: size;
   container-name: dash-artboard;
   --dashboard-page-padding: 16px;
-  --dashboard-card-gap: 12px;
+  --dashboard-card-gap: 8px;
   /* heroWidth = gridWidth = artboard content track inside page padding */
   --dashboard-track-width: calc(100cqw - (var(--dashboard-page-padding) * 2));
 }
@@ -2054,11 +2054,12 @@ html {
 .experience-dashboard-overlay__content-band {
   display: flex;
   width: 100%;
+  width: round(down, 100%, 2px);
   max-width: 100%;
-  margin: 0;
+  margin-inline: auto;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--dashboard-card-gap, 12px);
+  gap: var(--dashboard-card-gap, 8px);
   flex-shrink: 0;
   pointer-events: none;
   overflow: visible;
@@ -2121,10 +2122,10 @@ html {
 .dashboard-action-grid {
   width: 100%;
   max-width: 100%;
-  margin: 0;
+  margin-inline: auto;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--dashboard-card-gap, 12px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--dashboard-card-gap, 8px);
   box-sizing: border-box;
   flex-shrink: 0;
   padding: 0;
@@ -2140,7 +2141,7 @@ html {
   aspect-ratio: 1 / 1;
   padding: 0;
   border-radius: 18px;
-  overflow: visible;
+  overflow: hidden;
   text-decoration: none;
   transition:
     transform 0.22s ease,
@@ -2154,8 +2155,7 @@ html {
   height: 100%;
   object-fit: contain;
   object-position: center center;
-  transform: scale(var(--dash-action-art-scale, 1));
-  transform-origin: center center;
+  transform: none;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
@@ -2188,9 +2188,10 @@ html {
   .experience-dashboard-overlay__grid,
   .dashboard-action-grid {
     width: 100%;
+    width: round(down, 100%, 2px);
     max-width: 100%;
-    margin: 0;
-    gap: var(--dashboard-card-gap, 12px);
+    margin-inline: auto;
+    gap: var(--dashboard-card-gap, 8px);
   }
 }
 
