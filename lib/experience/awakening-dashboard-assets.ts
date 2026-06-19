@@ -1,10 +1,16 @@
 /** Experience dashboard — mobile video backdrop + route targets. */
 
+/** Fixed mobile dashboard artboard — logo lives in the flat background plate. */
+export const AWAKENING_DASHBOARD_ARTBOARD = {
+  width: 1080,
+  height: 1920,
+} as const;
+
 /** Fallback art dimensions until video metadata loads — tune if export size differs. */
 /** Portrait plate; rendered with object-fit: contain + object-position: center top. */
 export const AWAKENING_CONCERT_BACKDROP_ART = {
-  width: 941,
-  height: 1672,
+  width: AWAKENING_DASHBOARD_ARTBOARD.width,
+  height: AWAKENING_DASHBOARD_ARTBOARD.height,
 } as const;
 
 export const AWAKENING_MOBILE_DASHBOARD_VIEWPORT = {
@@ -114,7 +120,6 @@ export const AWAKENING_DASHBOARD_CARDS_MOBILE = [
 
 export const AWAKENING_PRELOAD_ASSETS = [
   { href: AWAKENING_ASSETS.background, as: "video" as const },
-  { href: AWAKENING_ASSETS.logo, as: "image" as const },
   { href: AWAKENING_ASSETS.ianCraigStoryPoster, as: "image" as const },
   ...Object.values(AWAKENING_DASHBOARD_BUTTON_ASSETS).map((href) => ({
     href,
