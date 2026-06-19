@@ -1,8 +1,8 @@
 /** Invisible hit regions aligned to baked Vital Seed giving background art. */
 
 export const EXPERIENCE_GIVING_MOBILE_ART = {
-  width: 1024,
-  height: 1536,
+  width: 941,
+  height: 1672,
 } as const;
 
 export type GivingHotspotRegion = {

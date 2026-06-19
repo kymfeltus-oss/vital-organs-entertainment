@@ -41,14 +41,12 @@ export const AWAKENING_DASHBOARD_OVERLAY_LAYOUT = {
   logoClearBottomY: 632,
   /** Minimum space between logo clear zone and Ian Craig story card. */
   logoToStoryMinGap: 32,
-  /** Uniform scale for 2×2 button cards. */
+  /** Uniform scale for 2×2 button cards — layout width comes from shared stack (100%). */
   cardScale: AWAKENING_DASHBOARD_BUTTON_GRID_SCALE,
-  /** Ian Craig story banner — slightly larger for readable copy. */
-  storyCardScale: 0.96,
+  /** @deprecated Use 100% shared stack width — kept for artboard scroll math only. */
+  storyCardScale: 1,
   /** Uniform gutter between all five cards — story, rows, and columns (1080 artboard px). */
-  overlayCardGap: 6,
-  /** Scales all grid PNG art to align visible borders with Ian Craig story edges. */
-  gridCardImageScale: 1.14,
+  overlayCardGap: 20,
   /** Extra nudge below story card — use overlayCardGap for primary rhythm. */
   gridTopOffset: 0,
   /**

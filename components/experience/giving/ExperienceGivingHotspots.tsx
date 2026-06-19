@@ -27,8 +27,28 @@ function HotspotButton({
     <button
       type="button"
       aria-label={region.label}
-      onClick={onClick}
-      className={`${VITAL_SEED_OVERLAY_HIT_CLASS} absolute border-0 p-0`}
+      onClick={() => {
+        // #region agent log
+        fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "baf5b9",
+          },
+          body: JSON.stringify({
+            sessionId: "baf5b9",
+            runId: "giving-layout",
+            hypothesisId: "C",
+            location: "ExperienceGivingHotspots.tsx:HotspotButton",
+            message: "Hotspot pointer event",
+            data: { id: region.id, label: region.label },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
+        onClick();
+      }}
+      className={`${VITAL_SEED_OVERLAY_HIT_CLASS} absolute touch-target border-0 p-0`}
       style={{
         left: region.left,
         top: region.top,

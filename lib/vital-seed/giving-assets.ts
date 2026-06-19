@@ -2,7 +2,7 @@
 
 export const VITAL_SEED_GIVING_ASSETS = {
   desktopBackground: "/images/vital-seed/desktop-background.png",
-  mobileBackground: "/images/vital-seed/mobile-background.png",
+  mobileBackground: "/vital%20seed/mobile-main-background.png",
 } as const;
 
 export const VITAL_SEED_GIVING_DESKTOP_ART = {

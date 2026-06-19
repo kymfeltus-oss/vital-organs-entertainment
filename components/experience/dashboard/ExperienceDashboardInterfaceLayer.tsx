@@ -21,10 +21,69 @@ export default function ExperienceDashboardInterfaceLayer({
   initialCountdownConfig,
 }: ExperienceDashboardInterfaceLayerProps) {
   const backgroundRef = useRef<HTMLVideoElement>(null);
+  const storyRef = useRef<HTMLAnchorElement>(null);
+  const gridRef = useRef<HTMLElement>(null);
+  const stackRef = useRef<HTMLDivElement>(null);
 
   const { config, countdown, eventPhase, isLoading, showTimer } = useLobbyCountdown({
     initialConfig: initialCountdownConfig,
   });
+
+  useEffect(() => {
+    const story = storyRef.current;
+    const grid = gridRef.current;
+    const stack = stackRef.current;
+    if (!story || !grid || !stack) return;
+
+    const measureAlignment = (trigger: string) => {
+      const storyRect = story.getBoundingClientRect();
+      const gridRect = grid.getBoundingClientRect();
+      const stackRect = stack.getBoundingClientRect();
+      const leftDelta = Math.round((gridRect.left - storyRect.left) * 100) / 100;
+      const rightDelta = Math.round((gridRect.right - storyRect.right) * 100) / 100;
+      // #region agent log
+      fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Debug-Session-Id": "baf5b9",
+        },
+        body: JSON.stringify({
+          sessionId: "baf5b9",
+          runId: "dashboard-align",
+          hypothesisId: "A-E",
+          location: "ExperienceDashboardInterfaceLayer.tsx:measureAlignment",
+          message: "Dashboard card edge alignment",
+          data: {
+            trigger,
+            storyLeft: Math.round(storyRect.left),
+            storyRight: Math.round(storyRect.right),
+            storyWidth: Math.round(storyRect.width),
+            gridLeft: Math.round(gridRect.left),
+            gridRight: Math.round(gridRect.right),
+            gridWidth: Math.round(gridRect.width),
+            stackLeft: Math.round(stackRect.left),
+            stackRight: Math.round(stackRect.right),
+            leftDelta,
+            rightDelta,
+            aligned: Math.abs(leftDelta) < 1 && Math.abs(rightDelta) < 1,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
+    };
+
+    measureAlignment("mount");
+    const resizeObserver = new ResizeObserver(() => measureAlignment("resize"));
+    resizeObserver.observe(stack);
+    window.addEventListener("orientationchange", () => measureAlignment("orientation"));
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("orientationchange", () => measureAlignment("orientation"));
+    };
+  }, []);
 
   useEffect(() => {
     const video = backgroundRef.current;
@@ -60,10 +119,7 @@ export default function ExperienceDashboardInterfaceLayer({
             "--dash-safe-right": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.safeArea.right,
             "--dash-safe-bottom": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.safeArea.bottom,
             "--dash-safe-left": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.safeArea.left,
-            "--dash-card-scale": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.cardScale,
-            "--dash-story-scale": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.storyCardScale,
             "--dash-overlay-card-gap": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.overlayCardGap,
-            "--dash-grid-card-image-scale": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridCardImageScale,
             "--dash-grid-top-offset": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridTopOffset,
             "--dash-artboard-scroll-h": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.artboardScrollHeight,
             "--dash-artboard-h": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.artboardHeight,
@@ -99,11 +155,15 @@ export default function ExperienceDashboardInterfaceLayer({
             </div>
           ) : null}
 
-          <div className="experience-dashboard-overlay__stack">
-            <div className="experience-dashboard-overlay__content-band">
+          <div
+            ref={stackRef}
+            className="experience-dashboard-overlay__stack dashboard-page"
+          >
+            <div className="experience-dashboard-overlay__content-band dashboard-card-stack">
             <Link
+              ref={storyRef}
               href={AWAKENING_ASSETS.routes.watchStory}
-              className="experience-dashboard-overlay__story touch-target"
+              className="experience-dashboard-overlay__story dashboard-card touch-target"
               aria-label="Watch Ian Craig's healing journey"
             >
               <img
@@ -118,12 +178,16 @@ export default function ExperienceDashboardInterfaceLayer({
               />
             </Link>
 
-            <nav className="experience-dashboard-overlay__grid" aria-label="Dashboard shortcuts">
+            <nav
+              ref={gridRef}
+              className="experience-dashboard-overlay__grid dashboard-card-grid"
+              aria-label="Dashboard shortcuts"
+            >
               {AWAKENING_DASHBOARD_BUTTON_GRID.map((button) => (
                 <Link
                   key={button.id}
                   href={button.href}
-                  className="experience-dashboard-overlay__card touch-target"
+                  className="experience-dashboard-overlay__card dashboard-card touch-target"
                   aria-label={button.ariaLabel}
                 >
                   <img
