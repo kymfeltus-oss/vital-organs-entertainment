@@ -65,6 +65,7 @@ export default function ExperienceDashboardInterfaceLayer({
             "--dash-grid-row-gap": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridRowGap,
             "--dash-grid-col-gap": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridColumnGap,
             "--dash-grid-top-offset": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridTopOffset,
+            "--dash-artboard-scroll-h": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.artboardScrollHeight,
             "--dash-artboard-h": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.artboardHeight,
             "--dash-artboard-w": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.artboardWidth,
           } as CSSProperties

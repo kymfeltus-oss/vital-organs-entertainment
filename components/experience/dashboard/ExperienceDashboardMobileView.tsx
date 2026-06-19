@@ -26,7 +26,7 @@ export default function ExperienceDashboardMobileView({
         onProfileChange={onProfileChange}
       />
 
-      <div className="relative z-10 flex min-h-0 w-full flex-1">
+      <div className="relative z-10 flex min-h-0 w-full flex-1 overflow-y-auto overscroll-contain">
         <ExperienceDashboardContent initialCountdownConfig={initialCountdownConfig} />
       </div>
     </div>
