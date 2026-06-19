@@ -2299,23 +2299,13 @@ html {
   background-color: #000000;
 }
 
-.prayer-page--mobile .prayer-page__stage {
-  position: relative;
-  width: 100%;
-  max-width: 100vw;
-  height: auto;
-  aspect-ratio: 853 / 1844;
-  min-height: calc(100vw * 1844 / 853);
-  flex-shrink: 0;
-  container-type: inline-size;
-}
-
 .prayer-page__stage {
   position: relative;
   width: 100%;
   max-width: 100vw;
   height: auto;
   aspect-ratio: var(--prayer-art-w, 853) / var(--prayer-art-h, 1844);
+  min-height: calc(100vw * var(--prayer-art-h, 1844) / var(--prayer-art-w, 853));
   flex-shrink: 0;
   container-type: inline-size;
 }
@@ -2349,7 +2339,7 @@ html {
 }
 
 @supports not (aspect-ratio: 853 / 1844) {
-  .prayer-page--mobile .prayer-page__stage {
+  .prayer-page__stage {
     height: calc(100vw * var(--prayer-art-h, 1844) / var(--prayer-art-w, 853));
   }
 }

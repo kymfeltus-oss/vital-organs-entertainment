@@ -6,7 +6,7 @@ import { PRAYER_ASSETS, PRAYER_MOBILE_ART } from "@/lib/prayer/assets";
 
 export default function PrayerPageClient() {
   return (
-    <div className="prayer-page prayer-page--mobile">
+    <div className="prayer-page">
       <div
         className="prayer-page__stage"
         style={
