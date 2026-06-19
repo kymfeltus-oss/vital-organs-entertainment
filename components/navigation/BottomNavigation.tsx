@@ -12,8 +12,8 @@ export default function BottomNavigation() {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Primary" className="bottom-nav">
-      <div className="bottom-nav__frame">
+    <nav aria-label="Primary" className="bottom-dock">
+      <div className="bottom-dock__frame">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={BOTTOM_MENU_BAR_SRC}
@@ -21,11 +21,12 @@ export default function BottomNavigation() {
           aria-hidden="true"
           width={BOTTOM_MENU_ARTBOARD.width}
           height={BOTTOM_MENU_ARTBOARD.height}
-          className="bottom-nav__art"
-          decoding="async"
+          className="bottom-dock__art"
+          decoding="sync"
+          fetchPriority="high"
           draggable={false}
         />
-        <div className="bottom-nav__hotspots">
+        <div className="bottom-dock__hotspots">
           {BOTTOM_NAV_HOTSPOTS.map((item) => {
             const active = item.isActive(pathname);
 
@@ -35,7 +36,7 @@ export default function BottomNavigation() {
                 href={item.href}
                 aria-label={item.label}
                 aria-current={active ? "page" : undefined}
-                className={`bottom-nav__hit touch-target${active ? " bottom-nav__hit--active" : ""}`}
+                className={`bottom-dock__hit touch-target${active ? " bottom-dock__hit--active" : ""}`}
               >
                 <span className="sr-only">{item.label}</span>
               </Link>

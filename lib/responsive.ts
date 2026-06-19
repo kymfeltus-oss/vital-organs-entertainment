@@ -1,5 +1,7 @@
 /** Shared responsive layout tokens for 300 Awakening */
 
+import { BOTTOM_NAV_BAR_HEIGHT_PX } from "@/lib/navigation/bottom-nav-config";
+
 /** Effect tier utility classes — pair with globals.css `.effects-heavy` / `.effects-lite` */
 export const EFFECTS_TIER = {
   heavy: "effects-heavy",
@@ -41,9 +43,12 @@ export const DEVICE_FIT_SCROLL =
 export const LOBBY_GRID =
   "grid min-h-dvh grid-cols-1 lg:grid-cols-[minmax(14rem,260px)_minmax(0,1fr)_minmax(16rem,360px)]";
 
-/** Content offset when bottom navigation is present (64px bar + 16px float gap) */
-export const CONTENT_WITH_NAV =
-  "pb-[calc(64px+16px+env(safe-area-inset-bottom))]";
+/** 9:16 mobile app content track — shared by artboard pages and bottom dock. */
+export const MOBILE_APP_TRACK_WIDTH =
+  "min(100vw, calc(100dvh * 1080 / 1920))" as const;
+
+/** Content offset when PNG bottom dock is present (display height + safe area). */
+export const CONTENT_WITH_NAV = `pb-[calc(${BOTTOM_NAV_BAR_HEIGHT_PX}px+env(safe-area-inset-bottom))]`;
 
 /** Dashboard card grid — scales with viewport */
 export const CARD_GRID_DASHBOARD =

@@ -1,10 +1,11 @@
-/** Bottom menu PNG artboard — hotspot rects are percentage-based on full image. */
+/** Bottom dock PNG artboard + five equal hotspot columns. */
+
 export const BOTTOM_MENU_BAR_SRC =
-  "/bottom-menu-bar/bottom-menu-bar.png?v=1893x341";
+  "/bottom-menu-bar/bottom-menu-bar.png?v=3422x678-crop";
 
 export const BOTTOM_MENU_ARTBOARD = {
-  width: 1893,
-  height: 341,
+  width: 3422,
+  height: 678,
 } as const;
 
 export type BottomNavItemId =
@@ -12,7 +13,6 @@ export type BottomNavItemId =
   | "live"
   | "giving"
   | "music"
-  | "prayer"
   | "buy-seeds";
 
 export type BottomNavHotspot = {
@@ -30,65 +30,54 @@ function matchesExact(path: string) {
 }
 
 function matchesPrefix(path: string) {
-  return (pathname: string) => pathname === path || pathname.startsWith(`${path}/`);
+  return (pathname: string) =>
+    pathname === path || pathname.startsWith(`${path}/`);
 }
 
-/** Full-width capsule on 1893×341 banner. */
-export const BOTTOM_NAV_PILL_INSET = {
-  left: 0,
-  width: 100,
-} as const;
+/** Max rendered dock height at typical phone track widths — for page padding fallback. */
+export const BOTTOM_NAV_BAR_HEIGHT_PX = 112;
 
-/** Six equal columns across the full-width capsule. */
-const COLUMN_WIDTH = BOTTOM_NAV_PILL_INSET.width / 6;
+const TAB_WIDTH = 100 / 5;
 
 export const BOTTOM_NAV_HOTSPOTS: readonly BottomNavHotspot[] = [
   {
     id: "home",
     label: "Home",
     href: "/experience",
-    left: BOTTOM_NAV_PILL_INSET.left + COLUMN_WIDTH * 0,
-    width: COLUMN_WIDTH,
+    left: TAB_WIDTH * 0,
+    width: TAB_WIDTH,
     isActive: matchesExact("/experience"),
   },
   {
     id: "live",
     label: "Live",
     href: "/live",
-    left: BOTTOM_NAV_PILL_INSET.left + COLUMN_WIDTH * 1,
-    width: COLUMN_WIDTH,
+    left: TAB_WIDTH * 1,
+    width: TAB_WIDTH,
     isActive: matchesPrefix("/live"),
   },
   {
     id: "giving",
     label: "Giving",
     href: "/giving",
-    left: BOTTOM_NAV_PILL_INSET.left + COLUMN_WIDTH * 2,
-    width: COLUMN_WIDTH,
+    left: TAB_WIDTH * 2,
+    width: TAB_WIDTH,
     isActive: matchesPrefix("/giving"),
   },
   {
     id: "music",
     label: "Music",
     href: "/music",
-    left: BOTTOM_NAV_PILL_INSET.left + COLUMN_WIDTH * 3,
-    width: COLUMN_WIDTH,
+    left: TAB_WIDTH * 3,
+    width: TAB_WIDTH,
     isActive: matchesPrefix("/music"),
-  },
-  {
-    id: "prayer",
-    label: "Prayer",
-    href: "/prayer",
-    left: BOTTOM_NAV_PILL_INSET.left + COLUMN_WIDTH * 4,
-    width: COLUMN_WIDTH,
-    isActive: matchesPrefix("/prayer"),
   },
   {
     id: "buy-seeds",
     label: "Buy Seeds",
     href: "/buy-seeds",
-    left: BOTTOM_NAV_PILL_INSET.left + COLUMN_WIDTH * 5,
-    width: COLUMN_WIDTH,
+    left: TAB_WIDTH * 4,
+    width: TAB_WIDTH,
     isActive: matchesPrefix("/buy-seeds"),
   },
 ] as const;
