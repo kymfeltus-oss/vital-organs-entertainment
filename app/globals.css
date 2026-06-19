@@ -3505,54 +3505,6 @@ html {
   );
 }
 
-/* Menu-screen header — transparent overlay aligned to 853×1844 PNG artboard */
-.menu-screen-header-shell {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.menu-screen-header {
-  box-sizing: border-box;
-  width: var(--mobile-app-track-w);
-  max-width: 100vw;
-  background: transparent;
-  pointer-events: none;
-}
-
-.menu-screen-header__canvas {
-  position: relative;
-  width: 100%;
-  height: min(
-    100dvh,
-    calc(
-      var(--mobile-app-track-w) * var(--menu-header-art-h, 1844) /
-        var(--menu-header-art-w, 853)
-    )
-  );
-  pointer-events: none;
-}
-
-.menu-screen-header__actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.25rem;
-  box-sizing: border-box;
-}
-
-.menu-screen-header__menu.awakening-menu-button {
-  width: 2.25rem;
-  height: 2.25rem;
-  min-width: 2.25rem;
-  min-height: 2.25rem;
-}
-
 .bottom-dock {
   position: fixed;
   left: 50%;
@@ -3885,6 +3837,26 @@ html {
   inset: 0;
 }
 
+/* Typed text sits in the PNG label zone — icons/labels remain artwork-only. */
+.auth-attendee-input {
+  text-align: left;
+  padding-left: 12.5%;
+  padding-right: 0.35rem;
+  font-size: clamp(0.72rem, 2.65cqw, 0.875rem);
+  line-height: 1;
+  caret-color: #ffffff;
+  color: transparent;
+}
+
+.auth-attendee-input--password {
+  padding-right: 11%;
+}
+
+.auth-attendee-input:not(:placeholder-shown) {
+  color: #ffffff;
+}
+
+/* Signup plate — same invisible field treatment as login */
 .auth-attendee-field {
   position: absolute;
   box-sizing: border-box;
@@ -3892,15 +3864,14 @@ html {
   margin: 0;
   min-width: 0;
   min-height: 0;
-  max-height: 100%;
   border: 0;
-  border-radius: 0.65rem;
-  background: rgb(0 0 0 / 0.35);
-  padding: 0 0.85rem 0 2.35rem;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 0.35rem 0 12.5%;
   font-family: var(--font-inter), sans-serif;
-  font-size: clamp(0.85rem, 3.1cqw, 1rem);
-  line-height: 1.2;
-  color: #ffffff;
+  font-size: clamp(0.72rem, 2.65cqw, 0.875rem);
+  line-height: 1;
+  color: transparent;
   outline: none;
   pointer-events: auto;
   touch-action: manipulation;
@@ -3908,26 +3879,33 @@ html {
 }
 
 .auth-attendee-field::placeholder {
-  color: rgb(255 255 255 / 0.42);
+  color: transparent;
 }
 
-.auth-attendee-field:focus {
-  background: rgb(0 0 0 / 0.52);
-  box-shadow: inset 0 0 0 1px rgb(0 168 255 / 0.45);
+.auth-attendee-field:not(:placeholder-shown) {
+  color: #ffffff;
+}
+
+.auth-attendee-field:focus,
+.auth-attendee-field:focus-visible {
+  background: transparent;
+  box-shadow: none;
+  outline: none;
 }
 
 .auth-attendee-field--password {
-  padding-right: 2.35rem;
+  padding-right: 11%;
 }
 
 .auth-attendee-field--select {
-  padding-right: 2rem;
+  padding-right: 0.75rem;
   appearance: none;
   cursor: pointer;
+  color: #ffffff;
 }
 
 .auth-attendee-field--select:invalid {
-  color: rgb(255 255 255 / 0.42);
+  color: transparent;
 }
 
 .auth-attendee-hit {

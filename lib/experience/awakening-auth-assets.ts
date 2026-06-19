@@ -20,12 +20,12 @@ export type AuthLayoutRect = {
 
 /** Percentage rects aligned to auth-attendee-login.png (853×1844). */
 export const AWAKENING_AUTH_LOGIN_PANELS = {
-  email: { left: 11.5, top: 50.55, width: 77, height: 4.85 },
-  password: { left: 11.5, top: 57.08, width: 77, height: 4.95 },
-  rememberMe: { left: 12, top: 62.45, width: 24, height: 2.8 },
-  forgotPassword: { left: 56, top: 62.35, width: 32, height: 2.8 },
-  loginButton: { left: 11.5, top: 68.71, width: 77, height: 3.35 },
-  createAccountButton: { left: 11.5, top: 73.97, width: 77, height: 3.35 },
+  email: { left: 12.66, top: 50.43, width: 74.33, height: 1.84 },
+  password: { left: 12.66, top: 55.48, width: 74.33, height: 1.57 },
+  rememberMe: { left: 12.66, top: 58.6, width: 24, height: 2.0 },
+  forgotPassword: { left: 56, top: 58.5, width: 31, height: 2.0 },
+  loginButton: { left: 12.66, top: 64.5, width: 74.33, height: 3.2 },
+  createAccountButton: { left: 12.66, top: 68.7, width: 74.33, height: 2.8 },
   joinMovement: { left: 18, top: 82.5, width: 64, height: 3 },
   guestEntry: { left: 22, top: 86.8, width: 56, height: 3 },
 } as const satisfies Record<string, AuthLayoutRect>;

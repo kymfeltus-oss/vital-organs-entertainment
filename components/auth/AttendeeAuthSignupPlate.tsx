@@ -62,7 +62,7 @@ export default function AttendeeAuthSignupPlate({
         value={values.firstName}
         onChange={(event) => onFieldChange("firstName", event.target.value)}
         onBlur={onBlur}
-        placeholder="First name"
+        placeholder=" "
         aria-label="First name"
         className="auth-attendee-field"
         style={authRectStyle(panels.firstName)}
@@ -74,7 +74,7 @@ export default function AttendeeAuthSignupPlate({
         value={values.lastName}
         onChange={(event) => onFieldChange("lastName", event.target.value)}
         onBlur={onBlur}
-        placeholder="Last name"
+        placeholder=" "
         aria-label="Last name"
         className="auth-attendee-field"
         style={authRectStyle(panels.lastName)}
@@ -87,7 +87,7 @@ export default function AttendeeAuthSignupPlate({
         value={values.email}
         onChange={(event) => onFieldChange("email", event.target.value)}
         onBlur={onBlur}
-        placeholder="Email"
+        placeholder=" "
         aria-label="Email address"
         className="auth-attendee-field"
         style={authRectStyle(panels.email)}
@@ -100,7 +100,7 @@ export default function AttendeeAuthSignupPlate({
         value={values.phone}
         onChange={(event) => onFieldChange("phone", event.target.value)}
         onBlur={onBlur}
-        placeholder="Phone"
+        placeholder=" "
         aria-label="Phone number"
         className="auth-attendee-field"
         style={authRectStyle(panels.phone)}
@@ -112,7 +112,7 @@ export default function AttendeeAuthSignupPlate({
         value={values.city}
         onChange={(event) => onFieldChange("city", event.target.value)}
         onBlur={onBlur}
-        placeholder="City"
+        placeholder=" "
         aria-label="City"
         className="auth-attendee-field"
         style={authRectStyle(panels.city)}
@@ -142,7 +142,7 @@ export default function AttendeeAuthSignupPlate({
         value={values.password}
         onChange={(event) => onFieldChange("password", event.target.value)}
         onBlur={onBlur}
-        placeholder="Password"
+        placeholder=" "
         aria-label="Password"
         className="auth-attendee-field auth-attendee-field--password"
         style={authRectStyle(panels.password)}
@@ -166,7 +166,7 @@ export default function AttendeeAuthSignupPlate({
         value={values.confirmPassword}
         onChange={(event) => onFieldChange("confirmPassword", event.target.value)}
         onBlur={onBlur}
-        placeholder="Confirm password"
+        placeholder=" "
         aria-label="Confirm password"
         className="auth-attendee-field auth-attendee-field--password"
         style={authRectStyle(panels.confirmPassword)}

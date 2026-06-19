@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation";
 import BottomNavigation from "@/components/navigation/BottomNavigation";
-import MenuScreenHeader from "@/components/navigation/MenuScreenHeader";
 import { CONTENT_WITH_NAV } from "@/lib/responsive";
 import { isNavHiddenRoute } from "@/lib/routes";
 import { cn } from "@/lib/utils";
@@ -25,7 +24,6 @@ export default function RootLayoutShell({ children }: RootLayoutShellProps) {
         experienceSurface ? "bg-transparent" : "bg-brand-black",
       )}
     >
-      <MenuScreenHeader />
       {!hideNav && <BottomNavigation />}
       <div
         className={cn(

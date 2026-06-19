@@ -49,38 +49,42 @@ export default function AttendeeAuthLoginPlate({
 
   return (
     <form onSubmit={onSubmit} className="auth-attendee-overlay-form" aria-label="Log in">
-      <input
-        type="email"
-        required
-        autoComplete="email"
-        value={email}
-        onChange={(event) => onEmailChange(event.target.value)}
-        onBlur={onEmailBlur}
-        placeholder="Email or username"
-        aria-label="Email or Username"
-        className="auth-attendee-field"
-        style={authRectStyle(loginPanels.email)}
-      />
-      <input
-        type={showPassword ? "text" : "password"}
-        required
-        minLength={8}
-        autoComplete="current-password"
-        value={password}
-        onChange={(event) => onPasswordChange(event.target.value)}
-        placeholder="Password"
-        aria-label="Password"
-        className="auth-attendee-field auth-attendee-field--password"
-        style={authRectStyle(loginPanels.password)}
-      />
+      <div className="artboard-field-slot" style={authRectStyle(loginPanels.email)}>
+        <input
+          type="email"
+          required
+          autoComplete="email"
+          value={email}
+          onChange={(event) => onEmailChange(event.target.value)}
+          onBlur={onEmailBlur}
+          placeholder=" "
+          aria-label="Email or Username"
+          className="artboard-field-slot__control auth-attendee-input font-body text-white"
+        />
+      </div>
+
+      <div className="artboard-field-slot" style={authRectStyle(loginPanels.password)}>
+        <input
+          type={showPassword ? "text" : "password"}
+          required
+          minLength={8}
+          autoComplete="current-password"
+          value={password}
+          onChange={(event) => onPasswordChange(event.target.value)}
+          placeholder=" "
+          aria-label="Password"
+          className="artboard-field-slot__control auth-attendee-input auth-attendee-input--password font-body text-white"
+        />
+      </div>
+
       <button
         type="button"
         aria-label={showPassword ? "Hide password" : "Show password"}
         className="auth-attendee-hit auth-attendee-password-toggle"
         style={authRectStyle({
-          left: loginPanels.password.left + loginPanels.password.width - 9,
+          left: loginPanels.password.left + loginPanels.password.width - 10.5,
           top: loginPanels.password.top,
-          width: 8,
+          width: 9.5,
           height: loginPanels.password.height,
         })}
         onClick={onToggleShowPassword}
