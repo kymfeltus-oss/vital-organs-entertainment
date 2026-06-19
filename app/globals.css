@@ -2045,15 +2045,16 @@ html {
   max-width: 100%;
   padding-inline: calc(var(--dash-content-track-padding, 16) * 1px);
   box-sizing: border-box;
+  overflow: visible;
 }
 
 .dashboard-card-stack {
   display: flex;
   width: 100%;
-  max-width: min(100%, calc(var(--dash-action-grid-max, 358) * 1px));
+  max-width: 100%;
   margin-inline: auto;
   flex-direction: column;
-  align-items: stretch;
+  align-items: center;
   gap: calc(var(--dash-overlay-card-gap, 20) / var(--dash-artboard-w, 1080) * 100cqw);
   flex-shrink: 0;
   pointer-events: none;
@@ -2071,14 +2072,24 @@ html {
 .experience-dashboard-overlay__content-band {
   display: flex;
   width: 100%;
-  max-width: min(100%, calc(var(--dash-action-grid-max, 358) * 1px));
+  max-width: 100%;
   margin-inline: auto;
   flex-direction: column;
-  align-items: stretch;
+  align-items: center;
   gap: calc(var(--dash-overlay-card-gap, 20) / var(--dash-artboard-w, 1080) * 100cqw);
   flex-shrink: 0;
   pointer-events: none;
   overflow: visible;
+}
+
+.experience-dashboard-overlay__story-track {
+  /* Span artboard width (cqw) — hero card wider than the inset action grid track. */
+  width: min(100cqw, calc(var(--dash-story-card-max, 400) * 1px));
+  max-width: min(100cqw, calc(var(--dash-story-card-max, 400) * 1px));
+  margin-inline: auto;
+  flex-shrink: 0;
+  overflow: visible;
+  pointer-events: none;
 }
 
 .experience-dashboard-countdown-slot {
@@ -2094,7 +2105,8 @@ html {
 .experience-dashboard-overlay__story {
   display: block;
   width: 100%;
-  max-width: 100%;
+  max-width: min(100%, calc(var(--dash-story-card-max, 400) * 1px));
+  margin-inline: auto;
   flex-shrink: 0;
   overflow: visible;
   transition:
@@ -2133,7 +2145,7 @@ html {
   pointer-events: auto;
 }
 
-/* Master grid wrapper — story banner shares the same max track width via .dashboard-card-stack */
+/* Master grid wrapper — action grid uses a narrower track than the Ian Craig hero card */
 .dashboard-action-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2210,6 +2222,11 @@ html {
   .dashboard-action-grid {
     margin-inline: auto;
     gap: calc(var(--dash-grid-card-gap, 14) * 1px);
+  }
+
+  .experience-dashboard-overlay__story-track {
+    width: min(100%, calc(var(--dash-story-card-max, 400) * 1px));
+    max-width: min(100%, calc(var(--dash-story-card-max, 400) * 1px));
   }
 }
 

@@ -51,8 +51,10 @@ export const AWAKENING_DASHBOARD_OVERLAY_LAYOUT = {
   overlayCardGap: 20,
   /** 2×2 grid gap — equal row and column spacing (px). */
   gridCardGap: 14,
-  /** Shared story + action grid track width at 390px reference (390 − 2×16 padding). */
+  /** 2×2 action grid track width at 390px reference (390 − 2×16 padding). */
   actionGridMaxWidth: 358,
+  /** Ian Craig hero story card — wider than the action grid below (px). */
+  storyCardMaxWidth: 400,
   /** Internal padding inside each action cell (px). */
   actionCellPadding: 16,
   /** Inner bottom inset for dashboard grid pill overlays (px). */

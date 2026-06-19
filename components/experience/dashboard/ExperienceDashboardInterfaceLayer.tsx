@@ -65,6 +65,7 @@ export default function ExperienceDashboardInterfaceLayer({
             "--dash-content-track-padding": `${AWAKENING_DASHBOARD_OVERLAY_LAYOUT.contentTrackPadding}px`,
             "--dash-grid-card-gap": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridCardGap,
             "--dash-action-grid-max": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.actionGridMaxWidth,
+            "--dash-story-card-max": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.storyCardMaxWidth,
             "--dash-action-cell-padding": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.actionCellPadding,
             "--dash-grid-top-offset": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridTopOffset,
             "--dash-artboard-scroll-h": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.artboardScrollHeight,
@@ -103,22 +104,24 @@ export default function ExperienceDashboardInterfaceLayer({
 
           <div className="experience-dashboard-overlay__stack dashboard-page">
             <div className="experience-dashboard-overlay__content-band dashboard-card-stack">
-              <Link
-                href={AWAKENING_ASSETS.routes.watchStory}
-                className="experience-dashboard-overlay__story touch-target"
-                aria-label="Watch Ian Craig's healing journey"
-              >
-                <img
-                  src={AWAKENING_ASSETS.ianCraigStoryPoster}
-                  alt=""
-                  width={1536}
-                  height={1024}
-                  className="experience-dashboard-overlay__story-img"
-                  loading="eager"
-                  decoding="async"
-                  draggable={false}
-                />
-              </Link>
+              <div className="experience-dashboard-overlay__story-track">
+                <Link
+                  href={AWAKENING_ASSETS.routes.watchStory}
+                  className="experience-dashboard-overlay__story touch-target"
+                  aria-label="Watch Ian Craig's healing journey"
+                >
+                  <img
+                    src={AWAKENING_ASSETS.ianCraigStoryPoster}
+                    alt=""
+                    width={1536}
+                    height={1024}
+                    className="experience-dashboard-overlay__story-img"
+                    loading="eager"
+                    decoding="async"
+                    draggable={false}
+                  />
+                </Link>
+              </div>
 
               <nav
                 className="dashboard-action-grid experience-dashboard-overlay__grid"
