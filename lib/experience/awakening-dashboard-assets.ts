@@ -47,6 +47,8 @@ export const AWAKENING_DASHBOARD_OVERLAY_LAYOUT = {
   storyCardScale: 0.96,
   /** Uniform gutter between all five cards — story, rows, and columns (1080 artboard px). */
   overlayCardGap: 6,
+  /** Scales all grid PNG art to align visible borders with Ian Craig story edges. */
+  gridCardImageScale: 1.14,
   /** Extra nudge below story card — use overlayCardGap for primary rhythm. */
   gridTopOffset: 0,
   /**

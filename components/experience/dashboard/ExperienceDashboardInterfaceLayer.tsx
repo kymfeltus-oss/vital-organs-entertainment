@@ -63,6 +63,7 @@ export default function ExperienceDashboardInterfaceLayer({
             "--dash-card-scale": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.cardScale,
             "--dash-story-scale": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.storyCardScale,
             "--dash-overlay-card-gap": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.overlayCardGap,
+            "--dash-grid-card-image-scale": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridCardImageScale,
             "--dash-grid-top-offset": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.gridTopOffset,
             "--dash-artboard-scroll-h": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.artboardScrollHeight,
             "--dash-artboard-h": AWAKENING_DASHBOARD_OVERLAY_LAYOUT.artboardHeight,
@@ -128,8 +129,8 @@ export default function ExperienceDashboardInterfaceLayer({
                   <img
                     src={button.src}
                     alt=""
-                    width={512}
-                    height={512}
+                    width={1254}
+                    height={1254}
                     className="experience-dashboard-overlay__card-img"
                     loading="eager"
                     decoding="async"

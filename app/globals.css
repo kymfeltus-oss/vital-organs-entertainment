@@ -2121,6 +2121,8 @@ html {
   display: block;
   object-fit: contain;
   object-position: center;
+  transform: scale(var(--dash-grid-card-image-scale, 1.14));
+  transform-origin: center;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
