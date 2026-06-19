@@ -1,14 +1,24 @@
-import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
-import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
+import { redirect } from "next/navigation";
 
-export const revalidate = 0;
+type ExperienceHoldingRoomPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-export default async function ExperienceHoldingRoomPage() {
-  const initialCountdownConfig = await loadActiveCountdownConfig();
+/** Legacy holding room URL — pre-live waiting now lives on `/experience/live`. */
+export default async function ExperienceHoldingRoomPage({
+  searchParams,
+}: ExperienceHoldingRoomPageProps) {
+  const params = await searchParams;
+  const query = new URLSearchParams();
 
-  return (
-    <main className="relative flex min-h-dvh w-full flex-col overflow-x-hidden bg-brand-black pt-safe pb-safe">
-      <ExperienceHoldingRoomPageClient initialCountdownConfig={initialCountdownConfig} />
-    </main>
-  );
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === "string") {
+      query.set(key, value);
+    } else if (Array.isArray(value)) {
+      value.forEach((entry) => query.append(key, entry));
+    }
+  }
+
+  const suffix = query.toString();
+  redirect(suffix ? `/experience/live?${suffix}` : "/experience/live");
 }

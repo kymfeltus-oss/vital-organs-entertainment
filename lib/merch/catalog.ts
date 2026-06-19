@@ -282,8 +282,8 @@ export function getMerchCheckoutPaths(productId: string): {
 
   if (isSeedPackProductId(productId)) {
     return {
-      successPath: "/experience/holding-room?seeds=success",
-      cancelPath: "/experience/holding-room?seeds=canceled",
+      successPath: "/experience/live?seeds=success",
+      cancelPath: "/experience/live?seeds=canceled",
     };
   }
 

@@ -3,19 +3,19 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
 import GoingLiveTransition from "@/components/experience/live/GoingLiveTransition";
 import IgLiveShell from "@/components/experience/live/ig/IgLiveShell";
 import PassActivatingShell from "@/components/live/PassActivatingShell";
 import { LiveExperienceStreamProvider } from "@/lib/experience/LiveExperienceStreamContext";
 import { LiveStreamReactionsProvider } from "@/lib/experience/LiveStreamReactionsContext";
 import { useAttendeeLiveState } from "@/lib/experience/useAttendeeLiveState";
-import { useEventCountdown } from "@/lib/experience/useEventCountdown";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
+import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
 import {
   BroadcastHealthProvider,
   useBroadcastHealth,
 } from "@/lib/parable/BroadcastHealthContext";
-import { useCountdownConfig } from "@/lib/useCountdownConfig";
 import { useLiveAccessVerification } from "@/lib/useLiveAccessVerification";
 import { useLiveSeedWallet } from "@/lib/useLiveSeedWallet";
 
@@ -45,31 +45,35 @@ function LiveExperienceClientInner({
 }: LiveExperienceClientProps) {
   const health = useBroadcastHealth();
   const { phase, verificationAttempt } = useLiveAccessVerification();
-  const { isLive: streamIsLive, isLoading: isStreamStateLoading } = useAttendeeLiveState();
-  const { config: countdownConfig, isLoading: countdownLoading } = useCountdownConfig({
+  const { isLive: streamIsLive } = useAttendeeLiveState();
+  const { refresh: refreshSeedBalance } = useLiveSeedWallet();
+  const { config, countdown, eventPhase, isLoading: countdownLoading } = useLobbyCountdown({
     initialConfig: initialCountdownConfig,
   });
-  const countdown = useEventCountdown(countdownConfig.start_time);
-  const { refresh: refreshSeedBalance } = useLiveSeedWallet();
 
-  const [goingLive, setGoingLive] = useState(false);
-  const wasLiveRef = useRef(false);
+  const [openingLiveRoom, setOpeningLiveRoom] = useState(false);
+  const wasPreConcertRef = useRef<boolean | null>(null);
 
   useEffect(() => {
-    if (isStreamStateLoading) return;
+    if (countdownLoading) return;
 
-    if (streamIsLive && !wasLiveRef.current) {
-      setGoingLive(true);
-      const timerId = window.setTimeout(() => setGoingLive(false), GOING_LIVE_MS);
-      wasLiveRef.current = true;
+    if (wasPreConcertRef.current === null) {
+      wasPreConcertRef.current = eventPhase === "waiting";
+      return;
+    }
+
+    if (eventPhase !== "waiting" && wasPreConcertRef.current) {
+      setOpeningLiveRoom(true);
+      const timerId = window.setTimeout(() => setOpeningLiveRoom(false), GOING_LIVE_MS);
+      wasPreConcertRef.current = false;
       return () => window.clearTimeout(timerId);
     }
 
-    if (!streamIsLive) {
-      wasLiveRef.current = false;
-      setGoingLive(false);
+    if (eventPhase === "waiting") {
+      wasPreConcertRef.current = true;
+      setOpeningLiveRoom(false);
     }
-  }, [isStreamStateLoading, streamIsLive]);
+  }, [countdownLoading, eventPhase]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -112,28 +116,38 @@ function LiveExperienceClientInner({
     );
   }
 
-  const showLiveStream = streamIsLive && !goingLive;
+  const concertHasBegun = eventPhase !== "waiting";
+  const showLiveRoom = concertHasBegun && !openingLiveRoom;
   const showPaywall = phase === "guest_hub";
   const paywallOverlay = showPaywall ? <StreamPaywallOverlay /> : undefined;
-  const waiting = {
-    countdown,
-    countdownConfig,
-    countdownLoading: countdownLoading && !initialCountdownConfig,
-  };
+  const shellMode = streamIsLive ? "live" : "waiting";
+
+  if (!showLiveRoom) {
+    if (openingLiveRoom) {
+      return <GoingLiveTransition visible />;
+    }
+
+    return (
+      <main className="relative flex min-h-dvh w-full flex-col overflow-x-hidden bg-brand-black pt-safe pb-safe">
+        <ExperienceHoldingRoomPageClient initialCountdownConfig={initialCountdownConfig} />
+      </main>
+    );
+  }
 
   return (
-    <>
-      <LiveStreamReactionsProvider enabled={showLiveStream && !health.safeMode}>
-        <LiveExperienceStreamProvider enabled={showLiveStream}>
-          <IgLiveShell
-            mode={showLiveStream ? "live" : "waiting"}
-            showPaywall={showPaywall}
-            paywallOverlay={paywallOverlay}
-            waiting={waiting}
-          />
-        </LiveExperienceStreamProvider>
-      </LiveStreamReactionsProvider>
-      <GoingLiveTransition visible={goingLive} />
-    </>
+    <LiveStreamReactionsProvider enabled={streamIsLive && !health.safeMode}>
+      <LiveExperienceStreamProvider enabled={streamIsLive}>
+        <IgLiveShell
+          mode={shellMode}
+          showPaywall={showPaywall}
+          paywallOverlay={paywallOverlay}
+          waiting={{
+            countdown,
+            countdownConfig: config,
+            countdownLoading,
+          }}
+        />
+      </LiveExperienceStreamProvider>
+    </LiveStreamReactionsProvider>
   );
 }
