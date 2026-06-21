@@ -6,6 +6,7 @@ import { fetchAccessContext } from "@/lib/access";
 import { buildPersonaHubUrl, DEFAULT_ATTENDEE_NEXT } from "@/lib/auth/routing";
 import {
   INTRO_ENTER_PANEL,
+  INTRO_FOOTER_TAGLINE_MASK,
   INTRO_MOBILE_ART,
   INTRO_MUSIC_SRC,
   INTRO_VIDEO_SRC,
@@ -39,6 +40,7 @@ export default function VideoIntroExperience() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const musicRef = useRef<HTMLAudioElement>(null);
   const isNavigatingRef = useRef(false);
+  const musicPlayingRef = useRef(false);
   const [isExiting, setIsExiting] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const [artSize, setArtSize] = useState<{ width: number; height: number }>(INTRO_MOBILE_ART);
@@ -100,43 +102,73 @@ export default function VideoIntroExperience() {
   const stopIntroMusic = useCallback(() => {
     const audio = musicRef.current;
     if (!audio) return;
+    musicPlayingRef.current = false;
     audio.pause();
     audio.currentTime = 0;
   }, []);
 
   const playIntroMusic = useCallback(async () => {
     const audio = musicRef.current;
-    if (!audio) return;
+    if (!audio || musicPlayingRef.current) return;
 
     audio.volume = 0.85;
+    audio.loop = true;
 
     try {
       if (audio.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
         audio.load();
+        await new Promise<void>((resolve) => {
+          if (audio.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+            resolve();
+            return;
+          }
+
+          const onReady = () => {
+            audio.removeEventListener("canplay", onReady);
+            resolve();
+          };
+
+          audio.addEventListener("canplay", onReady);
+        });
       }
+
       if (audio.paused) {
         await audio.play();
+        musicPlayingRef.current = true;
       }
     } catch {
       /* Browser autoplay policy — unlocks on first tap. */
     }
   }, []);
 
+  const unlockIntroAudio = useCallback(() => {
+    void playIntroMusic();
+
+    const video = videoRef.current;
+    if (!video || !video.paused) return;
+
+    void video.play().catch(() => {
+      /* Autoplay may require user gesture — enter tap will start playback. */
+    });
+  }, [playIntroMusic]);
+
   useEffect(() => {
     void playIntroMusic();
 
     const unlockOnGesture = () => {
-      void playIntroMusic();
+      unlockIntroAudio();
     };
 
     window.addEventListener("pointerdown", unlockOnGesture, { passive: true });
+    window.addEventListener("touchstart", unlockOnGesture, { passive: true });
     window.addEventListener("keydown", unlockOnGesture, { passive: true });
 
     return () => {
       window.removeEventListener("pointerdown", unlockOnGesture);
+      window.removeEventListener("touchstart", unlockOnGesture);
       window.removeEventListener("keydown", unlockOnGesture);
     };
-  }, [playIntroMusic]);
+  }, [playIntroMusic, unlockIntroAudio]);
 
   useEffect(() => {
     return () => {
@@ -147,6 +179,9 @@ export default function VideoIntroExperience() {
 
   const handleEnter = useCallback(() => {
     if (isNavigatingRef.current) return;
+
+    unlockIntroAudio();
+
     isNavigatingRef.current = true;
 
     setIsExiting(true);
@@ -172,20 +207,22 @@ export default function VideoIntroExperience() {
     void resolveIntroDestination()
       .then(navigate)
       .catch(() => navigate(buildPersonaHubUrl(DEFAULT_ATTENDEE_NEXT)));
-  }, [stopIntroMusic, stopIntroVideo]);
+  }, [stopIntroMusic, stopIntroVideo, unlockIntroAudio]);
 
   return (
     <div
       className={`intro-flash-root fixed inset-0 z-50 h-dvh w-full overflow-hidden bg-brand-black transition-opacity duration-500 ease-out ${
         isExiting ? "opacity-0" : "opacity-100"
       }`}
-      onPointerDown={() => void playIntroMusic()}
+      onPointerDown={unlockIntroAudio}
+      onTouchStart={unlockIntroAudio}
     >
       <audio
         ref={musicRef}
         src={INTRO_MUSIC_SRC}
         loop
         preload="auto"
+        playsInline
         className="intro-flash-audio"
         aria-hidden="true"
       />
@@ -224,6 +261,11 @@ export default function VideoIntroExperience() {
           ) : null}
 
           <div className="intro-flash-overlay">
+            <div
+              className="intro-flash-footer-mask"
+              aria-hidden="true"
+              style={introRectStyle(INTRO_FOOTER_TAGLINE_MASK)}
+            />
             <button
               type="button"
               onClick={handleEnter}

@@ -6,8 +6,8 @@ export const INTRO_MUSIC_SRC = "/intro-music.m4a";
 
 /** Fallback until video metadata loads — updated from `videoWidth` / `videoHeight`. */
 export const INTRO_MOBILE_ART = {
-  width: 1080,
-  height: 1920,
+  width: 720,
+  height: 1280,
 } as const;
 
 export type IntroLayoutRect = {
@@ -17,10 +17,18 @@ export type IntroLayoutRect = {
   height: number;
 };
 
-/** Enter CTA aligned to intro mobile.mp4 art (tune if export shifts). */
+/** Enter CTA aligned to intro mobile.mp4 art (720×1280 export). */
 export const INTRO_ENTER_PANEL = {
-  left: 8,
-  top: 69.5,
+  left: 10,
+  top: 76.5,
   width: 84,
-  height: 12,
+  height: 12.5,
+} as const satisfies IntroLayoutRect;
+
+/** Hides baked “AWAKENING POSSIBILITIES…” footer strip on intro mobile.mp4. */
+export const INTRO_FOOTER_TAGLINE_MASK = {
+  left: 0,
+  top: 91,
+  width: 100,
+  height: 9,
 } as const satisfies IntroLayoutRect;
