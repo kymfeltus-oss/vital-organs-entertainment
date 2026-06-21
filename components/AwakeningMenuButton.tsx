@@ -27,7 +27,7 @@ export const AWAKENING_MENU_ITEMS: AwakeningMenuItem[] = [
   { id: "live", label: "Live Room", href: EXPERIENCE_LIVE_PATH, match: "prefix" },
   { id: "seed", label: "Vital Seed", href: "/experience/giving", match: "prefix" },
   { id: "music", label: "Music", href: "/experience/music", match: "prefix" },
-  { id: "prayer", label: "Prayer", href: "/experience/prayer", match: "prefix" },
+  { id: "contact", label: "Contact", href: "/experience/contact-us", match: "prefix" },
   { id: "profile", label: "Profile", href: `${ATTENDEE_DASHBOARD_PATH}?view=profile` },
   { id: "settings", label: "Settings", href: `${ATTENDEE_DASHBOARD_PATH}?view=settings` },
 ];

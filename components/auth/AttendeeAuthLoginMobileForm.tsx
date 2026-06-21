@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import {
-  LOGIN_BAKED_FORM_MASK,
-  LOGIN_FORM_PANEL,
+  LOGIN_BAKED_FIELD_MASKS,
+  LOGIN_FIELD_SLOTS,
   type LoginOverlayRect,
 } from "@/lib/auth/login-mobile-slots";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 type AttendeeAuthLoginMobileFormProps = {
   createAccountHref: string;
@@ -25,7 +25,7 @@ type AttendeeAuthLoginMobileFormProps = {
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
 };
 
-function panelStyle(rect: LoginOverlayRect): CSSProperties {
+function slotStyle(rect: LoginOverlayRect): CSSProperties {
   return {
     position: "absolute",
     left: rect.left,
@@ -33,6 +33,20 @@ function panelStyle(rect: LoginOverlayRect): CSSProperties {
     width: rect.width,
     height: rect.height,
   };
+}
+
+function FormSlot({
+  rect,
+  children,
+}: {
+  rect: LoginOverlayRect;
+  children: ReactNode;
+}) {
+  return (
+    <div className="login-form__slot" style={slotStyle(rect)}>
+      {children}
+    </div>
+  );
 }
 
 export default function AttendeeAuthLoginMobileForm({
@@ -51,149 +65,154 @@ export default function AttendeeAuthLoginMobileForm({
   onSubmit,
 }: AttendeeAuthLoginMobileFormProps) {
   return (
-    <div
-      className="login-overlay pointer-events-none absolute inset-0 z-2 size-full"
-      style={
-        {
-          "--login-baked-mask-top": LOGIN_BAKED_FORM_MASK.top,
-          "--login-baked-mask-height": LOGIN_BAKED_FORM_MASK.height,
-        } as CSSProperties
-      }
-    >
-      <div className="login-overlay__baked-mask" aria-hidden="true" />
+    <div className="login-overlay pointer-events-none absolute inset-0 z-[3] size-full">
+      {LOGIN_BAKED_FIELD_MASKS.map((rect, index) => (
+        <div
+          key={`login-field-mask-${index}`}
+          className="login-form__field-mask"
+          style={slotStyle(rect)}
+          aria-hidden="true"
+        />
+      ))}
 
       <form
         onSubmit={onSubmit}
-        className="login-form auth-plate-form pointer-events-auto"
-        style={panelStyle(LOGIN_FORM_PANEL)}
+        className="login-form pointer-events-auto"
         aria-label="Log in"
         noValidate
       >
-        <label className="auth-plate-field">
-          <Mail className="auth-plate-field__icon" aria-hidden="true" />
-          <input
-            id="auth-login-email"
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            inputMode="email"
-            enterKeyHint="next"
-            disabled={isSubmitting}
-            value={email}
-            onChange={(event) => onEmailChange(event.target.value)}
-            onBlur={onEmailBlur}
-            placeholder="Email Address"
-            aria-label="Email address"
-            className="auth-plate-field__control font-body"
-          />
-        </label>
+        <FormSlot rect={LOGIN_FIELD_SLOTS.email}>
+          <label className="login-form__field">
+            <input
+              id="auth-login-email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              inputMode="email"
+              enterKeyHint="next"
+              disabled={isSubmitting}
+              value={email}
+              onChange={(event) => onEmailChange(event.target.value)}
+              onBlur={onEmailBlur}
+              placeholder=""
+              aria-label="Email address"
+              className="login-form__control font-body"
+            />
+          </label>
+        </FormSlot>
 
-        <label className="auth-plate-field auth-plate-field--password">
-          <Lock className="auth-plate-field__icon" aria-hidden="true" />
-          <input
-            id="auth-login-password"
-            name="password"
-            type={showPassword ? "text" : "password"}
-            required
-            minLength={8}
-            autoComplete="current-password"
-            enterKeyHint="done"
-            disabled={isSubmitting}
-            value={password}
-            onChange={(event) => onPasswordChange(event.target.value)}
-            placeholder="Password"
-            aria-label="Password"
-            className="auth-plate-field__control font-body"
-          />
+        <FormSlot rect={LOGIN_FIELD_SLOTS.password}>
+          <label className="login-form__field login-form__field--password">
+            <input
+              id="auth-login-password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              required
+              minLength={8}
+              autoComplete="current-password"
+              enterKeyHint="done"
+              disabled={isSubmitting}
+              value={password}
+              onChange={(event) => onPasswordChange(event.target.value)}
+              placeholder=""
+              aria-label="Password"
+              className="login-form__control login-form__control--password font-body"
+            />
+            <button
+              type="button"
+              className="login-form__password-toggle touch-target"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              disabled={isSubmitting}
+              onClick={onToggleShowPassword}
+            >
+              {showPassword ? (
+                <EyeOff className="size-4" aria-hidden="true" />
+              ) : (
+                <Eye className="size-4" aria-hidden="true" />
+              )}
+            </button>
+          </label>
+        </FormSlot>
+
+        <FormSlot rect={LOGIN_FIELD_SLOTS.options}>
+          <div className="login-form__options">
+            <label className="login-form__remember touch-target font-body">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                disabled={isSubmitting}
+                onChange={(event) => onRememberMeChange(event.target.checked)}
+                className="login-form__remember-checkbox"
+              />
+              <span>Remember Me</span>
+            </label>
+            <button
+              type="button"
+              disabled={isSubmitting}
+              aria-label="Forgot password — coming soon"
+              className="login-form__forgot touch-target font-ui"
+            >
+              Forgot Password?
+            </button>
+          </div>
+        </FormSlot>
+
+        <FormSlot rect={LOGIN_FIELD_SLOTS.submit}>
           <button
-            type="button"
-            className="auth-plate-field__toggle touch-target"
-            aria-label={showPassword ? "Hide password" : "Show password"}
+            type="submit"
             disabled={isSubmitting}
-            onClick={onToggleShowPassword}
+            aria-label="Log in"
+            className="login-form__submit touch-target font-ui size-full"
           >
-            {showPassword ? (
-              <EyeOff className="size-4" aria-hidden="true" />
+            {isSubmitting ? (
+              <Loader2 className="size-5 animate-spin text-white" aria-hidden="true" />
             ) : (
-              <Eye className="size-4" aria-hidden="true" />
+              <span className="sr-only">Log in</span>
             )}
           </button>
-        </label>
+        </FormSlot>
 
-        <div className="login-form__options">
-          <label className="login-form__remember touch-target font-body">
-            <input
-              type="checkbox"
-              checked={rememberMe}
+        <FormSlot rect={LOGIN_FIELD_SLOTS.socialRow}>
+          <div className="login-form__social-row" role="group" aria-label="Social sign in">
+            <button
+              type="button"
               disabled={isSubmitting}
-              onChange={(event) => onRememberMeChange(event.target.checked)}
-              className="login-form__remember-checkbox"
-            />
-            <span>Remember Me</span>
-          </label>
-          <button
-            type="button"
-            disabled={isSubmitting}
-            aria-label="Forgot password — coming soon"
-            className="login-form__forgot touch-target font-ui"
-          >
-            Forgot Password?
-          </button>
-        </div>
+              aria-label="Continue with Apple — coming soon"
+              className="login-form__social-btn touch-target font-ui"
+            >
+              <span className="sr-only">Apple</span>
+            </button>
+            <button
+              type="button"
+              disabled={isSubmitting}
+              aria-label="Continue with Google — coming soon"
+              className="login-form__social-btn touch-target font-ui"
+            >
+              <span className="sr-only">Google</span>
+            </button>
+            <button
+              type="button"
+              disabled={isSubmitting}
+              aria-label="Continue with Facebook — coming soon"
+              className="login-form__social-btn touch-target font-ui"
+            >
+              <span className="sr-only">Facebook</span>
+            </button>
+          </div>
+        </FormSlot>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="auth-plate-submit touch-target font-ui"
-        >
-          {isSubmitting ? (
-            <Loader2 className="size-5 animate-spin" aria-hidden="true" />
-          ) : (
-            <span>Log In</span>
-          )}
-        </button>
-
-        <p className="login-form__social-label font-ui" aria-hidden="true">
-          Or Continue With
-        </p>
-
-        <div className="login-form__social-row" role="group" aria-label="Social sign in">
-          <button
-            type="button"
-            disabled={isSubmitting}
-            aria-label="Continue with Apple — coming soon"
-            className="login-form__social-btn touch-target font-ui"
-          >
-            Apple
-          </button>
-          <button
-            type="button"
-            disabled={isSubmitting}
-            aria-label="Continue with Google — coming soon"
-            className="login-form__social-btn touch-target font-ui"
-          >
-            Google
-          </button>
-          <button
-            type="button"
-            disabled={isSubmitting}
-            aria-label="Continue with Facebook — coming soon"
-            className="login-form__social-btn touch-target font-ui"
-          >
-            Facebook
-          </button>
-        </div>
-
-        <p className="auth-plate-footer-prompt font-body">
-          Don&apos;t have an account?{" "}
-          <Link href={createAccountHref} className="auth-plate-footer-prompt__link font-ui">
-            Sign Up
-          </Link>
-        </p>
+        <FormSlot rect={LOGIN_FIELD_SLOTS.signUp}>
+          <p className="login-form__sign-up font-body">
+            Don&apos;t have an account?{" "}
+            <Link href={createAccountHref} className="login-form__sign-up-link font-ui">
+              Sign Up
+            </Link>
+          </p>
+        </FormSlot>
 
         {formError ? (
-          <p role="alert" className="auth-plate-form-error font-body">
+          <p role="alert" className="login-form__error font-body">
             {formError}
           </p>
         ) : null}

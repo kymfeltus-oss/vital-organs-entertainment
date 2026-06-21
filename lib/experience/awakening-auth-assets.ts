@@ -2,16 +2,30 @@
 
 import { MOBILE_ARTBOARD_REF } from "@/lib/responsive";
 
+/** Bump when replacing PNG plates so browsers pick up new art. */
+export const AWAKENING_AUTH_ASSET_VERSION = "20260621-auth-v6";
+
 /** Same 1080×1920 stage as attendee dashboard. */
 export const AWAKENING_AUTH_LOGIN_ART = MOBILE_ARTBOARD_REF;
 
 /** Same 1080×1920 stage as attendee dashboard. */
 export const AWAKENING_AUTH_SIGNUP_ART = MOBILE_ARTBOARD_REF;
 
+/** Native pixel sizes of auth PNG plates (object-fit: contain, top-aligned). */
+export const AWAKENING_AUTH_NATIVE = {
+  login: { width: 941, height: 1672 },
+  signup: { width: 941, height: 1672 },
+} as const;
+
 export const AWAKENING_AUTH_ASSETS = {
   attendeeLoginPlate: "/awakening/auth-attendee-login.png",
-  attendeeSignupPlate: "/create-account/create-account%20-background.png",
+  /** Signup plate — edit `public/create-account/create-account -background.png` (synced to canonical copy). */
+  attendeeSignupPlate: "/create-account/create-account-background.png",
 } as const;
+
+export function awakeningAuthAssetUrl(path: string): string {
+  return `${path}?v=${AWAKENING_AUTH_ASSET_VERSION}`;
+}
 
 export type AuthLayoutRect = {
   left: number;
@@ -22,15 +36,15 @@ export type AuthLayoutRect = {
 
 /** Percentage rects aligned to auth-attendee-login.png (1080×1920 stage). */
 export const AWAKENING_AUTH_LOGIN_PANELS = {
-  email: { left: 12.66, top: 50.54, width: 74.68, height: 5.2 },
-  password: { left: 12.66, top: 55.31, width: 74.68, height: 5.3 },
-  rememberMe: { left: 12.66, top: 60.2, width: 28, height: 3.2 },
-  forgotPassword: { left: 54, top: 60.2, width: 33, height: 3.2 },
-  loginButton: { left: 12.66, top: 62.91, width: 74.68, height: 5.8 },
-  appleSignIn: { left: 12.66, top: 68.33, width: 74.68, height: 4.6 },
-  googleSignIn: { left: 12.66, top: 73.2, width: 74.68, height: 4.6 },
-  facebookSignIn: { left: 12.66, top: 78.1, width: 74.68, height: 4.6 },
-  signUpLink: { left: 12.66, top: 88.2, width: 74.68, height: 4 },
+  email: { left: 10, top: 48, width: 80, height: 6 },
+  password: { left: 10, top: 53, width: 80, height: 5 },
+  rememberMe: { left: 10, top: 58, width: 40, height: 4 },
+  forgotPassword: { left: 50, top: 58, width: 40, height: 4 },
+  loginButton: { left: 10, top: 61, width: 80, height: 6 },
+  appleSignIn: { left: 10, top: 66, width: 26, height: 6 },
+  googleSignIn: { left: 37, top: 66, width: 26, height: 6 },
+  facebookSignIn: { left: 64, top: 66, width: 26, height: 6 },
+  signUpLink: { left: 10, top: 85, width: 80, height: 7 },
 } as const satisfies Record<string, AuthLayoutRect>;
 
 /** Signup overlay slots — create-account background (1080×1920 stage). */

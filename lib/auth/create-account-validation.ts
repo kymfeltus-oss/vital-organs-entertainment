@@ -50,11 +50,9 @@ export function validateCreateAccountForm(
   const errors: CreateAccountFieldErrors = {};
 
   if (!normalizeName(values.firstName)) {
-    errors.firstName = "First name is required.";
-  }
-
-  if (!normalizeName(values.lastName)) {
-    errors.lastName = "Last name is required.";
+    errors.firstName = "Full name is required.";
+  } else if (!normalizeName(values.lastName)) {
+    errors.lastName = "Enter your first and last name.";
   }
 
   if (!values.email.trim()) {
@@ -63,9 +61,7 @@ export function validateCreateAccountForm(
     errors.email = "Enter a valid email address.";
   }
 
-  if (!values.phone.trim()) {
-    errors.phone = "Phone number is required.";
-  } else if (!isValidPhone(values.phone)) {
+  if (values.phone.trim() && !isValidPhone(values.phone)) {
     errors.phone = "Enter a valid 10-digit US phone number.";
   }
 
@@ -108,6 +104,20 @@ export function validateCreateAccountForm(
 
 export function isCreateAccountFormValid(values: CreateAccountFormValues): boolean {
   return Object.keys(validateCreateAccountForm(values)).length === 0;
+}
+
+export function formatFullName(values: Pick<CreateAccountFormValues, "firstName" | "lastName">): string {
+  return [normalizeName(values.firstName), normalizeName(values.lastName)].filter(Boolean).join(" ");
+}
+
+export function applyFullNameInput(
+  fullName: string,
+): Pick<CreateAccountFormValues, "firstName" | "lastName"> {
+  const normalized = normalizeName(fullName);
+  if (!normalized) return { firstName: "", lastName: "" };
+  const parts = normalized.split(" ");
+  if (parts.length === 1) return { firstName: parts[0], lastName: "" };
+  return { firstName: parts[0], lastName: parts.slice(1).join(" ") };
 }
 
 export function formatCreateAccountPhoneInput(value: string): string {

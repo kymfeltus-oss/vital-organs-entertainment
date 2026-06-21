@@ -3,9 +3,10 @@
 import { useMemo, type CSSProperties } from "react";
 import { parseCountdownStartMs } from "@/lib/experience/countdown-display";
 import {
+  HOLDING_ROOM_COUNTDOWN_LABEL_CLASS,
   HOLDING_ROOM_COUNTDOWN_UNITS,
   HOLDING_ROOM_COUNTDOWN_VALUE_CLASS,
-  type HoldingRoomCountdownSlot,
+  type HoldingRoomCountdownRing,
   type HoldingRoomCountdownUnitId,
 } from "@/lib/experience/holding-room-countdown-slots";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
@@ -15,13 +16,13 @@ type HoldingRoomCountdownOverlayProps = {
   initialCountdownConfig?: EventCountdownConfig;
 };
 
-function anchorStyle(
-  slot: HoldingRoomCountdownSlot,
-  yKey: "digitY" | "labelY",
-): CSSProperties {
+function ringStyle(ring: HoldingRoomCountdownRing): CSSProperties {
   return {
-    left: `${slot.centerX}%`,
-    top: `${slot[yKey]}%`,
+    position: "absolute",
+    left: `${ring.centerX}%`,
+    top: `${ring.centerY}%`,
+    width: `${ring.width}%`,
+    height: `${ring.height}%`,
     transform: "translate(-50%, -50%)",
   };
 }
@@ -74,9 +75,8 @@ export default function HoldingRoomCountdownOverlay({
     return `${countdown.days} days, ${countdown.hours} hours, ${countdown.minutes} minutes, ${countdown.seconds} seconds until live`;
   }, [countdown, hasStartTime, isLoading]);
 
-  if (!hasStartTime) {
-    return null;
-  }
+  const displayValue = (unitId: HoldingRoomCountdownUnitId) =>
+    isLoading || !hasStartTime ? "00" : values[unitId];
 
   return (
     <div
@@ -85,17 +85,18 @@ export default function HoldingRoomCountdownOverlay({
       aria-label={ariaLabel}
     >
       {HOLDING_ROOM_COUNTDOWN_UNITS.map((unit) => (
-        <div key={unit.id} className="holding-room-countdown__unit">
+        <div
+          key={unit.id}
+          className="holding-room-countdown__unit"
+          style={ringStyle(unit.ring)}
+        >
           <div
             className={`holding-room-countdown__value font-headline ${HOLDING_ROOM_COUNTDOWN_VALUE_CLASS[unit.id]}`}
-            style={anchorStyle(unit, "digitY")}
           >
-            {isLoading ? "00" : values[unit.id]}
+            {displayValue(unit.id)}
           </div>
           <div
-            className="holding-room-countdown__label font-ui"
-            style={anchorStyle(unit, "labelY")}
-            aria-hidden="true"
+            className={`holding-room-countdown__label font-ui ${HOLDING_ROOM_COUNTDOWN_LABEL_CLASS[unit.id]}`}
           >
             {unit.label}
           </div>

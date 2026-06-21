@@ -1,24 +1,49 @@
-/** Anchors on holding-room.png — digits + labels over empty neon rings. */
+/** Percentage slots on holding-room.png — one flex column per neon ring. */
 
 export type HoldingRoomCountdownUnitId = "days" | "hours" | "minutes" | "seconds";
 
-export type HoldingRoomCountdownSlot = {
-  id: HoldingRoomCountdownUnitId;
-  /** Horizontal center of each ring (% of artboard width). */
+/** Center-anchored ring — overlay uses translate(-50%, -50%). */
+export type HoldingRoomCountdownRing = {
   centerX: number;
-  /** Vertical center of live digits inside the ring void (% of artboard height). */
-  digitY: number;
-  /** Vertical center of unit label below digits (% of artboard height). */
-  labelY: number;
-  label: string;
+  centerY: number;
+  width: number;
+  height: number;
 };
 
-/** Measured on holding-room.png (941×1672 native, top-aligned on 1080×1920 stage). */
-export const HOLDING_ROOM_COUNTDOWN_UNITS: readonly HoldingRoomCountdownSlot[] = [
-  { id: "days", centerX: 13.2, digitY: 48.9, labelY: 55.0, label: "DAYS" },
-  { id: "hours", centerX: 37.3, digitY: 49.5, labelY: 55.0, label: "HOURS" },
-  { id: "minutes", centerX: 62.8, digitY: 49.4, labelY: 55.0, label: "MINUTES" },
-  { id: "seconds", centerX: 87.2, digitY: 49.3, labelY: 55.0, label: "SECONDS" },
+export type HoldingRoomCountdownUnit = {
+  id: HoldingRoomCountdownUnitId;
+  label: string;
+  ring: HoldingRoomCountdownRing;
+};
+
+/** PNG (926×1698) is height-fit inside the 1080×1920 stage with side letterbox. */
+const STAGE_PNG_WIDTH_RATIO = (926 * 1920) / (1698 * 1080);
+const STAGE_PNG_X_OFFSET = ((1 - STAGE_PNG_WIDTH_RATIO) / 2) * 100;
+
+export function holdingRoomStageX(pngPercentX: number): number {
+  return STAGE_PNG_X_OFFSET + pngPercentX * STAGE_PNG_WIDTH_RATIO;
+}
+
+function ringSlot(
+  pngX: number,
+  pngY: number,
+  width: number,
+  height: number,
+): HoldingRoomCountdownRing {
+  return {
+    centerX: holdingRoomStageX(pngX),
+    centerY: pngY,
+    width,
+    height,
+  };
+}
+
+/** Measured ring interiors on holding-room.png (band ~40%–58% Y). */
+export const HOLDING_ROOM_COUNTDOWN_UNITS: readonly HoldingRoomCountdownUnit[] = [
+  { id: "days", label: "DAYS", ring: ringSlot(14.7, 48.94, 12, 17.5) },
+  { id: "hours", label: "HOURS", ring: ringSlot(36.4, 48.94, 12, 17.5) },
+  { id: "minutes", label: "MINS", ring: ringSlot(59.9, 48.94, 12, 17.5) },
+  { id: "seconds", label: "SECS", ring: ringSlot(82.9, 48.94, 12, 17.5) },
 ] as const;
 
 export const HOLDING_ROOM_COUNTDOWN_VALUE_CLASS: Record<HoldingRoomCountdownUnitId, string> = {
@@ -26,4 +51,11 @@ export const HOLDING_ROOM_COUNTDOWN_VALUE_CLASS: Record<HoldingRoomCountdownUnit
   hours: "holding-room-countdown__value--hours",
   minutes: "holding-room-countdown__value--minutes",
   seconds: "holding-room-countdown__value--seconds",
+};
+
+export const HOLDING_ROOM_COUNTDOWN_LABEL_CLASS: Record<HoldingRoomCountdownUnitId, string> = {
+  days: "holding-room-countdown__label--days",
+  hours: "holding-room-countdown__label--hours",
+  minutes: "holding-room-countdown__label--minutes",
+  seconds: "holding-room-countdown__label--seconds",
 };

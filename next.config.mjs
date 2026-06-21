@@ -35,8 +35,18 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: "/email-gate/attendee/create-account",
-        destination: "/create-account",
+        source: "/contact",
+        destination: "/contact-us",
+        permanent: true,
+      },
+      {
+        source: "/prayer",
+        destination: "/contact-us",
+        permanent: true,
+      },
+      {
+        source: "/experience/prayer",
+        destination: "/experience/contact-us",
         permanent: true,
       },
       {

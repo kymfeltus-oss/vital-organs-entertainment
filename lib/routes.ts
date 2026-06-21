@@ -32,7 +32,8 @@ const MOBILE_ARTBOARD_TAB_EXACT = [
   "/experience/giving",
   "/buy-seeds",
   "/live",
-  "/prayer",
+  "/contact-us",
+  "/experience/contact-us",
 ] as const;
 
 /** Bottom-nav artboard tabs — Live, Giving, Music, Buy Seeds (+ /live holding). */

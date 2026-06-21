@@ -2,6 +2,8 @@ import type { CSSProperties, ReactNode } from "react";
 import {
   AWAKENING_AUTH_ASSETS,
   AWAKENING_AUTH_LOGIN_ART,
+  AWAKENING_AUTH_NATIVE,
+  awakeningAuthAssetUrl,
 } from "@/lib/experience/awakening-auth-assets";
 import {
   MOBILE_ARTBOARD_ART_FIT,
@@ -21,12 +23,15 @@ type AttendeeAuthArtboardProps = {
   backgroundSrc?: string;
   /** Artboard pixel size — must match the PNG aspect ratio. */
   artboard?: AuthArtboardSpec;
+  /** Native PNG dimensions for `<img width/height>` (defaults to login plate). */
+  nativePlate?: AuthArtboardSpec;
 };
 
 export default function AttendeeAuthArtboard({
   children,
   backgroundSrc = AWAKENING_AUTH_ASSETS.attendeeLoginPlate,
   artboard = AWAKENING_AUTH_LOGIN_ART,
+  nativePlate = AWAKENING_AUTH_NATIVE.login,
 }: AttendeeAuthArtboardProps) {
   return (
     <div className={`auth-attendee-stage ${MOBILE_ARTBOARD_FULL_SHELL} min-h-0 w-full flex-1`}>
@@ -45,10 +50,10 @@ export default function AttendeeAuthArtboard({
         <div className={MOBILE_ARTBOARD_ART_FIT}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={backgroundSrc}
+            src={awakeningAuthAssetUrl(backgroundSrc)}
             alt=""
-            width={artboard.width}
-            height={artboard.height}
+            width={nativePlate.width}
+            height={nativePlate.height}
             className="auth-attendee-artboard__img"
             loading="eager"
             decoding="async"

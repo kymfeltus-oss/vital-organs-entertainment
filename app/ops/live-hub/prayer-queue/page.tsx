@@ -15,7 +15,7 @@ export default async function LiveHubPrayerQueuePage() {
         <div className="glass-panel rounded-2xl border border-brand-border p-6">
           <p className="font-body text-sm text-brand-muted">
             No queued requests in this mock view. When live, incoming prayer submissions from
-            `/experience/prayer` and the live fellowship panel will surface here for team response.
+            `/experience/contact-us` and the live fellowship panel will surface here for team response.
           </p>
         </div>
       </OpsModuleShell>

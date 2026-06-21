@@ -4,13 +4,18 @@ import ExperienceDashboardInterfaceLayer from "@/components/experience/dashboard
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 
 type ExperienceDashboardContentProps = {
+  headerDisplayName: string;
   initialCountdownConfig?: EventCountdownConfig;
 };
 
 export default function ExperienceDashboardContent({
+  headerDisplayName,
   initialCountdownConfig,
 }: ExperienceDashboardContentProps) {
   return (
-    <ExperienceDashboardInterfaceLayer initialCountdownConfig={initialCountdownConfig} />
+    <ExperienceDashboardInterfaceLayer
+      headerDisplayName={headerDisplayName}
+      initialCountdownConfig={initialCountdownConfig}
+    />
   );
 }

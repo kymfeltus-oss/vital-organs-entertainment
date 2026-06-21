@@ -13,6 +13,7 @@ import {
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
 import {
   AWAKENING_AUTH_ASSETS,
+  AWAKENING_AUTH_NATIVE,
   AWAKENING_AUTH_SIGNUP_ART,
 } from "@/lib/experience/awakening-auth-assets";
 
@@ -137,6 +138,7 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
       <AttendeeAuthArtboard
         backgroundSrc={AWAKENING_AUTH_ASSETS.attendeeSignupPlate}
         artboard={AWAKENING_AUTH_SIGNUP_ART}
+        nativePlate={AWAKENING_AUTH_NATIVE.signup}
       >
         <CreateAccountMobileForm
           loginHref={loginHref}

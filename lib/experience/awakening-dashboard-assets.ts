@@ -83,11 +83,12 @@ export const AWAKENING_ASSETS = {
   background: "/awakening/dashboard-concert-bg%20mobile.mp4",
   logo: "/branding/awakening-lockup.png",
   welcomeHeader: "/awakening/300_dashboard_assets/welcome_header.png",
-  /** 3:2 story poster — swap to MP4 via `ianCraigStoryVideo` when ready. */
+  /** Story poster (2752×1536) — swap to MP4 via `ianCraigStoryVideo` when ready. */
   ianCraigStoryPoster: "/awakening/300_dashboard_assets/ian%20craig%20story.png",
   ianCraigStoryVideo: null as string | null,
   routes: {
     enterExperience: EXPERIENCE_LIVE_PATH,
+    /** Cinematic intro — Ian Craig story video (`VideoIntroExperience`). */
     watchStory: "/",
     giving: "/giving",
     liveRoom: EXPERIENCE_LIVE_PATH,

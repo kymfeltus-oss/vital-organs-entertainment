@@ -108,9 +108,9 @@ export async function POST(request: Request) {
         );
       }
 
-      if (!phone || !isValidPhone(phone)) {
+      if (phone && !isValidPhone(phone)) {
         return NextResponse.json(
-          { error: "A valid 10-digit US phone number is required." },
+          { error: "Enter a valid 10-digit US phone number." },
           { status: 400 },
         );
       }
