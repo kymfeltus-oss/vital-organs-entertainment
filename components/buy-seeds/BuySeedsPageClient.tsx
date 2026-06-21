@@ -8,6 +8,7 @@ import { getMerchProduct } from "@/lib/merch/catalog";
 import {
   BUY_SEEDS_ASSETS,
   BUY_SEEDS_DEFAULT_PACKAGE_ID,
+  BUY_SEEDS_MOBILE_ART_NATIVE,
   getSeedPackage,
   type SeedPackageId,
 } from "@/lib/seeds/assets";
@@ -63,26 +64,32 @@ export default function BuySeedsPageClient() {
       <div className="buy-seeds-page relative min-h-dvh overflow-hidden bg-brand-black">
         <div
           className="buy-seeds-page__stage relative mx-auto min-h-dvh w-full"
-          style={mobileArtboardStageStyle() as CSSProperties}
+          style={
+            mobileArtboardStageStyle({ native: BUY_SEEDS_MOBILE_ART_NATIVE }) as CSSProperties
+          }
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={BUY_SEEDS_ASSETS.mobileBackground}
-            alt=""
-            className="buy-seeds-page__bg absolute inset-0 z-0 h-full w-full object-cover"
-            loading="eager"
-            decoding="async"
-            draggable={false}
-          />
+          <div className="mobile-artboard-art-fit buy-seeds-page__art-fit">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={BUY_SEEDS_ASSETS.mobileBackground}
+              alt=""
+              width={BUY_SEEDS_MOBILE_ART_NATIVE.width}
+              height={BUY_SEEDS_MOBILE_ART_NATIVE.height}
+              className="buy-seeds-page__bg"
+              loading="eager"
+              decoding="async"
+              draggable={false}
+            />
 
-          <BuySeedsOverlay
-            selectedPackageId={selectedPackageId}
-            isSubmitting={isSubmitting}
-            activeProductId={activeProductId}
-            errorMessage={errorMessage}
-            onSelectPackage={handleSelectPackage}
-            onContinue={handleContinue}
-          />
+            <BuySeedsOverlay
+              selectedPackageId={selectedPackageId}
+              isSubmitting={isSubmitting}
+              activeProductId={activeProductId}
+              errorMessage={errorMessage}
+              onSelectPackage={handleSelectPackage}
+              onContinue={handleContinue}
+            />
+          </div>
         </div>
       </div>
 

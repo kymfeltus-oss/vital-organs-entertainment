@@ -2227,6 +2227,13 @@ html {
   container-type: inline-size;
 }
 
+.buy-seeds-page__art-fit {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 .buy-seeds-page__bg {
   pointer-events: none;
   user-select: none;
@@ -2236,32 +2243,58 @@ html {
 .buy-seeds-page__overlay {
   position: absolute;
   inset: 0;
-  z-index: 10;
+  z-index: 2;
   width: 100%;
   height: 100%;
+  pointer-events: none;
+  container-type: inline-size;
+}
+
+.buy-seeds-page__baked-mask {
+  position: absolute;
+  left: 0;
+  top: var(--buy-seeds-baked-mask-top, 54%);
+  z-index: 1;
+  width: 100%;
+  height: var(--buy-seeds-baked-mask-height, 37%);
+  background-color: #000000;
   pointer-events: none;
 }
 
-.buy-seeds-page__native-layer {
-  position: relative;
+.buy-seeds-page__packages-panel {
+  position: absolute;
+  left: 0;
+  top: var(--buy-seeds-packages-panel-top, 55%);
+  z-index: 2;
+  box-sizing: border-box;
+  display: flex;
   width: 100%;
-  height: 100%;
-  min-height: 100%;
-  pointer-events: none;
+  height: var(--buy-seeds-packages-panel-height, 24%);
+  min-height: 0;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
+  gap: clamp(0.25rem, 1.2cqw, 0.45rem);
+  padding-inline: clamp(1rem, 6.2cqw, 1.45rem);
+  overflow: hidden;
 }
 
 .buy-seeds-package-row {
-  position: absolute;
+  position: relative;
   z-index: 2;
   box-sizing: border-box;
   display: grid;
+  flex: 1 1 0;
+  min-height: 0;
   grid-template-columns: 8% minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 0.75fr);
   align-items: center;
   gap: clamp(0.2rem, 1.5cqw, 0.55rem);
   padding-inline: clamp(0.45rem, 2.8cqw, 0.85rem);
-  border: none;
-  border-radius: 0;
-  background: transparent;
+  border: 1px solid transparent;
+  border-radius: clamp(0.45rem, 2cqw, 0.7rem);
+  background:
+    linear-gradient(#000000, #000000) padding-box,
+    var(--gradient-brand) border-box;
   color: #ffffff;
   text-align: left;
   cursor: pointer;
@@ -2269,14 +2302,23 @@ html {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   appearance: none;
+  transition:
+    opacity 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
-.buy-seeds-package-row:active {
-  opacity: 0.92;
+.buy-seeds-package-row:active:not(:disabled) {
+  transform: scale(0.985);
 }
 
 .buy-seeds-package-row--selected {
-  /* Frame glow comes from PNG — selection shown via radio only. */
+  background:
+    linear-gradient(#090b13, #090b13) padding-box,
+    var(--gradient-brand) border-box;
+  box-shadow:
+    0 0 22px rgb(0 168 255 / 0.32),
+    0 0 28px rgb(255 0 140 / 0.26);
 }
 
 .buy-seeds-package-row__radio {
@@ -2343,14 +2385,27 @@ html {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
-  border-radius: 0;
-  background: transparent;
+  gap: clamp(0.35rem, 1.6cqw, 0.55rem);
+  margin: 0;
+  padding-inline: clamp(0.75rem, 3.8cqw, 1rem);
+  border: 1px solid transparent;
+  border-radius: clamp(0.55rem, 2.4cqw, 0.85rem);
+  background:
+    linear-gradient(#000000, #000000) padding-box,
+    var(--gradient-brand) border-box;
+  color: #ffffff;
   cursor: pointer;
   pointer-events: auto;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   appearance: none;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.buy-seeds-continue-btn__icon {
+  width: clamp(0.75rem, 3.2cqw, 0.95rem);
+  height: clamp(0.75rem, 3.2cqw, 0.95rem);
+  flex-shrink: 0;
 }
 
 .buy-seeds-continue-btn__label {
@@ -2364,7 +2419,7 @@ html {
 }
 
 .buy-seeds-continue-btn:active:not(:disabled) {
-  opacity: 0.9;
+  transform: scale(0.985);
 }
 
 .buy-seeds-continue-btn--loading {
@@ -2391,9 +2446,17 @@ html {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .buy-seeds-package-row:active,
+  .buy-seeds-package-row {
+    transition: none;
+  }
+
+  .buy-seeds-package-row:active:not(:disabled),
   .buy-seeds-continue-btn:active:not(:disabled) {
-    opacity: 1;
+    transform: none;
+  }
+
+  .buy-seeds-continue-btn {
+    transition: none;
   }
 }
 

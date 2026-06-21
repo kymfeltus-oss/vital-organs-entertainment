@@ -1,12 +1,16 @@
 "use client";
 
 import {
+  BUY_SEEDS_BAKED_CONTROLS_MASK,
   BUY_SEEDS_CONTINUE_SLOT,
   BUY_SEEDS_ERROR_SLOT,
+  BUY_SEEDS_PACKAGES_PANEL,
   seedPackages,
   type SeedPackageId,
 } from "@/lib/seeds/assets";
 import { getMerchProduct } from "@/lib/merch/catalog";
+import { ChevronRight, Lock } from "lucide-react";
+import type { CSSProperties } from "react";
 
 type BuySeedsOverlayProps = {
   selectedPackageId: SeedPackageId;
@@ -27,6 +31,21 @@ function badgeClassName(badge: string): string {
   return "text-brand-pink";
 }
 
+function rectStyle(rect: {
+  left: string;
+  top: string;
+  width: string;
+  height: string;
+}) {
+  return {
+    position: "absolute" as const,
+    left: rect.left,
+    top: rect.top,
+    width: rect.width,
+    height: rect.height,
+  };
+}
+
 export default function BuySeedsOverlay({
   selectedPackageId,
   isSubmitting,
@@ -36,9 +55,22 @@ export default function BuySeedsOverlay({
   onContinue,
 }: BuySeedsOverlayProps) {
   return (
-    <div className="buy-seeds-page__overlay" aria-label="Buy Vital Seeds">
+    <div
+      className="buy-seeds-page__overlay"
+      aria-label="Buy Vital Seeds"
+      style={
+        {
+          "--buy-seeds-baked-mask-top": BUY_SEEDS_BAKED_CONTROLS_MASK.top,
+          "--buy-seeds-baked-mask-height": BUY_SEEDS_BAKED_CONTROLS_MASK.height,
+          "--buy-seeds-packages-panel-top": BUY_SEEDS_PACKAGES_PANEL.top,
+          "--buy-seeds-packages-panel-height": BUY_SEEDS_PACKAGES_PANEL.height,
+        } as CSSProperties
+      }
+    >
+      <div className="buy-seeds-page__baked-mask" aria-hidden="true" />
+
       <div
-        className="buy-seeds-page__native-layer"
+        className="buy-seeds-page__packages-panel pointer-events-auto"
         role="radiogroup"
         aria-label="Choose a seed package"
       >
@@ -61,15 +93,9 @@ export default function BuySeedsOverlay({
               disabled={isSubmitting}
               aria-busy={isActive}
               onClick={() => onSelectPackage(pkg.packageId)}
-              className={`buy-seeds-package-row touch-target${
+              className={`buy-seeds-package-row font-ui${
                 isSelected ? " buy-seeds-package-row--selected" : ""
               }`}
-              style={{
-                left: pkg.left,
-                top: pkg.top,
-                width: pkg.width,
-                height: pkg.height,
-              }}
             >
               <span
                 className={
@@ -96,41 +122,33 @@ export default function BuySeedsOverlay({
             </button>
           );
         })}
-
-        {errorMessage ? (
-          <p
-            className="buy-seeds-page__inline-error font-body"
-            role="alert"
-            style={{
-              left: BUY_SEEDS_ERROR_SLOT.left,
-              top: BUY_SEEDS_ERROR_SLOT.top,
-              width: BUY_SEEDS_ERROR_SLOT.width,
-              height: BUY_SEEDS_ERROR_SLOT.height,
-            }}
-          >
-            {errorMessage}
-          </p>
-        ) : null}
-
-        <button
-          type="button"
-          aria-label={BUY_SEEDS_CONTINUE_SLOT.label}
-          disabled={isSubmitting || !selectedPackageId}
-          aria-busy={isSubmitting}
-          onClick={onContinue}
-          className={`buy-seeds-continue-btn touch-target font-ui${
-            isSubmitting ? " buy-seeds-continue-btn--loading" : ""
-          }`}
-          style={{
-            left: BUY_SEEDS_CONTINUE_SLOT.left,
-            top: BUY_SEEDS_CONTINUE_SLOT.top,
-            width: BUY_SEEDS_CONTINUE_SLOT.width,
-            height: BUY_SEEDS_CONTINUE_SLOT.height,
-          }}
-        >
-          <span className="buy-seeds-continue-btn__label">Continue to Payment</span>
-        </button>
       </div>
+
+      {errorMessage ? (
+        <p
+          className="buy-seeds-page__inline-error font-body"
+          role="alert"
+          style={rectStyle(BUY_SEEDS_ERROR_SLOT)}
+        >
+          {errorMessage}
+        </p>
+      ) : null}
+
+      <button
+        type="button"
+        aria-label={BUY_SEEDS_CONTINUE_SLOT.label}
+        disabled={isSubmitting || !selectedPackageId}
+        aria-busy={isSubmitting}
+        onClick={onContinue}
+        style={rectStyle(BUY_SEEDS_CONTINUE_SLOT)}
+        className={`buy-seeds-continue-btn pointer-events-auto font-ui${
+          isSubmitting ? " buy-seeds-continue-btn--loading" : ""
+        }`}
+      >
+        <Lock className="buy-seeds-continue-btn__icon" aria-hidden="true" strokeWidth={2.25} />
+        <span className="buy-seeds-continue-btn__label">Continue to Payment</span>
+        <ChevronRight className="buy-seeds-continue-btn__icon" aria-hidden="true" strokeWidth={2.5} />
+      </button>
     </div>
   );
 }
