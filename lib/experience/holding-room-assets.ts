@@ -4,11 +4,8 @@ import { MOBILE_ARTBOARD_REF } from "@/lib/responsive";
 
 export const HOLDING_ROOM_ARTBOARD = MOBILE_ARTBOARD_REF;
 
-/** Native background plate dimensions (853×1844). */
-export const HOLDING_ROOM_ART_NATIVE = {
-  width: 853,
-  height: 1844,
-} as const;
+/** Native PNG plate — same 1080×1920 stage as attendee dashboard. */
+export const HOLDING_ROOM_ART_NATIVE = MOBILE_ARTBOARD_REF;
 
 export const HOLDING_ROOM_ASSETS = {
   mobileBackground: "/holding page/holding-room.png",

@@ -15,11 +15,7 @@ export const MUSIC_ASSETS = {
 
 export const MUSIC_MOBILE_ART = MOBILE_ARTBOARD_REF;
 
-/** Native PNG plate — background image mobile.png (853×1844). */
-export const MUSIC_MOBILE_ART_NATIVE = {
-  width: 853,
-  height: 1844,
-} as const;
+export const MUSIC_MOBILE_ART_NATIVE = MOBILE_ARTBOARD_REF;
 
 export type MusicPageAction = {
   id: string;

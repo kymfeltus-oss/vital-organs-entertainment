@@ -9,11 +9,8 @@ export const BUY_SEEDS_ASSETS = {
 
 export const BUY_SEEDS_MOBILE_ART = MOBILE_ARTBOARD_REF;
 
-/** Native PNG plate (1080×1920) for art-fit alignment. */
-export const BUY_SEEDS_MOBILE_ART_NATIVE = {
-  width: 1080,
-  height: 1920,
-} as const;
+/** Native PNG plate — same 1080×1920 stage as attendee dashboard. */
+export const BUY_SEEDS_MOBILE_ART_NATIVE = MOBILE_ARTBOARD_REF;
 
 /** @deprecated Use BUY_SEEDS_MOBILE_ART */
 export const BUY_SEEDS_ART = BUY_SEEDS_MOBILE_ART;

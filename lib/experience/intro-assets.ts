@@ -1,14 +1,13 @@
 /** Intro splash — mobile video plate + overlay slots. */
 
+import { MOBILE_ARTBOARD_REF } from "@/lib/responsive";
+
 export const INTRO_VIDEO_SRC = "/intro%20mobile.mp4";
 /** Served from `public/intro-music.m4a`. */
 export const INTRO_MUSIC_SRC = "/intro-music.m4a";
 
-/** Fallback until video metadata loads — updated from `videoWidth` / `videoHeight`. */
-export const INTRO_MOBILE_ART = {
-  width: 720,
-  height: 1280,
-} as const;
+/** Same 1080×1920 stage as attendee dashboard. */
+export const INTRO_MOBILE_ART = MOBILE_ARTBOARD_REF;
 
 export type IntroLayoutRect = {
   left: number;
@@ -17,7 +16,7 @@ export type IntroLayoutRect = {
   height: number;
 };
 
-/** Enter CTA aligned to intro mobile.mp4 art (720×1280 export). */
+/** Enter CTA aligned to intro mobile.mp4 art (1080×1920 stage). */
 export const INTRO_ENTER_PANEL = {
   left: 10,
   top: 76.5,

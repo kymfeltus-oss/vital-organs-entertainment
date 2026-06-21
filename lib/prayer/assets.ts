@@ -8,7 +8,4 @@ export const PRAYER_ASSETS = {
 
 export const PRAYER_MOBILE_ART = MOBILE_ARTBOARD_REF;
 
-export const PRAYER_MOBILE_ART_NATIVE = {
-  width: 853,
-  height: 1844,
-} as const;
+export const PRAYER_MOBILE_ART_NATIVE = MOBILE_ARTBOARD_REF;

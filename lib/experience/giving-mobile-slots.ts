@@ -1,7 +1,7 @@
 import { MOBILE_ARTBOARD_REF } from "@/lib/responsive";
 import { givingAmounts } from "@/lib/vital-seed/giving-assets";
 
-/** Percentage rects aligned to `/public/vital seed/mobile-main-background.png` (926×1698). */
+/** Percentage rects aligned to `/public/vital seed/mobile-main-background.png` (1080×1920 stage). */
 
 export type GivingFrequency = "one_time" | "monthly" | "weekly";
 
@@ -20,11 +20,8 @@ export type GivingPresetSlot = GivingOverlayRect & {
 /** Dashboard stage dimensions — same as home. */
 export const GIVING_MOBILE_ART = MOBILE_ARTBOARD_REF;
 
-/** Native PNG plate for art-fit + overlay alignment (`mobile-main-background.png`). */
-export const GIVING_MOBILE_ART_NATIVE = {
-  width: 926,
-  height: 1698,
-} as const;
+/** Native PNG plate — same 1080×1920 stage as attendee dashboard. */
+export const GIVING_MOBILE_ART_NATIVE = MOBILE_ARTBOARD_REF;
 
 export const GIVING_AMOUNT_PRESETS = givingAmounts.map((entry) => entry.amount);
 

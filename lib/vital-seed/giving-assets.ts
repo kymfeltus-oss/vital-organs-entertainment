@@ -14,10 +14,7 @@ export const VITAL_SEED_GIVING_DESKTOP_ART = {
 
 export const VITAL_SEED_GIVING_MOBILE_ART = MOBILE_ARTBOARD_REF;
 
-export const VITAL_SEED_GIVING_MOBILE_ART_NATIVE = {
-  width: 926,
-  height: 1698,
-} as const;
+export const VITAL_SEED_GIVING_MOBILE_ART_NATIVE = MOBILE_ARTBOARD_REF;
 
 /** Preset gift amounts — rendered as native text over empty grid slots on mobile-main-background.png. */
 export const givingAmounts = [

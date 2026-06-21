@@ -1,15 +1,12 @@
 /** Attendee email-gate — PNG art plate + overlay slot constants. */
 
-export const AWAKENING_AUTH_LOGIN_ART = {
-  width: 853,
-  height: 1844,
-} as const;
+import { MOBILE_ARTBOARD_REF } from "@/lib/responsive";
 
-/** Native create-account plate — `/public/create-account/create-account-background.png`. */
-export const AWAKENING_AUTH_SIGNUP_ART = {
-  width: 1024,
-  height: 1536,
-} as const;
+/** Same 1080×1920 stage as attendee dashboard. */
+export const AWAKENING_AUTH_LOGIN_ART = MOBILE_ARTBOARD_REF;
+
+/** Same 1080×1920 stage as attendee dashboard. */
+export const AWAKENING_AUTH_SIGNUP_ART = MOBILE_ARTBOARD_REF;
 
 export const AWAKENING_AUTH_ASSETS = {
   attendeeLoginPlate: "/awakening/auth-attendee-login.png",
@@ -23,7 +20,7 @@ export type AuthLayoutRect = {
   height: number;
 };
 
-/** Percentage rects aligned to auth-attendee-login.png (853×1844). */
+/** Percentage rects aligned to auth-attendee-login.png (1080×1920 stage). */
 export const AWAKENING_AUTH_LOGIN_PANELS = {
   email: { left: 12.66, top: 50.54, width: 74.68, height: 5.2 },
   password: { left: 12.66, top: 55.31, width: 74.68, height: 5.3 },
@@ -36,7 +33,7 @@ export const AWAKENING_AUTH_LOGIN_PANELS = {
   signUpLink: { left: 12.66, top: 88.2, width: 74.68, height: 4 },
 } as const satisfies Record<string, AuthLayoutRect>;
 
-/** Signup overlay slots — create-account -background.png (941×1672). */
+/** Signup overlay slots — create-account background (1080×1920 stage). */
 export const AWAKENING_AUTH_SIGNUP_PANELS = {
   firstName: { left: 8.5, top: 30.5, width: 40, height: 4.5 },
   lastName: { left: 52, top: 30.5, width: 40.5, height: 4.5 },

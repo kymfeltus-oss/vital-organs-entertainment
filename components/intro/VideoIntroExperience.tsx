@@ -43,7 +43,7 @@ export default function VideoIntroExperience() {
   const musicPlayingRef = useRef(false);
   const [isExiting, setIsExiting] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
-  const [artSize, setArtSize] = useState<{ width: number; height: number }>(INTRO_MOBILE_ART);
+  const artSize = INTRO_MOBILE_ART;
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -70,9 +70,6 @@ export default function VideoIntroExperience() {
     };
 
     const onReady = () => {
-      if (video.videoWidth > 0 && video.videoHeight > 0) {
-        setArtSize({ width: video.videoWidth, height: video.videoHeight });
-      }
       setVideoReady(true);
       tryPlay();
     };

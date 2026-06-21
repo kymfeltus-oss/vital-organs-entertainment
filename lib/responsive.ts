@@ -51,7 +51,7 @@ export const MOBILE_APP_TRACK_WIDTH =
 export const MOBILE_TAB_TRACK_WIDTH =
   "min(100vw, calc((100dvh - var(--bottom-dock-display-h, 76px) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 1080 / 1920))" as const;
 
-/** Reference artboard used for track-width math (1080×1920). */
+/** Reference artboard — every PNG/tab page uses this same stage as `/attendee-dashboard`. */
 export const MOBILE_ARTBOARD_REF = {
   width: 1080,
   height: 1920,
@@ -70,17 +70,16 @@ export function mobileArtboardVars(size: MobileArtboardSize = MOBILE_ARTBOARD_RE
   };
 }
 
-/** Stage style for tab pages — dashboard track + optional native PNG dimensions for art-fit. */
+/** Stage inline style — locked 1080×1920 column (same size as dashboard). */
 export function mobileArtboardStageStyle(options?: {
+  /** @deprecated Ignored — all pages use MOBILE_ARTBOARD_REF stage size. */
   native?: MobileArtboardSize;
   extra?: Record<string, string | number>;
 }): Record<string, string | number> {
-  const native = options?.native ?? MOBILE_ARTBOARD_REF;
-
   return {
     ...mobileArtboardVars(MOBILE_ARTBOARD_REF),
-    "--mobile-art-native-w": native.width,
-    "--mobile-art-native-h": native.height,
+    "--mobile-art-native-w": MOBILE_ARTBOARD_REF.width,
+    "--mobile-art-native-h": MOBILE_ARTBOARD_REF.height,
     ...options?.extra,
   };
 }
