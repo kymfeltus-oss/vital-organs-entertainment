@@ -65,9 +65,8 @@ export const MUSIC_PAGE_ACTIONS: readonly MusicPageAction[] = [
   },
 ] as const;
 
-/** Hotspots aligned to `background image mobile.png`. */
+/** Hotspots aligned to `background image mobile.png` — back handled by MobileArtboardTabHeader. */
 export const MUSIC_MOBILE_VISIBLE_ACTION_IDS = [
-  "back",
   "apple-music-cover",
   "apple-music",
 ] as const;

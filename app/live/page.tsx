@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import LiveExperienceClient from "@/components/experience/live/LiveExperienceClient";
 import LightweightLiveLoading from "@/components/live/LightweightLiveLoading";
+import { loadTabPageProfile } from "@/lib/experience/load-tab-page-profile";
 import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
 
 export const metadata: Metadata = {
@@ -11,11 +12,17 @@ export const metadata: Metadata = {
 
 /** Attendee live entry — holding room, then Viewer POV when concert begins. Nav hidden on /live. */
 export default async function LivePage() {
-  const initialCountdownConfig = await loadActiveCountdownConfig();
+  const [initialCountdownConfig, initialProfile] = await Promise.all([
+    loadActiveCountdownConfig(),
+    loadTabPageProfile(),
+  ]);
 
   return (
     <Suspense fallback={<LightweightLiveLoading />}>
-      <LiveExperienceClient initialCountdownConfig={initialCountdownConfig} />
+      <LiveExperienceClient
+        initialCountdownConfig={initialCountdownConfig}
+        initialProfile={initialProfile}
+      />
     </Suspense>
   );
 }

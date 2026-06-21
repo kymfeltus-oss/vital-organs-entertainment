@@ -1,10 +1,13 @@
 import { Suspense } from "react";
 import BuySeedsPageClient from "@/components/buy-seeds/BuySeedsPageClient";
+import { loadTabPageProfile } from "@/lib/experience/load-tab-page-profile";
 import { DEVICE_FIT_PAGE } from "@/lib/responsive";
 
 export const dynamic = "force-dynamic";
 
-export default function BuySeedsPage() {
+export default async function BuySeedsPage() {
+  const profile = await loadTabPageProfile();
+
   return (
     <main
       id="main-content"
@@ -12,7 +15,7 @@ export default function BuySeedsPage() {
       aria-label="Buy Seeds"
     >
       <Suspense fallback={null}>
-        <BuySeedsPageClient />
+        <BuySeedsPageClient initialProfile={profile} />
       </Suspense>
     </main>
   );

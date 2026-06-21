@@ -7,49 +7,65 @@ export type MobileArtboardChromeRect = {
   height: string;
 };
 
-/** Top chrome on 853×1844 artboards — measured from music/giving PNG headers. */
-export const MOBILE_ARTBOARD_853_CHROME = {
+/** Shared top row on Live · Giving · Music · Buy Seeds (853×1844 reference art). */
+export const MOBILE_ARTBOARD_TAB_CHROME = {
   back: MOBILE_ARTBOARD_BACK_HOTSPOT,
-  profile: {
-    left: "76%",
-    top: "1.6%",
-    width: "9%",
-    height: "5.2%",
-  },
-  menu: {
-    left: "89.4%",
-    top: "2%",
-    width: "6.5%",
-    height: "5.2%",
-  },
-  /** Combined row for flex layout — profile orb + hamburger menu. */
+  profileOrbSize: 34,
   actions: {
     left: "74%",
     top: "1.5%",
     width: "22%",
     height: "5.5%",
   },
+  /** Hides baked PNG back / profile / menu so native chrome is identical on every tab. */
+  bakedMask: {
+    back: {
+      left: "0%",
+      top: "0%",
+      width: "17%",
+      height: "7.5%",
+    },
+    actions: {
+      left: "71%",
+      top: "0%",
+      width: "29%",
+      height: "7.5%",
+    },
+  },
 } as const;
 
-/** Top chrome on 1080×1920 artboards — measured from buy-seeds PNG header. */
-export const MOBILE_ARTBOARD_1080_CHROME = {
-  back: MOBILE_ARTBOARD_BACK_HOTSPOT,
+/** @deprecated Use MOBILE_ARTBOARD_TAB_CHROME */
+export const MOBILE_ARTBOARD_853_CHROME = {
+  back: MOBILE_ARTBOARD_TAB_CHROME.back,
   profile: {
-    left: "72.5%",
-    top: "1.8%",
-    width: "7.3%",
-    height: "6.5%",
+    left: "76%",
+    top: "1.5%",
+    width: "9%",
+    height: "5.5%",
   },
   menu: {
-    left: "83.7%",
-    top: "1.8%",
-    width: "4.4%",
-    height: "6.5%",
+    left: "89.4%",
+    top: "1.5%",
+    width: "6.5%",
+    height: "5.5%",
   },
-  actions: {
-    left: "70%",
-    top: "1.8%",
-    width: "18%",
-    height: "6.5%",
+  actions: MOBILE_ARTBOARD_TAB_CHROME.actions,
+} as const;
+
+/** @deprecated Use MOBILE_ARTBOARD_TAB_CHROME — buy-seeds uses the same tab row now. */
+export const MOBILE_ARTBOARD_1080_CHROME = {
+  back: MOBILE_ARTBOARD_TAB_CHROME.back,
+  profile: {
+    left: "76%",
+    top: "1.5%",
+    width: "9%",
+    height: "5.5%",
   },
+  menu: {
+    left: "89.4%",
+    top: "1.5%",
+    width: "6.5%",
+    height: "5.5%",
+  },
+  actions: MOBILE_ARTBOARD_TAB_CHROME.actions,
 } as const;

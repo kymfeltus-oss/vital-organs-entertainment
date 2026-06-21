@@ -2100,16 +2100,70 @@ html {
   }
 }
 
-/* Shared mobile artboard stage — dashboard track (1080×1920) on every tab page */
+/* Bottom-nav artboard tabs — unified top header anchor (Live · Giving · Music · Buy Seeds) */
+.mobile-artboard-tab-shell,
+.music-page,
+.buy-seeds-page,
+.vital-giving-page {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  box-sizing: border-box;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: hidden;
+  overscroll-behavior: none;
+  padding-top: env(safe-area-inset-top, 0px);
+  height: calc(
+    100dvh - var(--bottom-dock-display-h, 76px) - env(safe-area-inset-bottom, 0px)
+  );
+  max-height: calc(
+    100dvh - var(--bottom-dock-display-h, 76px) - env(safe-area-inset-bottom, 0px)
+  );
+  background-color: #000000;
+}
+
+@media (min-width: 768px) {
+  .mobile-artboard-tab-shell,
+  .music-page,
+  .buy-seeds-page,
+  .vital-giving-page {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+}
+
+/* Live holding + POV — no bottom dock; same top anchor as tab pages */
+.live-holding-shell .holding-room-page,
+.live-pov-page.mobile-artboard-tab-shell {
+  height: 100%;
+  max-height: 100%;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.mobile-artboard-tab-shell__stage,
 .music-page__stage,
 .buy-seeds-page__stage,
 .holding-room-page__stage,
-.prayer-page__stage,
-.email-gate-page__stage,
-.email-gate-page--mobile .email-gate-page__stage,
 .live-pov-page__stage,
 .vital-giving-artboard--mobile,
 .auth-attendee-artboard {
+  position: relative;
+  width: var(--mobile-app-track-w);
+  max-width: 100vw;
+  flex-shrink: 0;
+  container-type: inline-size;
+  height: min(100%, calc(var(--mobile-app-track-w) * 1920 / 1080));
+  max-height: 100%;
+}
+
+/* Shared mobile artboard stage — dashboard track (1080×1920) on every tab page */
+.prayer-page__stage,
+.email-gate-page__stage,
+.email-gate-page--mobile .email-gate-page__stage {
   width: var(--mobile-app-track-w);
   max-width: 100vw;
   flex-shrink: 0;
@@ -2156,23 +2210,8 @@ html {
 
 /* Experience music — mobile artboard, interactive overlays */
 .music-page {
-  position: relative;
-  display: flex;
-  flex: 1;
-  width: 100%;
-  min-height: 100%;
-  height: auto;
-  align-items: flex-start;
-  justify-content: center;
   overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior: contain;
-  background-color: #000000;
-}
-
-.music-page__stage {
-  position: relative;
-  container-type: inline-size;
 }
 
 .music-page__bg {
@@ -2206,25 +2245,6 @@ html {
   .music-page__stage {
     width: var(--mobile-app-track-w);
   }
-}
-
-/* Buy Seeds — flat PNG background + native package overlay */
-.buy-seeds-page {
-  display: flex;
-  flex: 1;
-  width: 100%;
-  align-items: stretch;
-  justify-content: center;
-  background-color: #000000;
-}
-
-.buy-seeds-page__stage {
-  position: relative;
-  width: var(--mobile-app-track-w);
-  max-width: 100vw;
-  flex-shrink: 0;
-  height: min(100dvh, calc(var(--mobile-app-track-w) * 1920 / 1080));
-  container-type: inline-size;
 }
 
 .buy-seeds-page__art-fit {
@@ -2582,19 +2602,7 @@ html {
 
 /* Experience holding room — 853×1844 art-fit plate on mobile app track (/live) */
 .holding-room-page {
-  position: relative;
-  display: flex;
-  flex: 1;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
   box-sizing: border-box;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
-  background-color: #000000;
 }
 
 .live-holding-shell .holding-room-page__stage {
@@ -2604,7 +2612,6 @@ html {
 
 .holding-room-page__stage {
   position: relative;
-  container-type: inline-size;
 }
 
 /* Match giving/buy-seeds: native plate centered in track, full PNG visible (contain). */
@@ -2620,17 +2627,12 @@ html {
   position: fixed;
   inset: 0;
   z-index: 100;
-  display: flex;
   width: 100%;
   height: 100dvh;
-  align-items: flex-start;
-  justify-content: center;
-  overflow: hidden;
-  background-color: #000000;
+  max-height: 100dvh;
 }
 
 .live-pov-page__stage {
-  position: relative;
   overflow: hidden;
 }
 
@@ -2988,7 +2990,18 @@ html {
   color: transparent;
 }
 
-/* Mobile artboard top chrome — profile orb + menu (Music / Buy Seeds / Giving) */
+/* Mobile artboard top chrome — profile orb + menu (all bottom-nav tabs) */
+.mobile-artboard-header-mask {
+  position: absolute;
+  left: var(--mobile-artboard-header-mask-left, 0%);
+  top: var(--mobile-artboard-header-mask-top, 0%);
+  z-index: 11;
+  width: var(--mobile-artboard-header-mask-width, 17%);
+  height: var(--mobile-artboard-header-mask-height, 7.5%);
+  background-color: #000000;
+  pointer-events: none;
+}
+
 .mobile-artboard-top-chrome {
   position: absolute;
   z-index: 12;
@@ -3049,13 +3062,24 @@ html {
   container-type: inline-size;
 }
 
+.experience-giving-overlay__body-copy-mask {
+  position: absolute;
+  left: 0;
+  top: var(--giving-body-copy-mask-top, 40%);
+  z-index: 2;
+  width: 100%;
+  height: var(--giving-body-copy-mask-height, 14.5%);
+  background-color: #000000;
+  pointer-events: none;
+}
+
 .experience-giving-overlay__baked-mask {
   position: absolute;
   left: 0;
-  top: var(--giving-baked-mask-top, 52%);
+  top: var(--giving-baked-mask-top, 47.5%);
   z-index: 2;
   width: 100%;
-  height: var(--giving-baked-mask-height, 42%);
+  height: var(--giving-baked-mask-height, 44%);
   background-color: #000000;
   pointer-events: none;
 }
@@ -3064,7 +3088,7 @@ html {
 .experience-giving-overlay__amount-panel {
   position: absolute;
   left: 0;
-  top: var(--giving-grid-panel-top, 52%);
+  top: var(--giving-grid-panel-top, 47.5%);
   z-index: 3;
   box-sizing: border-box;
   display: flex;
@@ -3352,37 +3376,7 @@ html {
   color: transparent;
 }
 
-/* Vital Seed giving — content-only overlay (background art is the layout) */
 /* Vital Seed giving — single viewport artboard on mobile app track */
-.vital-giving-page {
-  position: relative;
-  display: flex;
-  width: 100%;
-  height: calc(
-    100dvh - var(--bottom-dock-display-h, 76px) - env(safe-area-inset-bottom, 0px)
-  );
-  max-height: calc(
-    100dvh - var(--bottom-dock-display-h, 76px) - env(safe-area-inset-bottom, 0px)
-  );
-  min-height: 0;
-  box-sizing: border-box;
-  overflow: hidden;
-  padding-top: env(safe-area-inset-top, 0px);
-  background-color: #000000;
-}
-
-@media (min-width: 768px) {
-  .vital-giving-page {
-    height: 100dvh;
-    max-height: 100dvh;
-  }
-}
-
-.vital-giving-page .vital-giving-artboard--mobile {
-  height: min(100%, calc(var(--mobile-app-track-w) * 1920 / 1080));
-  max-height: 100%;
-}
-
 .vital-giving-stage {
   position: relative;
   display: flex;
@@ -3390,7 +3384,7 @@ html {
   height: 100%;
   min-height: 0;
   flex: 1;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   overflow: hidden;
   overscroll-behavior: none;
@@ -4388,14 +4382,18 @@ html {
   flex: 1 1 auto;
   width: 100%;
   max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
   min-height: 0;
   margin: 0;
+  box-sizing: border-box;
   align-items: flex-start;
   justify-content: center;
   overflow-x: hidden;
   overflow-y: hidden;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  padding-top: env(safe-area-inset-top, 0px);
   background-color: #000000;
 }
 
@@ -4622,6 +4620,322 @@ html {
   padding: 0.65rem 0.85rem;
   text-align: center;
   pointer-events: auto;
+}
+
+/* Create account — PNG hero + native form panel (941×1672) */
+.create-account-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  container-type: inline-size;
+}
+
+.create-account-overlay__baked-mask {
+  position: absolute;
+  left: 0;
+  top: var(--create-account-mask-top, 32%);
+  z-index: 1;
+  width: 100%;
+  height: var(--create-account-mask-height, 67%);
+  background-color: #000000;
+  pointer-events: none;
+}
+
+.create-account-form {
+  position: absolute;
+  z-index: 2;
+  box-sizing: border-box;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: clamp(0.3rem, 1.3cqw, 0.5rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 0.25rem;
+}
+
+.create-account-form__row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-shrink: 0;
+  gap: clamp(0.35rem, 1.5cqw, 0.55rem);
+}
+
+.create-account-form__row--split {
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.create-account-form__row--split .create-account-field {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+}
+
+.create-account-field {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  height: clamp(2.45rem, 8.8cqw, 2.95rem);
+  min-height: clamp(2.45rem, 8.8cqw, 2.95rem);
+  align-items: center;
+  gap: clamp(0.35rem, 1.4cqw, 0.55rem);
+  border: 1px solid transparent;
+  border-radius: clamp(0.55rem, 2.2cqw, 0.8rem);
+  background:
+    linear-gradient(#090b13, #090b13) padding-box,
+    var(--gradient-brand) border-box;
+  padding-inline: clamp(0.55rem, 2.2cqw, 0.75rem);
+  color: #ffffff;
+}
+
+.create-account-field__icon {
+  width: clamp(0.85rem, 3.2cqw, 1rem);
+  height: clamp(0.85rem, 3.2cqw, 1rem);
+  flex-shrink: 0;
+  align-self: center;
+  color: #ffffff;
+  opacity: 0.88;
+}
+
+.create-account-field__control {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: clamp(0.68rem, 2.35cqw, 0.82rem);
+  line-height: 1;
+  color: #ffffff;
+  outline: none;
+}
+
+.create-account-field__control::placeholder {
+  color: rgb(255 255 255 / 0.42);
+}
+
+.create-account-field__control:focus,
+.create-account-field__control:focus-visible {
+  outline: none;
+}
+
+.create-account-field__control:-webkit-autofill,
+.create-account-field__control:-webkit-autofill:hover,
+.create-account-field__control:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #090b13 inset !important;
+  box-shadow: 0 0 0 1000px #090b13 inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.create-account-field--password .create-account-field__control {
+  padding-right: 1.75rem;
+}
+
+.create-account-field__toggle {
+  position: absolute;
+  top: 50%;
+  right: clamp(0.35rem, 1.4cqw, 0.55rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: rgb(255 255 255 / 0.72);
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.create-account-field--select-wrap .create-account-field__control--select {
+  appearance: none;
+  height: 100%;
+  padding-right: 1.25rem;
+  cursor: pointer;
+}
+
+.create-account-field--select-wrap .create-account-field__control--select:invalid {
+  color: rgb(255 255 255 / 0.42);
+}
+
+.create-account-field__chevron {
+  position: absolute;
+  top: 50%;
+  right: clamp(0.35rem, 1.4cqw, 0.55rem);
+  width: 0.9rem;
+  height: 0.9rem;
+  color: rgb(255 255 255 / 0.72);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.create-account-avatar-panel {
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  align-items: center;
+  gap: clamp(0.55rem, 2.2cqw, 0.85rem);
+  border: 1px solid transparent;
+  border-radius: clamp(0.55rem, 2.2cqw, 0.8rem);
+  background:
+    linear-gradient(#090b13, #090b13) padding-box,
+    var(--gradient-brand) border-box;
+  padding: clamp(0.55rem, 2.2cqw, 0.75rem);
+}
+
+.create-account-avatar-panel__orb {
+  position: relative;
+  display: flex;
+  width: clamp(2.75rem, 10cqw, 3.35rem);
+  height: clamp(2.75rem, 10cqw, 3.35rem);
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background:
+    linear-gradient(#090b13, #090b13) padding-box,
+    var(--gradient-brand) border-box;
+  border: 2px solid transparent;
+}
+
+.create-account-avatar-panel__orb-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: #ffffff;
+  opacity: 0.85;
+}
+
+.create-account-avatar-panel__copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.create-account-avatar-panel__title {
+  margin: 0;
+  font-size: clamp(0.58rem, 2.1cqw, 0.68rem);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.create-account-avatar-panel__hint,
+.create-account-avatar-panel__filename {
+  margin: 0;
+  font-size: clamp(0.58rem, 2cqw, 0.68rem);
+  line-height: 1.35;
+  color: rgb(255 255 255 / 0.68);
+}
+
+.create-account-avatar-panel__filename {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgb(255 255 255 / 0.82);
+}
+
+.create-account-avatar-panel__btn {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 2rem;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.06);
+  padding: 0.35rem 0.75rem;
+  font-size: clamp(0.56rem, 1.9cqw, 0.64rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.create-account-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: clamp(0.58rem, 2cqw, 0.68rem);
+  line-height: 1.45;
+  color: rgb(255 255 255 / 0.78);
+}
+
+.create-account-terms__checkbox {
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.1rem;
+  flex-shrink: 0;
+  accent-color: #00a8ff;
+  cursor: pointer;
+}
+
+.create-account-submit {
+  display: inline-flex;
+  width: 100%;
+  min-height: clamp(2.5rem, 9cqw, 3rem);
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border: 1px solid transparent;
+  border-radius: clamp(0.55rem, 2.2cqw, 0.8rem);
+  background:
+    linear-gradient(#090b13, #090b13) padding-box,
+    var(--gradient-brand) border-box;
+  font-size: clamp(0.62rem, 2.2cqw, 0.74rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.create-account-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.create-account-submit__icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.create-account-form-error {
+  margin: 0;
+  text-align: center;
+  font-size: clamp(0.58rem, 2cqw, 0.68rem);
+  line-height: 1.4;
+  color: #ff008c;
+}
+
+.create-account-login-prompt {
+  margin: 0;
+  text-align: center;
+  font-size: clamp(0.58rem, 2cqw, 0.68rem);
+  color: rgb(255 255 255 / 0.68);
+}
+
+.create-account-login-prompt__link {
+  font-size: inherit;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  background: var(--gradient-brand);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
 @supports not (aspect-ratio: 1080 / 1920) {

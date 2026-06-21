@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import AttendeeAuthLoginPlate from "@/components/auth/AttendeeAuthLoginPlate";
+import AttendeeAuthArtboard from "@/components/auth/AttendeeAuthArtboard";
+import AttendeeAuthLoginMobileForm from "@/components/auth/AttendeeAuthLoginMobileForm";
 import EmailGateShell, {
   gateFieldClass,
   PrimaryGateButton,
@@ -218,35 +219,22 @@ export default function AttendeeFunnelClient({
   }
 
   return (
-    <div className="flex min-h-dvh w-full flex-1 flex-col items-center justify-center bg-brand-black px-4 pb-safe pt-safe">
-      <AttendeeAuthLoginPlate
+    <AttendeeAuthArtboard scrollable>
+      <AttendeeAuthLoginMobileForm
         createAccountHref={buildCreateAccountUrl(destination)}
         email={email}
         password={password}
         showPassword={showPassword}
         rememberMe={rememberMe}
         isSubmitting={status === "submitting"}
+        formError={displayError}
         onEmailChange={setEmail}
         onPasswordChange={setPassword}
         onEmailBlur={() => setEmailTouched(true)}
         onToggleShowPassword={() => setShowPassword((current) => !current)}
         onRememberMeChange={setRememberMe}
         onSubmit={(event) => void handleCredentialSubmit(event)}
-        onGuest={() => {
-          setActiveTab("guest");
-          setGuestStep("form");
-          setError(null);
-        }}
       />
-
-      {displayError ? (
-        <p
-          role="alert"
-          className="mt-4 max-w-[min(100%,24rem)] text-center font-body text-sm text-brand-pink"
-        >
-          {displayError}
-        </p>
-      ) : null}
-    </div>
+    </AttendeeAuthArtboard>
   );
 }

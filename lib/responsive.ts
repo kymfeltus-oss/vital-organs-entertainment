@@ -81,6 +81,10 @@ export function mobileArtboardStageStyle(options?: {
   };
 }
 
+/** Shared page shell + stage classes for bottom-nav artboard tabs. */
+export const MOBILE_ARTBOARD_TAB_SHELL = "mobile-artboard-tab-shell";
+export const MOBILE_ARTBOARD_TAB_STAGE = "mobile-artboard-tab-shell__stage";
+
 /** Content offset when PNG bottom dock is present (display height + safe area). */
 export const CONTENT_WITH_NAV = `pb-[calc(${BOTTOM_NAV_BAR_HEIGHT_PX}px+env(safe-area-inset-bottom))]`;
 

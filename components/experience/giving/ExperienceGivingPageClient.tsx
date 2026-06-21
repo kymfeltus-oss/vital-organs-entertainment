@@ -5,8 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import ExperienceGivingMobileOverlay from "@/components/experience/giving/ExperienceGivingMobileOverlay";
-import MobileArtboardTopChrome from "@/components/navigation/MobileArtboardTopChrome";
-import { MOBILE_ARTBOARD_853_CHROME } from "@/lib/navigation/mobile-artboard-chrome";
+import MobileArtboardTabHeader from "@/components/navigation/MobileArtboardTabHeader";
 import { getClientAppUrl } from "@/lib/client-api";
 import {
   GIVING_MOBILE_ART_NATIVE,
@@ -128,12 +127,12 @@ function ExperienceGivingPageContent({
     <>
       <section
         id="sow-seed"
-        className="vital-giving-page"
+        className="vital-giving-page mobile-artboard-tab-shell"
         aria-label="Vital Seed giving"
       >
         <div className="vital-giving-stage">
           <div
-            className="vital-giving-artboard vital-giving-artboard--mobile"
+            className="vital-giving-artboard vital-giving-artboard--mobile mobile-artboard-tab-shell__stage"
             style={
               mobileArtboardStageStyle({ native: GIVING_MOBILE_ART_NATIVE }) as CSSProperties
             }
@@ -161,11 +160,7 @@ function ExperienceGivingPageContent({
                 onCustomAmountFocus={handleCustomAmountFocus}
                 onGiveNow={() => void handleGiveNow()}
               />
-              <MobileArtboardTopChrome
-                profile={profile}
-                onProfileChange={setProfile}
-                actionsSlot={MOBILE_ARTBOARD_853_CHROME.actions}
-              />
+              <MobileArtboardTabHeader profile={profile} onProfileChange={setProfile} />
             </div>
           </div>
         </div>

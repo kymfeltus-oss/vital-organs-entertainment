@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import ExperienceGivingAmountGrid from "@/components/experience/giving/ExperienceGivingAmountGrid";
 import {
   GIVING_MOBILE_BAKED_CONTROLS_MASK,
+  GIVING_MOBILE_BODY_COPY_MASK,
   GIVING_MOBILE_CUSTOM_AMOUNT_SLOT,
   GIVING_MOBILE_ERROR_SLOT,
   GIVING_MOBILE_GIVE_NOW_SLOT,
@@ -57,11 +58,14 @@ export default function ExperienceGivingMobileOverlay({
         {
           "--giving-baked-mask-top": GIVING_MOBILE_BAKED_CONTROLS_MASK.top,
           "--giving-baked-mask-height": GIVING_MOBILE_BAKED_CONTROLS_MASK.height,
+          "--giving-body-copy-mask-top": GIVING_MOBILE_BODY_COPY_MASK.top,
+          "--giving-body-copy-mask-height": GIVING_MOBILE_BODY_COPY_MASK.height,
           "--giving-grid-panel-top": GIVING_MOBILE_GRID_PANEL.top,
           "--giving-grid-panel-height": GIVING_MOBILE_GRID_PANEL.height,
         } as CSSProperties
       }
     >
+      <div className="experience-giving-overlay__body-copy-mask" aria-hidden="true" />
       <div className="experience-giving-overlay__baked-mask" aria-hidden="true" />
 
       <div className="experience-giving-overlay__grid-panel pointer-events-auto">

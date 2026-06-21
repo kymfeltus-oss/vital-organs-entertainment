@@ -5,14 +5,15 @@ export const AWAKENING_AUTH_LOGIN_ART = {
   height: 1844,
 } as const;
 
+/** Native create-account plate — `/public/create-account/create-account -background.png`. */
 export const AWAKENING_AUTH_SIGNUP_ART = {
-  width: 1024,
-  height: 1536,
+  width: 941,
+  height: 1672,
 } as const;
 
 export const AWAKENING_AUTH_ASSETS = {
   attendeeLoginPlate: "/awakening/auth-attendee-login.png",
-  attendeeSignupPlate: "/create-account/create-account-background.png",
+  attendeeSignupPlate: "/create-account/create-account%20-background.png",
 } as const;
 
 export type AuthLayoutRect = {
@@ -29,12 +30,13 @@ export const AWAKENING_AUTH_LOGIN_PANELS = {
   rememberMe: { left: 12.66, top: 60.2, width: 24, height: 2.71 },
   forgotPassword: { left: 56, top: 60.2, width: 31, height: 2.71 },
   loginButton: { left: 12.66, top: 62.91, width: 74.68, height: 5.42 },
-  createAccountButton: { left: 12.66, top: 68.33, width: 74.68, height: 5.42 },
-  joinMovement: { left: 12.66, top: 81.34, width: 74.68, height: 4.34 },
-  guestEntry: { left: 12.66, top: 85.68, width: 74.68, height: 4.34 },
+  appleSignIn: { left: 12.66, top: 68.33, width: 74.68, height: 4.34 },
+  googleSignIn: { left: 12.66, top: 73.2, width: 74.68, height: 4.34 },
+  facebookSignIn: { left: 12.66, top: 78.1, width: 74.68, height: 4.34 },
+  signUpLink: { left: 12.66, top: 88.2, width: 74.68, height: 3.65 },
 } as const satisfies Record<string, AuthLayoutRect>;
 
-/** Signup overlay slots — create-account-background.png (1024×1536). */
+/** Signup overlay slots — create-account -background.png (941×1672). */
 export const AWAKENING_AUTH_SIGNUP_PANELS = {
   firstName: { left: 8.5, top: 30.5, width: 40, height: 4.5 },
   lastName: { left: 52, top: 30.5, width: 40.5, height: 4.5 },

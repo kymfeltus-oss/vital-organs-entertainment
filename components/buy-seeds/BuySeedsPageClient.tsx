@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import BuySeedsOverlay from "@/components/buy-seeds/BuySeedsOverlay";
+import MobileArtboardTabHeader from "@/components/navigation/MobileArtboardTabHeader";
 import { getMerchProduct } from "@/lib/merch/catalog";
+import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import {
   BUY_SEEDS_ASSETS,
   BUY_SEEDS_DEFAULT_PACKAGE_ID,
@@ -15,7 +17,11 @@ import {
 import { mobileArtboardStageStyle } from "@/lib/responsive";
 import { useMerchCheckout } from "@/lib/useMerchCheckout";
 
-export default function BuySeedsPageClient() {
+type BuySeedsPageClientProps = {
+  initialProfile: AttendeeProfileSnapshot;
+};
+
+export default function BuySeedsPageClient({ initialProfile }: BuySeedsPageClientProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const successParam = searchParams.get("success") === "true";
@@ -24,6 +30,7 @@ export default function BuySeedsPageClient() {
     useState<SeedPackageId>(BUY_SEEDS_DEFAULT_PACKAGE_ID);
   const [activeProductId, setActiveProductId] = useState<string | null>(null);
   const [showThankYou, setShowThankYou] = useState(successParam);
+  const [profile, setProfile] = useState(initialProfile);
 
   const { isSubmitting, errorMessage, startCheckout, clearError } = useMerchCheckout();
 
@@ -61,9 +68,9 @@ export default function BuySeedsPageClient() {
 
   return (
     <>
-      <div className="buy-seeds-page relative min-h-dvh overflow-hidden bg-brand-black">
+      <div className="buy-seeds-page mobile-artboard-tab-shell relative overflow-hidden bg-brand-black">
         <div
-          className="buy-seeds-page__stage relative mx-auto min-h-dvh w-full"
+          className="buy-seeds-page__stage mobile-artboard-tab-shell__stage relative mx-auto w-full"
           style={
             mobileArtboardStageStyle({ native: BUY_SEEDS_MOBILE_ART_NATIVE }) as CSSProperties
           }
@@ -80,6 +87,8 @@ export default function BuySeedsPageClient() {
               decoding="async"
               draggable={false}
             />
+
+            <MobileArtboardTabHeader profile={profile} onProfileChange={setProfile} />
 
             <BuySeedsOverlay
               selectedPackageId={selectedPackageId}

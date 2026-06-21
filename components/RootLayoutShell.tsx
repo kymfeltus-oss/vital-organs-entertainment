@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import BottomNavigation from "@/components/navigation/BottomNavigation";
 import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 import { CONTENT_WITH_NAV } from "@/lib/responsive";
-import { isNavHiddenRoute } from "@/lib/routes";
+import { isMobileArtboardTabRoute, isNavHiddenRoute } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 type RootLayoutShellProps = {
@@ -19,6 +19,7 @@ export default function RootLayoutShell({ children }: RootLayoutShellProps) {
     pathname === "/experience" ||
     pathname.startsWith("/experience/");
   const isExperienceDashboard = pathname === ATTENDEE_DASHBOARD_PATH;
+  const isArtboardTab = isMobileArtboardTabRoute(pathname);
 
   return (
     <div
@@ -30,8 +31,11 @@ export default function RootLayoutShell({ children }: RootLayoutShellProps) {
       {!hideNav && <BottomNavigation />}
       <div
         className={cn(
-          "min-h-dvh w-full",
-          !hideNav && !isExperienceDashboard && CONTENT_WITH_NAV,
+          "w-full",
+          isArtboardTab
+            ? "flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden"
+            : "min-h-dvh",
+          !hideNav && !isExperienceDashboard && !isArtboardTab && CONTENT_WITH_NAV,
         )}
       >
         {children}

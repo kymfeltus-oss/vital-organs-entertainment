@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import AwakeningMenuButton from "@/components/AwakeningMenuButton";
 import ProfileOrbEditor from "@/components/profile/ProfileOrbEditor";
 import {
-  MOBILE_ARTBOARD_1080_CHROME,
+  MOBILE_ARTBOARD_TAB_CHROME,
   type MobileArtboardChromeRect,
 } from "@/lib/navigation/mobile-artboard-chrome";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
@@ -29,8 +29,8 @@ function slotStyle(slot: MobileArtboardChromeRect): CSSProperties {
 export default function MobileArtboardTopChrome({
   profile,
   onProfileChange,
-  actionsSlot = MOBILE_ARTBOARD_1080_CHROME.actions,
-  profileOrbSize = 34,
+  actionsSlot = MOBILE_ARTBOARD_TAB_CHROME.actions,
+  profileOrbSize = MOBILE_ARTBOARD_TAB_CHROME.profileOrbSize,
 }: MobileArtboardTopChromeProps) {
   return (
     <header

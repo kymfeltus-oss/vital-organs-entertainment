@@ -1,15 +1,23 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import MusicOverlay from "@/components/music/MusicOverlay";
-import { MUSIC_ASSETS, MUSIC_MOBILE_ART, MUSIC_MOBILE_ART_NATIVE } from "@/lib/music/assets";
+import MobileArtboardTabHeader from "@/components/navigation/MobileArtboardTabHeader";
+import { MUSIC_ASSETS, MUSIC_MOBILE_ART_NATIVE } from "@/lib/music/assets";
+import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { mobileArtboardStageStyle } from "@/lib/responsive";
 
-export default function MusicPageClient() {
+type MusicPageClientProps = {
+  initialProfile: AttendeeProfileSnapshot;
+};
+
+export default function MusicPageClient({ initialProfile }: MusicPageClientProps) {
+  const [profile, setProfile] = useState(initialProfile);
+
   return (
-    <div className="music-page">
+    <div className="music-page mobile-artboard-tab-shell">
       <div
-        className="music-page__stage"
+        className="music-page__stage mobile-artboard-tab-shell__stage"
         style={mobileArtboardStageStyle({ native: MUSIC_MOBILE_ART_NATIVE }) as CSSProperties}
       >
         <div className="mobile-artboard-art-fit">
@@ -24,6 +32,7 @@ export default function MusicPageClient() {
             decoding="async"
             draggable={false}
           />
+          <MobileArtboardTabHeader profile={profile} onProfileChange={setProfile} />
           <MusicOverlay />
         </div>
       </div>

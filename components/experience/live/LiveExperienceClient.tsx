@@ -7,6 +7,7 @@ import GoingLiveTransition from "@/components/experience/live/GoingLiveTransitio
 import ViewerPovGoLiveShell from "@/components/experience/live/pov/ViewerPovGoLiveShell";
 import PassActivatingShell from "@/components/live/PassActivatingShell";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
+import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
 import { BroadcastHealthProvider } from "@/lib/parable/BroadcastHealthContext";
@@ -17,20 +18,26 @@ const GOING_LIVE_MS = 1_400;
 
 type LiveExperienceClientProps = {
   initialCountdownConfig?: EventCountdownConfig;
+  initialProfile: AttendeeProfileSnapshot;
 };
 
 export default function LiveExperienceClient({
   initialCountdownConfig,
+  initialProfile,
 }: LiveExperienceClientProps) {
   return (
     <BroadcastHealthProvider surface="experience">
-      <LiveExperienceClientInner initialCountdownConfig={initialCountdownConfig} />
+      <LiveExperienceClientInner
+        initialCountdownConfig={initialCountdownConfig}
+        initialProfile={initialProfile}
+      />
     </BroadcastHealthProvider>
   );
 }
 
 function LiveExperienceClientInner({
   initialCountdownConfig,
+  initialProfile,
 }: LiveExperienceClientProps) {
   const { phase, verificationAttempt } = useLiveAccessVerification();
   const { refresh: refreshSeedBalance } = useLiveSeedWallet();
@@ -114,7 +121,10 @@ function LiveExperienceClientInner({
 
     return (
       <main className="live-holding-shell">
-        <ExperienceHoldingRoomPageClient initialCountdownConfig={initialCountdownConfig} />
+        <ExperienceHoldingRoomPageClient
+          initialCountdownConfig={initialCountdownConfig}
+          initialProfile={initialProfile}
+        />
       </main>
     );
   }

@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useRef, useState } from "react";
 import AttendeeAuthArtboard from "@/components/auth/AttendeeAuthArtboard";
-import AttendeeAuthSignupPlate from "@/components/auth/AttendeeAuthSignupPlate";
+import CreateAccountMobileForm from "@/components/auth/CreateAccountMobileForm";
 import {
   formatCreateAccountPhoneInput,
   isCreateAccountFormValid,
@@ -139,12 +139,28 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
         artboard={AWAKENING_AUTH_SIGNUP_ART}
         scrollable
       >
-        <AttendeeAuthSignupPlate
+        <CreateAccountMobileForm
           loginHref={loginHref}
           values={values}
           showPassword={showPassword}
           showConfirmPassword={showConfirmPassword}
           isSubmitting={isSubmitting}
+          formError={
+            formError ??
+            (touched && Object.keys(fieldErrors).length > 0
+              ? fieldErrors.firstName ??
+                fieldErrors.lastName ??
+                fieldErrors.email ??
+                fieldErrors.phone ??
+                fieldErrors.city ??
+                fieldErrors.state ??
+                fieldErrors.password ??
+                fieldErrors.confirmPassword ??
+                fieldErrors.acceptedTerms ??
+                fieldErrors.avatarFile ??
+                "Fix the highlighted fields to continue."
+              : null)
+          }
           onFieldChange={(key, value) => {
             if (key === "phone") {
               setField("phone", formatCreateAccountPhoneInput(String(value)));
@@ -158,28 +174,6 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
           onAvatarPick={() => fileInputRef.current?.click()}
           onSubmit={(event) => void handleSubmit(event)}
         />
-
-        {formError ? (
-          <p role="alert" className="auth-attendee-error font-body text-sm text-brand-pink">
-            {formError}
-          </p>
-        ) : null}
-
-        {touched && Object.keys(fieldErrors).length > 0 && !formError ? (
-          <p role="alert" className="auth-attendee-error font-body text-sm text-brand-pink">
-            {fieldErrors.firstName ??
-              fieldErrors.lastName ??
-              fieldErrors.email ??
-              fieldErrors.phone ??
-              fieldErrors.city ??
-              fieldErrors.state ??
-              fieldErrors.password ??
-              fieldErrors.confirmPassword ??
-              fieldErrors.acceptedTerms ??
-              fieldErrors.avatarFile ??
-              "Fix the highlighted fields to continue."}
-          </p>
-        ) : null}
       </AttendeeAuthArtboard>
 
       <input

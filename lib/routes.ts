@@ -26,6 +26,19 @@ function matchesHiddenPrefix(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
 
+const MOBILE_ARTBOARD_TAB_EXACT = [
+  "/music",
+  "/giving",
+  "/experience/giving",
+  "/buy-seeds",
+  "/live",
+] as const;
+
+/** Bottom-nav artboard tabs — Live, Giving, Music, Buy Seeds (+ /live holding). */
+export function isMobileArtboardTabRoute(pathname: string): boolean {
+  return (MOBILE_ARTBOARD_TAB_EXACT as readonly string[]).includes(pathname);
+}
+
 export function isNavHiddenRoute(pathname: string): boolean {
   if ((NAV_HIDDEN_EXACT as readonly string[]).includes(pathname)) {
     return true;
