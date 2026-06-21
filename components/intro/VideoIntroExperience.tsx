@@ -9,6 +9,7 @@ import {
   INTRO_FOOTER_TAGLINE_MASK,
   INTRO_MOBILE_ART,
   INTRO_MUSIC_SRC,
+  INTRO_VIDEO_ART,
   INTRO_VIDEO_SRC,
 } from "@/lib/experience/intro-assets";
 import { introRectStyle } from "@/lib/experience/intro-layout-slots";
@@ -43,7 +44,6 @@ export default function VideoIntroExperience() {
   const musicPlayingRef = useRef(false);
   const [isExiting, setIsExiting] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
-  const artSize = INTRO_MOBILE_ART;
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -232,17 +232,18 @@ export default function VideoIntroExperience() {
         <div
           className="intro-flash-artboard"
           style={{
-            aspectRatio: `${artSize.width} / ${artSize.height}`,
-            ["--intro-art-w" as string]: String(artSize.width),
-            ["--intro-art-h" as string]: String(artSize.height),
+            ["--intro-art-w" as string]: String(INTRO_VIDEO_ART.width),
+            ["--intro-art-h" as string]: String(INTRO_VIDEO_ART.height),
+            ["--mobile-art-w" as string]: String(INTRO_MOBILE_ART.width),
+            ["--mobile-art-h" as string]: String(INTRO_MOBILE_ART.height),
           }}
         >
           <video
             ref={videoRef}
             src={INTRO_VIDEO_SRC}
             className="intro-flash-artboard__video"
-            width={artSize.width}
-            height={artSize.height}
+            width={INTRO_VIDEO_ART.width}
+            height={INTRO_VIDEO_ART.height}
             autoPlay
             loop
             muted
