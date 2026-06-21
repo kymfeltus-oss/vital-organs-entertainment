@@ -15,7 +15,7 @@ type ExperienceHoldingRoomPageClientProps = {
 
 function ExperienceHoldingRoomPageContent() {
   return (
-    <div className="holding-room-page pt-safe pb-safe">
+    <div className="holding-room-page">
       <div
         className="holding-room-page__stage"
         style={mobileArtboardStageStyle({ native: HOLDING_ROOM_ART_NATIVE }) as CSSProperties}

@@ -2568,17 +2568,38 @@ html {
   pointer-events: auto;
 }
 
+/* Live holding shell — single viewport, no page scroll (/live pre-show) */
+.live-holding-shell {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  background-color: #000000;
+}
+
 /* Experience holding room — 853×1844 art-fit plate on mobile app track (/live) */
 .holding-room-page {
   position: relative;
   display: flex;
   flex: 1;
   width: 100%;
+  height: 100%;
   min-height: 0;
-  align-items: flex-start;
+  box-sizing: border-box;
+  align-items: center;
   justify-content: center;
-  overflow-x: hidden;
+  overflow: hidden;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
   background-color: #000000;
+}
+
+.live-holding-shell .holding-room-page__stage {
+  height: min(100%, calc(var(--mobile-app-track-w) * 1920 / 1080));
+  max-height: 100%;
 }
 
 .holding-room-page__stage {
@@ -3332,17 +3353,47 @@ html {
 }
 
 /* Vital Seed giving — content-only overlay (background art is the layout) */
+/* Vital Seed giving — single viewport artboard on mobile app track */
+.vital-giving-page {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: calc(
+    100dvh - var(--bottom-dock-display-h, 76px) - env(safe-area-inset-bottom, 0px)
+  );
+  max-height: calc(
+    100dvh - var(--bottom-dock-display-h, 76px) - env(safe-area-inset-bottom, 0px)
+  );
+  min-height: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding-top: env(safe-area-inset-top, 0px);
+  background-color: #000000;
+}
+
+@media (min-width: 768px) {
+  .vital-giving-page {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+}
+
+.vital-giving-page .vital-giving-artboard--mobile {
+  height: min(100%, calc(var(--mobile-app-track-w) * 1920 / 1080));
+  max-height: 100%;
+}
+
 .vital-giving-stage {
   position: relative;
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
   width: 100%;
+  height: 100%;
   min-height: 0;
   flex: 1;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .vital-giving-artboard {
@@ -3361,6 +3412,7 @@ html {
 .vital-giving-artboard--mobile {
   position: relative;
   container-type: inline-size;
+  overflow: hidden;
 }
 
 /* Native 853×1844 plate — width/height come from .mobile-artboard-art-fit vars. */

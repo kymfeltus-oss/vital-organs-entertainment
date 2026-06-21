@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import ExperienceGivingMobileOverlay from "@/components/experience/giving/ExperienceGivingMobileOverlay";
 import MobileArtboardTopChrome from "@/components/navigation/MobileArtboardTopChrome";
+import { MOBILE_ARTBOARD_853_CHROME } from "@/lib/navigation/mobile-artboard-chrome";
 import { getClientAppUrl } from "@/lib/client-api";
 import {
   GIVING_MOBILE_ART_NATIVE,
@@ -127,10 +128,10 @@ function ExperienceGivingPageContent({
     <>
       <section
         id="sow-seed"
-        className="relative flex min-h-dvh w-full flex-col overflow-x-hidden bg-brand-black pb-safe"
+        className="vital-giving-page"
         aria-label="Vital Seed giving"
       >
-        <div className="vital-giving-stage flex flex-1">
+        <div className="vital-giving-stage">
           <div
             className="vital-giving-artboard vital-giving-artboard--mobile"
             style={
@@ -160,11 +161,12 @@ function ExperienceGivingPageContent({
                 onCustomAmountFocus={handleCustomAmountFocus}
                 onGiveNow={() => void handleGiveNow()}
               />
+              <MobileArtboardTopChrome
+                profile={profile}
+                onProfileChange={setProfile}
+                actionsSlot={MOBILE_ARTBOARD_853_CHROME.actions}
+              />
             </div>
-            <MobileArtboardTopChrome
-              profile={profile}
-              onProfileChange={setProfile}
-            />
           </div>
         </div>
 

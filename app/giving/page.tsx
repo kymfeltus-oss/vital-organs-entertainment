@@ -18,7 +18,7 @@ export default async function GivingPage() {
   const profile = buildAttendeeProfileSnapshot(user, attendeeRecord);
 
   return (
-    <main id="main-content" className="min-h-dvh w-full">
+    <main id="main-content" className="w-full overflow-hidden">
       <ExperienceGivingPageClient initialProfile={profile} />
     </main>
   );
