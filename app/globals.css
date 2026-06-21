@@ -2122,8 +2122,8 @@ html {
 .buy-seeds-page,
 .vital-giving-page,
 .prayer-page {
-  --mobile-artboard-stage-w: var(--mobile-tab-track-w);
-  --mobile-artboard-stage-h: min(100%, calc(var(--mobile-tab-track-w) * 1920 / 1080));
+  --mobile-artboard-stage-w: var(--mobile-app-track-w);
+  --mobile-artboard-stage-h: var(--mobile-artboard-stage-h-full);
   position: relative;
   display: flex;
   width: 100%;
@@ -2135,12 +2135,8 @@ html {
   overflow: hidden;
   overscroll-behavior: none;
   padding-top: env(safe-area-inset-top, 0px);
-  height: calc(
-    100dvh - var(--bottom-dock-display-h, 76px) - env(safe-area-inset-bottom, 0px)
-  );
-  max-height: calc(
-    100dvh - var(--bottom-dock-display-h, 76px) - env(safe-area-inset-bottom, 0px)
-  );
+  height: var(--mobile-artboard-viewport-h);
+  max-height: var(--mobile-artboard-viewport-h);
   background-color: #000000;
 }
 

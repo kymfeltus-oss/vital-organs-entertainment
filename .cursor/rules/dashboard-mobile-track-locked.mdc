@@ -14,7 +14,7 @@ All artboard surfaces use the same column as `/attendee-dashboard`:
 | Token | Value |
 |-------|--------|
 | Artboard | **1080×1920** (`MOBILE_ARTBOARD_REF`) |
-| Width | `--mobile-app-track-w` or `--mobile-tab-track-w` |
+| Width | `--mobile-app-track-w` (tab pages too — bottom dock overlays fixed) |
 | Height | `track-w × 1920 / 1080` |
 
 Never use per-page native PNG pixel sizes (853×1844, 926×1698, 720×1280, etc.) for **stage width/height**.
