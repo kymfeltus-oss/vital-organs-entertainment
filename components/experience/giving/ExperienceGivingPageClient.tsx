@@ -142,7 +142,7 @@ function ExperienceGivingPageContent({
               mobileArtboardStageStyle({ native: GIVING_MOBILE_ART_NATIVE }) as CSSProperties
             }
           >
-            <div className={`${MOBILE_ARTBOARD_ART_FIT} vital-giving-artboard__art-fit`}>
+            <div className={MOBILE_ARTBOARD_ART_FIT}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={VITAL_SEED_GIVING_ASSETS.mobileBackground}

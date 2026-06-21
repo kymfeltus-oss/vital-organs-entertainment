@@ -54,7 +54,7 @@ export default function AttendeeAuthArtboard({
             decoding="async"
             draggable={false}
           />
-          <div className="auth-attendee-overlay">{children}</div>
+          {children}
         </div>
       </div>
     </div>

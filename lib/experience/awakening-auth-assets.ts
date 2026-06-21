@@ -5,10 +5,10 @@ export const AWAKENING_AUTH_LOGIN_ART = {
   height: 1844,
 } as const;
 
-/** Native create-account plate — `/public/create-account/create-account -background.png`. */
+/** Native create-account plate — `/public/create-account/create-account-background.png`. */
 export const AWAKENING_AUTH_SIGNUP_ART = {
-  width: 941,
-  height: 1672,
+  width: 1024,
+  height: 1536,
 } as const;
 
 export const AWAKENING_AUTH_ASSETS = {

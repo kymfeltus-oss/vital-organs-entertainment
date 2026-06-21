@@ -11,6 +11,7 @@ html {
   --mobile-artboard-viewport-h: calc(
     100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
   );
+  /* Locked 9:16 mobile app column — dashboard, bottom dock, and artboard pages. */
   --mobile-app-track-w: min(100vw, calc(var(--mobile-artboard-viewport-h) * 1080 / 1920));
   --gradient-brand: linear-gradient(90deg, #00a8ff 0%, #8a2eff 50%, #ff2faf 100%);
   --gradient-brand-soft: linear-gradient(
@@ -1692,7 +1693,7 @@ html {
 .experience-dashboard-stage {
   display: flex;
   align-items: stretch;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .experience-dashboard-container {
@@ -1931,15 +1932,19 @@ html {
 
 .dashboard-mobile-fixed-chrome {
   position: fixed;
-  inset-inline: 0;
+  left: 50%;
   top: 0;
   z-index: 60;
   display: flex;
+  width: var(--mobile-app-track-w);
+  max-width: 100vw;
+  transform: translateX(-50%);
   align-items: flex-start;
   justify-content: flex-end;
   padding-top: max(0.5rem, env(safe-area-inset-top));
-  padding-inline: max(1rem, calc(40 / 1080 * 100vw));
+  padding-inline: max(1rem, calc(40 / 1080 * var(--mobile-app-track-w)));
   padding-bottom: 0.35rem;
+  box-sizing: border-box;
 }
 
 .dashboard-mobile-fixed-chrome__actions {
@@ -2103,10 +2108,7 @@ html {
   .experience-dashboard-container {
     width: 100%;
     height: 100%;
-    max-width: none;
-    max-height: none;
-    margin-inline: 0;
-    border-radius: 0;
+    justify-content: center;
   }
 }
 
@@ -2117,7 +2119,10 @@ html {
 .vital-giving-page,
 .prayer-page {
   --mobile-artboard-stage-w: var(--mobile-tab-track-w);
-  --mobile-artboard-stage-h: min(100%, calc(var(--mobile-tab-track-w) * 1920 / 1080));
+  --mobile-artboard-stage-h: min(
+    100%,
+    calc(100vw * var(--mobile-art-native-h, 1920) / var(--mobile-art-native-w, 1080))
+  );
   position: relative;
   display: flex;
   width: 100%;
@@ -2142,7 +2147,10 @@ html {
 .mobile-artboard-full-shell,
 .auth-attendee-stage {
   --mobile-artboard-stage-w: var(--mobile-app-track-w);
-  --mobile-artboard-stage-h: min(100%, calc(var(--mobile-app-track-w) * 1920 / 1080));
+  --mobile-artboard-stage-h: min(
+    var(--mobile-artboard-viewport-h),
+    calc(100vw * var(--mobile-art-native-h, 1920) / var(--mobile-art-native-w, 1080))
+  );
   position: relative;
   display: flex;
   width: 100%;
@@ -2203,27 +2211,16 @@ html {
   overflow: hidden;
 }
 
-/* Native PNG plate — object-fit:contain box centered in the dashboard stage. */
+/* Native PNG plate — full width, native aspect (overlay % slots stay aligned). */
 .mobile-artboard-art-fit {
   position: absolute;
-  left: 50%;
+  left: 0;
   top: 0;
   z-index: 1;
-  transform: translateX(-50%);
-  width: min(
-    100%,
-    calc(
-      100% * var(--mobile-art-native-w, 1080) * var(--mobile-art-h, 1920) /
-        (var(--mobile-art-native-h, 1920) * var(--mobile-art-w, 1080))
-    )
-  );
-  height: min(
-    100%,
-    calc(
-      100% * var(--mobile-art-native-h, 1920) * var(--mobile-art-w, 1080) /
-        (var(--mobile-art-native-w, 1080) * var(--mobile-art-h, 1920))
-    )
-  );
+  transform: none;
+  width: 100%;
+  height: 100%;
+  isolation: isolate;
 }
 
 .mobile-artboard-art-fit > img,
@@ -2243,14 +2240,6 @@ html {
 
 /* Experience music — mobile artboard, interactive overlays */
 .music-page__bg {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center top;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
@@ -2509,14 +2498,6 @@ html {
 
 /* Prayer page — mobile artboard on tab track (bottom nav visible) */
 .prayer-page__bg {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center top;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
@@ -2538,14 +2519,6 @@ html {
 
 /* Email gate persona hub — PNG artboard + entry path hotspots */
 .email-gate-page__bg {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center top;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
@@ -3385,16 +3358,7 @@ html {
   overflow: hidden;
 }
 
-/* Native 853×1844 plate — art-fit handled by .mobile-artboard-art-fit. */
 .vital-giving-artboard__img {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center top;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
@@ -3923,7 +3887,7 @@ html {
   --bottom-dock-display-h: calc(
     var(--mobile-app-track-w) * var(--bottom-dock-art-h) / var(--bottom-dock-art-w)
   );
-  /* Tab pages — track width derived from viewport minus bottom dock + safe areas. */
+  /* Tab pages — same locked track; height subtracts bottom dock in shell CSS. */
   --mobile-tab-track-w: min(
     100vw,
     calc(
@@ -4356,14 +4320,6 @@ html {
 
 /* Attendee auth — PNG overlays on unified mobile-artboard stage */
 .auth-attendee-artboard__img {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center top;
   user-select: none;
   pointer-events: none;
   -webkit-user-drag: none;
@@ -4374,7 +4330,7 @@ html {
   inset: 0;
   z-index: 2;
   overflow: visible;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .auth-attendee-overlay-form {
@@ -4385,6 +4341,7 @@ html {
   height: 100%;
   pointer-events: auto;
   touch-action: manipulation;
+  isolation: isolate;
 }
 
 /* Typed text sits in the PNG label zone — icons/labels remain artwork-only. */
@@ -4429,7 +4386,7 @@ html {
 .auth-attendee-field {
   position: absolute;
   box-sizing: border-box;
-  z-index: 10;
+  z-index: 12;
   margin: 0;
   min-width: 0;
   min-height: max(2.75rem, 4.8%);
@@ -4502,7 +4459,7 @@ html {
 }
 
 .auth-attendee-password-toggle {
-  z-index: 11;
+  z-index: 13;
 }
 
 .auth-attendee-action-hit {

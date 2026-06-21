@@ -43,7 +43,7 @@ export const DEVICE_FIT_SCROLL =
 export const LOBBY_GRID =
   "grid min-h-dvh grid-cols-1 lg:grid-cols-[minmax(14rem,260px)_minmax(0,1fr)_minmax(16rem,360px)]";
 
-/** 9:16 mobile app content track — shared by artboard pages and bottom dock. */
+/** 9:16 mobile app content track — locked; do not switch to 100vw (dashboard + bottom dock). */
 export const MOBILE_APP_TRACK_WIDTH =
   "min(100vw, calc((100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 1080 / 1920))" as const;
 

@@ -1,0 +1,28 @@
+---
+description: LOCKED — attendee dashboard and bottom dock stay on the 9:16 mobile app track. Do not widen to 100vw.
+alwaysApply: true
+---
+
+# Dashboard + bottom dock — mobile track LOCKED
+
+**Do not change without explicit user instruction.**
+
+## `--mobile-app-track-w`
+
+Must remain:
+
+```css
+min(100vw, calc(var(--mobile-artboard-viewport-h) * 1080 / 1920))
+```
+
+Never replace with `100vw`, `max-w-*` desktop shells, or fluid full-bleed on `/attendee-dashboard`.
+
+## Applies to
+
+- `.experience-dashboard-artboard` — `width: var(--mobile-app-track-w)`
+- `.bottom-dock` — `width: var(--mobile-app-track-w)`, centered with `translateX(-50%)`
+- `.dashboard-mobile-fixed-chrome` — same track width, centered
+
+## Desktop behavior
+
+On wide viewports the dashboard and bottom menu render as a **centered mobile column** with black side margins — intentional. Do not "fix" letterboxing on desktop for these surfaces.
