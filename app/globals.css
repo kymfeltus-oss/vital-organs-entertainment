@@ -1813,88 +1813,6 @@ html {
   border-radius: 1.5rem;
 }
 
-.experience-dashboard-story-card {
-  position: relative;
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  flex-shrink: 0;
-  aspect-ratio: 2752 / 1536;
-  overflow: hidden;
-  border-radius: 1.5rem;
-  box-sizing: border-box;
-  container-type: inline-size;
-  pointer-events: none;
-}
-
-.experience-dashboard-story-card__poster {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.experience-dashboard-story-card__welcome-mask {
-  z-index: 1;
-  border-radius: 0.35rem;
-  background: linear-gradient(
-    180deg,
-    rgb(0 0 0 / 0.92) 0%,
-    rgb(0 0 0 / 0.88) 55%,
-    rgb(0 0 0 / 0.72) 100%
-  );
-  pointer-events: none;
-}
-
-.experience-dashboard-story-card__welcome {
-  z-index: 2;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: clamp(0.1rem, 0.8cqw, 0.35rem);
-  padding: 0;
-  pointer-events: none;
-}
-
-.experience-dashboard-story-card__welcome .experience-dashboard-welcome-label {
-  font-size: clamp(0.48rem, 2.4cqw, 0.72rem);
-  letter-spacing: 0.28em;
-}
-
-.experience-dashboard-story-card__welcome .experience-dashboard-welcome-name {
-  font-size: clamp(1.35rem, 8.5cqw, 2.65rem);
-  line-height: 0.9;
-  letter-spacing: 0.04em;
-}
-
-.experience-dashboard-story-card__watch {
-  z-index: 3;
-  display: block;
-  border-radius: 9999px;
-  background: transparent;
-  pointer-events: auto;
-  cursor: pointer;
-  transition:
-    transform 0.22s ease,
-    filter 0.22s ease;
-}
-
-.experience-dashboard-story-card__watch:hover {
-  transform: scale(1.02);
-  filter: drop-shadow(0 0 14px rgb(255 0 140 / 0.35)) drop-shadow(0 0 18px rgb(0 168 255 / 0.25));
-}
-
-.experience-dashboard-story-card__watch:active {
-  transform: scale(0.98);
-}
-
 .experience-dashboard-overlay__story {
   display: block;
   width: 100%;
@@ -2005,7 +1923,6 @@ html {
 
   .experience-dashboard-overlay__content-band,
   .dashboard-card-stack,
-  .experience-dashboard-story-card,
   .experience-dashboard-overlay__story,
   .experience-dashboard-overlay__grid,
   .dashboard-action-grid {
@@ -2174,15 +2091,12 @@ html {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .experience-dashboard-story-card,
   .experience-dashboard-overlay__story,
   .dashboard-action-card.experience-dashboard-overlay__card,
   .action-cell.experience-dashboard-overlay__card {
     transition: none;
   }
 
-  .experience-dashboard-story-card__watch:hover,
-  .experience-dashboard-story-card__watch:active,
   .experience-dashboard-overlay__story:hover,
   .experience-dashboard-overlay__story:active,
   .dashboard-action-card.experience-dashboard-overlay__card:hover,
@@ -2830,84 +2744,34 @@ html {
   container-type: inline-size;
 }
 
-/* Holding room — live digits + labels in empty neon ring art. */
+/* Holding room — mask baked PNG digits; labels remain in artwork. */
 .holding-room-countdown {
   position: absolute;
   inset: 0;
   z-index: 3;
   pointer-events: none;
-  container-type: inline-size;
 }
 
-.holding-room-countdown__unit {
+.holding-room-countdown__value-mask {
   position: absolute;
-  z-index: 2;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  pointer-events: none;
+  border-radius: 9999px;
+  background-color: #000000;
 }
 
 .holding-room-countdown__value {
+  position: absolute;
+  box-sizing: border-box;
   display: flex;
-  width: 100%;
-  flex: 0 0 auto;
-  margin-top: 24%;
   align-items: center;
   justify-content: center;
-  font-size: clamp(1.1rem, 5.2cqw, 2.5rem);
+  font-size: clamp(0.95rem, 4.1cqw, 2.15rem);
   font-weight: 400;
   line-height: 1;
   letter-spacing: 0.04em;
   text-align: center;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-}
-
-.holding-room-countdown__label {
-  display: flex;
-  width: 100%;
-  flex: 0 0 auto;
-  margin-top: auto;
-  margin-bottom: 10%;
-  align-items: flex-end;
-  justify-content: center;
-  font-size: clamp(0.58rem, 3.1cqw, 0.78rem);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.holding-room-countdown__label--days {
-  color: #00a8ff;
-  text-shadow:
-    0 0 8px rgb(0 168 255 / 0.95),
-    0 0 18px rgb(0 168 255 / 0.65);
-}
-
-.holding-room-countdown__label--hours {
-  color: #5b8cff;
-  text-shadow:
-    0 0 8px rgb(91 140 255 / 0.95),
-    0 0 18px rgb(91 66 255 / 0.6);
-}
-
-.holding-room-countdown__label--minutes {
-  color: #c44bff;
-  text-shadow:
-    0 0 8px rgb(196 75 255 / 0.95),
-    0 0 18px rgb(138 43 226 / 0.6);
-}
-
-.holding-room-countdown__label--seconds {
-  color: #ff008c;
-  text-shadow:
-    0 0 8px rgb(255 0 140 / 0.95),
-    0 0 18px rgb(255 0 140 / 0.65);
 }
 
 .holding-room-countdown__value--days {
@@ -2939,8 +2803,7 @@ html {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .holding-room-countdown__value,
-  .holding-room-countdown__label {
+  .holding-room-countdown__value {
     text-shadow: none;
   }
 }
