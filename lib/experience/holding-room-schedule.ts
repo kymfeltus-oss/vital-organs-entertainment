@@ -34,3 +34,46 @@ export function formatHoldingRoomEventTime(startIso: string): string {
     timeZone,
   }).format(new Date(startIso));
 }
+
+function formatIcsUtc(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+}
+
+/** Downloads a calendar invite for the live event start/end window. */
+export function downloadHoldingRoomCalendar(config: {
+  headline: string;
+  subtitle: string;
+  start_time: string;
+  end_time: string;
+}): void {
+  const dtStart = formatIcsUtc(config.start_time);
+  const dtEnd = formatIcsUtc(config.end_time);
+  if (!dtStart || !dtEnd) return;
+
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Vital Organs Entertainment//300 Awakening//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `UID:300-awakening-${dtStart}@vitalorgansent.com`,
+    `DTSTAMP:${formatIcsUtc(new Date().toISOString())}`,
+    `DTSTART:${dtStart}`,
+    `DTEND:${dtEnd}`,
+    `SUMMARY:${config.headline.replace(/\r?\n/g, " ")}`,
+    `DESCRIPTION:${config.subtitle.replace(/\r?\n/g, " ")}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "300-awakening-live.ics";
+  anchor.click();
+  URL.revokeObjectURL(url);
+}

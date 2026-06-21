@@ -1,44 +1,23 @@
 "use client";
 
 import { Suspense, type CSSProperties } from "react";
-import HoldingRoomContent from "@/components/experience/holding-room/HoldingRoomContent";
-import { shouldShowCountdownTimer } from "@/lib/experience/countdown-display";
 import {
   HOLDING_ROOM_ART_NATIVE,
   HOLDING_ROOM_ASSETS,
-  HOLDING_ROOM_SAFE_AREA,
 } from "@/lib/experience/holding-room-assets";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
-import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
 import { mobileArtboardStageStyle } from "@/lib/responsive";
 
 type ExperienceHoldingRoomPageClientProps = {
   initialCountdownConfig?: EventCountdownConfig;
 };
 
-function ExperienceHoldingRoomPageContent({
-  initialCountdownConfig,
-}: ExperienceHoldingRoomPageClientProps) {
-  const { config, countdown, eventPhase, isLoading, showTimer } = useLobbyCountdown({
-    initialConfig: initialCountdownConfig,
-  });
-
-  const showCountdown =
-    eventPhase === "waiting" && shouldShowCountdownTimer(config, isLoading) && showTimer;
-
+function ExperienceHoldingRoomPageContent() {
   return (
-    <div className="holding-room-page">
+    <div className="holding-room-page pt-safe pb-safe">
       <div
         className="holding-room-page__stage"
-        style={
-          {
-            ...mobileArtboardStageStyle({ native: HOLDING_ROOM_ART_NATIVE }),
-            "--holding-safe-top": HOLDING_ROOM_SAFE_AREA.top,
-            "--holding-safe-right": HOLDING_ROOM_SAFE_AREA.right,
-            "--holding-safe-bottom": HOLDING_ROOM_SAFE_AREA.bottom,
-            "--holding-safe-left": HOLDING_ROOM_SAFE_AREA.left,
-          } as CSSProperties
-        }
+        style={mobileArtboardStageStyle({ native: HOLDING_ROOM_ART_NATIVE }) as CSSProperties}
       >
         <div className="mobile-artboard-art-fit">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -47,13 +26,10 @@ function ExperienceHoldingRoomPageContent({
             alt="300 Awakening holding room"
             width={HOLDING_ROOM_ART_NATIVE.width}
             height={HOLDING_ROOM_ART_NATIVE.height}
-            className="holding-room-page__bg"
             loading="eager"
             decoding="async"
             draggable={false}
           />
-
-          <HoldingRoomContent countdown={countdown} showCountdown={showCountdown} />
         </div>
       </div>
     </div>
@@ -61,11 +37,11 @@ function ExperienceHoldingRoomPageContent({
 }
 
 export default function ExperienceHoldingRoomPageClient({
-  initialCountdownConfig,
+  initialCountdownConfig: _initialCountdownConfig,
 }: ExperienceHoldingRoomPageClientProps) {
   return (
     <Suspense fallback={null}>
-      <ExperienceHoldingRoomPageContent initialCountdownConfig={initialCountdownConfig} />
+      <ExperienceHoldingRoomPageContent />
     </Suspense>
   );
 }

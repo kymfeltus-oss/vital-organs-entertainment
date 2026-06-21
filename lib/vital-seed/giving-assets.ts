@@ -19,27 +19,23 @@ export const VITAL_SEED_GIVING_MOBILE_ART_NATIVE = {
   height: 1844,
 } as const;
 
-/** Preset amount cards — rendered over empty grid slots on mobile-main-background.png. */
+/** Preset gift amounts — rendered as native text over empty grid slots on mobile-main-background.png. */
 export const givingAmounts = [
   {
     amount: 25,
     label: "SEED",
-    image: "/vital seed/card_25_seed.png",
   },
   {
     amount: 50,
     label: "SOW",
-    image: "/vital seed/card_50_sow.png",
   },
   {
     amount: 100,
     label: "GROW",
-    image: "/vital seed/card_100_grow.png",
   },
   {
     amount: 250,
     label: "FLOURISH",
-    image: "/vital seed/card_250_flourish.png",
   },
 ] as const;
 

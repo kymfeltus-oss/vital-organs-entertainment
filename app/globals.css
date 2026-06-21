@@ -2505,113 +2505,22 @@ html {
   pointer-events: auto;
 }
 
-/* Experience holding room — pre-live /live holding artboard */
+/* Experience holding room — mobile artboard track + 853×1844 art-fit plate on /live */
 .holding-room-page {
   position: relative;
   display: flex;
   flex: 1;
   width: 100%;
   min-height: 100%;
-  height: auto;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: center;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow: hidden;
   background-color: #000000;
 }
 
 .holding-room-page__stage {
   position: relative;
   container-type: inline-size;
-  container-name: holding-artboard;
-}
-
-.holding-room-page__bg {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center top;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.holding-room-page__content {
-  position: absolute;
-  box-sizing: border-box;
-  pointer-events: none;
-}
-
-.holding-room-page__content--countdown {
-  z-index: 2;
-}
-
-.holding-room-page__countdown-values {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.holding-room-page__countdown-grid {
-  display: grid;
-  width: 100%;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  align-items: end;
-  gap: clamp(0.15rem, 1.2cqw, 0.45rem);
-}
-
-.holding-room-page__countdown-cell {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(0.1rem, 0.8cqw, 0.25rem);
-}
-
-.holding-room-page__countdown-value {
-  font-size: clamp(1.15rem, 5.8cqw, 2.15rem);
-  line-height: 1;
-  letter-spacing: 0.08em;
-  color: #ffffff;
-  font-variant-numeric: tabular-nums;
-  text-shadow:
-    0 2px 12px rgb(0 0 0 / 0.95),
-    0 0 18px rgb(0 0 0 / 0.75);
-}
-
-.holding-room-page__countdown-label {
-  font-size: clamp(0.38rem, 1.55cqw, 0.58rem);
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgb(255 255 255 / 0.72);
-  text-align: center;
-}
-
-@supports not (width: 1cqw) {
-  .holding-room-page__stage {
-    width: var(--mobile-app-track-w);
-  }
-
-  .holding-room-page__countdown-grid {
-    gap: clamp(0.15rem, 1.2vw, 0.45rem);
-  }
-
-  .holding-room-page__countdown-value {
-    font-size: clamp(1.15rem, 5.8vw, 2.15rem);
-  }
-
-  .holding-room-page__countdown-label {
-    font-size: clamp(0.38rem, 1.55vw, 0.58rem);
-  }
 }
 
 /* Live POV — mobile artboard track only (matches Giving / Buy Seeds) */
@@ -3011,7 +2920,7 @@ html {
   margin-top: 0;
 }
 
-/* Experience giving — card PNG overlays on mobile-main-background.png */
+/* Experience giving — native amount section + lower control overlays */
 .experience-giving-overlay {
   position: absolute;
   inset: 0;
@@ -3022,70 +2931,289 @@ html {
   container-type: inline-size;
 }
 
-.experience-giving-overlay__amount-group {
-  position: relative;
+.experience-giving-overlay__baked-mask {
+  position: absolute;
+  left: 0;
+  top: var(--giving-baked-mask-top, 52%);
+  z-index: 2;
   width: 100%;
-  height: 100%;
-  min-height: 100%;
+  height: var(--giving-baked-mask-height, 42%);
+  background-color: #000000;
   pointer-events: none;
 }
 
-.experience-giving-overlay__amount-slot {
+.experience-giving-overlay__grid-panel,
+.experience-giving-overlay__amount-panel {
   position: absolute;
-  z-index: 2;
+  left: 0;
+  top: var(--giving-grid-panel-top, 52%);
+  z-index: 3;
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+  display: flex;
+  width: 100%;
+  height: var(--giving-grid-panel-height, 23%);
+  min-height: 0;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding-inline: clamp(1rem, 6.2cqw, 1.45rem);
+  padding-block: clamp(0.15rem, 0.8cqw, 0.3rem) 0;
   overflow: hidden;
   background: transparent;
-  pointer-events: none;
 }
 
-.experience-giving-overlay__amount-card-img {
-  display: block;
+.experience-giving-amount-section {
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: clamp(0.35rem, 1.8cqw, 0.6rem);
+  overflow: hidden;
+}
+
+.experience-giving-amount-section__headline {
+  margin: 0;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: clamp(0.58rem, 2.45cqw, 0.72rem);
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.experience-giving-amount-section__grid {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.35rem, 1.8cqw, 0.6rem);
+}
+
+.experience-giving-amount-card {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
   width: 100%;
   height: 100%;
-  object-fit: fill;
-  object-position: center;
-  border-radius: 0;
-  background: transparent;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.experience-giving-overlay__amount-hit {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  box-sizing: border-box;
+  min-height: clamp(2.35rem, 9.5cqw, 3.15rem);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.1rem, 0.9cqw, 0.24rem);
   margin: 0;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  outline: none;
-  appearance: none;
-  overflow: visible;
+  padding: clamp(0.35rem, 1.8cqw, 0.6rem);
+  border: 1px solid transparent;
+  border-radius: clamp(0.55rem, 2.4cqw, 0.85rem);
+  background:
+    linear-gradient(#000000, #000000) padding-box,
+    var(--gradient-brand) border-box;
+  color: #ffffff;
   cursor: pointer;
-  pointer-events: auto;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  transition:
+    opacity 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
-.experience-giving-overlay__amount-hit:hover,
-.experience-giving-overlay__amount-hit:active,
-.experience-giving-overlay__amount-hit:focus,
-.experience-giving-overlay__amount-hit:focus-visible {
-  border: none;
-  background: transparent;
-  outline: none;
-  box-shadow: none;
+.experience-giving-amount-card:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.experience-giving-amount-card--dimmed {
+  opacity: 0.38;
+}
+
+.experience-giving-amount-card--selected {
+  opacity: 1;
+  background:
+    linear-gradient(#090b13, #090b13) padding-box,
+    var(--gradient-brand) border-box;
+  box-shadow:
+    0 0 22px rgb(0 168 255 / 0.32),
+    0 0 28px rgb(255 0 140 / 0.26);
+}
+
+.experience-giving-amount-card__check {
+  position: absolute;
+  top: clamp(0.35rem, 1.6cqw, 0.55rem);
+  left: clamp(0.35rem, 1.6cqw, 0.55rem);
+  display: flex;
+  width: clamp(1rem, 4.2cqw, 1.25rem);
+  height: clamp(1rem, 4.2cqw, 1.25rem);
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1.5px solid #ff008c;
+  background: rgb(255 0 140 / 0.18);
+  box-shadow:
+    0 0 14px rgb(255 0 140 / 0.55),
+    inset 0 0 8px rgb(255 255 255 / 0.12);
+  pointer-events: none;
+}
+
+.experience-giving-amount-card__check-icon {
+  width: 58%;
+  height: 58%;
+  color: #ff008c;
+}
+
+.experience-giving-amount-card__value {
+  font-size: clamp(1rem, 4.8cqw, 1.55rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: #ffffff;
+}
+
+.experience-giving-amount-card--dimmed .experience-giving-amount-card__value {
+  color: rgb(255 255 255 / 0.82);
+}
+
+.experience-giving-amount-card__label {
+  font-size: clamp(0.5rem, 2.1cqw, 0.68rem);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.55);
+}
+
+.experience-giving-amount-card--selected .experience-giving-amount-card__label {
+  color: rgb(255 255 255 / 0.72);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .experience-giving-amount-card {
+    transition: none;
+  }
+
+  .experience-giving-amount-card:active:not(:disabled) {
+    transform: none;
+  }
+
+  .experience-giving-give-now-btn {
+    transition: none;
+  }
+
+  .experience-giving-give-now-btn:active:not(:disabled) {
+    transform: none;
+  }
 }
 
 .experience-giving-overlay .artboard-hit-target,
 .experience-giving-overlay .artboard-field-slot {
   pointer-events: auto;
+}
+
+.experience-giving-custom-amount {
+  position: absolute;
+  z-index: 4;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: clamp(0.45rem, 2.4cqw, 0.7rem);
+  margin: 0;
+  padding-inline: clamp(0.75rem, 3.8cqw, 1rem);
+  border: 1px solid transparent;
+  border-radius: clamp(0.55rem, 2.4cqw, 0.85rem);
+  background:
+    linear-gradient(#000000, #000000) padding-box,
+    var(--gradient-brand) border-box;
+  cursor: text;
+  pointer-events: auto;
+}
+
+.experience-giving-custom-amount__icon {
+  flex-shrink: 0;
+  width: clamp(0.85rem, 3.6cqw, 1.05rem);
+  height: clamp(0.85rem, 3.6cqw, 1.05rem);
+  object-fit: contain;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.experience-giving-custom-amount__control {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  appearance: none;
+  font-size: clamp(0.72rem, 3.1cqw, 0.92rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
+  caret-color: #ffffff;
+}
+
+.experience-giving-custom-amount__control::placeholder {
+  color: rgb(255 255 255 / 0.55);
+}
+
+.experience-giving-custom-amount__control:focus,
+.experience-giving-custom-amount__control:focus-visible {
+  outline: none;
+}
+
+.experience-giving-give-now-btn {
+  position: absolute;
+  z-index: 4;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.35rem, 1.6cqw, 0.55rem);
+  margin: 0;
+  padding-inline: clamp(0.75rem, 3.8cqw, 1rem);
+  border: 1px solid transparent;
+  border-radius: clamp(0.55rem, 2.4cqw, 0.85rem);
+  background:
+    linear-gradient(#000000, #000000) padding-box,
+    var(--gradient-brand) border-box;
+  color: #ffffff;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.experience-giving-give-now-btn__label {
+  font-size: clamp(0.72rem, 3.1cqw, 0.92rem);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.experience-giving-give-now-btn__icon {
+  width: clamp(0.85rem, 3.6cqw, 1.05rem);
+  height: clamp(0.85rem, 3.6cqw, 1.05rem);
+  flex-shrink: 0;
+}
+
+.experience-giving-give-now-btn:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.experience-giving-give-now-btn--loading,
+.experience-giving-give-now-btn:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.experience-giving-inline-error {
+  flex-shrink: 0;
 }
 
 .experience-giving-hit--loading {
