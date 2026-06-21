@@ -2568,14 +2568,14 @@ html {
   pointer-events: auto;
 }
 
-/* Experience holding room — mobile artboard track + 853×1844 art-fit plate on /live */
+/* Experience holding room — full-bleed 853×1844 plate on mobile app track (/live) */
 .holding-room-page {
   position: relative;
   display: flex;
   flex: 1;
   width: 100%;
-  min-height: 100%;
-  align-items: stretch;
+  min-height: 0;
+  align-items: flex-start;
   justify-content: center;
   overflow: hidden;
   background-color: #000000;
@@ -2583,7 +2583,23 @@ html {
 
 .holding-room-page__stage {
   position: relative;
+  overflow: hidden;
   container-type: inline-size;
+}
+
+.holding-room-page__art-fit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
+}
+
+.holding-room-page__art-fit > img,
+.holding-room-page__bg {
+  object-fit: cover;
+  object-position: center top;
 }
 
 /* Live POV — mobile artboard track only (matches Giving / Buy Seeds) */
@@ -2981,6 +2997,32 @@ html {
 
 .mobile-artboard-top-chrome__menu {
   margin-top: 0;
+}
+
+.mobile-artboard-back-btn {
+  position: absolute;
+  z-index: 12;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 9999px;
+  background: rgb(0 0 0 / 0.5);
+  color: #ffffff;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.mobile-artboard-back-btn:hover {
+  border-color: rgb(0 168 255 / 0.45);
+  background: rgb(0 0 0 / 0.65);
+}
+
+.mobile-artboard-back-btn__icon {
+  width: clamp(1rem, 4.2cqw, 1.25rem);
+  height: clamp(1rem, 4.2cqw, 1.25rem);
 }
 
 /* Experience giving — native amount section + lower control overlays */

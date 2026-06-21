@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, type CSSProperties } from "react";
+import MobileArtboardBackButton from "@/components/navigation/MobileArtboardBackButton";
 import {
   HOLDING_ROOM_ART_NATIVE,
   HOLDING_ROOM_ASSETS,
@@ -19,17 +20,19 @@ function ExperienceHoldingRoomPageContent() {
         className="holding-room-page__stage"
         style={mobileArtboardStageStyle({ native: HOLDING_ROOM_ART_NATIVE }) as CSSProperties}
       >
-        <div className="mobile-artboard-art-fit">
+        <div className="mobile-artboard-art-fit holding-room-page__art-fit">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={HOLDING_ROOM_ASSETS.mobileBackground}
             alt="300 Awakening holding room"
             width={HOLDING_ROOM_ART_NATIVE.width}
             height={HOLDING_ROOM_ART_NATIVE.height}
+            className="holding-room-page__bg"
             loading="eager"
             decoding="async"
             draggable={false}
           />
+          <MobileArtboardBackButton variant="close" />
         </div>
       </div>
     </div>
