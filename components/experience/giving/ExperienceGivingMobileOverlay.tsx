@@ -1,19 +1,15 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
-import ExperienceGivingAmountGrid from "@/components/experience/giving/ExperienceGivingAmountGrid";
+import { Loader2 } from "lucide-react";
 import {
-  GIVING_MOBILE_BAKED_CONTROLS_MASK,
-  GIVING_MOBILE_BODY_COPY_MASK,
   GIVING_MOBILE_CUSTOM_AMOUNT_SLOT,
   GIVING_MOBILE_ERROR_SLOT,
   GIVING_MOBILE_GIVE_NOW_SLOT,
-  GIVING_MOBILE_GRID_PANEL,
+  GIVING_MOBILE_PRESET_SLOTS,
 } from "@/lib/experience/giving-mobile-slots";
 import type { CSSProperties } from "react";
 
 type ExperienceGivingMobileOverlayProps = {
-  selectedAmount: number | null;
   activePreset: number | null;
   customAmount: string;
   isLoading: boolean;
@@ -29,9 +25,9 @@ function rectStyle(rect: {
   top: string;
   width: string;
   height: string;
-}) {
+}): CSSProperties {
   return {
-    position: "absolute" as const,
+    position: "absolute",
     left: rect.left,
     top: rect.top,
     width: rect.width,
@@ -40,7 +36,6 @@ function rectStyle(rect: {
 }
 
 export default function ExperienceGivingMobileOverlay({
-  selectedAmount,
   activePreset,
   customAmount,
   isLoading,
@@ -50,58 +45,56 @@ export default function ExperienceGivingMobileOverlay({
   onCustomAmountFocus,
   onGiveNow,
 }: ExperienceGivingMobileOverlayProps) {
+  const submitCurrentForm = (form: HTMLFormElement | null) => {
+    if (!form) return;
+    if (typeof form.requestSubmit === "function") {
+      form.requestSubmit();
+      return;
+    }
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  };
+
   return (
-    <div
-      className="experience-giving-overlay pointer-events-none absolute inset-0 z-2 size-full"
+    <form
+      className="experience-giving-overlay-form pointer-events-none absolute inset-0 z-2 size-full"
       aria-label="Giving controls"
-      style={
-        {
-          "--giving-baked-mask-top": GIVING_MOBILE_BAKED_CONTROLS_MASK.top,
-          "--giving-baked-mask-height": GIVING_MOBILE_BAKED_CONTROLS_MASK.height,
-          "--giving-body-copy-mask-top": GIVING_MOBILE_BODY_COPY_MASK.top,
-          "--giving-body-copy-mask-height": GIVING_MOBILE_BODY_COPY_MASK.height,
-          "--giving-grid-panel-top": GIVING_MOBILE_GRID_PANEL.top,
-          "--giving-grid-panel-height": GIVING_MOBILE_GRID_PANEL.height,
-        } as CSSProperties
-      }
+      onSubmit={(event) => {
+        event.preventDefault();
+        onGiveNow();
+      }}
     >
-      <div className="experience-giving-overlay__body-copy-mask" aria-hidden="true" />
-      <div className="experience-giving-overlay__baked-mask" aria-hidden="true" />
+      {GIVING_MOBILE_PRESET_SLOTS.map((slot) => {
+        const isSelected = activePreset === slot.amount;
 
-      <div className="experience-giving-overlay__grid-panel pointer-events-auto">
-        <ExperienceGivingAmountGrid
-          activePreset={activePreset}
-          isLoading={isLoading}
-          onSelectAmount={onSelectAmount}
-        />
-      </div>
+        return (
+          <button
+            key={slot.amount}
+            type="button"
+            role="radio"
+            aria-checked={isSelected}
+            aria-label={`Select $${slot.amount} ${slot.label} gift`}
+            disabled={isLoading}
+            onClick={() => onSelectAmount(slot.amount)}
+            className="auth-attendee-hit auth-attendee-action-hit pointer-events-auto"
+            style={rectStyle(slot)}
+          />
+        );
+      })}
 
-      <label
-        className="experience-giving-custom-amount pointer-events-auto"
+      <input
+        type="text"
+        inputMode="decimal"
+        autoComplete="off"
+        aria-label="Enter custom gift amount"
+        placeholder=" "
+        disabled={isLoading}
+        value={customAmount}
+        onFocus={onCustomAmountFocus}
+        onClick={onCustomAmountFocus}
+        onChange={(event) => onCustomAmountChange(event.target.value)}
+        className="auth-attendee-field pointer-events-auto"
         style={rectStyle(GIVING_MOBILE_CUSTOM_AMOUNT_SLOT)}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/vital seed/pencil-icon.png"
-          alt=""
-          className="experience-giving-custom-amount__icon"
-          draggable={false}
-        />
-        <span className="sr-only">Enter custom gift amount</span>
-        <input
-          type="text"
-          inputMode="decimal"
-          autoComplete="off"
-          aria-label="Enter custom gift amount"
-          placeholder="$ OTHER AMOUNT"
-          disabled={isLoading}
-          value={customAmount}
-          onFocus={onCustomAmountFocus}
-          onClick={onCustomAmountFocus}
-          onChange={(event) => onCustomAmountChange(event.target.value)}
-          className="experience-giving-custom-amount__control font-ui"
-        />
-      </label>
+      />
 
       {error ? (
         <p
@@ -115,25 +108,16 @@ export default function ExperienceGivingMobileOverlay({
 
       <button
         type="button"
-        aria-label={
-          selectedAmount != null && selectedAmount > 0
-            ? `Give now — $${selectedAmount} secure checkout`
-            : "Give now — continue to secure checkout"
-        }
+        aria-label="Give now — continue to secure checkout"
         disabled={isLoading}
-        onClick={onGiveNow}
+        onClick={(event) => submitCurrentForm(event.currentTarget.form)}
+        className="auth-attendee-hit auth-attendee-action-hit pointer-events-auto"
         style={rectStyle(GIVING_MOBILE_GIVE_NOW_SLOT)}
-        className={`experience-giving-give-now-btn pointer-events-auto font-ui${
-          isLoading ? " experience-giving-give-now-btn--loading" : ""
-        }`}
       >
-        <span className="experience-giving-give-now-btn__label">Give Now</span>
-        <ArrowRight
-          className="experience-giving-give-now-btn__icon"
-          aria-hidden="true"
-          strokeWidth={2.5}
-        />
+        {isLoading ? (
+          <Loader2 className="h-5 w-5 animate-spin text-white" aria-hidden="true" />
+        ) : null}
       </button>
-    </div>
+    </form>
   );
 }

@@ -137,7 +137,6 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
       <AttendeeAuthArtboard
         backgroundSrc={AWAKENING_AUTH_ASSETS.attendeeSignupPlate}
         artboard={AWAKENING_AUTH_SIGNUP_ART}
-        scrollable
       >
         <CreateAccountMobileForm
           loginHref={loginHref}

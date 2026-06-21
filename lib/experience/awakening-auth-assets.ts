@@ -25,15 +25,15 @@ export type AuthLayoutRect = {
 
 /** Percentage rects aligned to auth-attendee-login.png (853×1844). */
 export const AWAKENING_AUTH_LOGIN_PANELS = {
-  email: { left: 12.66, top: 50.54, width: 74.68, height: 4.77 },
-  password: { left: 12.66, top: 55.31, width: 74.68, height: 4.88 },
-  rememberMe: { left: 12.66, top: 60.2, width: 24, height: 2.71 },
-  forgotPassword: { left: 56, top: 60.2, width: 31, height: 2.71 },
-  loginButton: { left: 12.66, top: 62.91, width: 74.68, height: 5.42 },
-  appleSignIn: { left: 12.66, top: 68.33, width: 74.68, height: 4.34 },
-  googleSignIn: { left: 12.66, top: 73.2, width: 74.68, height: 4.34 },
-  facebookSignIn: { left: 12.66, top: 78.1, width: 74.68, height: 4.34 },
-  signUpLink: { left: 12.66, top: 88.2, width: 74.68, height: 3.65 },
+  email: { left: 12.66, top: 50.54, width: 74.68, height: 5.2 },
+  password: { left: 12.66, top: 55.31, width: 74.68, height: 5.3 },
+  rememberMe: { left: 12.66, top: 60.2, width: 28, height: 3.2 },
+  forgotPassword: { left: 54, top: 60.2, width: 33, height: 3.2 },
+  loginButton: { left: 12.66, top: 62.91, width: 74.68, height: 5.8 },
+  appleSignIn: { left: 12.66, top: 68.33, width: 74.68, height: 4.6 },
+  googleSignIn: { left: 12.66, top: 73.2, width: 74.68, height: 4.6 },
+  facebookSignIn: { left: 12.66, top: 78.1, width: 74.68, height: 4.6 },
+  signUpLink: { left: 12.66, top: 88.2, width: 74.68, height: 4 },
 } as const satisfies Record<string, AuthLayoutRect>;
 
 /** Signup overlay slots — create-account -background.png (941×1672). */

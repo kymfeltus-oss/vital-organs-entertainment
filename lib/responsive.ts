@@ -45,7 +45,11 @@ export const LOBBY_GRID =
 
 /** 9:16 mobile app content track — shared by artboard pages and bottom dock. */
 export const MOBILE_APP_TRACK_WIDTH =
-  "min(100vw, calc(100dvh * 1080 / 1920))" as const;
+  "min(100vw, calc((100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 1080 / 1920))" as const;
+
+/** Tab content track — viewport minus bottom dock + safe areas (Giving · Music · Buy Seeds · Prayer). */
+export const MOBILE_TAB_TRACK_WIDTH =
+  "min(100vw, calc((100dvh - var(--bottom-dock-display-h, 76px) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 1080 / 1920))" as const;
 
 /** Reference artboard used for track-width math (1080×1920). */
 export const MOBILE_ARTBOARD_REF = {
@@ -84,6 +88,11 @@ export function mobileArtboardStageStyle(options?: {
 /** Shared page shell + stage classes for bottom-nav artboard tabs. */
 export const MOBILE_ARTBOARD_TAB_SHELL = "mobile-artboard-tab-shell";
 export const MOBILE_ARTBOARD_TAB_STAGE = "mobile-artboard-tab-shell__stage";
+
+/** Full-viewport artboard shell — login, create-account, email-gate, live holding. */
+export const MOBILE_ARTBOARD_FULL_SHELL = "mobile-artboard-full-shell";
+export const MOBILE_ARTBOARD_STAGE = "mobile-artboard-stage";
+export const MOBILE_ARTBOARD_ART_FIT = "mobile-artboard-art-fit";
 
 /** Content offset when PNG bottom dock is present (display height + safe area). */
 export const CONTENT_WITH_NAV = `pb-[calc(${BOTTOM_NAV_BAR_HEIGHT_PX}px+env(safe-area-inset-bottom))]`;

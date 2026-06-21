@@ -3,7 +3,12 @@ import {
   AWAKENING_AUTH_ASSETS,
   AWAKENING_AUTH_LOGIN_ART,
 } from "@/lib/experience/awakening-auth-assets";
-import { mobileArtboardStageStyle } from "@/lib/responsive";
+import {
+  MOBILE_ARTBOARD_ART_FIT,
+  MOBILE_ARTBOARD_FULL_SHELL,
+  MOBILE_ARTBOARD_STAGE,
+  mobileArtboardStageStyle,
+} from "@/lib/responsive";
 
 type AuthArtboardSpec = {
   width: number;
@@ -16,21 +21,17 @@ type AttendeeAuthArtboardProps = {
   backgroundSrc?: string;
   /** Artboard pixel size — must match the PNG aspect ratio. */
   artboard?: AuthArtboardSpec;
-  scrollable?: boolean;
 };
 
 export default function AttendeeAuthArtboard({
   children,
   backgroundSrc = AWAKENING_AUTH_ASSETS.attendeeLoginPlate,
   artboard = AWAKENING_AUTH_LOGIN_ART,
-  scrollable = false,
 }: AttendeeAuthArtboardProps) {
   return (
-    <div
-      className={`auth-attendee-stage${scrollable ? " auth-attendee-stage--scroll" : ""}`}
-    >
+    <div className={`auth-attendee-stage ${MOBILE_ARTBOARD_FULL_SHELL} min-h-0 w-full flex-1`}>
       <div
-        className="auth-attendee-artboard"
+        className={`auth-attendee-artboard ${MOBILE_ARTBOARD_STAGE}`}
         style={
           mobileArtboardStageStyle({
             native: artboard,
@@ -41,7 +42,7 @@ export default function AttendeeAuthArtboard({
           }) as CSSProperties
         }
       >
-        <div className="mobile-artboard-art-fit">
+        <div className={MOBILE_ARTBOARD_ART_FIT}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={backgroundSrc}

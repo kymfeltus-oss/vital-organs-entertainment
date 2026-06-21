@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import BottomNavigation from "@/components/navigation/BottomNavigation";
 import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 import { CONTENT_WITH_NAV } from "@/lib/responsive";
-import { isMobileArtboardTabRoute, isNavHiddenRoute } from "@/lib/routes";
+import { isFullHeightArtboardRoute, isMobileArtboardTabRoute, isNavHiddenRoute } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 type RootLayoutShellProps = {
@@ -20,6 +20,8 @@ export default function RootLayoutShell({ children }: RootLayoutShellProps) {
     pathname.startsWith("/experience/");
   const isExperienceDashboard = pathname === ATTENDEE_DASHBOARD_PATH;
   const isArtboardTab = isMobileArtboardTabRoute(pathname);
+  const isFullHeightArtboard = isFullHeightArtboardRoute(pathname);
+  const useFlexViewportShell = isArtboardTab || isFullHeightArtboard;
 
   return (
     <div
@@ -32,7 +34,7 @@ export default function RootLayoutShell({ children }: RootLayoutShellProps) {
       <div
         className={cn(
           "w-full",
-          isArtboardTab
+          useFlexViewportShell
             ? "flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden"
             : "min-h-dvh",
           !hideNav && !isExperienceDashboard && !isArtboardTab && CONTENT_WITH_NAV,

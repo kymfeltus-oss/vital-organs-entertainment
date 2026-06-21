@@ -1,8 +1,6 @@
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import EmailGatePageClient from "@/components/email-gate/EmailGatePageClient";
-import { DEVICE_FIT_PAGE } from "@/lib/responsive";
-
 export const dynamic = "force-dynamic";
 
 function EmailGateFallback() {
@@ -18,7 +16,7 @@ export default function EmailGatePage() {
   return (
     <main
       id="main-content"
-      className={`${DEVICE_FIT_PAGE} flex min-h-0 flex-1 flex-col overflow-x-hidden bg-brand-black pt-safe`}
+      className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-brand-black"
       aria-label="Entry hub"
     >
       <Suspense fallback={<EmailGateFallback />}>

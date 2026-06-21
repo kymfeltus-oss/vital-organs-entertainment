@@ -32,11 +32,25 @@ const MOBILE_ARTBOARD_TAB_EXACT = [
   "/experience/giving",
   "/buy-seeds",
   "/live",
+  "/prayer",
 ] as const;
 
 /** Bottom-nav artboard tabs — Live, Giving, Music, Buy Seeds (+ /live holding). */
 export function isMobileArtboardTabRoute(pathname: string): boolean {
   return (MOBILE_ARTBOARD_TAB_EXACT as readonly string[]).includes(pathname);
+}
+
+/** Full-viewport PNG artboard routes — login, create-account, email-gate. */
+export function isFullHeightArtboardRoute(pathname: string): boolean {
+  if (pathname === "/login" || pathname.startsWith("/login/")) {
+    return true;
+  }
+
+  if (pathname.includes("create-account")) {
+    return true;
+  }
+
+  return pathname === "/email-gate" || pathname.startsWith("/email-gate/");
 }
 
 export function isNavHiddenRoute(pathname: string): boolean {

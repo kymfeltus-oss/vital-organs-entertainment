@@ -12,7 +12,12 @@ import {
   GIVING_MOBILE_DEFAULT_AMOUNT,
   type GivingFrequency,
 } from "@/lib/experience/giving-mobile-slots";
-import { mobileArtboardStageStyle } from "@/lib/responsive";
+import {
+  MOBILE_ARTBOARD_ART_FIT,
+  MOBILE_ARTBOARD_TAB_SHELL,
+  MOBILE_ARTBOARD_TAB_STAGE,
+  mobileArtboardStageStyle,
+} from "@/lib/responsive";
 import {
   amountToCents,
   parseAmountDollars,
@@ -127,17 +132,17 @@ function ExperienceGivingPageContent({
     <>
       <section
         id="sow-seed"
-        className="vital-giving-page mobile-artboard-tab-shell"
+        className={`vital-giving-page ${MOBILE_ARTBOARD_TAB_SHELL}`}
         aria-label="Vital Seed giving"
       >
         <div className="vital-giving-stage">
           <div
-            className="vital-giving-artboard vital-giving-artboard--mobile mobile-artboard-tab-shell__stage"
+            className={`vital-giving-artboard vital-giving-artboard--mobile ${MOBILE_ARTBOARD_TAB_STAGE}`}
             style={
               mobileArtboardStageStyle({ native: GIVING_MOBILE_ART_NATIVE }) as CSSProperties
             }
           >
-            <div className="mobile-artboard-art-fit vital-giving-artboard__art-fit">
+            <div className={`${MOBILE_ARTBOARD_ART_FIT} vital-giving-artboard__art-fit`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={VITAL_SEED_GIVING_ASSETS.mobileBackground}
@@ -150,7 +155,6 @@ function ExperienceGivingPageContent({
                 draggable={false}
               />
               <ExperienceGivingMobileOverlay
-                selectedAmount={selectedAmount}
                 activePreset={activePreset}
                 customAmount={customAmount}
                 isLoading={isLoading}

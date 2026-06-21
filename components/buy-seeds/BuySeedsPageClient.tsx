@@ -14,7 +14,12 @@ import {
   getSeedPackage,
   type SeedPackageId,
 } from "@/lib/seeds/assets";
-import { mobileArtboardStageStyle } from "@/lib/responsive";
+import {
+  MOBILE_ARTBOARD_ART_FIT,
+  MOBILE_ARTBOARD_TAB_SHELL,
+  MOBILE_ARTBOARD_TAB_STAGE,
+  mobileArtboardStageStyle,
+} from "@/lib/responsive";
 import { useMerchCheckout } from "@/lib/useMerchCheckout";
 
 type BuySeedsPageClientProps = {
@@ -68,14 +73,14 @@ export default function BuySeedsPageClient({ initialProfile }: BuySeedsPageClien
 
   return (
     <>
-      <div className="buy-seeds-page mobile-artboard-tab-shell relative overflow-hidden bg-brand-black">
+      <div className={`buy-seeds-page ${MOBILE_ARTBOARD_TAB_SHELL} relative overflow-hidden bg-brand-black`}>
         <div
-          className="buy-seeds-page__stage mobile-artboard-tab-shell__stage relative mx-auto w-full"
+          className={`buy-seeds-page__stage ${MOBILE_ARTBOARD_TAB_STAGE} relative mx-auto w-full`}
           style={
             mobileArtboardStageStyle({ native: BUY_SEEDS_MOBILE_ART_NATIVE }) as CSSProperties
           }
         >
-          <div className="mobile-artboard-art-fit buy-seeds-page__art-fit">
+          <div className={`${MOBILE_ARTBOARD_ART_FIT} buy-seeds-page__art-fit`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={BUY_SEEDS_ASSETS.mobileBackground}
