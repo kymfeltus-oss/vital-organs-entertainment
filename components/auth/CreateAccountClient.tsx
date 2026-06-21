@@ -144,6 +144,7 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
           showPassword={showPassword}
           showConfirmPassword={showConfirmPassword}
           isSubmitting={isSubmitting}
+          canSubmit={canSubmit}
           formError={
             formError ??
             (touched && Object.keys(fieldErrors).length > 0

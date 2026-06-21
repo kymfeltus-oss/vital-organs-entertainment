@@ -1,23 +1,24 @@
-/** Center anchors on holding-room.png — live digits in empty ring voids (labels stay baked). */
+/** Anchors on holding-room.png — digits + labels over empty neon rings. */
 
 export type HoldingRoomCountdownUnitId = "days" | "hours" | "minutes" | "seconds";
 
 export type HoldingRoomCountdownSlot = {
   id: HoldingRoomCountdownUnitId;
-  /** Horizontal center of each ring void (% of artboard width). */
+  /** Horizontal center of each ring (% of artboard width). */
   centerX: number;
-  /** Vertical center of digit slot — upper void above baked labels (% of artboard height). */
-  centerY: number;
-  /** Font-scaling box width (% of artboard width via cqw). */
-  sizeCqw: number;
+  /** Vertical center of live digits inside the ring void (% of artboard height). */
+  digitY: number;
+  /** Vertical center of unit label below digits (% of artboard height). */
+  labelY: number;
+  label: string;
 };
 
-/** Measured on holding-room.png ring voids (941×1672 native, top-aligned on 1080×1920 stage). */
+/** Measured on holding-room.png (941×1672 native, top-aligned on 1080×1920 stage). */
 export const HOLDING_ROOM_COUNTDOWN_UNITS: readonly HoldingRoomCountdownSlot[] = [
-  { id: "days", centerX: 12.4, centerY: 45.9, sizeCqw: 14 },
-  { id: "hours", centerX: 37.4, centerY: 45.9, sizeCqw: 14 },
-  { id: "minutes", centerX: 62.4, centerY: 45.9, sizeCqw: 14 },
-  { id: "seconds", centerX: 87.3, centerY: 45.9, sizeCqw: 14 },
+  { id: "days", centerX: 13.2, digitY: 48.9, labelY: 55.0, label: "DAYS" },
+  { id: "hours", centerX: 37.3, digitY: 49.5, labelY: 55.0, label: "HOURS" },
+  { id: "minutes", centerX: 62.8, digitY: 49.4, labelY: 55.0, label: "MINUTES" },
+  { id: "seconds", centerX: 87.2, digitY: 49.3, labelY: 55.0, label: "SECONDS" },
 ] as const;
 
 export const HOLDING_ROOM_COUNTDOWN_VALUE_CLASS: Record<HoldingRoomCountdownUnitId, string> = {

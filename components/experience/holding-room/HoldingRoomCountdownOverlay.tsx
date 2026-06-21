@@ -15,12 +15,13 @@ type HoldingRoomCountdownOverlayProps = {
   initialCountdownConfig?: EventCountdownConfig;
 };
 
-function unitStyle(slot: HoldingRoomCountdownSlot): CSSProperties {
+function anchorStyle(
+  slot: HoldingRoomCountdownSlot,
+  yKey: "digitY" | "labelY",
+): CSSProperties {
   return {
     left: `${slot.centerX}%`,
-    top: `${slot.centerY}%`,
-    width: `${slot.sizeCqw}cqw`,
-    aspectRatio: "1",
+    top: `${slot[yKey]}%`,
     transform: "translate(-50%, -50%)",
   };
 }
@@ -84,15 +85,19 @@ export default function HoldingRoomCountdownOverlay({
       aria-label={ariaLabel}
     >
       {HOLDING_ROOM_COUNTDOWN_UNITS.map((unit) => (
-        <div
-          key={unit.id}
-          className="holding-room-countdown__unit"
-          style={unitStyle(unit)}
-        >
+        <div key={unit.id} className="holding-room-countdown__unit">
           <div
             className={`holding-room-countdown__value font-headline ${HOLDING_ROOM_COUNTDOWN_VALUE_CLASS[unit.id]}`}
+            style={anchorStyle(unit, "digitY")}
           >
             {isLoading ? "00" : values[unit.id]}
+          </div>
+          <div
+            className="holding-room-countdown__label font-ui"
+            style={anchorStyle(unit, "labelY")}
+            aria-hidden="true"
+          >
+            {unit.label}
           </div>
         </div>
       ))}

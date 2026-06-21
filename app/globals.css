@@ -679,22 +679,23 @@ html {
   inset: 0;
   z-index: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   overflow: hidden;
   box-sizing: border-box;
   container-type: size;
-  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
-    env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: 0;
+  padding-left: env(safe-area-inset-left, 0px);
 }
 
 .intro-flash-artboard {
   position: relative;
   flex-shrink: 0;
-  width: min(100cqw, var(--mobile-app-track-w), calc(100cqh * 1080 / 1920));
-  height: min(100cqh, calc(min(100cqw, var(--mobile-app-track-w)) * 1920 / 1080));
-  max-width: 100cqw;
-  max-height: 100cqh;
+  height: 100%;
+  width: auto;
+  max-width: min(100cqw, var(--mobile-app-track-w));
   aspect-ratio: 1080 / 1920;
 }
 
@@ -704,7 +705,7 @@ html {
   height: 100%;
   object-fit: contain;
   object-position: center top;
-  background-color: #07070a;
+  background-color: #000000;
   pointer-events: none;
   user-select: none;
 }
@@ -714,13 +715,6 @@ html {
   inset: 0;
   z-index: 5;
   overflow: hidden;
-  pointer-events: none;
-}
-
-.intro-flash-footer-mask {
-  position: absolute;
-  z-index: 2;
-  background-color: #000000;
   pointer-events: none;
 }
 
@@ -768,7 +762,7 @@ html {
 .intro-flash-video {
   object-fit: contain;
   object-position: center top;
-  background-color: #07070a;
+  background-color: #000000;
 }
 
 .intro-flash-video-loading {
@@ -2599,7 +2593,7 @@ html {
   container-type: inline-size;
 }
 
-/* Holding room — live digits in empty neon ring voids (PNG labels stay baked). */
+/* Holding room — live digits + labels in empty neon ring art. */
 .holding-room-countdown {
   position: absolute;
   inset: 0;
@@ -2609,22 +2603,31 @@ html {
 
 .holding-room-countdown__unit {
   position: absolute;
-  box-sizing: border-box;
-  container-type: size;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  inset: 0;
 }
 
 .holding-room-countdown__value {
+  position: absolute;
   box-sizing: border-box;
-  width: 100%;
-  font-size: clamp(1rem, 72cqi, 2.35rem);
+  font-size: clamp(1.35rem, 5.4cqw, 2.65rem);
   font-weight: 400;
   line-height: 1;
   letter-spacing: 0.06em;
   text-align: center;
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+.holding-room-countdown__label {
+  position: absolute;
+  box-sizing: border-box;
+  font-size: clamp(0.48rem, 1.85cqw, 0.68rem);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+  color: rgb(255 255 255 / 0.72);
 }
 
 .holding-room-countdown__value--days {
@@ -4691,7 +4694,8 @@ html {
 }
 
 /* Create account — PNG hero + native form panel (941×1672) */
-.create-account-overlay {
+.create-account-overlay,
+.login-overlay {
   position: absolute;
   inset: 0;
   z-index: 2;
@@ -4701,7 +4705,8 @@ html {
   container-type: inline-size;
 }
 
-.create-account-overlay__baked-mask {
+.create-account-overlay__baked-mask,
+.login-overlay__baked-mask {
   position: absolute;
   left: 0;
   top: var(--create-account-mask-top, 32%);
@@ -4712,7 +4717,14 @@ html {
   pointer-events: none;
 }
 
-.create-account-form {
+.login-overlay__baked-mask {
+  top: var(--login-baked-mask-top, 49%);
+  height: var(--login-baked-mask-height, 41%);
+}
+
+.auth-plate-form,
+.create-account-form,
+.login-form {
   position: absolute;
   z-index: 2;
   box-sizing: border-box;
@@ -4741,12 +4753,14 @@ html {
   align-items: stretch;
 }
 
+.create-account-form__row--split .auth-plate-field,
 .create-account-form__row--split .create-account-field {
   flex: 1 1 0;
   width: auto;
   min-width: 0;
 }
 
+.auth-plate-field,
 .create-account-field {
   position: relative;
   box-sizing: border-box;
@@ -4765,6 +4779,7 @@ html {
   color: #ffffff;
 }
 
+.auth-plate-field__icon,
 .create-account-field__icon {
   width: clamp(0.85rem, 3.2cqw, 1rem);
   height: clamp(0.85rem, 3.2cqw, 1rem);
@@ -4774,6 +4789,7 @@ html {
   opacity: 0.88;
 }
 
+.auth-plate-field__control,
 .create-account-field__control {
   width: 100%;
   min-width: 0;
@@ -4787,15 +4803,21 @@ html {
   outline: none;
 }
 
+.auth-plate-field__control::placeholder,
 .create-account-field__control::placeholder {
   color: rgb(255 255 255 / 0.42);
 }
 
+.auth-plate-field__control:focus,
+.auth-plate-field__control:focus-visible,
 .create-account-field__control:focus,
 .create-account-field__control:focus-visible {
   outline: none;
 }
 
+.auth-plate-field__control:-webkit-autofill,
+.auth-plate-field__control:-webkit-autofill:hover,
+.auth-plate-field__control:-webkit-autofill:focus,
 .create-account-field__control:-webkit-autofill,
 .create-account-field__control:-webkit-autofill:hover,
 .create-account-field__control:-webkit-autofill:focus {
@@ -4804,10 +4826,12 @@ html {
   -webkit-text-fill-color: #ffffff !important;
 }
 
+.auth-plate-field--password .auth-plate-field__control,
 .create-account-field--password .create-account-field__control {
   padding-right: 1.75rem;
 }
 
+.auth-plate-field__toggle,
 .create-account-field__toggle {
   position: absolute;
   top: 50%;
@@ -4948,6 +4972,7 @@ html {
   cursor: pointer;
 }
 
+.auth-plate-submit,
 .create-account-submit {
   display: inline-flex;
   width: 100%;
@@ -4968,17 +4993,20 @@ html {
   cursor: pointer;
 }
 
+.auth-plate-submit:disabled,
 .create-account-submit:disabled {
   opacity: 0.65;
   cursor: not-allowed;
 }
 
+.auth-plate-submit__icon,
 .create-account-submit__icon {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
 }
 
+.auth-plate-form-error,
 .create-account-form-error {
   margin: 0;
   text-align: center;
@@ -4987,6 +5015,7 @@ html {
   color: #ff008c;
 }
 
+.auth-plate-footer-prompt,
 .create-account-login-prompt {
   margin: 0;
   text-align: center;
@@ -4994,6 +5023,7 @@ html {
   color: rgb(255 255 255 / 0.68);
 }
 
+.auth-plate-footer-prompt__link,
 .create-account-login-prompt__link {
   font-size: inherit;
   font-weight: 700;
@@ -5004,6 +5034,82 @@ html {
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
+}
+
+.login-form__options {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.login-form__remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  font-size: clamp(0.58rem, 2cqw, 0.68rem);
+  color: rgb(255 255 255 / 0.78);
+  cursor: pointer;
+}
+
+.login-form__remember-checkbox {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: #00a8ff;
+  cursor: pointer;
+}
+
+.login-form__forgot {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: clamp(0.58rem, 2cqw, 0.68rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ff008c;
+  cursor: pointer;
+}
+
+.login-form__social-label {
+  margin: clamp(0.15rem, 0.8cqw, 0.3rem) 0 0;
+  text-align: center;
+  font-size: clamp(0.52rem, 1.85cqw, 0.62rem);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.55);
+}
+
+.login-form__social-row {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.35rem, 1.5cqw, 0.55rem);
+}
+
+.login-form__social-btn {
+  min-height: clamp(2.15rem, 7.5cqw, 2.65rem);
+  border: 1px solid transparent;
+  border-radius: clamp(0.55rem, 2.2cqw, 0.8rem);
+  background:
+    linear-gradient(#090b13, #090b13) padding-box,
+    var(--gradient-brand) border-box;
+  font-size: clamp(0.52rem, 1.85cqw, 0.62rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.82);
+  cursor: pointer;
+}
+
+.login-form__social-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 @supports not (aspect-ratio: 1080 / 1920) {

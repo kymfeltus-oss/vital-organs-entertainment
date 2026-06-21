@@ -30,6 +30,7 @@ type CreateAccountMobileFormProps = {
   showPassword: boolean;
   showConfirmPassword: boolean;
   isSubmitting: boolean;
+  canSubmit: boolean;
   formError?: string | null;
   onFieldChange: <K extends keyof CreateAccountFormValues>(
     key: K,
@@ -58,6 +59,7 @@ export default function CreateAccountMobileForm({
   showPassword,
   showConfirmPassword,
   isSubmitting,
+  canSubmit,
   formError,
   onFieldChange,
   onBlur,
@@ -82,14 +84,14 @@ export default function CreateAccountMobileForm({
 
       <form
         onSubmit={onSubmit}
-        className="create-account-form pointer-events-auto"
+        className="auth-plate-form create-account-form pointer-events-auto"
         style={panelStyle(CREATE_ACCOUNT_FORM_PANEL)}
         aria-label="Create account"
         noValidate
       >
         <div className="create-account-form__row create-account-form__row--split">
-          <label className="create-account-field">
-            <User className="create-account-field__icon" aria-hidden="true" />
+          <label className="auth-plate-field">
+            <User className="auth-plate-field__icon" aria-hidden="true" />
             <input
               type="text"
               required
@@ -99,11 +101,11 @@ export default function CreateAccountMobileForm({
               onBlur={onBlur}
               placeholder="First Name"
               aria-label="First name"
-              className="create-account-field__control font-body"
+              className="auth-plate-field__control font-body"
             />
           </label>
-          <label className="create-account-field">
-            <User className="create-account-field__icon" aria-hidden="true" />
+          <label className="auth-plate-field">
+            <User className="auth-plate-field__icon" aria-hidden="true" />
             <input
               type="text"
               required
@@ -113,13 +115,13 @@ export default function CreateAccountMobileForm({
               onBlur={onBlur}
               placeholder="Last Name"
               aria-label="Last name"
-              className="create-account-field__control font-body"
+              className="auth-plate-field__control font-body"
             />
           </label>
         </div>
 
-        <label className="create-account-field">
-          <Mail className="create-account-field__icon" aria-hidden="true" />
+        <label className="auth-plate-field">
+          <Mail className="auth-plate-field__icon" aria-hidden="true" />
           <input
             type="email"
             required
@@ -130,12 +132,12 @@ export default function CreateAccountMobileForm({
             onBlur={onBlur}
             placeholder="Email Address"
             aria-label="Email address"
-            className="create-account-field__control font-body"
+            className="auth-plate-field__control font-body"
           />
         </label>
 
-        <label className="create-account-field">
-          <Phone className="create-account-field__icon" aria-hidden="true" />
+        <label className="auth-plate-field">
+          <Phone className="auth-plate-field__icon" aria-hidden="true" />
           <input
             type="tel"
             required
@@ -146,13 +148,13 @@ export default function CreateAccountMobileForm({
             onBlur={onBlur}
             placeholder="Phone Number"
             aria-label="Phone number"
-            className="create-account-field__control font-body"
+            className="auth-plate-field__control font-body"
           />
         </label>
 
         <div className="create-account-form__row create-account-form__row--split">
-          <label className="create-account-field">
-            <MapPin className="create-account-field__icon" aria-hidden="true" />
+          <label className="auth-plate-field">
+            <MapPin className="auth-plate-field__icon" aria-hidden="true" />
             <input
               type="text"
               required
@@ -162,18 +164,18 @@ export default function CreateAccountMobileForm({
               onBlur={onBlur}
               placeholder="City"
               aria-label="City"
-              className="create-account-field__control font-body"
+              className="auth-plate-field__control font-body"
             />
           </label>
-          <label className="create-account-field create-account-field--select-wrap">
-            <MapPin className="create-account-field__icon" aria-hidden="true" />
+          <label className="auth-plate-field create-account-field--select-wrap">
+            <MapPin className="auth-plate-field__icon" aria-hidden="true" />
             <select
               required
               value={values.state}
               onChange={(event) => onFieldChange("state", event.target.value)}
               onBlur={onBlur}
               aria-label="State"
-              className="create-account-field__control create-account-field__control--select font-body"
+              className="auth-plate-field__control create-account-field__control--select font-body"
             >
               <option value="" disabled>
                 State
@@ -188,8 +190,8 @@ export default function CreateAccountMobileForm({
           </label>
         </div>
 
-        <label className="create-account-field create-account-field--password">
-          <Lock className="create-account-field__icon" aria-hidden="true" />
+        <label className="auth-plate-field auth-plate-field--password create-account-field--password">
+          <Lock className="auth-plate-field__icon" aria-hidden="true" />
           <input
             type={showPassword ? "text" : "password"}
             required
@@ -199,11 +201,11 @@ export default function CreateAccountMobileForm({
             onBlur={onBlur}
             placeholder="Password"
             aria-label="Password"
-            className="create-account-field__control font-body"
+            className="auth-plate-field__control font-body"
           />
           <button
             type="button"
-            className="create-account-field__toggle touch-target"
+            className="auth-plate-field__toggle touch-target"
             aria-label={showPassword ? "Hide password" : "Show password"}
             onClick={onToggleShowPassword}
           >
@@ -215,8 +217,8 @@ export default function CreateAccountMobileForm({
           </button>
         </label>
 
-        <label className="create-account-field create-account-field--password">
-          <Lock className="create-account-field__icon" aria-hidden="true" />
+        <label className="auth-plate-field auth-plate-field--password create-account-field--password">
+          <Lock className="auth-plate-field__icon" aria-hidden="true" />
           <input
             type={showConfirmPassword ? "text" : "password"}
             required
@@ -226,11 +228,11 @@ export default function CreateAccountMobileForm({
             onBlur={onBlur}
             placeholder="Confirm Password"
             aria-label="Confirm password"
-            className="create-account-field__control font-body"
+            className="auth-plate-field__control font-body"
           />
           <button
             type="button"
-            className="create-account-field__toggle touch-target"
+            className="auth-plate-field__toggle touch-target"
             aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
             onClick={onToggleShowConfirmPassword}
           >
@@ -281,29 +283,29 @@ export default function CreateAccountMobileForm({
 
         <button
           type="submit"
-          disabled={isSubmitting}
-          className="create-account-submit touch-target font-ui"
+          disabled={isSubmitting || !canSubmit}
+          className="auth-plate-submit touch-target font-ui"
         >
           {isSubmitting ? (
             <Loader2 className="size-5 animate-spin" aria-hidden="true" />
           ) : (
             <>
-              <Lock className="create-account-submit__icon" aria-hidden="true" />
+              <Lock className="auth-plate-submit__icon" aria-hidden="true" />
               <span>Create Account</span>
-              <ArrowRight className="create-account-submit__icon" aria-hidden="true" />
+              <ArrowRight className="auth-plate-submit__icon" aria-hidden="true" />
             </>
           )}
         </button>
 
         {formError ? (
-          <p role="alert" className="create-account-form-error font-body">
+          <p role="alert" className="auth-plate-form-error font-body">
             {formError}
           </p>
         ) : null}
 
-        <p className="create-account-login-prompt font-body">
+        <p className="auth-plate-footer-prompt font-body">
           Already have an account?{" "}
-          <Link href={loginHref} className="create-account-login-prompt__link font-ui">
+          <Link href={loginHref} className="auth-plate-footer-prompt__link font-ui">
             Log In
           </Link>
         </p>
