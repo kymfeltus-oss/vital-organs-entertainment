@@ -2568,7 +2568,7 @@ html {
   pointer-events: auto;
 }
 
-/* Experience holding room — full-bleed 853×1844 plate on mobile app track (/live) */
+/* Experience holding room — 853×1844 art-fit plate on mobile app track (/live) */
 .holding-room-page {
   position: relative;
   display: flex;
@@ -2577,29 +2577,21 @@ html {
   min-height: 0;
   align-items: flex-start;
   justify-content: center;
-  overflow: hidden;
+  overflow-x: hidden;
   background-color: #000000;
 }
 
 .holding-room-page__stage {
   position: relative;
-  overflow: hidden;
   container-type: inline-size;
 }
 
+/* Match giving/buy-seeds: native plate centered in track, full PNG visible (contain). */
 .holding-room-page__art-fit {
   position: absolute;
   top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  transform: none;
-}
-
-.holding-room-page__art-fit > img,
-.holding-room-page__bg {
-  object-fit: cover;
-  object-position: center top;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 /* Live POV — mobile artboard track only (matches Giving / Buy Seeds) */

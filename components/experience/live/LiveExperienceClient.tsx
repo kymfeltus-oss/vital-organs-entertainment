@@ -113,7 +113,7 @@ function LiveExperienceClientInner({
     }
 
     return (
-      <main className="relative flex min-h-dvh w-full flex-col overflow-hidden bg-brand-black">
+      <main className="relative flex min-h-dvh w-full flex-col overflow-x-hidden bg-brand-black">
         <ExperienceHoldingRoomPageClient initialCountdownConfig={initialCountdownConfig} />
       </main>
     );
