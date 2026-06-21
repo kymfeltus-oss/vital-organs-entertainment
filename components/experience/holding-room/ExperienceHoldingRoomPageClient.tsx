@@ -2,6 +2,7 @@
 
 import { Suspense, useState, type CSSProperties } from "react";
 import MobileArtboardTabHeader from "@/components/navigation/MobileArtboardTabHeader";
+import HoldingRoomCountdownOverlay from "@/components/experience/holding-room/HoldingRoomCountdownOverlay";
 import {
   HOLDING_ROOM_ART_NATIVE,
   HOLDING_ROOM_ASSETS,
@@ -21,8 +22,10 @@ type ExperienceHoldingRoomPageClientProps = {
 };
 
 function ExperienceHoldingRoomPageContent({
+  initialCountdownConfig,
   initialProfile,
 }: {
+  initialCountdownConfig?: EventCountdownConfig;
   initialProfile: AttendeeProfileSnapshot;
 }) {
   const [profile, setProfile] = useState(initialProfile);
@@ -45,6 +48,7 @@ function ExperienceHoldingRoomPageContent({
             decoding="async"
             draggable={false}
           />
+          <HoldingRoomCountdownOverlay initialCountdownConfig={initialCountdownConfig} />
           <MobileArtboardTabHeader profile={profile} onProfileChange={setProfile} />
         </div>
       </div>
@@ -53,12 +57,15 @@ function ExperienceHoldingRoomPageContent({
 }
 
 export default function ExperienceHoldingRoomPageClient({
-  initialCountdownConfig: _initialCountdownConfig,
+  initialCountdownConfig,
   initialProfile,
 }: ExperienceHoldingRoomPageClientProps) {
   return (
     <Suspense fallback={null}>
-      <ExperienceHoldingRoomPageContent initialProfile={initialProfile} />
+      <ExperienceHoldingRoomPageContent
+        initialCountdownConfig={initialCountdownConfig}
+        initialProfile={initialProfile}
+      />
     </Suspense>
   );
 }

@@ -2561,6 +2561,72 @@ html {
   -webkit-user-drag: none;
 }
 
+.holding-room-page__art-fit {
+  container-type: inline-size;
+}
+
+/* Holding room — live digits over static neon ring art (PNG labels stay baked). */
+.holding-room-countdown {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.holding-room-countdown__value-mask {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 9999px;
+  background-color: #000000;
+}
+
+.holding-room-countdown__value {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(1.35rem, 4.1cqw, 2.65rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
+.holding-room-countdown__value--days {
+  color: #00a8ff;
+  text-shadow:
+    0 0 12px rgb(0 168 255 / 0.85),
+    0 0 28px rgb(0 168 255 / 0.45);
+}
+
+.holding-room-countdown__value--hours {
+  color: #5b8cff;
+  text-shadow:
+    0 0 12px rgb(91 140 255 / 0.85),
+    0 0 28px rgb(91 66 255 / 0.4);
+}
+
+.holding-room-countdown__value--minutes {
+  color: #c44bff;
+  text-shadow:
+    0 0 12px rgb(196 75 255 / 0.85),
+    0 0 28px rgb(138 43 226 / 0.4);
+}
+
+.holding-room-countdown__value--seconds {
+  color: #ff008c;
+  text-shadow:
+    0 0 12px rgb(255 0 140 / 0.9),
+    0 0 28px rgb(255 0 140 / 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .holding-room-countdown__value {
+    text-shadow: none;
+  }
+}
+
 /* Live POV — mobile artboard track only (matches Giving / Buy Seeds) */
 .live-pov-page {
   position: fixed;
