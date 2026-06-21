@@ -1,37 +1,23 @@
-/** Percentage rects on holding-room.png (1080×1920) — neon ring countdown row. */
+/** Center anchors on holding-room.png — live digits in empty ring voids (labels stay baked). */
 
 export type HoldingRoomCountdownUnitId = "days" | "hours" | "minutes" | "seconds";
 
 export type HoldingRoomCountdownSlot = {
   id: HoldingRoomCountdownUnitId;
-  /** Masks baked placeholder digits in the PNG. */
-  valueMask: { left: number; top: number; width: number; height: number };
-  /** Live countdown digit overlay — centered in each ring. */
-  value: { left: number; top: number; width: number; height: number };
+  /** Horizontal center of each ring void (% of artboard width). */
+  centerX: number;
+  /** Vertical center of digit slot — upper void above baked labels (% of artboard height). */
+  centerY: number;
+  /** Font-scaling box width (% of artboard width via cqw). */
+  sizeCqw: number;
 };
 
-/** Baked labels (DAYS / HOURS / …) stay on the PNG — only digits are replaced. */
+/** Measured on holding-room.png ring voids (941×1672 native, top-aligned on 1080×1920 stage). */
 export const HOLDING_ROOM_COUNTDOWN_UNITS: readonly HoldingRoomCountdownSlot[] = [
-  {
-    id: "days",
-    valueMask: { left: 7.5, top: 44.2, width: 17.5, height: 7.2 },
-    value: { left: 8.5, top: 44.6, width: 15.5, height: 6.4 },
-  },
-  {
-    id: "hours",
-    valueMask: { left: 29.5, top: 44.2, width: 17.5, height: 7.2 },
-    value: { left: 30.5, top: 44.6, width: 15.5, height: 6.4 },
-  },
-  {
-    id: "minutes",
-    valueMask: { left: 51.5, top: 44.2, width: 17.5, height: 7.2 },
-    value: { left: 52.5, top: 44.6, width: 15.5, height: 6.4 },
-  },
-  {
-    id: "seconds",
-    valueMask: { left: 73.5, top: 44.2, width: 17.5, height: 7.2 },
-    value: { left: 74.5, top: 44.6, width: 15.5, height: 6.4 },
-  },
+  { id: "days", centerX: 12.4, centerY: 45.9, sizeCqw: 14 },
+  { id: "hours", centerX: 37.4, centerY: 45.9, sizeCqw: 14 },
+  { id: "minutes", centerX: 62.4, centerY: 45.9, sizeCqw: 14 },
+  { id: "seconds", centerX: 87.3, centerY: 45.9, sizeCqw: 14 },
 ] as const;
 
 export const HOLDING_ROOM_COUNTDOWN_VALUE_CLASS: Record<HoldingRoomCountdownUnitId, string> = {

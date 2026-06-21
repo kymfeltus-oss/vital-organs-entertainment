@@ -5,6 +5,7 @@ import { parseCountdownStartMs } from "@/lib/experience/countdown-display";
 import {
   HOLDING_ROOM_COUNTDOWN_UNITS,
   HOLDING_ROOM_COUNTDOWN_VALUE_CLASS,
+  type HoldingRoomCountdownSlot,
   type HoldingRoomCountdownUnitId,
 } from "@/lib/experience/holding-room-countdown-slots";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
@@ -14,14 +15,13 @@ type HoldingRoomCountdownOverlayProps = {
   initialCountdownConfig?: EventCountdownConfig;
 };
 
-type Rect = { left: number; top: number; width: number; height: number };
-
-function rectStyle(rect: Rect): CSSProperties {
+function unitStyle(slot: HoldingRoomCountdownSlot): CSSProperties {
   return {
-    left: `${rect.left}%`,
-    top: `${rect.top}%`,
-    width: `${rect.width}%`,
-    height: `${rect.height}%`,
+    left: `${slot.centerX}%`,
+    top: `${slot.centerY}%`,
+    width: `${slot.sizeCqw}cqw`,
+    aspectRatio: "1",
+    transform: "translate(-50%, -50%)",
   };
 }
 
@@ -84,15 +84,13 @@ export default function HoldingRoomCountdownOverlay({
       aria-label={ariaLabel}
     >
       {HOLDING_ROOM_COUNTDOWN_UNITS.map((unit) => (
-        <div key={unit.id}>
-          <div
-            className="holding-room-countdown__value-mask"
-            aria-hidden="true"
-            style={rectStyle(unit.valueMask)}
-          />
+        <div
+          key={unit.id}
+          className="holding-room-countdown__unit"
+          style={unitStyle(unit)}
+        >
           <div
             className={`holding-room-countdown__value font-headline ${HOLDING_ROOM_COUNTDOWN_VALUE_CLASS[unit.id]}`}
-            style={rectStyle(unit.value)}
           >
             {isLoading ? "00" : values[unit.id]}
           </div>

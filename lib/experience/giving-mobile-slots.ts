@@ -27,12 +27,12 @@ export const GIVING_AMOUNT_PRESETS = givingAmounts.map((entry) => entry.amount);
 
 export const GIVING_MOBILE_DEFAULT_AMOUNT = givingAmounts[0].amount;
 
-/** 2×2 preset amount hit targets over baked PNG buttons. */
+/** 2×2 preset amount slots over empty PNG button art. */
 export const GIVING_MOBILE_PRESET_SLOTS: readonly GivingPresetSlot[] = [
-  { amount: 25, label: "SEED", left: "8%", top: "52%", width: "40%", height: "6.8%" },
-  { amount: 50, label: "SOW", left: "52%", top: "52%", width: "40%", height: "6.8%" },
-  { amount: 100, label: "GROW", left: "8%", top: "59.8%", width: "40%", height: "6.8%" },
-  { amount: 250, label: "FLOURISH", left: "52%", top: "59.8%", width: "40%", height: "6.8%" },
+  { amount: 25, label: "SEED", left: "8%", top: "48.5%", width: "40%", height: "7.2%" },
+  { amount: 50, label: "SOW", left: "52%", top: "48.5%", width: "40%", height: "7.2%" },
+  { amount: 100, label: "GROW", left: "8%", top: "58.4%", width: "40%", height: "7.2%" },
+  { amount: 250, label: "FLOURISH", left: "52%", top: "58.4%", width: "40%", height: "7.2%" },
 ];
 
 /** “Custom Amount” field on the PNG plate. */

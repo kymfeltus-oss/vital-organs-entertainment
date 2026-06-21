@@ -65,6 +65,7 @@ export default function ExperienceGivingMobileOverlay({
     >
       {GIVING_MOBILE_PRESET_SLOTS.map((slot) => {
         const isSelected = activePreset === slot.amount;
+        const isDimmed = activePreset != null && !isSelected;
 
         return (
           <button
@@ -75,9 +76,18 @@ export default function ExperienceGivingMobileOverlay({
             aria-label={`Select $${slot.amount} ${slot.label} gift`}
             disabled={isLoading}
             onClick={() => onSelectAmount(slot.amount)}
-            className="auth-attendee-hit auth-attendee-action-hit pointer-events-auto"
+            className={[
+              "experience-giving-preset-slot font-ui pointer-events-auto",
+              isSelected ? "experience-giving-preset-slot--selected" : "",
+              isDimmed ? "experience-giving-preset-slot--dimmed" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             style={rectStyle(slot)}
-          />
+          >
+            <span className="experience-giving-preset-slot__value">${slot.amount}</span>
+            <span className="experience-giving-preset-slot__label">{slot.label}</span>
+          </button>
         );
       })}
 

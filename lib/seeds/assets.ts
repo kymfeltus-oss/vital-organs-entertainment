@@ -23,20 +23,20 @@ export type SeedPackageOverlay = {
   price: string;
 };
 
-/** Black mask — hides baked package rows and Continue button art (through ~90%). */
+/** Black mask — hides baked row borders/glow (starts above first neon edge). */
 export const BUY_SEEDS_BAKED_CONTROLS_MASK = {
   left: "0%",
-  top: "54%",
+  top: "53%",
   width: "100%",
-  height: "37%",
+  height: "38%",
 } as const;
 
-/** Native package list panel — replaces baked row text on the PNG. */
+/** Native package list panel — aligned to four baked row slots on the PNG. */
 export const BUY_SEEDS_PACKAGES_PANEL = {
   left: "0%",
-  top: "55%",
+  top: "54.45%",
   width: "100%",
-  height: "24%",
+  height: "21.5%",
 } as const;
 
 /** Native package rows — text rendered in React over masked PNG slots. */
