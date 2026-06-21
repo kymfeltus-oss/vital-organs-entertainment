@@ -11,7 +11,7 @@ export const HOLDING_ROOM_ART_NATIVE = {
   height: 1698,
 } as const;
 
-export const HOLDING_ROOM_ASSET_VERSION = "20260621-holding-v5";
+export const HOLDING_ROOM_ASSET_VERSION = "20260621-holding-v7";
 
 export const HOLDING_ROOM_ASSETS = {
   mobileBackground: `/holding page/holding-room.png?v=${HOLDING_ROOM_ASSET_VERSION}`,

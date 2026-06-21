@@ -1,49 +1,59 @@
-/** Percentage slots on holding-room.png — one flex column per neon ring. */
+/** Percentage rects on holding-room.png (926×1698) — digit overlays only. */
 
 export type HoldingRoomCountdownUnitId = "days" | "hours" | "minutes" | "seconds";
 
-/** Center-anchored ring — overlay uses translate(-50%, -50%). */
-export type HoldingRoomCountdownRing = {
-  centerX: number;
-  centerY: number;
+export type HoldingRoomCountdownRect = {
+  left: number;
+  top: number;
   width: number;
   height: number;
 };
 
-export type HoldingRoomCountdownUnit = {
+export type HoldingRoomCountdownDigitSlot = {
   id: HoldingRoomCountdownUnitId;
-  label: string;
-  ring: HoldingRoomCountdownRing;
+  /** Masks baked placeholder digits — live "00" is flex-centered inside this box. */
+  valueMask: HoldingRoomCountdownRect;
 };
 
-/** PNG (926×1698) is height-fit inside the 1080×1920 stage with side letterbox. */
-const STAGE_PNG_WIDTH_RATIO = (926 * 1920) / (1698 * 1080);
-const STAGE_PNG_X_OFFSET = ((1 - STAGE_PNG_WIDTH_RATIO) / 2) * 100;
+/**
+ * PNG is height-fit inside the 1080×1920 stage (top-aligned, side letterbox).
+ * Map PNG percentage coords → overlay percentage coords on the art-fit box.
+ */
+export const HOLDING_ROOM_PNG_STAGE = {
+  widthRatio: (926 * 1920) / (1698 * 1080),
+  xOffset: ((1 - (926 * 1920) / (1698 * 1080)) / 2) * 100,
+} as const;
 
 export function holdingRoomStageX(pngPercentX: number): number {
-  return STAGE_PNG_X_OFFSET + pngPercentX * STAGE_PNG_WIDTH_RATIO;
+  return HOLDING_ROOM_PNG_STAGE.xOffset + pngPercentX * HOLDING_ROOM_PNG_STAGE.widthRatio;
 }
 
-function ringSlot(
-  pngX: number,
-  pngY: number,
-  width: number,
-  height: number,
-): HoldingRoomCountdownRing {
+/** Height-fit plate — PNG Y maps 1:1 to the stage art-fit box. */
+export function holdingRoomStageY(pngPercentY: number): number {
+  return pngPercentY;
+}
+
+export function holdingRoomStageRect(rect: HoldingRoomCountdownRect): HoldingRoomCountdownRect {
   return {
-    centerX: holdingRoomStageX(pngX),
-    centerY: pngY,
-    width,
-    height,
+    left: holdingRoomStageX(rect.left),
+    top: holdingRoomStageY(rect.top),
+    width: rect.width * HOLDING_ROOM_PNG_STAGE.widthRatio,
+    height: rect.height,
   };
 }
 
-/** Measured ring interiors on holding-room.png (band ~40%–58% Y). */
-export const HOLDING_ROOM_COUNTDOWN_UNITS: readonly HoldingRoomCountdownUnit[] = [
-  { id: "days", label: "DAYS", ring: ringSlot(14.7, 48.94, 12, 17.5) },
-  { id: "hours", label: "HOURS", ring: ringSlot(36.4, 48.94, 12, 17.5) },
-  { id: "minutes", label: "MINS", ring: ringSlot(59.9, 48.94, 12, 17.5) },
-  { id: "seconds", label: "SECS", ring: ringSlot(82.9, 48.94, 12, 17.5) },
+/**
+ * Baked DAYS / HOURS / MINS / SECS labels stay on the PNG.
+ * Only center digits are masked and replaced with live values.
+ *
+ * Measured on `public/holding page/holding-room.png` (926×1698).
+ * To move the clock down, increase `top` on each `valueMask`.
+ */
+export const HOLDING_ROOM_COUNTDOWN_UNITS: readonly HoldingRoomCountdownDigitSlot[] = [
+  { id: "days", valueMask: { left: 9.4, top: 41.2, width: 12.8, height: 9.2 } },
+  { id: "hours", valueMask: { left: 29.2, top: 41.5, width: 13.8, height: 9.0 } },
+  { id: "minutes", valueMask: { left: 52.6, top: 41.5, width: 13.8, height: 9.0 } },
+  { id: "seconds", valueMask: { left: 75.8, top: 41.2, width: 13.8, height: 9.2 } },
 ] as const;
 
 export const HOLDING_ROOM_COUNTDOWN_VALUE_CLASS: Record<HoldingRoomCountdownUnitId, string> = {
@@ -51,11 +61,4 @@ export const HOLDING_ROOM_COUNTDOWN_VALUE_CLASS: Record<HoldingRoomCountdownUnit
   hours: "holding-room-countdown__value--hours",
   minutes: "holding-room-countdown__value--minutes",
   seconds: "holding-room-countdown__value--seconds",
-};
-
-export const HOLDING_ROOM_COUNTDOWN_LABEL_CLASS: Record<HoldingRoomCountdownUnitId, string> = {
-  days: "holding-room-countdown__label--days",
-  hours: "holding-room-countdown__label--hours",
-  minutes: "holding-room-countdown__label--minutes",
-  seconds: "holding-room-countdown__label--seconds",
 };

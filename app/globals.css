@@ -2752,8 +2752,14 @@ html {
   pointer-events: none;
 }
 
+.holding-room-countdown__unit {
+  position: absolute;
+  box-sizing: border-box;
+}
+
 .holding-room-countdown__value-mask {
   position: absolute;
+  inset: 0;
   box-sizing: border-box;
   border-radius: 9999px;
   background-color: #000000;
@@ -2761,6 +2767,7 @@ html {
 
 .holding-room-countdown__value {
   position: absolute;
+  inset: 0;
   box-sizing: border-box;
   display: flex;
   align-items: center;
