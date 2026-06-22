@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import ExperienceGivingNativeForm from "@/components/experience/giving/ExperienceGivingNativeForm";
 import ExperienceGivingPlate from "@/components/experience/giving/ExperienceGivingPlate";
 import { getClientAppUrl } from "@/lib/client-api";
-import { GIVING_MOBILE_DEFAULT_AMOUNT, type GivingFrequency } from "@/lib/experience/giving-mobile-slots";
+import { type GivingFrequency } from "@/lib/experience/giving-mobile-slots";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { CONTENT_WITH_NAV } from "@/lib/responsive";
 import {
@@ -28,12 +28,8 @@ function ExperienceGivingPageContent({
   const searchParams = useSearchParams();
   const successParam = searchParams.get("success") === "true";
 
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(
-    GIVING_MOBILE_DEFAULT_AMOUNT,
-  );
-  const [activePreset, setActivePreset] = useState<number | null>(
-    GIVING_MOBILE_DEFAULT_AMOUNT,
-  );
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
+  const [activePreset, setActivePreset] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
   const [selectedFrequency, setSelectedFrequency] =
     useState<GivingFrequency>("one_time");

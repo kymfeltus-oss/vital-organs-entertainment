@@ -2397,9 +2397,21 @@ body::-webkit-scrollbar {
   width: 83.6%;
   min-height: 0;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start;
   pointer-events: auto;
-  overflow: hidden;
+  overflow: visible;
+}
+
+.vital-giving-form {
+  width: 100%;
+}
+
+.vital-giving-form--select {
+  padding-top: 0.25rem;
+}
+
+.vital-giving-form--checkout {
+  padding-top: 0;
 }
 
 .buy-seeds-page__baked-mask {
