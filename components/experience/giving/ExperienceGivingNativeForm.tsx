@@ -15,14 +15,14 @@ type ExperienceGivingNativeFormProps = {
 };
 
 const fieldClassName =
-  "w-full rounded-xl border border-brand-border bg-brand-panel/80 px-3 py-1.5 font-body text-sm text-white outline-none transition placeholder:text-brand-muted/50 focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/30";
+  "w-full rounded-xl border border-brand-border/70 bg-black/20 px-3 py-1.5 font-body text-sm text-white outline-none transition placeholder:text-brand-muted/50 focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/30";
 
 function amountCardClassName(isSelected: boolean, isDimmed: boolean): string {
   return [
-    "relative flex min-h-[2rem] flex-col items-center justify-center gap-0 rounded-xl border p-1 transition touch-target font-ui",
+    "relative flex min-h-[1.85rem] flex-col items-center justify-center gap-0 rounded-xl border p-0.5 transition touch-target font-ui",
     isSelected
-      ? "border-brand-blue/50 bg-brand-panel shadow-[0_0_22px_rgba(0,168,255,0.28),0_0_28px_rgba(255,0,140,0.2)]"
-      : "border-brand-border bg-brand-panel/80",
+      ? "border-brand-blue/50 bg-black/30 shadow-[0_0_22px_rgba(0,168,255,0.28),0_0_28px_rgba(255,0,140,0.2)]"
+      : "border-brand-border/70 bg-black/20",
     isDimmed ? "opacity-55" : "opacity-100",
   ].join(" ");
 }
@@ -40,7 +40,7 @@ export default function ExperienceGivingNativeForm({
   const hasSelection = activePreset != null;
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1">
       <section aria-label="Choose a gift amount">
         <div role="radiogroup" aria-label="Choose a gift amount" className="grid grid-cols-2 gap-1">
           {givingAmounts.map((card) => {

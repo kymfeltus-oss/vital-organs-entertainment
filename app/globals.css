@@ -2388,7 +2388,7 @@ body::-webkit-scrollbar {
 .vital-giving-page__form-overlay {
   position: absolute;
   left: 8.2%;
-  top: var(--vital-giving-form-top, 62%);
+  top: var(--vital-giving-form-top, 64%);
   bottom: calc(
     var(--bottom-dock-display-h, 76px) + env(safe-area-inset-bottom, 0px) + 0.5rem
   );
@@ -2399,7 +2399,7 @@ body::-webkit-scrollbar {
   flex-direction: column;
   justify-content: flex-end;
   pointer-events: auto;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .buy-seeds-page__baked-mask {

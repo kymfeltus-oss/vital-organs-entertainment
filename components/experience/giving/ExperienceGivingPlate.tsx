@@ -42,9 +42,21 @@ export default function ExperienceGivingPlate({
 
     const headerBottomPx = imgRect.bottom - stageRect.top;
     const headerBottomPct = (headerBottomPx / stageRect.height) * 100;
-    const formTopPct = Math.min(headerBottomPct + 1.25, 72);
+    const formTopPct = Math.min(headerBottomPct + 2.5, 74);
 
     overlay.style.setProperty("--vital-giving-form-top", `${formTopPct}%`);
+
+    requestAnimationFrame(() => {
+      const overlayRect = overlay.getBoundingClientRect();
+      const overlapPx = imgRect.bottom - overlayRect.top;
+
+      if (overlapPx > 0) {
+        overlay.style.setProperty(
+          "--vital-giving-form-top",
+          `${formTopPct + (overlapPx / stageRect.height) * 100 + 0.5}%`,
+        );
+      }
+    });
   }, []);
 
   useEffect(() => {
