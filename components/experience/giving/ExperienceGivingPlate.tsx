@@ -94,7 +94,7 @@ export default function ExperienceGivingPlate({
 
           <div ref={formOverlayRef} className="vital-giving-page__form-overlay">
             <div className="glass-panel w-full rounded-[1.25rem] border border-brand-border shadow-[0_0_40px_rgba(0,168,255,0.06)]">
-              <div className="p-3 sm:p-3.5">{children}</div>
+              <div className="p-2.5 sm:p-3">{children}</div>
             </div>
           </div>
         </div>

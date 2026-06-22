@@ -15,11 +15,11 @@ type ExperienceGivingNativeFormProps = {
 };
 
 const fieldClassName =
-  "w-full rounded-xl border border-brand-border bg-brand-panel/80 px-3 py-2 font-body text-sm text-white outline-none transition placeholder:text-brand-muted/50 focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/30";
+  "w-full rounded-xl border border-brand-border bg-brand-panel/80 px-3 py-1.5 font-body text-sm text-white outline-none transition placeholder:text-brand-muted/50 focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/30";
 
 function amountCardClassName(isSelected: boolean, isDimmed: boolean): string {
   return [
-    "relative flex min-h-[2.25rem] flex-col items-center justify-center gap-0.5 rounded-xl border p-1 transition touch-target font-ui",
+    "relative flex min-h-[2rem] flex-col items-center justify-center gap-0 rounded-xl border p-1 transition touch-target font-ui",
     isSelected
       ? "border-brand-blue/50 bg-brand-panel shadow-[0_0_22px_rgba(0,168,255,0.28),0_0_28px_rgba(255,0,140,0.2)]"
       : "border-brand-border bg-brand-panel/80",
@@ -40,9 +40,9 @@ export default function ExperienceGivingNativeForm({
   const hasSelection = activePreset != null;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1.5">
       <section aria-label="Choose a gift amount">
-        <div role="radiogroup" aria-label="Choose a gift amount" className="grid grid-cols-2 gap-1.5">
+        <div role="radiogroup" aria-label="Choose a gift amount" className="grid grid-cols-2 gap-1">
           {givingAmounts.map((card) => {
             const isSelected = activePreset === card.amount;
             const isDimmed = hasSelection && !isSelected;
@@ -101,7 +101,7 @@ export default function ExperienceGivingNativeForm({
         </div>
       </label>
 
-      <div className="space-y-2 border-t border-brand-border/30 pt-2">
+      <div className="space-y-1.5 border-t border-brand-border/30 pt-1.5">
         {error ? (
           <p
             role="alert"
@@ -115,7 +115,7 @@ export default function ExperienceGivingNativeForm({
           type="button"
           disabled={isLoading}
           onClick={onGiveNow}
-          className="touch-target inline-flex w-full min-h-11 items-center justify-center gap-2 rounded-xl border border-brand-blue/40 bg-brand-blue/10 px-6 font-ui text-[0.65rem] font-bold uppercase tracking-[0.16em] text-brand-blue transition hover:bg-brand-blue/20 disabled:cursor-not-allowed disabled:opacity-50"
+          className="touch-target inline-flex w-full min-h-10 items-center justify-center gap-2 rounded-xl border border-brand-blue/40 bg-brand-blue/10 px-6 font-ui text-[0.65rem] font-bold uppercase tracking-[0.16em] text-brand-blue transition hover:bg-brand-blue/20 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? (
             <>

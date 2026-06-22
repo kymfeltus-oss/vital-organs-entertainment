@@ -8,6 +8,40 @@ html {
   background-color: var(--color-brand-black-base);
   background-image: var(--app-glossy-background);
   background-attachment: fixed;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* No visible scrollbars anywhere — touch/wheel scrolling still works */
+*,
+*::before,
+*::after {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
 }
 
 :root {
@@ -2363,10 +2397,13 @@ html {
   width: 83.6%;
   min-height: 0;
   flex-direction: column;
+  justify-content: flex-end;
   pointer-events: auto;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
+}
+
+.vital-giving-page__form-overlay .glass-panel {
+  overflow: hidden;
 }
 .buy-seeds-page__baked-mask {
   position: absolute;
