@@ -17,8 +17,6 @@ import {
   X,
 } from "lucide-react";
 import {
-  applyFullNameInput,
-  formatFullName,
   type CreateAccountFormValues,
 } from "@/lib/auth/create-account-validation";
 import { US_STATES } from "@/lib/auth/us-states";
@@ -66,15 +64,13 @@ export default function AttendeeAuthCreateAccountPlate({
   onAvatarPick,
   onSubmit,
 }: AttendeeAuthCreateAccountPlateProps) {
-  const fullName = formatFullName(values);
-
   return (
-    <div className="auth-login-page flex min-h-0 w-full flex-1 flex-col items-center overflow-y-auto px-4 py-8 pt-safe pb-safe sm:px-6 sm:py-12">
+    <div className="auth-login-page flex min-h-0 w-full flex-1 flex-col items-center overflow-y-auto py-8 pt-safe pb-safe sm:py-12">
       <div className="auth-login-page__glow pointer-events-none" aria-hidden="true" />
 
-      <div className="relative z-[1] w-full max-w-[28rem]">
+      <div className="relative z-[1] w-[var(--mobile-app-track-w)] max-w-[100vw] px-4">
         <header className="mb-6 text-center">
-          <div className="relative mx-auto aspect-[3/2] w-full max-w-[18rem] sm:max-w-[22rem]">
+          <div className="relative aspect-[3/2] w-full">
             <Image
               src={EXPERIENCE_BRAND_ASSETS.lockup}
               alt="300 Awakening"
@@ -141,30 +137,49 @@ export default function AttendeeAuthCreateAccountPlate({
               </div>
             </div>
 
-            <label className="block">
-              <span className={labelClassName}>Full name</span>
-              <div className="relative">
-                <User
-                  className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-brand-blue"
-                  aria-hidden="true"
-                />
-                <input
-                  type="text"
-                  required
-                  autoComplete="name"
-                  disabled={isSubmitting}
-                  value={fullName}
-                  onChange={(event) => {
-                    const parsed = applyFullNameInput(event.target.value);
-                    onFieldChange("firstName", parsed.firstName);
-                    onFieldChange("lastName", parsed.lastName);
-                  }}
-                  onBlur={onBlur}
-                  placeholder="First and last name"
-                  className={`${inputClassName} pl-10`}
-                />
-              </div>
-            </label>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <label className="block">
+                <span className={labelClassName}>First name</span>
+                <div className="relative">
+                  <User
+                    className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-brand-blue"
+                    aria-hidden="true"
+                  />
+                  <input
+                    type="text"
+                    required
+                    autoComplete="given-name"
+                    disabled={isSubmitting}
+                    value={values.firstName}
+                    onChange={(event) => onFieldChange("firstName", event.target.value)}
+                    onBlur={onBlur}
+                    placeholder="First name"
+                    className={`${inputClassName} pl-10`}
+                  />
+                </div>
+              </label>
+
+              <label className="block">
+                <span className={labelClassName}>Last name</span>
+                <div className="relative">
+                  <User
+                    className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-brand-purple"
+                    aria-hidden="true"
+                  />
+                  <input
+                    type="text"
+                    required
+                    autoComplete="family-name"
+                    disabled={isSubmitting}
+                    value={values.lastName}
+                    onChange={(event) => onFieldChange("lastName", event.target.value)}
+                    onBlur={onBlur}
+                    placeholder="Last name"
+                    className={`${inputClassName} pl-10`}
+                  />
+                </div>
+              </label>
+            </div>
 
             <label className="block">
               <span className={labelClassName}>Email</span>

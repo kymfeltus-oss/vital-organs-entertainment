@@ -6,6 +6,7 @@ const NAV_HIDDEN_EXACT = [
   "/login",
   "/create-account",
   "/test-suite",
+  "/countdown",
 ] as const;
 
 const NAV_HIDDEN_PREFIXES = [
@@ -20,6 +21,7 @@ const NAV_HIDDEN_PREFIXES = [
   "/email-gate",
   "/experience/live",
   "/dashboard/live",
+  "/countdown/",
 ] as const;
 
 function matchesHiddenPrefix(pathname: string, prefix: string): boolean {

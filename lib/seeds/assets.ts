@@ -3,7 +3,7 @@ import { SEED_ECONOMY_PACKS } from "@/lib/merch/catalog";
 
 /** Buy Seeds page — flat background + native overlay content. */
 
-export const BUY_SEEDS_ASSET_VERSION = "20260622";
+export const BUY_SEEDS_ASSET_VERSION = "20260622-4";
 
 export const BUY_SEEDS_ASSETS = {
   mobileBackground: `/buy-seeds/mobile-main-background.png?v=${BUY_SEEDS_ASSET_VERSION}`,
@@ -14,11 +14,24 @@ export const BUY_SEEDS_MOBILE_ART = MOBILE_ARTBOARD_REF;
 /** Native PNG plate — same 1080×1920 stage as attendee dashboard. */
 export const BUY_SEEDS_MOBILE_ART_NATIVE = MOBILE_ARTBOARD_REF;
 
-/** Top crop of mobile-main-background.png — Ian Craig + 300 logo + waveforms (excludes baked package rows ~53%). */
-export const BUY_SEEDS_HERO_CROP_RATIO = 0.44;
+/**
+ * Measured active art bounds on mobile-main-background.png (1080×1920).
+ * Hero + UI art spans cols 96–983 (~82% canvas); scale X to fill dashboard track.
+ */
+export const BUY_SEEDS_ARTBOARD_CONTENT_BOUNDS = {
+  left: 96,
+  right: 983,
+  width: 887,
+  canvasWidth: 1080,
+} as const;
 
-/** Horizontal scale — trims PNG side letterboxing so hero aligns with form card edges. */
-export const BUY_SEEDS_HERO_WIDTH_SCALE = 1.14;
+/** Horizontal scale — removes PNG side letterbox on the full plate. */
+export const BUY_SEEDS_ARTBOARD_WIDTH_SCALE =
+  BUY_SEEDS_ARTBOARD_CONTENT_BOUNDS.canvasWidth /
+  BUY_SEEDS_ARTBOARD_CONTENT_BOUNDS.width;
+
+/** @deprecated Use BUY_SEEDS_ARTBOARD_WIDTH_SCALE */
+export const BUY_SEEDS_HERO_WIDTH_SCALE = BUY_SEEDS_ARTBOARD_WIDTH_SCALE;
 
 /** @deprecated Use BUY_SEEDS_MOBILE_ART */
 export const BUY_SEEDS_ART = BUY_SEEDS_MOBILE_ART;
@@ -41,9 +54,9 @@ export const BUY_SEEDS_BAKED_CONTROLS_MASK = {
 
 /** Native package list panel — aligned to four baked row slots on the PNG. */
 export const BUY_SEEDS_PACKAGES_PANEL = {
-  left: "0%",
+  left: "calc(40 / 1080 * 100%)",
   top: "54.45%",
-  width: "100%",
+  width: "calc(100% - 2 * 40 / 1080 * 100%)",
   height: "21.5%",
 } as const;
 
@@ -85,16 +98,16 @@ export const BUY_SEEDS_DEFAULT_PACKAGE_ID: SeedPackageId = "seed-pack-100";
 
 export const BUY_SEEDS_CONTINUE_SLOT = {
   label: "Continue to payment",
-  left: "13%",
+  left: "calc(40 / 1080 * 100%)",
   top: "81.2%",
-  width: "74%",
+  width: "calc(100% - 2 * 40 / 1080 * 100%)",
   height: "6.2%",
 } as const;
 
 export const BUY_SEEDS_ERROR_SLOT = {
-  left: "13%",
+  left: "calc(40 / 1080 * 100%)",
   top: "79.4%",
-  width: "74%",
+  width: "calc(100% - 2 * 40 / 1080 * 100%)",
   height: "1.6%",
 } as const;
 

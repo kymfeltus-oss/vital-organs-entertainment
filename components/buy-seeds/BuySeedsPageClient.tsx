@@ -3,7 +3,6 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import BuySeedsNativeForm from "@/components/buy-seeds/BuySeedsNativeForm";
 import BuySeedsPlate from "@/components/buy-seeds/BuySeedsPlate";
 import { getMerchProduct } from "@/lib/merch/catalog";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
@@ -67,19 +66,19 @@ function BuySeedsPageContent({ initialProfile }: BuySeedsPageContentProps) {
   return (
     <>
       <section
-        className={`buy-seeds-native-page ${CONTENT_WITH_NAV} flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-brand-black text-white`}
+        className={`${CONTENT_WITH_NAV} flex min-h-0 w-full flex-1 flex-col overflow-hidden text-white`}
         aria-label="Buy Vital Seeds"
       >
-        <BuySeedsPlate profile={profile} onProfileChange={setProfile}>
-          <BuySeedsNativeForm
-            selectedPackageId={selectedPackageId}
-            isSubmitting={isSubmitting}
-            activeProductId={activeProductId}
-            errorMessage={errorMessage}
-            onSelectPackage={handleSelectPackage}
-            onContinue={handleContinue}
-          />
-        </BuySeedsPlate>
+        <BuySeedsPlate
+          profile={profile}
+          onProfileChange={setProfile}
+          selectedPackageId={selectedPackageId}
+          isSubmitting={isSubmitting}
+          activeProductId={activeProductId}
+          errorMessage={errorMessage}
+          onSelectPackage={handleSelectPackage}
+          onContinue={handleContinue}
+        />
       </section>
 
       <AnimatePresence>

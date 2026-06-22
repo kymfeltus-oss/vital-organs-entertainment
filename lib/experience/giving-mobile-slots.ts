@@ -1,7 +1,7 @@
 import { MOBILE_ARTBOARD_REF } from "@/lib/responsive";
 import { givingAmounts } from "@/lib/vital-seed/giving-assets";
 
-/** Percentage rects aligned to `/public/vital seed/mobile-main-background.png` (941×1672 native). */
+/** Percentage rects aligned to `/public/vital seed/mobile-main-background.png` (941×1000 native). */
 
 export type GivingFrequency = "one_time" | "monthly" | "weekly";
 

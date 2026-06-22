@@ -86,6 +86,11 @@ export function mobileArtboardStageStyle(options?: {
 export const MOBILE_ARTBOARD_TAB_SHELL = "mobile-artboard-tab-shell";
 export const MOBILE_ARTBOARD_TAB_STAGE = "mobile-artboard-tab-shell__stage";
 
+/** Dashboard-matched horizontal inset for tab overlays (40px @ 1080 artboard). */
+export const MOBILE_TAB_CONTENT_INSET_LEFT = "calc(40 / 1080 * 100%)";
+export const MOBILE_TAB_CONTENT_WIDTH = "calc(100% - 2 * 40 / 1080 * 100%)";
+export const MOBILE_ARTBOARD_TAB_CONTENT_OVERLAY = "mobile-artboard-tab-content-overlay";
+
 /** Full-viewport artboard shell — login, create-account, email-gate, live holding. */
 export const MOBILE_ARTBOARD_FULL_SHELL = "mobile-artboard-full-shell";
 export const MOBILE_ARTBOARD_STAGE = "mobile-artboard-stage";

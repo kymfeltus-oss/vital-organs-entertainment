@@ -50,9 +50,11 @@ export function validateCreateAccountForm(
   const errors: CreateAccountFieldErrors = {};
 
   if (!normalizeName(values.firstName)) {
-    errors.firstName = "Full name is required.";
-  } else if (!normalizeName(values.lastName)) {
-    errors.lastName = "Enter your first and last name.";
+    errors.firstName = "First name is required.";
+  }
+
+  if (!normalizeName(values.lastName)) {
+    errors.lastName = "Last name is required.";
   }
 
   if (!values.email.trim()) {

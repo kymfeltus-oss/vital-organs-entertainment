@@ -17,12 +17,12 @@ export default function EmailGatePersonaPlate({
   onAttendeeSelect,
 }: EmailGatePersonaPlateProps) {
   return (
-    <div className="auth-login-page flex min-h-0 w-full flex-1 flex-col items-center overflow-y-auto px-4 py-8 pt-safe pb-safe sm:px-6 sm:py-12">
+    <div className="auth-login-page flex min-h-0 w-full flex-1 flex-col items-center overflow-y-auto py-8 pt-safe pb-safe sm:py-12">
       <div className="auth-login-page__glow pointer-events-none" aria-hidden="true" />
 
-      <div className="relative z-[1] w-full max-w-[26rem]">
+      <div className="relative z-[1] w-[var(--mobile-app-track-w)] max-w-[100vw] px-4">
         <header className="mb-8 text-center">
-          <div className="relative mx-auto aspect-[3/2] w-full max-w-[20rem] sm:max-w-[26rem]">
+          <div className="relative aspect-[3/2] w-full">
             <Image
               src={EXPERIENCE_BRAND_ASSETS.lockup}
               alt="300 Awakening"
