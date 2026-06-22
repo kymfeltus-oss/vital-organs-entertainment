@@ -1,32 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useState, type CSSProperties } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import BuySeedsOverlay from "@/components/buy-seeds/BuySeedsOverlay";
-import MobileArtboardTabHeader from "@/components/navigation/MobileArtboardTabHeader";
+import BuySeedsNativeForm from "@/components/buy-seeds/BuySeedsNativeForm";
+import BuySeedsPlate from "@/components/buy-seeds/BuySeedsPlate";
 import { getMerchProduct } from "@/lib/merch/catalog";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
+import { CONTENT_WITH_NAV } from "@/lib/responsive";
 import {
-  BUY_SEEDS_ASSETS,
   BUY_SEEDS_DEFAULT_PACKAGE_ID,
-  BUY_SEEDS_MOBILE_ART_NATIVE,
   getSeedPackage,
   type SeedPackageId,
 } from "@/lib/seeds/assets";
-import {
-  MOBILE_ARTBOARD_ART_FIT,
-  MOBILE_ARTBOARD_TAB_SHELL,
-  MOBILE_ARTBOARD_TAB_STAGE,
-  mobileArtboardStageStyle,
-} from "@/lib/responsive";
 import { useMerchCheckout } from "@/lib/useMerchCheckout";
 
-type BuySeedsPageClientProps = {
+type BuySeedsPageContentProps = {
   initialProfile: AttendeeProfileSnapshot;
 };
 
-export default function BuySeedsPageClient({ initialProfile }: BuySeedsPageClientProps) {
+function BuySeedsPageContent({ initialProfile }: BuySeedsPageContentProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const successParam = searchParams.get("success") === "true";
@@ -73,39 +66,21 @@ export default function BuySeedsPageClient({ initialProfile }: BuySeedsPageClien
 
   return (
     <>
-      <div className={`buy-seeds-page ${MOBILE_ARTBOARD_TAB_SHELL} relative overflow-hidden bg-brand-black`}>
-        <div
-          className={`buy-seeds-page__stage ${MOBILE_ARTBOARD_TAB_STAGE} relative mx-auto w-full`}
-          style={
-            mobileArtboardStageStyle({ native: BUY_SEEDS_MOBILE_ART_NATIVE }) as CSSProperties
-          }
-        >
-          <div className={`${MOBILE_ARTBOARD_ART_FIT} buy-seeds-page__art-fit`}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={BUY_SEEDS_ASSETS.mobileBackground}
-              alt=""
-              width={BUY_SEEDS_MOBILE_ART_NATIVE.width}
-              height={BUY_SEEDS_MOBILE_ART_NATIVE.height}
-              className="buy-seeds-page__bg"
-              loading="eager"
-              decoding="async"
-              draggable={false}
-            />
-
-            <MobileArtboardTabHeader profile={profile} onProfileChange={setProfile} />
-
-            <BuySeedsOverlay
-              selectedPackageId={selectedPackageId}
-              isSubmitting={isSubmitting}
-              activeProductId={activeProductId}
-              errorMessage={errorMessage}
-              onSelectPackage={handleSelectPackage}
-              onContinue={handleContinue}
-            />
-          </div>
-        </div>
-      </div>
+      <section
+        className={`buy-seeds-page ${CONTENT_WITH_NAV} min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden bg-brand-black text-white`}
+        aria-label="Buy Vital Seeds"
+      >
+        <BuySeedsPlate profile={profile} onProfileChange={setProfile}>
+          <BuySeedsNativeForm
+            selectedPackageId={selectedPackageId}
+            isSubmitting={isSubmitting}
+            activeProductId={activeProductId}
+            errorMessage={errorMessage}
+            onSelectPackage={handleSelectPackage}
+            onContinue={handleContinue}
+          />
+        </BuySeedsPlate>
+      </section>
 
       <AnimatePresence>
         {showThankYou ? (
@@ -145,5 +120,17 @@ export default function BuySeedsPageClient({ initialProfile }: BuySeedsPageClien
         ) : null}
       </AnimatePresence>
     </>
+  );
+}
+
+type BuySeedsPageClientProps = {
+  initialProfile: AttendeeProfileSnapshot;
+};
+
+export default function BuySeedsPageClient({ initialProfile }: BuySeedsPageClientProps) {
+  return (
+    <Suspense fallback={null}>
+      <BuySeedsPageContent initialProfile={initialProfile} />
+    </Suspense>
   );
 }

@@ -22,8 +22,8 @@ export const VITAL_SEED_GIVING_MOBILE_ART_NATIVE = {
   height: 1672,
 } as const;
 
-/** Top crop of mobile-main-background.png — logo, tagline, and copy (excludes baked form). */
-export const VITAL_SEED_GIVING_HERO_CROP_RATIO = 0.47;
+/** Top crop of mobile-main-background.png — logo + tagline (excludes baked form). */
+export const VITAL_SEED_GIVING_HERO_CROP_RATIO = 0.34;
 
 /** Preset gift amounts — rendered as native text over empty grid slots on mobile-main-background.png. */
 export const givingAmounts = [

@@ -15,11 +15,11 @@ type ExperienceGivingNativeFormProps = {
 };
 
 const fieldClassName =
-  "w-full rounded-xl border border-brand-border bg-brand-panel/80 px-4 py-3 font-body text-sm text-white outline-none transition placeholder:text-brand-muted/50 focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/30";
+  "w-full rounded-xl border border-brand-border bg-brand-panel/80 px-4 py-2.5 font-body text-sm text-white outline-none transition placeholder:text-brand-muted/50 focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/30";
 
 function amountCardClassName(isSelected: boolean, isDimmed: boolean): string {
   return [
-    "relative flex min-h-[5.5rem] flex-col items-center justify-center gap-1 rounded-xl border p-3 transition touch-target font-ui",
+    "relative flex min-h-[3.75rem] flex-col items-center justify-center gap-0.5 rounded-xl border p-2.5 transition touch-target font-ui",
     isSelected
       ? "border-brand-blue/50 bg-brand-panel shadow-[0_0_22px_rgba(0,168,255,0.28),0_0_28px_rgba(255,0,140,0.2)]"
       : "border-brand-border bg-brand-panel/80",
@@ -40,13 +40,13 @@ export default function ExperienceGivingNativeForm({
   const hasSelection = activePreset != null;
 
   return (
-    <div className="w-full space-y-5">
+    <div className="w-full space-y-3">
       <section aria-label="Choose a gift amount">
-        <h2 className="mb-3 text-center font-ui text-[0.62rem] font-bold uppercase tracking-[0.24em] text-white">
+        <h2 className="mb-2 text-center font-ui text-[0.58rem] font-bold uppercase tracking-[0.24em] text-white">
           Choose an amount
         </h2>
 
-        <div role="radiogroup" aria-label="Choose a gift amount" className="grid grid-cols-2 gap-3">
+        <div role="radiogroup" aria-label="Choose a gift amount" className="grid grid-cols-2 gap-2.5">
           {givingAmounts.map((card) => {
             const isSelected = activePreset === card.amount;
             const isDimmed = hasSelection && !isSelected;
@@ -64,14 +64,14 @@ export default function ExperienceGivingNativeForm({
               >
                 {isSelected ? (
                   <span
-                    className="absolute left-2.5 top-2.5 flex size-5 items-center justify-center rounded-full bg-brand-pink text-white"
+                    className="absolute left-2 top-2 flex size-4 items-center justify-center rounded-full bg-brand-pink text-white"
                     aria-hidden="true"
                   >
-                    <Check className="size-3" strokeWidth={3} />
+                    <Check className="size-2.5" strokeWidth={3} />
                   </span>
                 ) : null}
-                <span className="font-body text-xl font-bold text-white">${card.amount}</span>
-                <span className="text-[0.58rem] font-semibold uppercase tracking-[0.16em] text-brand-muted">
+                <span className="font-body text-lg font-bold text-white">${card.amount}</span>
+                <span className="text-[0.54rem] font-semibold uppercase tracking-[0.14em] text-brand-muted">
                   {card.label}
                 </span>
               </button>
@@ -81,12 +81,12 @@ export default function ExperienceGivingNativeForm({
       </section>
 
       <label className="block">
-        <span className="mb-1.5 block font-ui text-[0.62rem] font-bold uppercase tracking-[0.18em] text-brand-muted">
+        <span className="mb-1 block font-ui text-[0.58rem] font-bold uppercase tracking-[0.16em] text-brand-muted">
           Custom amount
         </span>
         <div className="relative">
           <Pencil
-            className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-brand-blue"
+            className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-brand-blue"
             aria-hidden="true"
           />
           <input
@@ -100,7 +100,7 @@ export default function ExperienceGivingNativeForm({
             onFocus={onCustomAmountFocus}
             onClick={onCustomAmountFocus}
             onChange={(event) => onCustomAmountChange(event.target.value)}
-            className={`${fieldClassName} pl-10`}
+            className={`${fieldClassName} pl-9`}
           />
         </div>
       </label>
@@ -108,7 +108,7 @@ export default function ExperienceGivingNativeForm({
       {error ? (
         <p
           role="alert"
-          className="rounded-lg border border-brand-pink/30 bg-brand-pink/10 px-3 py-2 font-body text-sm text-brand-pink"
+          className="rounded-lg border border-brand-pink/30 bg-brand-pink/10 px-3 py-1.5 font-body text-xs text-brand-pink"
         >
           {error}
         </p>

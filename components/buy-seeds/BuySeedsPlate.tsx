@@ -9,22 +9,22 @@ import ProfileOrbEditor from "@/components/profile/ProfileOrbEditor";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 import {
-  VITAL_SEED_GIVING_ASSETS,
-  VITAL_SEED_GIVING_HERO_CROP_RATIO,
-  VITAL_SEED_GIVING_MOBILE_ART_NATIVE,
-} from "@/lib/vital-seed/giving-assets";
+  BUY_SEEDS_ASSETS,
+  BUY_SEEDS_HERO_CROP_RATIO,
+  BUY_SEEDS_MOBILE_ART_NATIVE,
+} from "@/lib/seeds/assets";
 
-type ExperienceGivingPlateProps = {
+type BuySeedsPlateProps = {
   profile: AttendeeProfileSnapshot;
   onProfileChange: (profile: AttendeeProfileSnapshot) => void;
   children: ReactNode;
 };
 
-export default function ExperienceGivingPlate({
+export default function BuySeedsPlate({
   profile,
   onProfileChange,
   children,
-}: ExperienceGivingPlateProps) {
+}: BuySeedsPlateProps) {
   return (
     <div className="auth-login-page relative flex w-full flex-col items-center px-4 py-3 pt-safe sm:px-6 sm:py-5">
       <div className="auth-login-page__glow pointer-events-none" aria-hidden="true" />
@@ -48,16 +48,16 @@ export default function ExperienceGivingPlate({
         <header className="mb-3">
           <div className="relative h-[clamp(8.5rem,28dvh,12rem)] w-full overflow-hidden">
             <Image
-              src={VITAL_SEED_GIVING_ASSETS.mobileBackground}
-              alt="Vital Seed Giving"
-              width={VITAL_SEED_GIVING_MOBILE_ART_NATIVE.width}
-              height={VITAL_SEED_GIVING_MOBILE_ART_NATIVE.height}
+              src={BUY_SEEDS_ASSETS.mobileBackground}
+              alt="Buy Vital Seeds"
+              width={BUY_SEEDS_MOBILE_ART_NATIVE.width}
+              height={BUY_SEEDS_MOBILE_ART_NATIVE.height}
               priority
               sizes="(max-width: 640px) 100vw, 448px"
               className="absolute left-0 top-0 max-w-none object-cover object-top"
               style={{
                 width: "100%",
-                height: `${100 / VITAL_SEED_GIVING_HERO_CROP_RATIO}%`,
+                height: `${100 / BUY_SEEDS_HERO_CROP_RATIO}%`,
               }}
             />
           </div>

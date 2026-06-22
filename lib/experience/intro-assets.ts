@@ -3,8 +3,12 @@
 import { MOBILE_ARTBOARD_REF } from "@/lib/responsive";
 
 export const INTRO_VIDEO_SRC = "/intro%20mobile.mp4";
+
+/** Cache-bust when replacing `public/intro-music.m4a`. */
+export const INTRO_MUSIC_ASSET_VERSION = "20260618";
+
 /** Served from `public/intro-music.m4a`. */
-export const INTRO_MUSIC_SRC = "/intro-music.m4a";
+export const INTRO_MUSIC_SRC = `/intro-music.m4a?v=${INTRO_MUSIC_ASSET_VERSION}`;
 
 /** Native intro mobile.mp4 export (9:16 — same ratio as dashboard track). */
 export const INTRO_VIDEO_ART = {
@@ -28,12 +32,4 @@ export const INTRO_ENTER_PANEL = {
   top: 76.5,
   width: 84,
   height: 12.5,
-} as const satisfies IntroLayoutRect;
-
-/** Hides baked “BILITIES…” footer strip on intro mobile.mp4. */
-export const INTRO_FOOTER_TAGLINE_MASK = {
-  left: 0,
-  top: 91,
-  width: 100,
-  height: 9,
 } as const satisfies IntroLayoutRect;

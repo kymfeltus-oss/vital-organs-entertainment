@@ -3,14 +3,19 @@ import { SEED_ECONOMY_PACKS } from "@/lib/merch/catalog";
 
 /** Buy Seeds page — flat background + native overlay content. */
 
+export const BUY_SEEDS_ASSET_VERSION = "20260622";
+
 export const BUY_SEEDS_ASSETS = {
-  mobileBackground: "/buy-seeds/mobile-main-background.png",
+  mobileBackground: `/buy-seeds/mobile-main-background.png?v=${BUY_SEEDS_ASSET_VERSION}`,
 } as const;
 
 export const BUY_SEEDS_MOBILE_ART = MOBILE_ARTBOARD_REF;
 
 /** Native PNG plate — same 1080×1920 stage as attendee dashboard. */
 export const BUY_SEEDS_MOBILE_ART_NATIVE = MOBILE_ARTBOARD_REF;
+
+/** Top crop of mobile-main-background.png — branding above package list. */
+export const BUY_SEEDS_HERO_CROP_RATIO = 0.5;
 
 /** @deprecated Use BUY_SEEDS_MOBILE_ART */
 export const BUY_SEEDS_ART = BUY_SEEDS_MOBILE_ART;

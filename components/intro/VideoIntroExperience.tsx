@@ -6,7 +6,6 @@ import { fetchAccessContext } from "@/lib/access";
 import { buildPersonaHubUrl, DEFAULT_ATTENDEE_NEXT } from "@/lib/auth/routing";
 import {
   INTRO_ENTER_PANEL,
-  INTRO_FOOTER_TAGLINE_MASK,
   INTRO_MOBILE_ART,
   INTRO_MUSIC_SRC,
   INTRO_VIDEO_ART,
@@ -106,7 +105,7 @@ export default function VideoIntroExperience() {
 
   const playIntroMusic = useCallback(async () => {
     const audio = musicRef.current;
-    if (!audio || musicPlayingRef.current) return;
+    if (!audio) return;
 
     audio.volume = 0.85;
     audio.loop = true;
@@ -114,18 +113,29 @@ export default function VideoIntroExperience() {
     try {
       if (audio.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
         audio.load();
-        await new Promise<void>((resolve) => {
+        await new Promise<void>((resolve, reject) => {
           if (audio.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
             resolve();
             return;
           }
 
           const onReady = () => {
-            audio.removeEventListener("canplay", onReady);
+            cleanup();
             resolve();
           };
 
-          audio.addEventListener("canplay", onReady);
+          const onError = () => {
+            cleanup();
+            reject(new Error("Intro music failed to load."));
+          };
+
+          const cleanup = () => {
+            audio.removeEventListener("canplaythrough", onReady);
+            audio.removeEventListener("error", onError);
+          };
+
+          audio.addEventListener("canplaythrough", onReady);
+          audio.addEventListener("error", onError);
         });
       }
 
@@ -134,6 +144,7 @@ export default function VideoIntroExperience() {
         musicPlayingRef.current = true;
       }
     } catch {
+      musicPlayingRef.current = false;
       /* Browser autoplay policy — unlocks on first tap. */
     }
   }, []);
@@ -214,15 +225,9 @@ export default function VideoIntroExperience() {
       onPointerDown={unlockIntroAudio}
       onTouchStart={unlockIntroAudio}
     >
-      <audio
-        ref={musicRef}
-        src={INTRO_MUSIC_SRC}
-        loop
-        preload="auto"
-        playsInline
-        className="intro-flash-audio"
-        aria-hidden="true"
-      />
+      <audio ref={musicRef} loop preload="auto" className="intro-flash-audio" aria-hidden="true">
+        <source src={INTRO_MUSIC_SRC} type="audio/mp4" />
+      </audio>
 
       <div className="intro-flash-ambience intro-flash-ambience--back" aria-hidden="true">
         <div className="intro-flash-vignette" />
@@ -257,12 +262,6 @@ export default function VideoIntroExperience() {
               <span className="intro-flash-video-loading-bar" />
             </div>
           ) : null}
-
-          <div
-            className="intro-flash-footer-mask"
-            aria-hidden="true"
-            style={introRectStyle(INTRO_FOOTER_TAGLINE_MASK)}
-          />
 
           <div className="intro-flash-overlay">
             <button
