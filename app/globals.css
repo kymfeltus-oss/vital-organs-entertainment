@@ -2399,12 +2399,9 @@ body::-webkit-scrollbar {
   flex-direction: column;
   justify-content: flex-end;
   pointer-events: auto;
-  overflow: hidden;
+  overflow: visible;
 }
 
-.vital-giving-page__form-overlay .glass-panel {
-  overflow: hidden;
-}
 .buy-seeds-page__baked-mask {
   position: absolute;
   left: 0;

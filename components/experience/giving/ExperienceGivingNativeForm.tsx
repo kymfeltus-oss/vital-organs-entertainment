@@ -101,7 +101,7 @@ export default function ExperienceGivingNativeForm({
         </div>
       </label>
 
-      <div className="space-y-1.5 border-t border-brand-border/30 pt-1.5">
+      <div className="space-y-1.5 pt-0.5">
         {error ? (
           <p
             role="alert"
