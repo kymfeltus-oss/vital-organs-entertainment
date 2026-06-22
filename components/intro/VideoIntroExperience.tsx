@@ -6,6 +6,7 @@ import { fetchAccessContext } from "@/lib/access";
 import { buildPersonaHubUrl, DEFAULT_ATTENDEE_NEXT } from "@/lib/auth/routing";
 import {
   INTRO_ENTER_PANEL,
+  INTRO_FOOTER_TAGLINE_MASK,
   INTRO_MOBILE_ART,
   INTRO_MUSIC_SRC,
   INTRO_VIDEO_ART,
@@ -256,6 +257,12 @@ export default function VideoIntroExperience() {
               <span className="intro-flash-video-loading-bar" />
             </div>
           ) : null}
+
+          <div
+            className="intro-flash-footer-mask"
+            aria-hidden="true"
+            style={introRectStyle(INTRO_FOOTER_TAGLINE_MASK)}
+          />
 
           <div className="intro-flash-overlay">
             <button

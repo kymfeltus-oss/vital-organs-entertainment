@@ -3,7 +3,7 @@
 import { MOBILE_ARTBOARD_REF } from "@/lib/responsive";
 
 /** Bump when replacing PNG plates so browsers pick up new art. */
-export const AWAKENING_AUTH_ASSET_VERSION = "20260621-auth-v6";
+export const AWAKENING_AUTH_ASSET_VERSION = "20260622-auth-v19";
 
 /** Same 1080×1920 stage as attendee dashboard. */
 export const AWAKENING_AUTH_LOGIN_ART = MOBILE_ARTBOARD_REF;
@@ -19,9 +19,24 @@ export const AWAKENING_AUTH_NATIVE = {
 
 export const AWAKENING_AUTH_ASSETS = {
   attendeeLoginPlate: "/awakening/auth-attendee-login.png",
-  /** Signup plate — edit `public/create-account/create-account -background.png` (synced to canonical copy). */
+  /** Signup plate — `public/create-account/create-account-background.png` (941×1672). */
   attendeeSignupPlate: "/create-account/create-account-background.png",
 } as const;
+
+/** Sliced login controls — `public/awakening/*.png` */
+export const AWAKENING_AUTH_LOGIN_COMPONENTS = {
+  emailField: { src: "/awakening/email_field_full.png", width: 710, height: 97 },
+  passwordField: { src: "/awakening/password_button.png", width: 332, height: 47 },
+  rememberRow: { src: "/awakening/remember_me_button.png", width: 1319, height: 91 },
+  loginButton: { src: "/awakening/login_button_full.png", width: 713, height: 103 },
+  createAccountButton: { src: "/awakening/create_account_button_full.png", width: 714, height: 140 },
+  appleButton: { src: "/awakening/apple_button.png", width: 343, height: 219 },
+  googleButton: { src: "/awakening/google_button.png", width: 337, height: 220 },
+  facebookButton: { src: "/awakening/facebook_button.png", width: 337, height: 220 },
+  signUpFooter: { src: "/awakening/dont_have_account_button.png", width: 346, height: 29 },
+} as const;
+
+export type AuthLoginComponentKey = keyof typeof AWAKENING_AUTH_LOGIN_COMPONENTS;
 
 export function awakeningAuthAssetUrl(path: string): string {
   return `${path}?v=${AWAKENING_AUTH_ASSET_VERSION}`;
@@ -34,31 +49,40 @@ export type AuthLayoutRect = {
   height: number;
 };
 
-/** Percentage rects aligned to auth-attendee-login.png (1080×1920 stage). */
+/** Flex form column anchor on the login artboard (below header plate). */
+export const AWAKENING_AUTH_LOGIN_FORM = {
+  left: 13.82,
+  top: 46.63,
+  width: 72.48,
+} as const;
+
+/** Header-only clip height — matches form anchor top (auth-attendee-login.png). */
+export const AWAKENING_AUTH_LOGIN_HEADER_HEIGHT = AWAKENING_AUTH_LOGIN_FORM.top;
+
+/** Percentage rects aligned to auth-attendee-login.png (941×1672 on 1080×1920 stage). */
 export const AWAKENING_AUTH_LOGIN_PANELS = {
-  email: { left: 10, top: 48, width: 80, height: 6 },
-  password: { left: 10, top: 53, width: 80, height: 5 },
-  rememberMe: { left: 10, top: 58, width: 40, height: 4 },
-  forgotPassword: { left: 50, top: 58, width: 40, height: 4 },
-  loginButton: { left: 10, top: 61, width: 80, height: 6 },
-  appleSignIn: { left: 10, top: 66, width: 26, height: 6 },
-  googleSignIn: { left: 37, top: 66, width: 26, height: 6 },
-  facebookSignIn: { left: 64, top: 66, width: 26, height: 6 },
-  signUpLink: { left: 10, top: 85, width: 80, height: 7 },
+  email: { left: 13.82, top: 46.63, width: 72.48, height: 6.93 },
+  password: { left: 13.82, top: 54.1, width: 72.49, height: 6.04 },
+  rememberMe: { left: 12.54, top: 60.2, width: 6.38, height: 1.43 },
+  forgotPassword: { left: 35.07, top: 60.08, width: 45.48, height: 1.43 },
+  loginButton: { left: 13.82, top: 63.24, width: 72.48, height: 4.2 },
+  createAccountButton: { left: 13.82, top: 71.25, width: 72.48, height: 3.8 },
+  appleSignIn: { left: 8, top: 81, width: 28, height: 4.2 },
+  googleSignIn: { left: 33, top: 81, width: 32, height: 4.2 },
+  facebookSignIn: { left: 72, top: 81, width: 28, height: 4.2 },
+  signUpLink: { left: 13.82, top: 84.88, width: 72.48, height: 4.3 },
 } as const satisfies Record<string, AuthLayoutRect>;
 
-/** Signup overlay slots — create-account background (1080×1920 stage). */
+/** Signup overlay slots — create-account-background.png (941×1672 on 1080×1920 stage). */
 export const AWAKENING_AUTH_SIGNUP_PANELS = {
-  firstName: { left: 8.5, top: 30.5, width: 40, height: 4.5 },
-  lastName: { left: 52, top: 30.5, width: 40.5, height: 4.5 },
-  email: { left: 8.5, top: 37.96, width: 84, height: 4.82 },
-  phone: { left: 8.5, top: 44.08, width: 84, height: 4.82 },
-  city: { left: 8.5, top: 50.13, width: 42, height: 4.88 },
-  state: { left: 52, top: 50.13, width: 40.5, height: 4.88 },
-  password: { left: 8.5, top: 56.25, width: 84, height: 4.82 },
-  confirmPassword: { left: 8.5, top: 62.3, width: 84, height: 4.75 },
-  termsCheckbox: { left: 8.5, top: 67.5, width: 7, height: 2.5 },
-  submitButton: { left: 8.5, top: 82.5, width: 84, height: 4.5 },
-  backToLogin: { left: 8.5, top: 86.98, width: 84, height: 3.65 },
-  avatarUpload: { left: 8.5, top: 74.41, width: 84, height: 12.43 },
+  avatarUpload: { left: 34, top: 29.5, width: 32, height: 12 },
+  fullName: { left: 14.5, top: 41.87, width: 71, height: 7.18 },
+  email: { left: 14.5, top: 49.04, width: 71, height: 5.98 },
+  city: { left: 14.5, top: 55.02, width: 71, height: 5.98 },
+  state: { left: 14.5, top: 61, width: 71, height: 4.78 },
+  password: { left: 14.5, top: 65.79, width: 71, height: 5.98 },
+  confirmPassword: { left: 14.5, top: 71.77, width: 71, height: 5.98 },
+  termsCheckbox: { left: 14.5, top: 77.99, width: 8, height: 2.8 },
+  submitButton: { left: 14.5, top: 80.2, width: 71, height: 4.72 },
+  backToLogin: { left: 14.5, top: 88.52, width: 71, height: 4.78 },
 } as const satisfies Record<string, AuthLayoutRect>;

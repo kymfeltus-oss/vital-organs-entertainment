@@ -29,7 +29,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     <main
       id="main-content"
       className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-brand-black"
-      aria-label="Log in"
+      aria-label="Log in page"
     >
       <AttendeeFunnelClient nextPath={nextPath} authError={params.error ?? null} />
     </main>

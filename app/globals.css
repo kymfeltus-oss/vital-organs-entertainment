@@ -710,6 +710,15 @@ html {
   user-select: none;
 }
 
+/* Covers baked “AWAKENING POSSIBILITIES” strip on intro mobile.mp4. */
+.intro-flash-footer-mask {
+  position: absolute;
+  z-index: 4;
+  box-sizing: border-box;
+  background: #000000;
+  pointer-events: none;
+}
+
 .intro-flash-overlay {
   position: absolute;
   inset: 0;
@@ -2752,9 +2761,40 @@ html {
   pointer-events: none;
 }
 
+.holding-room-countdown__label-unit {
+  position: absolute;
+  box-sizing: border-box;
+  z-index: 2;
+}
+
 .holding-room-countdown__unit {
   position: absolute;
   box-sizing: border-box;
+  z-index: 1;
+}
+
+.holding-room-countdown__label-mask {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  background-color: #000000;
+}
+
+.holding-room-countdown__label {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(0.55rem, 2.4cqw, 1.1rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-align: center;
+  white-space: nowrap;
+  color: rgb(255 255 255 / 0.72);
 }
 
 .holding-room-countdown__value-mask {
@@ -4663,12 +4703,48 @@ html {
   -webkit-user-drag: none;
 }
 
+/* Login with sliced component PNGs — header plate only (no duplicate form art). */
+.auth-attendee-artboard--login-plates {
+  /* Keep in sync with AWAKENING_AUTH_LOGIN_FORM.top in awakening-auth-assets.ts */
+  --auth-login-header-ratio: 0.4663;
+  --auth-login-header-h: calc(var(--auth-login-header-ratio) * 100%);
+}
+
+/* Header-only window — img stays full-stage height; overflow hides baked form art below. */
+.auth-attendee-login-header-plate {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: 100%;
+  height: var(--auth-login-header-h);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.auth-attendee-login-header-plate > .auth-attendee-artboard__img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: auto;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: calc(100% / var(--auth-login-header-ratio));
+  object-fit: contain;
+  object-position: top center;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
 .auth-attendee-overlay {
   position: absolute;
   inset: 0;
   z-index: 2;
   overflow: visible;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .auth-attendee-overlay-form {
@@ -4677,9 +4753,206 @@ html {
   z-index: 3;
   width: 100%;
   height: 100%;
-  pointer-events: auto;
+  pointer-events: none;
   touch-action: manipulation;
   isolation: isolate;
+}
+
+/* Login — flex column form anchored to PNG field column (create-account keeps absolute slots). */
+.auth-attendee-overlay-form.auth-attendee-login-form {
+  inset: auto;
+  right: auto;
+  bottom: auto;
+  height: auto;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 2cqw, 0.85rem);
+  pointer-events: auto;
+  box-sizing: border-box;
+}
+
+.auth-attendee-login-form__plate {
+  position: relative;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.auth-attendee-login-form__plate-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.auth-attendee-login-form__plate-controls {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.auth-attendee-login-form__field {
+  position: static;
+  top: auto;
+  left: auto;
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  min-height: 2.75rem;
+  margin: 0;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 12% 0 18%;
+  font-size: clamp(0.8125rem, 2.8cqw, 0.9375rem);
+  line-height: 1.25;
+  color: #ffffff;
+  caret-color: #ffffff;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.auth-attendee-login-form__field::placeholder {
+  color: rgb(255 255 255 / 0.68);
+  opacity: 1;
+}
+
+.auth-attendee-login-form__field:focus,
+.auth-attendee-login-form__field:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgb(0 168 255 / 0.35);
+}
+
+.auth-attendee-login-form__field:-webkit-autofill,
+.auth-attendee-login-form__field:-webkit-autofill:hover,
+.auth-attendee-login-form__field:-webkit-autofill:focus,
+.auth-attendee-login-form__field:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  box-shadow: 0 0 0 1000px transparent inset !important;
+  background-color: transparent !important;
+  -webkit-text-fill-color: #ffffff !important;
+  color: #ffffff !important;
+  caret-color: #ffffff;
+  transition: background-color 99999s ease-out 0s;
+}
+
+.auth-attendee-login-form__field--password {
+  padding-right: 18%;
+}
+
+.auth-attendee-login-form__password-toggle {
+  position: static;
+  flex: 0 0 14%;
+  width: auto;
+  height: auto;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.auth-attendee-login-form__password-toggle:focus-visible {
+  outline: 2px solid #00a8ff;
+  outline-offset: -2px;
+}
+
+.auth-attendee-login-form__remember-hit {
+  flex: 0 0 38%;
+  min-height: 2.75rem;
+  margin: 0;
+  cursor: pointer;
+}
+
+.auth-attendee-login-form__checkbox {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.auth-attendee-login-form__forgot-hit {
+  flex: 1 1 auto;
+  min-height: 2.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.auth-attendee-login-form__forgot-hit:focus-visible {
+  outline: 2px solid #00a8ff;
+  outline-offset: -2px;
+}
+
+.auth-attendee-login-form__asset-btn,
+.auth-attendee-login-form__asset-link {
+  position: static;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 2.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.auth-attendee-login-form__asset-btn:focus-visible,
+.auth-attendee-login-form__asset-link:focus-visible {
+  outline: 2px solid #00a8ff;
+  outline-offset: 2px;
+}
+
+.auth-attendee-login-form__social {
+  display: flex;
+  align-items: stretch;
+  gap: clamp(0.45rem, 2cqw, 0.75rem);
+  width: 100%;
+}
+
+.auth-attendee-login-form__plate--social {
+  flex: 1 1 0;
+  min-width: 0;
+  aspect-ratio: 337 / 220;
+}
+
+.auth-attendee-login-form__plate--social .auth-attendee-login-form__plate-art {
+  height: 100%;
+  object-fit: contain;
+}
+
+.auth-attendee-login-form__message {
+  position: static;
+  top: auto;
+  left: auto;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  transform: none;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(255 0 140 / 0.35);
+  background: rgb(9 11 19 / 0.92);
+  padding: 0.65rem 0.85rem;
+  text-align: center;
+  color: #ffffff;
+}
+
+.auth-attendee-interactive {
+  pointer-events: auto;
+  touch-action: manipulation;
 }
 
 /* Typed text sits in the PNG label zone — icons/labels remain artwork-only. */
@@ -4846,6 +5119,69 @@ html {
   pointer-events: auto;
 }
 
+/* Login PNG overlays — slot-sized hit targets; global 44px mins stack and block taps. */
+.auth-attendee-overlay-form .auth-attendee-field,
+.auth-attendee-overlay-form .auth-attendee-hit,
+.auth-attendee-overlay-form .auth-attendee-action-hit,
+.auth-attendee-overlay-form .auth-attendee-password-toggle,
+.auth-attendee-overlay-form .auth-attendee-link-hit,
+.auth-attendee-overlay-form .auth-attendee-forgot-hit,
+.auth-attendee-overlay-form .auth-attendee-remember {
+  min-width: 0;
+  min-height: 0;
+}
+
+.auth-attendee-overlay-form .auth-attendee-field {
+  z-index: 12;
+  display: block;
+  overflow: hidden;
+  padding-top: clamp(0.35rem, 1.1cqh, 0.65rem);
+  padding-bottom: 0;
+  line-height: 1.15;
+}
+
+.auth-attendee-overlay-form .auth-attendee-password-toggle {
+  z-index: 13;
+}
+
+.auth-attendee-overlay-form .auth-attendee-action-hit {
+  z-index: 14;
+}
+
+/* PNG overlay inputs — hide empty text, kill light-blue browser autofill paint. */
+.auth-attendee-overlay-form .auth-attendee-field {
+  color-scheme: dark;
+  color: transparent;
+  background-color: transparent;
+}
+
+.auth-attendee-overlay-form .auth-attendee-field:focus,
+.auth-attendee-overlay-form .auth-attendee-field:not(:placeholder-shown) {
+  color: #ffffff;
+}
+
+.auth-attendee-overlay-form .auth-attendee-field:-webkit-autofill,
+.auth-attendee-overlay-form .auth-attendee-field:-webkit-autofill:hover,
+.auth-attendee-overlay-form .auth-attendee-field:-webkit-autofill:focus,
+.auth-attendee-overlay-form .auth-attendee-field:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  box-shadow: 0 0 0 1000px transparent inset !important;
+  background-color: transparent !important;
+  -webkit-text-fill-color: #ffffff !important;
+  color: #ffffff !important;
+  caret-color: #ffffff;
+  transition: background-color 99999s ease-out 0s;
+}
+
+.auth-attendee-overlay-form .auth-attendee-field--select:invalid {
+  color: transparent;
+}
+
+.auth-attendee-overlay-form .auth-attendee-field--select:valid,
+.auth-attendee-overlay-form .auth-attendee-field--select:focus {
+  color: #ffffff;
+}
+
 /* Create account — PNG hero + native form panel (941×1672) */
 .create-account-overlay,
 .login-overlay {
@@ -4958,10 +5294,14 @@ html {
 
 .login-form__control:-webkit-autofill,
 .login-form__control:-webkit-autofill:hover,
-.login-form__control:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px #000000 inset !important;
-  box-shadow: 0 0 0 1000px #000000 inset !important;
+.login-form__control:-webkit-autofill:focus,
+.login-form__control:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  box-shadow: 0 0 0 1000px transparent inset !important;
+  background-color: transparent !important;
   -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff;
+  transition: background-color 99999s ease-out 0s;
 }
 
 .login-form__password-toggle {

@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  LOGIN_BAKED_FIELD_MASKS,
-  LOGIN_FIELD_SLOTS,
-  type LoginOverlayRect,
-} from "@/lib/auth/login-mobile-slots";
-import type { CSSProperties, ReactNode } from "react";
+  AWAKENING_AUTH_LOGIN_COMPONENTS,
+  AWAKENING_AUTH_LOGIN_FORM,
+  awakeningAuthAssetUrl,
+} from "@/lib/experience/awakening-auth-assets";
 
 type AttendeeAuthLoginMobileFormProps = {
   createAccountHref: string;
@@ -25,26 +26,29 @@ type AttendeeAuthLoginMobileFormProps = {
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
 };
 
-function slotStyle(rect: LoginOverlayRect): CSSProperties {
-  return {
-    position: "absolute",
-    left: rect.left,
-    top: rect.top,
-    width: rect.width,
-    height: rect.height,
-  };
-}
-
-function FormSlot({
-  rect,
-  children,
-}: {
-  rect: LoginOverlayRect;
+type LoginPlateProps = {
+  component: (typeof AWAKENING_AUTH_LOGIN_COMPONENTS)[keyof typeof AWAKENING_AUTH_LOGIN_COMPONENTS];
+  className?: string;
   children: ReactNode;
-}) {
+};
+
+const COMING_SOON_NOTICE_MS = 3200;
+
+function LoginPlate({ component, className = "", children }: LoginPlateProps) {
   return (
-    <div className="login-form__slot" style={slotStyle(rect)}>
-      {children}
+    <div className={`auth-attendee-login-form__plate ${className}`.trim()}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={awakeningAuthAssetUrl(component.src)}
+        alt=""
+        width={component.width}
+        height={component.height}
+        className="auth-attendee-login-form__plate-art"
+        loading="eager"
+        decoding="async"
+        draggable={false}
+      />
+      <div className="auth-attendee-login-form__plate-controls">{children}</div>
     </div>
   );
 }
@@ -64,159 +68,215 @@ export default function AttendeeAuthLoginMobileForm({
   onRememberMeChange,
   onSubmit,
 }: AttendeeAuthLoginMobileFormProps) {
+  const formAnchor = AWAKENING_AUTH_LOGIN_FORM;
+  const components = AWAKENING_AUTH_LOGIN_COMPONENTS;
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const noticeTimerRef = useRef<number | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    const syncAutofill = () => {
+      const emailInput = emailRef.current;
+      const passwordInput = passwordRef.current;
+
+      if (emailInput?.value.includes("@") && emailInput.value !== email) {
+        onEmailChange(emailInput.value);
+      }
+
+      if (
+        passwordInput?.value &&
+        !passwordInput.value.includes("@") &&
+        passwordInput.value !== password
+      ) {
+        onPasswordChange(passwordInput.value);
+      }
+
+      if (passwordInput?.value.includes("@")) {
+        passwordInput.value = "";
+        onPasswordChange("");
+      }
+    };
+
+    syncAutofill();
+    const shortTimer = window.setTimeout(syncAutofill, 350);
+    const longTimer = window.setTimeout(syncAutofill, 1200);
+
+    return () => {
+      window.clearTimeout(shortTimer);
+      window.clearTimeout(longTimer);
+    };
+  }, [email, onEmailChange, onPasswordChange, password]);
+
+  useEffect(() => {
+    return () => {
+      if (noticeTimerRef.current != null) {
+        window.clearTimeout(noticeTimerRef.current);
+      }
+    };
+  }, []);
+
+  const showComingSoon = (label: string) => {
+    if (noticeTimerRef.current != null) {
+      window.clearTimeout(noticeTimerRef.current);
+    }
+    setNotice(`${label} is coming soon.`);
+    noticeTimerRef.current = window.setTimeout(() => {
+      setNotice(null);
+      noticeTimerRef.current = null;
+    }, COMING_SOON_NOTICE_MS);
+  };
+
+  const displayMessage = formError ?? notice;
+
   return (
-    <div className="login-overlay pointer-events-none absolute inset-0 z-[3] size-full">
-      {LOGIN_BAKED_FIELD_MASKS.map((rect, index) => (
-        <div
-          key={`login-field-mask-${index}`}
-          className="login-form__field-mask"
-          style={slotStyle(rect)}
-          aria-hidden="true"
+    <form
+      onSubmit={onSubmit}
+      className="auth-attendee-overlay-form auth-attendee-login-form"
+      aria-label="Sign in form"
+      autoComplete="on"
+      noValidate
+      style={{
+        left: `${formAnchor.left}%`,
+        top: `${formAnchor.top}%`,
+        width: `${formAnchor.width}%`,
+      }}
+    >
+      <LoginPlate component={components.emailField}>
+        <input
+          ref={emailRef}
+          id="auth-login-email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          inputMode="email"
+          enterKeyHint="next"
+          disabled={isSubmitting}
+          value={email}
+          onChange={(event) => onEmailChange(event.target.value)}
+          onInput={(event) => onEmailChange(event.currentTarget.value)}
+          onBlur={onEmailBlur}
+          placeholder="Email Address"
+          aria-label="Email address"
+          className="auth-attendee-login-form__field auth-attendee-interactive font-body"
         />
-      ))}
+      </LoginPlate>
 
-      <form
-        onSubmit={onSubmit}
-        className="login-form pointer-events-auto"
-        aria-label="Log in"
-        noValidate
-      >
-        <FormSlot rect={LOGIN_FIELD_SLOTS.email}>
-          <label className="login-form__field">
-            <input
-              id="auth-login-email"
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-              inputMode="email"
-              enterKeyHint="next"
-              disabled={isSubmitting}
-              value={email}
-              onChange={(event) => onEmailChange(event.target.value)}
-              onBlur={onEmailBlur}
-              placeholder=""
-              aria-label="Email address"
-              className="login-form__control font-body"
-            />
-          </label>
-        </FormSlot>
+      <LoginPlate component={components.passwordField}>
+        <input
+          ref={passwordRef}
+          id="auth-login-password"
+          name="password"
+          type={showPassword ? "text" : "password"}
+          required
+          minLength={8}
+          autoComplete="current-password"
+          enterKeyHint="done"
+          disabled={isSubmitting}
+          value={password}
+          onChange={(event) => onPasswordChange(event.target.value)}
+          onInput={(event) => onPasswordChange(event.currentTarget.value)}
+          placeholder="Password"
+          aria-label="Password"
+          className="auth-attendee-login-form__field auth-attendee-login-form__field--password auth-attendee-interactive font-body"
+        />
+        <button
+          type="button"
+          aria-label={showPassword ? "Hide password" : "Show password"}
+          disabled={isSubmitting}
+          className="auth-attendee-login-form__password-toggle auth-attendee-interactive touch-target"
+          onClick={onToggleShowPassword}
+        />
+      </LoginPlate>
 
-        <FormSlot rect={LOGIN_FIELD_SLOTS.password}>
-          <label className="login-form__field login-form__field--password">
-            <input
-              id="auth-login-password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              required
-              minLength={8}
-              autoComplete="current-password"
-              enterKeyHint="done"
-              disabled={isSubmitting}
-              value={password}
-              onChange={(event) => onPasswordChange(event.target.value)}
-              placeholder=""
-              aria-label="Password"
-              className="login-form__control login-form__control--password font-body"
-            />
-            <button
-              type="button"
-              className="login-form__password-toggle touch-target"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              disabled={isSubmitting}
-              onClick={onToggleShowPassword}
-            >
-              {showPassword ? (
-                <EyeOff className="size-4" aria-hidden="true" />
-              ) : (
-                <Eye className="size-4" aria-hidden="true" />
-              )}
-            </button>
-          </label>
-        </FormSlot>
-
-        <FormSlot rect={LOGIN_FIELD_SLOTS.options}>
-          <div className="login-form__options">
-            <label className="login-form__remember touch-target font-body">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                disabled={isSubmitting}
-                onChange={(event) => onRememberMeChange(event.target.checked)}
-                className="login-form__remember-checkbox"
-              />
-              <span>Remember Me</span>
-            </label>
-            <button
-              type="button"
-              disabled={isSubmitting}
-              aria-label="Forgot password — coming soon"
-              className="login-form__forgot touch-target font-ui"
-            >
-              Forgot Password?
-            </button>
-          </div>
-        </FormSlot>
-
-        <FormSlot rect={LOGIN_FIELD_SLOTS.submit}>
-          <button
-            type="submit"
+      <LoginPlate component={components.rememberRow}>
+        <label className="auth-attendee-login-form__remember-hit auth-attendee-interactive">
+          <input
+            type="checkbox"
+            checked={rememberMe}
             disabled={isSubmitting}
-            aria-label="Log in"
-            className="login-form__submit touch-target font-ui size-full"
-          >
-            {isSubmitting ? (
-              <Loader2 className="size-5 animate-spin text-white" aria-hidden="true" />
-            ) : (
-              <span className="sr-only">Log in</span>
-            )}
-          </button>
-        </FormSlot>
+            onChange={(event) => onRememberMeChange(event.target.checked)}
+            className="auth-attendee-login-form__checkbox"
+          />
+          <span className="sr-only">Remember me</span>
+        </label>
+        <button
+          type="button"
+          disabled={isSubmitting}
+          aria-label="Forgot password — coming soon"
+          className="auth-attendee-login-form__forgot-hit auth-attendee-interactive touch-target"
+          onClick={() => showComingSoon("Password reset")}
+        />
+      </LoginPlate>
 
-        <FormSlot rect={LOGIN_FIELD_SLOTS.socialRow}>
-          <div className="login-form__social-row" role="group" aria-label="Social sign in">
-            <button
-              type="button"
-              disabled={isSubmitting}
-              aria-label="Continue with Apple — coming soon"
-              className="login-form__social-btn touch-target font-ui"
-            >
-              <span className="sr-only">Apple</span>
-            </button>
-            <button
-              type="button"
-              disabled={isSubmitting}
-              aria-label="Continue with Google — coming soon"
-              className="login-form__social-btn touch-target font-ui"
-            >
-              <span className="sr-only">Google</span>
-            </button>
-            <button
-              type="button"
-              disabled={isSubmitting}
-              aria-label="Continue with Facebook — coming soon"
-              className="login-form__social-btn touch-target font-ui"
-            >
-              <span className="sr-only">Facebook</span>
-            </button>
-          </div>
-        </FormSlot>
+      <LoginPlate component={components.loginButton}>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          aria-label="Log in"
+          className="auth-attendee-login-form__asset-btn auth-attendee-interactive touch-target"
+        >
+          {isSubmitting ? (
+            <Loader2 className="h-5 w-5 animate-spin text-white" aria-hidden="true" />
+          ) : null}
+        </button>
+      </LoginPlate>
 
-        <FormSlot rect={LOGIN_FIELD_SLOTS.signUp}>
-          <p className="login-form__sign-up font-body">
-            Don&apos;t have an account?{" "}
-            <Link href={createAccountHref} className="login-form__sign-up-link font-ui">
-              Sign Up
-            </Link>
-          </p>
-        </FormSlot>
+      <LoginPlate component={components.createAccountButton}>
+        <Link
+          href={createAccountHref}
+          aria-label="Create account"
+          className="auth-attendee-login-form__asset-link auth-attendee-interactive touch-target"
+        />
+      </LoginPlate>
 
-        {formError ? (
-          <p role="alert" className="login-form__error font-body">
-            {formError}
-          </p>
-        ) : null}
-      </form>
-    </div>
+      <div className="auth-attendee-login-form__social" aria-label="Social sign-in">
+        <LoginPlate component={components.appleButton} className="auth-attendee-login-form__plate--social">
+          <button
+            type="button"
+            disabled={isSubmitting}
+            aria-label="Continue with Apple — coming soon"
+            className="auth-attendee-login-form__asset-btn auth-attendee-interactive touch-target"
+            onClick={() => showComingSoon("Apple sign-in")}
+          />
+        </LoginPlate>
+        <LoginPlate component={components.googleButton} className="auth-attendee-login-form__plate--social">
+          <button
+            type="button"
+            disabled={isSubmitting}
+            aria-label="Continue with Google — coming soon"
+            className="auth-attendee-login-form__asset-btn auth-attendee-interactive touch-target"
+            onClick={() => showComingSoon("Google sign-in")}
+          />
+        </LoginPlate>
+        <LoginPlate component={components.facebookButton} className="auth-attendee-login-form__plate--social">
+          <button
+            type="button"
+            disabled={isSubmitting}
+            aria-label="Continue with Facebook — coming soon"
+            className="auth-attendee-login-form__asset-btn auth-attendee-interactive touch-target"
+            onClick={() => showComingSoon("Facebook sign-in")}
+          />
+        </LoginPlate>
+      </div>
+
+      <LoginPlate component={components.signUpFooter}>
+        <Link
+          href={createAccountHref}
+          aria-label="Don't have an account? Create account"
+          className="auth-attendee-login-form__asset-link auth-attendee-interactive touch-target"
+        />
+      </LoginPlate>
+
+      {displayMessage ? (
+        <p
+          role={formError ? "alert" : "status"}
+          className="auth-attendee-login-form__message auth-attendee-interactive font-body"
+        >
+          {displayMessage}
+        </p>
+      ) : null}
+    </form>
   );
 }

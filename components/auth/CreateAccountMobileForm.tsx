@@ -1,19 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, Eye, EyeOff, Loader2, Lock, Mail, MapPin, User } from "lucide-react";
-import {
-  CREATE_ACCOUNT_BAKED_FIELD_MASKS,
-  CREATE_ACCOUNT_FIELD_SLOTS,
-  type CreateAccountOverlayRect,
-} from "@/lib/auth/create-account-slots";
+import { Loader2 } from "lucide-react";
+import { AWAKENING_AUTH_SIGNUP_PANELS } from "@/lib/experience/awakening-auth-assets";
+import { authRectStyle } from "@/lib/experience/auth-layout-slots";
 import {
   applyFullNameInput,
   formatFullName,
   type CreateAccountFormValues,
 } from "@/lib/auth/create-account-validation";
 import { US_STATES } from "@/lib/auth/us-states";
-import type { CSSProperties, ReactNode } from "react";
 
 type CreateAccountMobileFormProps = {
   loginHref: string;
@@ -34,32 +30,6 @@ type CreateAccountMobileFormProps = {
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
 };
 
-function slotStyle(rect: CreateAccountOverlayRect): CSSProperties {
-  return {
-    position: "absolute",
-    left: rect.left,
-    top: rect.top,
-    width: rect.width,
-    height: rect.height,
-  };
-}
-
-function FormSlot({
-  rect,
-  className,
-  children,
-}: {
-  rect: CreateAccountOverlayRect;
-  className?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className={["create-account-form__slot", className].filter(Boolean).join(" ")} style={slotStyle(rect)}>
-      {children}
-    </div>
-  );
-}
-
 export default function CreateAccountMobileForm({
   loginHref,
   values,
@@ -75,220 +45,189 @@ export default function CreateAccountMobileForm({
   onAvatarPick,
   onSubmit,
 }: CreateAccountMobileFormProps) {
+  const panels = AWAKENING_AUTH_SIGNUP_PANELS;
   const fullName = formatFullName(values);
 
   return (
-    <div className="create-account-overlay pointer-events-none absolute inset-0 z-2 size-full">
-      {CREATE_ACCOUNT_BAKED_FIELD_MASKS.map((rect, index) => (
-        <div
-          key={`create-account-field-mask-${index}`}
-          className="create-account-overlay__field-mask"
-          style={slotStyle(rect)}
-          aria-hidden="true"
-        />
-      ))}
+    <form
+      onSubmit={onSubmit}
+      className="auth-attendee-overlay-form"
+      aria-label="Create account"
+      autoComplete="on"
+      noValidate
+    >
+      <button
+        type="button"
+        aria-label="Upload profile photo"
+        disabled={isSubmitting}
+        className="auth-attendee-hit auth-attendee-link-hit auth-attendee-interactive"
+        style={authRectStyle(panels.avatarUpload)}
+        onClick={onAvatarPick}
+      />
 
-      <form
-        onSubmit={onSubmit}
-        className="auth-plate-form create-account-form pointer-events-auto"
-        aria-label="Create account"
-        noValidate
+      <input
+        type="text"
+        required
+        autoComplete="name"
+        disabled={isSubmitting}
+        value={fullName}
+        onChange={(event) => {
+          const parsed = applyFullNameInput(event.target.value);
+          onFieldChange("firstName", parsed.firstName);
+          onFieldChange("lastName", parsed.lastName);
+        }}
+        onBlur={onBlur}
+        placeholder=" "
+        aria-label="Full name"
+        className="auth-attendee-field auth-attendee-interactive"
+        style={authRectStyle(panels.fullName)}
+      />
+
+      <input
+        type="email"
+        required
+        autoComplete="email"
+        inputMode="email"
+        disabled={isSubmitting}
+        value={values.email}
+        onChange={(event) => onFieldChange("email", event.target.value)}
+        onBlur={onBlur}
+        placeholder=" "
+        aria-label="Email address"
+        className="auth-attendee-field auth-attendee-interactive"
+        style={authRectStyle(panels.email)}
+      />
+
+      <input
+        type="text"
+        required
+        autoComplete="address-level2"
+        disabled={isSubmitting}
+        value={values.city}
+        onChange={(event) => onFieldChange("city", event.target.value)}
+        onBlur={onBlur}
+        placeholder=" "
+        aria-label="City"
+        className="auth-attendee-field auth-attendee-interactive"
+        style={authRectStyle(panels.city)}
+      />
+
+      <select
+        required
+        disabled={isSubmitting}
+        value={values.state}
+        onChange={(event) => onFieldChange("state", event.target.value)}
+        onBlur={onBlur}
+        aria-label="State"
+        className="auth-attendee-field auth-attendee-field--select auth-attendee-interactive"
+        style={authRectStyle(panels.state)}
       >
-        <FormSlot rect={CREATE_ACCOUNT_FIELD_SLOTS.avatar}>
-          <button
-            type="button"
-            className="create-account-avatar-hit touch-target size-full"
-            aria-label="Upload profile photo"
-            disabled={isSubmitting}
-            onClick={onAvatarPick}
-          />
-        </FormSlot>
+        <option value="" disabled>
+          State
+        </option>
+        {US_STATES.map((state) => (
+          <option key={state.code} value={state.code}>
+            {state.name}
+          </option>
+        ))}
+      </select>
 
-        <FormSlot rect={CREATE_ACCOUNT_FIELD_SLOTS.fullName}>
-          <label className="auth-plate-field create-account-form__field">
-            <User className="auth-plate-field__icon" aria-hidden="true" />
-            <input
-              type="text"
-              required
-              autoComplete="name"
-              value={fullName}
-              onChange={(event) => {
-                const parsed = applyFullNameInput(event.target.value);
-                onFieldChange("firstName", parsed.firstName);
-                onFieldChange("lastName", parsed.lastName);
-              }}
-              onBlur={onBlur}
-              placeholder="Full Name"
-              aria-label="Full name"
-              className="auth-plate-field__control font-body"
-            />
-          </label>
-        </FormSlot>
+      <input
+        type={showPassword ? "text" : "password"}
+        required
+        autoComplete="new-password"
+        disabled={isSubmitting}
+        value={values.password}
+        onChange={(event) => onFieldChange("password", event.target.value)}
+        onBlur={onBlur}
+        placeholder=" "
+        aria-label="Create password"
+        className="auth-attendee-field auth-attendee-field--password auth-attendee-interactive"
+        style={authRectStyle(panels.password)}
+      />
 
-        <FormSlot rect={CREATE_ACCOUNT_FIELD_SLOTS.email}>
-          <label className="auth-plate-field create-account-form__field">
-            <Mail className="auth-plate-field__icon" aria-hidden="true" />
-            <input
-              type="email"
-              required
-              autoComplete="email"
-              inputMode="email"
-              value={values.email}
-              onChange={(event) => onFieldChange("email", event.target.value)}
-              onBlur={onBlur}
-              placeholder="Email Address"
-              aria-label="Email address"
-              className="auth-plate-field__control font-body"
-            />
-          </label>
-        </FormSlot>
+      <button
+        type="button"
+        aria-label={showPassword ? "Hide password" : "Show password"}
+        disabled={isSubmitting}
+        className="auth-attendee-hit auth-attendee-password-toggle auth-attendee-interactive"
+        style={authRectStyle({
+          left: panels.password.left + panels.password.width - 10,
+          top: panels.password.top,
+          width: 9,
+          height: panels.password.height,
+        })}
+        onClick={onToggleShowPassword}
+      />
 
-        <FormSlot rect={CREATE_ACCOUNT_FIELD_SLOTS.city}>
-          <label className="auth-plate-field create-account-form__field">
-            <MapPin className="auth-plate-field__icon" aria-hidden="true" />
-            <input
-              type="text"
-              required
-              autoComplete="address-level2"
-              value={values.city}
-              onChange={(event) => onFieldChange("city", event.target.value)}
-              onBlur={onBlur}
-              placeholder="City"
-              aria-label="City"
-              className="auth-plate-field__control font-body"
-            />
-          </label>
-        </FormSlot>
+      <input
+        type={showConfirmPassword ? "text" : "password"}
+        required
+        autoComplete="new-password"
+        disabled={isSubmitting}
+        value={values.confirmPassword}
+        onChange={(event) => onFieldChange("confirmPassword", event.target.value)}
+        onBlur={onBlur}
+        placeholder=" "
+        aria-label="Confirm password"
+        className="auth-attendee-field auth-attendee-field--password auth-attendee-interactive"
+        style={authRectStyle(panels.confirmPassword)}
+      />
 
-        <FormSlot rect={CREATE_ACCOUNT_FIELD_SLOTS.state}>
-          <label className="auth-plate-field create-account-form__field create-account-field--select-wrap">
-            <MapPin className="auth-plate-field__icon" aria-hidden="true" />
-            <select
-              required
-              value={values.state}
-              onChange={(event) => onFieldChange("state", event.target.value)}
-              onBlur={onBlur}
-              aria-label="State"
-              className="auth-plate-field__control create-account-field__control--select font-body"
-            >
-              <option value="" disabled>
-                State
-              </option>
-              {US_STATES.map((state) => (
-                <option key={state.code} value={state.code}>
-                  {state.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="create-account-field__chevron" aria-hidden="true" />
-          </label>
-        </FormSlot>
+      <button
+        type="button"
+        aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+        disabled={isSubmitting}
+        className="auth-attendee-hit auth-attendee-password-toggle auth-attendee-interactive"
+        style={authRectStyle({
+          left: panels.confirmPassword.left + panels.confirmPassword.width - 10,
+          top: panels.confirmPassword.top,
+          width: 9,
+          height: panels.confirmPassword.height,
+        })}
+        onClick={onToggleShowConfirmPassword}
+      />
 
-        <FormSlot rect={CREATE_ACCOUNT_FIELD_SLOTS.password}>
-          <label className="auth-plate-field auth-plate-field--password create-account-form__field create-account-field--password">
-            <Lock className="auth-plate-field__icon" aria-hidden="true" />
-            <input
-              type={showPassword ? "text" : "password"}
-              required
-              autoComplete="new-password"
-              value={values.password}
-              onChange={(event) => onFieldChange("password", event.target.value)}
-              onBlur={onBlur}
-              placeholder="Create Password"
-              aria-label="Create password"
-              className="auth-plate-field__control font-body"
-            />
-            <button
-              type="button"
-              className="auth-plate-field__toggle touch-target"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              onClick={onToggleShowPassword}
-            >
-              {showPassword ? (
-                <EyeOff className="size-4" aria-hidden="true" />
-              ) : (
-                <Eye className="size-4" aria-hidden="true" />
-              )}
-            </button>
-          </label>
-        </FormSlot>
+      <label
+        className="auth-attendee-hit auth-attendee-remember auth-attendee-interactive"
+        style={authRectStyle(panels.termsCheckbox)}
+      >
+        <input
+          type="checkbox"
+          checked={values.acceptedTerms}
+          disabled={isSubmitting}
+          onChange={(event) => onFieldChange("acceptedTerms", event.target.checked)}
+          onBlur={onBlur}
+          required
+          className="auth-attendee-checkbox"
+        />
+        <span className="sr-only">Accept terms of service and privacy policy</span>
+      </label>
 
-        <FormSlot rect={CREATE_ACCOUNT_FIELD_SLOTS.confirmPassword}>
-          <label className="auth-plate-field auth-plate-field--password create-account-form__field create-account-field--password">
-            <Lock className="auth-plate-field__icon" aria-hidden="true" />
-            <input
-              type={showConfirmPassword ? "text" : "password"}
-              required
-              autoComplete="new-password"
-              value={values.confirmPassword}
-              onChange={(event) => onFieldChange("confirmPassword", event.target.value)}
-              onBlur={onBlur}
-              placeholder="Confirm Password"
-              aria-label="Confirm password"
-              className="auth-plate-field__control font-body"
-            />
-            <button
-              type="button"
-              className="auth-plate-field__toggle touch-target"
-              aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-              onClick={onToggleShowConfirmPassword}
-            >
-              {showConfirmPassword ? (
-                <EyeOff className="size-4" aria-hidden="true" />
-              ) : (
-                <Eye className="size-4" aria-hidden="true" />
-              )}
-            </button>
-          </label>
-        </FormSlot>
-
-        <FormSlot rect={CREATE_ACCOUNT_FIELD_SLOTS.terms}>
-          <label className="create-account-terms create-account-form__field touch-target font-body">
-            <input
-              type="checkbox"
-              checked={values.acceptedTerms}
-              onChange={(event) => onFieldChange("acceptedTerms", event.target.checked)}
-              onBlur={onBlur}
-              required
-              className="create-account-terms__checkbox"
-            />
-            <span className="create-account-terms__copy">
-              I agree to the{" "}
-              <span className="text-brand-blue">Terms of Service</span> and{" "}
-              <span className="text-brand-pink">Privacy Policy</span>.
-            </span>
-          </label>
-        </FormSlot>
-
-        <FormSlot rect={CREATE_ACCOUNT_FIELD_SLOTS.submit}>
-          <button
-            type="submit"
-            disabled={isSubmitting || !canSubmit}
-            className="auth-plate-submit create-account-form__field touch-target font-ui size-full"
-          >
-            {isSubmitting ? (
-              <Loader2 className="size-5 animate-spin" aria-hidden="true" />
-            ) : (
-              <span>Create Account</span>
-            )}
-          </button>
-        </FormSlot>
-
-        {formError ? (
-          <p role="alert" className="auth-plate-form-error font-body">
-            {formError}
-          </p>
+      <button
+        type="submit"
+        disabled={isSubmitting || !canSubmit}
+        aria-label="Create account"
+        className="auth-attendee-hit auth-attendee-action-hit auth-attendee-interactive"
+        style={authRectStyle(panels.submitButton)}
+      >
+        {isSubmitting ? (
+          <Loader2 className="h-5 w-5 animate-spin text-white" aria-hidden="true" />
         ) : null}
+      </button>
 
-        <FormSlot rect={CREATE_ACCOUNT_FIELD_SLOTS.loginLink}>
-          <p className="auth-plate-footer-prompt create-account-form__field font-body">
-            Already have an account?{" "}
-            <Link href={loginHref} className="auth-plate-footer-prompt__link font-ui">
-              Log In
-            </Link>
-          </p>
-        </FormSlot>
-      </form>
-    </div>
+      <Link
+        href={loginHref}
+        aria-label="Back to login"
+        className="auth-attendee-hit auth-attendee-link-hit auth-attendee-interactive"
+        style={authRectStyle(panels.backToLogin)}
+      />
+
+      {formError ? (
+        <p role="alert" className="auth-attendee-error font-body">
+          {formError}
+        </p>
+      ) : null}
+    </form>
   );
 }

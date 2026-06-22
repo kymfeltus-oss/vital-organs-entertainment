@@ -219,7 +219,7 @@ export default function AttendeeFunnelClient({
   }
 
   return (
-    <AttendeeAuthArtboard>
+    <AttendeeAuthArtboard loginComponentPlates>
       <AttendeeAuthLoginMobileForm
         createAccountHref={buildCreateAccountUrl(destination)}
         email={email}

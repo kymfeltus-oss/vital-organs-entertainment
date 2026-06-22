@@ -1,4 +1,4 @@
-/** Percentage rects on holding-room.png (926×1698) — digit overlays only. */
+/** Percentage rects on holding-room.png (926×1698) — label + digit overlays. */
 
 export type HoldingRoomCountdownUnitId = "days" | "hours" | "minutes" | "seconds";
 
@@ -11,6 +11,10 @@ export type HoldingRoomCountdownRect = {
 
 export type HoldingRoomCountdownDigitSlot = {
   id: HoldingRoomCountdownUnitId;
+  /** Live unit label — masks baked PNG text above each digit column. */
+  label: string;
+  /** Move label words (DAYS / HOURS / …) — increase `top` to move down. */
+  labelMask: HoldingRoomCountdownRect;
   /** Masks baked placeholder digits — live "00" is flex-centered inside this box. */
   valueMask: HoldingRoomCountdownRect;
 };
@@ -43,17 +47,37 @@ export function holdingRoomStageRect(rect: HoldingRoomCountdownRect): HoldingRoo
 }
 
 /**
- * Baked DAYS / HOURS / MINS / SECS labels stay on the PNG.
- * Only center digits are masked and replaced with live values.
- *
  * Measured on `public/holding page/holding-room.png` (926×1698).
- * To move the clock down, increase `top` on each `valueMask`.
+ * - `labelMask` → moves the unit words (DAYS / HOURS / MINS / SECS)
+ * - `valueMask` → moves the live colored 00 digits
+ * Keep each labelMask above its valueMask (`labelMask.top + height` ≤ `valueMask.top`).
  */
 export const HOLDING_ROOM_COUNTDOWN_UNITS: readonly HoldingRoomCountdownDigitSlot[] = [
-  { id: "days", valueMask: { left: 9.4, top: 41.2, width: 12.8, height: 9.2 } },
-  { id: "hours", valueMask: { left: 29.2, top: 41.5, width: 13.8, height: 9.0 } },
-  { id: "minutes", valueMask: { left: 52.6, top: 41.5, width: 13.8, height: 9.0 } },
-  { id: "seconds", valueMask: { left: 75.8, top: 41.2, width: 13.8, height: 9.2 } },
+  {
+    id: "days",
+    label: "DAYS",
+    /* Baked PNG label ~42.2–43.3% Y — keep above valueMask (48.5). */
+    labelMask: { left: 8.4, top: 54.4, width: 13.0, height: 3.5 },
+    valueMask: { left: 8.4, top: 48.5, width: 12.8, height: 9.2 },
+  },
+  {
+    id: "hours",
+    label: "HOURS",
+    labelMask: { left: 31.5, top: 54.4, width: 13.8, height: 4.0 },
+    valueMask: { left: 31.5, top: 48.5, width: 13.8, height: 9.0 },
+  },
+  {
+    id: "minutes",
+    label: "MINS",
+    labelMask: { left: 54.5, top: 54.4, width: 13.8, height: 4.0 },
+    valueMask: { left: 54.5, top: 48.5, width: 13.8, height: 9.0 },
+  },
+  {
+    id: "seconds",
+    label: "SECS",
+    labelMask: { left: 79.2, top: 54.4, width: 13.8, height: 4.0 },
+    valueMask: { left: 78.2, top: 48.5, width: 13.8, height: 9.2 },
+  },
 ] as const;
 
 export const HOLDING_ROOM_COUNTDOWN_VALUE_CLASS: Record<HoldingRoomCountdownUnitId, string> = {

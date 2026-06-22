@@ -30,7 +30,7 @@ export const INTRO_ENTER_PANEL = {
   height: 12.5,
 } as const satisfies IntroLayoutRect;
 
-/** Hides baked “AWAKENING POSSIBILITIES…” footer strip on intro mobile.mp4. */
+/** Hides baked “BILITIES…” footer strip on intro mobile.mp4. */
 export const INTRO_FOOTER_TAGLINE_MASK = {
   left: 0,
   top: 91,

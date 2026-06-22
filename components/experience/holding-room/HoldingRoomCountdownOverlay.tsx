@@ -86,16 +86,21 @@ export default function HoldingRoomCountdownOverlay({
       aria-label={ariaLabel}
     >
       {HOLDING_ROOM_COUNTDOWN_UNITS.map((unit) => (
-        <div
-          key={unit.id}
-          className="holding-room-countdown__unit"
-          style={rectStyle(unit.valueMask)}
-        >
-          <div className="holding-room-countdown__value-mask" aria-hidden="true" />
+        <div key={unit.id} aria-hidden="true">
           <div
-            className={`holding-room-countdown__value font-headline ${HOLDING_ROOM_COUNTDOWN_VALUE_CLASS[unit.id]}`}
+            className="holding-room-countdown__label-unit"
+            style={rectStyle(unit.labelMask)}
           >
-            {isLoading ? "00" : values[unit.id]}
+            <div className="holding-room-countdown__label-mask" />
+            <div className="holding-room-countdown__label font-ui">{unit.label}</div>
+          </div>
+          <div className="holding-room-countdown__unit" style={rectStyle(unit.valueMask)}>
+            <div className="holding-room-countdown__value-mask" aria-hidden="true" />
+            <div
+              className={`holding-room-countdown__value font-headline ${HOLDING_ROOM_COUNTDOWN_VALUE_CLASS[unit.id]}`}
+            >
+              {isLoading ? "00" : values[unit.id]}
+            </div>
           </div>
         </div>
       ))}

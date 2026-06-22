@@ -18,16 +18,18 @@ function slot(left: number, top: number, width: number, height: number): LoginOv
 
 /** Absolute slots — measured on auth-attendee-login.png. */
 export const LOGIN_FIELD_SLOTS = {
-  email: slot(10, 48, 80, 6),
-  password: slot(10, 53, 80, 5),
-  options: slot(10, 58, 80, 4),
-  submit: slot(10, 61, 80, 6),
-  socialRow: slot(10, 66, 80, 6),
-  signUp: slot(10, 85, 80, 7),
+  email: slot(15, 54.0, 70, 4.8),
+  password: slot(15, 58.9, 70, 4.8),
+  options: slot(15, 62.5, 69, 3.2),
+  submit: slot(15, 66.5, 70, 4.5),
+  socialRow: slot(14, 70.9, 72, 5.5),
+  signUp: slot(10, 79.0, 80, 4.5),
 } as const satisfies Record<string, LoginOverlayRect>;
 
-/** Hides baked PNG copy on options + sign-up rows — inputs use transparent overlay on glass art. */
+/** Hides baked PNG rows — live inputs and links sit on top. Submit/social keep PNG art visible. */
 export const LOGIN_BAKED_FIELD_MASKS: LoginOverlayRect[] = [
+  LOGIN_FIELD_SLOTS.email,
+  LOGIN_FIELD_SLOTS.password,
   LOGIN_FIELD_SLOTS.options,
   LOGIN_FIELD_SLOTS.signUp,
 ];
@@ -35,9 +37,9 @@ export const LOGIN_BAKED_FIELD_MASKS: LoginOverlayRect[] = [
 /** @deprecated Use LOGIN_BAKED_FIELD_MASKS. */
 export const LOGIN_BAKED_FORM_MASK: LoginOverlayRect = {
   left: "0%",
-  top: "46%",
+  top: "53%",
   width: "100%",
-  height: "46%",
+  height: "32%",
 };
 
 /** @deprecated Flex panel — use LOGIN_FIELD_SLOTS. */
