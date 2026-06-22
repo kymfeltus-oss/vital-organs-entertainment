@@ -14,8 +14,11 @@ export const BUY_SEEDS_MOBILE_ART = MOBILE_ARTBOARD_REF;
 /** Native PNG plate — same 1080×1920 stage as attendee dashboard. */
 export const BUY_SEEDS_MOBILE_ART_NATIVE = MOBILE_ARTBOARD_REF;
 
-/** Top crop of mobile-main-background.png — branding above package list. */
-export const BUY_SEEDS_HERO_CROP_RATIO = 0.5;
+/** Top crop of mobile-main-background.png — Ian Craig + 300 logo + waveforms (excludes baked package rows ~53%). */
+export const BUY_SEEDS_HERO_CROP_RATIO = 0.44;
+
+/** Horizontal scale — trims PNG side letterboxing so hero aligns with form card edges. */
+export const BUY_SEEDS_HERO_WIDTH_SCALE = 1.14;
 
 /** @deprecated Use BUY_SEEDS_MOBILE_ART */
 export const BUY_SEEDS_ART = BUY_SEEDS_MOBILE_ART;

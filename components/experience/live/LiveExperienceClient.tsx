@@ -6,7 +6,13 @@ import ExperienceHoldingRoomPageClient from "@/components/experience/holding-roo
 import GoingLiveTransition from "@/components/experience/live/GoingLiveTransition";
 import ViewerPovGoLiveShell from "@/components/experience/live/pov/ViewerPovGoLiveShell";
 import PassActivatingShell from "@/components/live/PassActivatingShell";
-import type { EventCountdownConfig } from "@/lib/live/countdown-config";
+import { GOING_LIVE_TRANSITION_MS } from "@/lib/experience/live-go-live-transition";
+import {
+  computeEventCountdownPhase,
+  type EventCountdownConfig,
+  type EventCountdownPhase,
+} from "@/lib/live/countdown-config";
+import type { CountdownParts } from "@/lib/live/event-lobby";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
@@ -14,21 +20,34 @@ import { BroadcastHealthProvider } from "@/lib/parable/BroadcastHealthContext";
 import { useLiveAccessVerification } from "@/lib/useLiveAccessVerification";
 import { useLiveSeedWallet } from "@/lib/useLiveSeedWallet";
 
-const GOING_LIVE_MS = 1_400;
+const GOING_LIVE_MS = GOING_LIVE_TRANSITION_MS;
+
+/** Never open live room unless both SSR schedule and synced client agree. */
+function resolveAttendeeEventPhase(
+  clientPhase: EventCountdownPhase,
+  serverPhase: EventCountdownPhase,
+): EventCountdownPhase {
+  if (clientPhase === "live" && serverPhase === "live") return "live";
+  if (clientPhase === "waiting" || serverPhase === "waiting") return "waiting";
+  return "ended";
+}
 
 type LiveExperienceClientProps = {
   initialCountdownConfig?: EventCountdownConfig;
+  initialCountdown?: CountdownParts;
   initialProfile: AttendeeProfileSnapshot;
 };
 
 export default function LiveExperienceClient({
   initialCountdownConfig,
+  initialCountdown,
   initialProfile,
 }: LiveExperienceClientProps) {
   return (
     <BroadcastHealthProvider surface="experience">
       <LiveExperienceClientInner
         initialCountdownConfig={initialCountdownConfig}
+        initialCountdown={initialCountdown}
         initialProfile={initialProfile}
       />
     </BroadcastHealthProvider>
@@ -37,13 +56,21 @@ export default function LiveExperienceClient({
 
 function LiveExperienceClientInner({
   initialCountdownConfig,
+  initialCountdown,
   initialProfile,
 }: LiveExperienceClientProps) {
   const { phase, verificationAttempt } = useLiveAccessVerification();
   const { refresh: refreshSeedBalance } = useLiveSeedWallet();
-  const { eventPhase, isLoading: countdownLoading } = useLobbyCountdown({
+  const { config: countdownConfig, eventPhase, isLoading: countdownLoading } = useLobbyCountdown({
     initialConfig: initialCountdownConfig,
+    initialCountdown,
   });
+
+  const serverPhase = computeEventCountdownPhase(
+    initialCountdownConfig.start_time,
+    initialCountdownConfig.end_time,
+  );
+  const routingPhase = resolveAttendeeEventPhase(eventPhase, serverPhase);
 
   const [openingLiveRoom, setOpeningLiveRoom] = useState(false);
   const wasPreConcertRef = useRef<boolean | null>(null);
@@ -52,22 +79,22 @@ function LiveExperienceClientInner({
     if (countdownLoading) return;
 
     if (wasPreConcertRef.current === null) {
-      wasPreConcertRef.current = eventPhase === "waiting";
+      wasPreConcertRef.current = routingPhase === "waiting";
       return;
     }
 
-    if (eventPhase === "live" && wasPreConcertRef.current) {
+    if (routingPhase === "live" && wasPreConcertRef.current) {
       setOpeningLiveRoom(true);
       const timerId = window.setTimeout(() => setOpeningLiveRoom(false), GOING_LIVE_MS);
       wasPreConcertRef.current = false;
       return () => window.clearTimeout(timerId);
     }
 
-    if (eventPhase === "waiting") {
+    if (routingPhase === "waiting") {
       wasPreConcertRef.current = true;
       setOpeningLiveRoom(false);
     }
-  }, [countdownLoading, eventPhase]);
+  }, [countdownLoading, routingPhase]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -112,17 +139,18 @@ function LiveExperienceClientInner({
     );
   }
 
-  const showLiveRoom = eventPhase === "live" && !openingLiveRoom;
+  const showLiveRoom = routingPhase === "live" && !openingLiveRoom;
 
   if (!showLiveRoom) {
     if (openingLiveRoom) {
-      return <GoingLiveTransition visible />;
+      return <GoingLiveTransition visible durationMs={GOING_LIVE_MS} />;
     }
 
     return (
       <main className="live-holding-shell">
         <ExperienceHoldingRoomPageClient
           initialCountdownConfig={initialCountdownConfig}
+          initialCountdown={initialCountdown}
           initialProfile={initialProfile}
         />
       </main>

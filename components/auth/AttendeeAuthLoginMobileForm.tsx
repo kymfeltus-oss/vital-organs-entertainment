@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -192,6 +192,22 @@ export default function AttendeeAuthLoginMobileForm({
 
       <LoginPlate component={components.rememberRow}>
         <label className="auth-attendee-login-form__remember-hit auth-attendee-interactive">
+          <span
+            className="auth-attendee-login-form__remember-indicator"
+            aria-hidden="true"
+          >
+            {rememberMe ? (
+              <Check
+                className="auth-attendee-login-form__remember-mark auth-attendee-login-form__remember-mark--checked"
+                strokeWidth={2.5}
+              />
+            ) : (
+              <X
+                className="auth-attendee-login-form__remember-mark auth-attendee-login-form__remember-mark--unchecked"
+                strokeWidth={2.5}
+              />
+            )}
+          </span>
           <input
             type="checkbox"
             checked={rememberMe}

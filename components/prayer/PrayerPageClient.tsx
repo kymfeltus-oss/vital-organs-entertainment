@@ -1,20 +1,15 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties, type FormEvent } from "react";
-import ContactUsMobileForm, { type ContactUsFormValues } from "@/components/prayer/ContactUsMobileForm";
-import MobileArtboardTabHeader from "@/components/navigation/MobileArtboardTabHeader";
-import {
-  CONTACT_US_ASSETS,
-  CONTACT_US_MOBILE_ART_NATIVE,
-} from "@/lib/prayer/assets";
-import { buildContactMailto } from "@/lib/prayer/contact-slots";
+import Link from "next/link";
+import { useMemo, useState, type FormEvent } from "react";
+import { ChevronLeft } from "lucide-react";
+import ContactUsForm, { type ContactUsFormValues } from "@/components/prayer/ContactUsForm";
+import AwakeningMenuButton from "@/components/AwakeningMenuButton";
+import ProfileOrbEditor from "@/components/profile/ProfileOrbEditor";
+import { buildContactMailto } from "@/lib/prayer/contact";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
-import {
-  MOBILE_ARTBOARD_ART_FIT,
-  MOBILE_ARTBOARD_TAB_SHELL,
-  MOBILE_ARTBOARD_TAB_STAGE,
-  mobileArtboardStageStyle,
-} from "@/lib/responsive";
+import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
+import { CONTENT_WITH_NAV } from "@/lib/responsive";
 
 type ContactUsPageClientProps = {
   initialProfile: AttendeeProfileSnapshot;
@@ -77,38 +72,44 @@ export default function ContactUsPageClient({ initialProfile }: ContactUsPageCli
   };
 
   return (
-    <div className={`contact-us-page prayer-page ${MOBILE_ARTBOARD_TAB_SHELL}`}>
-      <div
-        className={`contact-us-page__stage prayer-page__stage ${MOBILE_ARTBOARD_TAB_STAGE}`}
-        style={
-          mobileArtboardStageStyle({ native: CONTACT_US_MOBILE_ART_NATIVE }) as CSSProperties
-        }
-      >
-        <div className={MOBILE_ARTBOARD_ART_FIT}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={CONTACT_US_ASSETS.mobileBackground}
-            alt="Contact us — We'd love to hear from you"
-            width={CONTACT_US_MOBILE_ART_NATIVE.width}
-            height={CONTACT_US_MOBILE_ART_NATIVE.height}
-            className="contact-us-page__bg prayer-page__bg"
-            loading="eager"
-            decoding="async"
-            draggable={false}
-          />
+    <div className={`contact-us-page ${CONTENT_WITH_NAV} min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden bg-brand-black text-white`}>
+      <div className="mx-auto w-full max-w-2xl px-4 py-5 pt-safe sm:px-6 sm:py-8 lg:px-8">
+        <header className="mb-6 flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <Link
+              href={ATTENDEE_DASHBOARD_PATH}
+              className="touch-target mb-4 inline-flex min-h-11 items-center gap-1 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-brand-muted transition hover:text-brand-blue"
+            >
+              <ChevronLeft className="size-4" aria-hidden="true" />
+              Back
+            </Link>
+            <p className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.24em] text-brand-blue">
+              Vital Organs Entertainment
+            </p>
+            <h1 className="mt-2 font-headline text-fluid-section uppercase tracking-[0.12em] text-white">
+              Contact Us
+            </h1>
+            <p className="mt-2 max-w-lg font-body text-sm leading-relaxed text-brand-muted">
+              We&apos;d love to hear from you. Send a message and our team will get back to you soon.
+            </p>
+          </div>
 
-          <MobileArtboardTabHeader profile={profile} onProfileChange={setProfile} />
+          <div className="flex shrink-0 items-center gap-2 pt-1">
+            <ProfileOrbEditor profile={profile} onProfileChange={setProfile} size={40} />
+            <AwakeningMenuButton className="shrink-0" />
+          </div>
+        </header>
 
-          <ContactUsMobileForm
-            values={values}
-            isSubmitting={isSubmitting}
-            formError={formError}
-            onFieldChange={(key, value) => {
-              setValues((current) => ({ ...current, [key]: value }));
-            }}
-            onSubmit={handleSubmit}
-          />
-        </div>
+        <ContactUsForm
+          values={values}
+          isSubmitting={isSubmitting}
+          canSubmit={canSubmit}
+          formError={formError}
+          onFieldChange={(key, value) => {
+            setValues((current) => ({ ...current, [key]: value }));
+          }}
+          onSubmit={handleSubmit}
+        />
       </div>
     </div>
   );

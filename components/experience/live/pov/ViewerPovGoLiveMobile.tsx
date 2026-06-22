@@ -31,7 +31,7 @@ export default function ViewerPovGoLiveMobile() {
       </div>
 
       {/* Top floating bar — no boxed chrome */}
-      <div className="absolute left-4 right-4 top-[max(1rem,env(safe-area-inset-top))] z-20 flex items-center gap-2">
+      <div className="absolute left-[clamp(0.75rem,3.5cqw,1rem)] right-[clamp(0.75rem,3.5cqw,1rem)] top-[max(0.75rem,env(safe-area-inset-top))] z-20 flex items-center gap-2">
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full ring-2 ring-white/25 font-ui text-xs font-bold text-white"
           style={{ background: POV_MOCK_CREATOR.avatarGradient }}
@@ -75,7 +75,7 @@ export default function ViewerPovGoLiveMobile() {
       </div>
 
       {/* Raw floating chat — no boxes, fade mask */}
-      <div className="viewer-pov-chat-mask pointer-events-none absolute bottom-24 left-4 z-10 max-h-[42dvh] max-w-[75%] overflow-hidden">
+      <div className="viewer-pov-chat-mask pointer-events-none absolute bottom-[clamp(5.5rem,14cqw,7.5rem)] left-[clamp(0.75rem,3.5cqw,1rem)] z-10 max-h-[42%] max-w-[75%] overflow-hidden">
         <div className="viewer-pov-chat-scroll flex flex-col justify-end gap-2.5 pr-2">
           {POV_MOCK_CHAT_MESSAGES.map((entry) => (
             <p key={entry.id} className="font-body text-[0.9rem] leading-snug viewer-pov-text-shadow">
@@ -98,7 +98,7 @@ export default function ViewerPovGoLiveMobile() {
       </div>
 
       {/* Bottom controls */}
-      <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 right-4 z-20 flex items-center gap-2.5">
+      <div className="absolute bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-[clamp(0.75rem,3.5cqw,1rem)] right-[clamp(0.75rem,3.5cqw,1rem)] z-20 flex items-center gap-[clamp(0.5rem,2cqw,0.625rem)]">
         <label className="sr-only" htmlFor="viewer-pov-mobile-comment">
           Join the conversation
         </label>

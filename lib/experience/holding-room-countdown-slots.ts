@@ -1,5 +1,10 @@
 /** Percentage rects on holding-room.png (926×1698) — label + digit overlays. */
 
+import {
+  alignHoldingRoomCountdownMasks,
+  measureHoldingRoomCountdownCentering,
+} from "@/lib/experience/holding-room-countdown-circles";
+
 export type HoldingRoomCountdownUnitId = "days" | "hours" | "minutes" | "seconds";
 
 export type HoldingRoomCountdownRect = {
@@ -13,7 +18,7 @@ export type HoldingRoomCountdownDigitSlot = {
   id: HoldingRoomCountdownUnitId;
   /** Live unit label — masks baked PNG text above each digit column. */
   label: string;
-  /** Move label words (DAYS / HOURS / …) — increase `top` to move down. */
+  /** Move label words (DAYS / HOURS / MINS / SECS) — increase `top` to move down. */
   labelMask: HoldingRoomCountdownRect;
   /** Masks baked placeholder digits — live "00" is flex-centered inside this box. */
   valueMask: HoldingRoomCountdownRect;
@@ -46,39 +51,38 @@ export function holdingRoomStageRect(rect: HoldingRoomCountdownRect): HoldingRoo
   };
 }
 
+const HOLDING_ROOM_COUNTDOWN_LABELS: Record<HoldingRoomCountdownUnitId, string> = {
+  days: "DAYS",
+  hours: "HOURS",
+  minutes: "MINS",
+  seconds: "SECS",
+};
+
+const HOLDING_ROOM_COUNTDOWN_ORDER: HoldingRoomCountdownUnitId[] = [
+  "days",
+  "hours",
+  "minutes",
+  "seconds",
+];
+
+/** Days anchor centering applied to all four PNG circle columns. */
+export const HOLDING_ROOM_COUNTDOWN_CENTERING = measureHoldingRoomCountdownCentering();
+
+const ALIGNED_HOLDING_ROOM_COUNTDOWN_MASKS = alignHoldingRoomCountdownMasks(
+  undefined,
+  HOLDING_ROOM_COUNTDOWN_CENTERING,
+);
+
 /**
- * Measured on `public/holding page/holding-room.png` (926×1698).
- * - `labelMask` → moves the unit words (DAYS / HOURS / MINS / SECS)
- * - `valueMask` → moves the live colored 00 digits
- * Keep each labelMask above its valueMask (`labelMask.top + height` ≤ `valueMask.top`).
+ * Overlay slots derived from the far-left circle anchor.
+ * Tune days masks in `HOLDING_ROOM_COUNTDOWN_ANCHOR_MASKS` — other columns follow automatically.
  */
-export const HOLDING_ROOM_COUNTDOWN_UNITS: readonly HoldingRoomCountdownDigitSlot[] = [
-  {
-    id: "days",
-    label: "DAYS",
-    /* Baked PNG label ~42.2–43.3% Y — keep above valueMask (48.5). */
-    labelMask: { left: 8.4, top: 54.4, width: 13.0, height: 3.5 },
-    valueMask: { left: 8.4, top: 48.5, width: 12.8, height: 9.2 },
-  },
-  {
-    id: "hours",
-    label: "HOURS",
-    labelMask: { left: 31.5, top: 54.4, width: 13.8, height: 4.0 },
-    valueMask: { left: 31.5, top: 48.5, width: 13.8, height: 9.0 },
-  },
-  {
-    id: "minutes",
-    label: "MINS",
-    labelMask: { left: 54.5, top: 54.4, width: 13.8, height: 4.0 },
-    valueMask: { left: 54.5, top: 48.5, width: 13.8, height: 9.0 },
-  },
-  {
-    id: "seconds",
-    label: "SECS",
-    labelMask: { left: 79.2, top: 54.4, width: 13.8, height: 4.0 },
-    valueMask: { left: 78.2, top: 48.5, width: 13.8, height: 9.2 },
-  },
-] as const;
+export const HOLDING_ROOM_COUNTDOWN_UNITS: readonly HoldingRoomCountdownDigitSlot[] =
+  HOLDING_ROOM_COUNTDOWN_ORDER.map((id) => ({
+    id,
+    label: HOLDING_ROOM_COUNTDOWN_LABELS[id],
+    ...ALIGNED_HOLDING_ROOM_COUNTDOWN_MASKS[id],
+  }));
 
 export const HOLDING_ROOM_COUNTDOWN_VALUE_CLASS: Record<HoldingRoomCountdownUnitId, string> = {
   days: "holding-room-countdown__value--days",

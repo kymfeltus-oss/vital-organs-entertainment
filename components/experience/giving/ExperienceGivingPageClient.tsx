@@ -121,7 +121,7 @@ function ExperienceGivingPageContent({
     <>
       <section
         id="sow-seed"
-        className={`giving-page ${CONTENT_WITH_NAV} min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden bg-brand-black text-white`}
+        className={`${CONTENT_WITH_NAV} flex min-h-0 w-full flex-1 flex-col overflow-hidden text-white`}
         aria-label="Vital Seed giving"
       >
         <ExperienceGivingPlate profile={profile} onProfileChange={setProfile}>

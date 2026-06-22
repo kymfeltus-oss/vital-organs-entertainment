@@ -4,10 +4,19 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   touch-action: manipulation;
+  min-height: 100%;
+  background-color: var(--color-brand-black-base);
+  background-image: var(--app-glossy-background);
+  background-attachment: fixed;
 }
 
 :root {
   /* 9:16 mobile content track — shared by artboard pages + bottom dock */
+  --color-brand-black-base: #020203;
+  --app-glossy-background:
+    radial-gradient(ellipse 115% 75% at 50% -18%, rgb(255 255 255 / 0.038) 0%, transparent 54%),
+    radial-gradient(ellipse 88% 58% at 50% 108%, rgb(0 168 255 / 0.024) 0%, transparent 52%),
+    linear-gradient(180deg, #050507 0%, #020203 46%, #010102 100%);
   --mobile-artboard-viewport-h: calc(
     100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
   );
@@ -37,7 +46,7 @@ html {
 }
 
 @theme {
-  --color-brand-black: #07070a;
+  --color-brand-black: #020203;
   --color-brand-panel: #0c0c10;
   --color-brand-blue: #00a8ff;
   --color-brand-pink: #ff2faf;
@@ -92,6 +101,18 @@ html {
   }
   .bg-brand-panel {
     background-color: var(--color-brand-panel);
+  }
+
+  .bg-brand-black {
+    background-color: var(--color-brand-black-base);
+    background-image: var(--app-glossy-background);
+    background-attachment: fixed;
+  }
+
+  .app-glossy-black {
+    background-color: var(--color-brand-black-base);
+    background-image: var(--app-glossy-background);
+    background-attachment: fixed;
   }
 
   .glass-panel {
@@ -450,7 +471,42 @@ html {
 }
 
 .experience-go-live-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: clamp(1rem, 4cqw, 1.5rem);
+  text-align: center;
+  background-color: rgb(0 0 0 / 0.92);
   animation: experience-go-live-in 1.2s ease-out forwards;
+}
+
+.experience-go-live-countdown {
+  font-size: clamp(4.5rem, 18vw, 7.5rem);
+  text-shadow:
+    0 0 24px rgb(0 168 255 / 0.85),
+    0 0 48px rgb(0 168 255 / 0.35);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .experience-go-live-countdown {
+    animation: experience-go-live-countdown-pulse 1s ease-in-out infinite;
+  }
+}
+
+@keyframes experience-go-live-countdown-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.04);
+  }
 }
 
 .experience-go-live-sweep {
@@ -1721,7 +1777,7 @@ html {
   overflow-y: visible;
   overscroll-behavior: contain;
   border-radius: 0;
-  background-color: #000000;
+  background-color: transparent;
   isolation: isolate;
 }
 
@@ -2130,8 +2186,7 @@ html {
 .music-page,
 .buy-seeds-page,
 .vital-giving-page,
-.prayer-page,
-.contact-us-page {
+.prayer-page {
   --mobile-artboard-stage-w: var(--mobile-app-track-w);
   --mobile-artboard-stage-h: var(--mobile-artboard-stage-h-full);
   position: relative;
@@ -2147,24 +2202,7 @@ html {
   padding-top: env(safe-area-inset-top, 0px);
   height: var(--mobile-artboard-viewport-h);
   max-height: var(--mobile-artboard-viewport-h);
-  background-color: #000000;
-}
-
-/* Contact us — scrollable tab page; form extends below bottom dock. */
-.contact-us-page {
-  --mobile-artboard-stage-w: var(--mobile-tab-track-w, var(--mobile-app-track-w));
-  --mobile-artboard-stage-h: calc(var(--mobile-tab-track-w, var(--mobile-app-track-w)) * 1920 / 1080);
-  height: calc(var(--mobile-artboard-viewport-h) - var(--bottom-dock-display-h, 76px));
-  max-height: calc(var(--mobile-artboard-viewport-h) - var(--bottom-dock-display-h, 76px));
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.contact-us-page__stage {
-  height: var(--mobile-artboard-stage-h);
-  max-height: none;
-  overflow: visible;
+  background-color: transparent;
 }
 
 /* Full-viewport artboard — login, create-account, email-gate, live holding */
@@ -2186,7 +2224,7 @@ html {
   padding-top: env(safe-area-inset-top, 0px);
   height: var(--mobile-artboard-viewport-h);
   max-height: var(--mobile-artboard-viewport-h);
-  background-color: #000000;
+  background-color: transparent;
 }
 
 @media (min-width: 768px) {
@@ -2198,16 +2236,13 @@ html {
     height: 100dvh;
     max-height: 100dvh;
   }
-
-  .contact-us-page {
-    height: calc(100dvh - var(--bottom-dock-display-h, 76px));
-    max-height: calc(100dvh - var(--bottom-dock-display-h, 76px));
-  }
 }
 
-/* Live holding + POV — no bottom dock; full viewport */
+/* Live holding + POV + go-live — no bottom dock; full viewport mobile track */
 .live-holding-shell .holding-room-page,
 .live-holding-shell .mobile-artboard-tab-shell,
+.live-holding-shell .live-pov-page,
+.live-holding-shell .experience-go-live-page,
 .live-pov-page.mobile-artboard-tab-shell {
   --mobile-artboard-stage-w: var(--mobile-app-track-w);
   --mobile-artboard-stage-h: min(100%, calc(var(--mobile-app-track-w) * 1920 / 1080));
@@ -2221,12 +2256,13 @@ html {
 .mobile-artboard-tab-shell__stage,
 .music-page__stage,
 .buy-seeds-page__stage,
+.vital-giving-page__stage,
 .holding-room-page__stage,
 .live-pov-page__stage,
+.experience-go-live-page__stage,
 .vital-giving-artboard--mobile,
 .auth-attendee-artboard,
 .prayer-page__stage,
-.contact-us-page__stage,
 .email-gate-page__stage {
   position: relative;
   width: var(--mobile-artboard-stage-w, var(--mobile-app-track-w));
@@ -2307,6 +2343,31 @@ html {
   container-type: inline-size;
 }
 
+
+/* Vital Seed giving — header PNG + native form overlay (matches Music tab chrome) */
+.vital-giving-page__bg {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.vital-giving-page__form-overlay {
+  position: absolute;
+  left: 8.2%;
+  top: var(--vital-giving-form-top, 62%);
+  bottom: calc(
+    var(--bottom-dock-display-h, 76px) + env(safe-area-inset-bottom, 0px) + 0.5rem
+  );
+  z-index: 3;
+  display: flex;
+  width: 83.6%;
+  min-height: 0;
+  flex-direction: column;
+  pointer-events: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
 .buy-seeds-page__baked-mask {
   position: absolute;
   left: 0;
@@ -2578,133 +2639,6 @@ html {
   pointer-events: auto;
 }
 
-/* Contact us — `/contact-us` native form overlay on contact-us.png */
-.contact-us-page__bg,
-.contact-us-overlay,
-.contact-us-form {
-  container-type: inline-size;
-}
-
-.contact-us-form__field-mask {
-  position: absolute;
-  z-index: 1;
-  box-sizing: border-box;
-  border-radius: clamp(0.35rem, 1.2cqw, 0.55rem);
-  background-color: #000000;
-  pointer-events: none;
-}
-
-.contact-us-form {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  overflow: visible;
-  pointer-events: auto;
-}
-
-.contact-us-form__slot {
-  position: absolute;
-  box-sizing: border-box;
-  min-height: 0;
-  pointer-events: auto;
-}
-
-.contact-us-form__field,
-.contact-us-form__submit,
-.contact-us-form__email-hit {
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  margin: 0;
-  pointer-events: auto;
-}
-
-.contact-us-form__field {
-  display: flex;
-  align-items: center;
-}
-
-.contact-us-form__control {
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  padding: 0;
-  padding-inline: clamp(1.75rem, 7.2cqw, 2.35rem) clamp(0.35rem, 1.4cqw, 0.55rem);
-  font-size: clamp(0.62rem, 2.15cqw, 0.76rem);
-  line-height: 1.2;
-  color: #ffffff;
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.contact-us-form__control--compact {
-  padding-inline: clamp(1.35rem, 5.8cqw, 1.85rem) clamp(0.25rem, 1.1cqw, 0.45rem);
-  font-size: clamp(0.58rem, 1.95cqw, 0.7rem);
-}
-
-.contact-us-form__control::placeholder {
-  color: transparent;
-}
-
-.contact-us-form__control:focus,
-.contact-us-form__control:focus-visible {
-  outline: none;
-}
-
-.contact-us-form__field--message {
-  align-items: flex-start;
-  padding-top: clamp(0.45rem, 1.8cqw, 0.65rem);
-}
-
-.contact-us-form__textarea {
-  resize: none;
-  line-height: 1.35;
-  padding-top: clamp(0.15rem, 0.6cqw, 0.25rem);
-  min-height: 0;
-}
-
-.contact-us-form__submit {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  background: transparent;
-  color: transparent;
-  cursor: pointer;
-}
-
-.contact-us-form__submit:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.contact-us-form__email-hit {
-  display: block;
-  border: 0;
-  background: transparent;
-}
-
-.contact-us-form__error {
-  position: absolute;
-  left: 8%;
-  top: 86%;
-  z-index: 4;
-  width: 84%;
-  margin: 0;
-  font-size: clamp(0.58rem, 2cqw, 0.72rem);
-  color: #ff008c;
-  text-shadow: 0 0 12px rgb(255 0 140 / 0.45);
-}
-
 /* Email gate persona hub — PNG artboard + entry path hotspots */
 .email-gate-page__bg {
   pointer-events: none;
@@ -2735,7 +2669,7 @@ html {
   max-height: 100dvh;
   min-height: 0;
   overflow: hidden;
-  background-color: #000000;
+  background-color: transparent;
 }
 
 /* Experience holding room — 853×1844 art-fit plate on mobile app track (/live) */
@@ -2788,7 +2722,7 @@ html {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(0.55rem, 2.4cqw, 1.1rem);
+  font-size: clamp(0.62rem, 2.7cqw, 1.2rem);
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.16em;
@@ -2812,13 +2746,61 @@ html {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(0.95rem, 4.1cqw, 2.15rem);
+  font-size: clamp(1.35rem, 6.4cqw, 3.25rem);
   font-weight: 400;
   line-height: 1;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   text-align: center;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+.holding-room-countdown__value-inner {
+  display: inline-block;
+  transform-origin: center center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .holding-room-countdown__value--tick .holding-room-countdown__value-inner {
+    animation: holding-room-countdown-digit-tick 0.48s ease-out;
+  }
+
+  .holding-room-countdown__value--seconds .holding-room-countdown__value-inner {
+    animation: holding-room-countdown-seconds-glow 1s ease-in-out infinite;
+  }
+
+  .holding-room-countdown__value--seconds.holding-room-countdown__value--tick
+    .holding-room-countdown__value-inner {
+    animation: holding-room-countdown-digit-tick 0.48s ease-out;
+  }
+}
+
+@keyframes holding-room-countdown-digit-tick {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+
+  40% {
+    transform: scale(1.14);
+    filter: brightness(1.4);
+  }
+
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+@keyframes holding-room-countdown-seconds-glow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.82;
+  }
 }
 
 .holding-room-countdown__value--days {
@@ -2849,24 +2831,82 @@ html {
     0 0 28px rgb(255 0 140 / 0.45);
 }
 
+.holding-room-countdown__starting-soon {
+  position: absolute;
+  box-sizing: border-box;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: rgb(0 0 0 / 0.78);
+  border: 1px solid rgb(255 255 255 / 0.08);
+}
+
+.holding-room-countdown__starting-soon-text {
+  margin: 0;
+  font-size: clamp(0.6rem, 2.6cqw, 1.15rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.18em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #00a8ff;
+  text-shadow: 0 0 12px rgb(0 168 255 / 0.85);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .holding-room-countdown__starting-soon-text {
+    animation: holding-room-countdown-soon-pulse 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes holding-room-countdown-soon-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.72;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .holding-room-countdown__value {
     text-shadow: none;
   }
+
+  .holding-room-countdown__value--seconds .holding-room-countdown__value-inner,
+  .holding-room-countdown__value--tick .holding-room-countdown__value-inner {
+    animation: none;
+  }
+
+  .holding-room-countdown__starting-soon-text {
+    text-shadow: none;
+  }
+
+  .experience-go-live-countdown {
+    animation: none;
+  }
 }
 
-/* Live POV — mobile artboard track only (matches Giving / Buy Seeds) */
-.live-pov-page {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  width: 100%;
-  height: 100dvh;
-  max-height: 100dvh;
+/* Live POV + go-live interstitial — mobile artboard track (matches holding room /live) */
+.live-pov-page,
+.experience-go-live-page {
+  box-sizing: border-box;
 }
 
-.live-pov-page__stage {
+.live-pov-page__stage,
+.experience-go-live-page__stage {
   overflow: hidden;
+}
+
+.live-pov-root,
+.experience-go-live-root {
+  position: relative;
+  z-index: 1;
 }
 
 .live-access-page {
@@ -2876,7 +2916,7 @@ html {
   width: 100%;
   align-items: center;
   justify-content: center;
-  background-color: #000000;
+  background-color: transparent;
 }
 
 .live-access-page__track {
@@ -3431,6 +3471,61 @@ html {
   background: transparent;
 }
 
+/* Single column — grid, custom amount, and CTA without absolute overlap. */
+.experience-giving-overlay__controls-stack {
+  position: absolute;
+  left: 0;
+  top: var(--giving-controls-top, 48%);
+  z-index: 3;
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  height: var(--giving-controls-height, 35%);
+  min-height: 0;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: clamp(0.4rem, 1.8cqw, 0.55rem);
+  padding-inline: clamp(1rem, 6.2cqw, 1.45rem);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.experience-giving-overlay__controls-stack > * {
+  pointer-events: auto;
+}
+
+.experience-giving-overlay__controls-stack .experience-giving-amount-section {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.experience-giving-overlay__controls-stack .experience-giving-amount-section__grid {
+  min-height: clamp(7.5rem, 30cqw, 9.5rem);
+}
+
+.experience-giving-custom-amount--stacked,
+.experience-giving-give-now-btn--stacked {
+  position: relative;
+  top: auto;
+  left: auto;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.experience-giving-custom-amount--stacked {
+  min-height: clamp(2.35rem, 9.5cqw, 3rem);
+}
+
+.experience-giving-give-now-btn--stacked {
+  min-height: clamp(2.5rem, 10cqw, 3.25rem);
+}
+
+.experience-giving-overlay__controls-stack .experience-giving-inline-error {
+  flex-shrink: 0;
+  margin-block: calc(clamp(0.1rem, 0.5cqw, 0.2rem) * -1) 0;
+}
+
 .experience-giving-amount-section {
   display: flex;
   width: 100%;
@@ -3469,7 +3564,7 @@ html {
   display: flex;
   width: 100%;
   height: 100%;
-  min-height: clamp(2.35rem, 9.5cqw, 3.15rem);
+  min-height: clamp(2rem, 7.5cqw, 2.65rem);
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -3497,7 +3592,7 @@ html {
 }
 
 .experience-giving-amount-card--dimmed {
-  opacity: 0.38;
+  opacity: 0.58;
 }
 
 .experience-giving-amount-card--selected {
@@ -4286,7 +4381,7 @@ html {
   width: var(--mobile-app-track-w);
   max-width: 100vw;
   transform: translateX(-50%);
-  background-color: #000000;
+  background-color: transparent;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   min-height: calc(var(--bottom-dock-display-h) + env(safe-area-inset-bottom, 0px));
   pointer-events: none;
@@ -4539,9 +4634,19 @@ html {
   }
 }
 
-/* Attendee login — pure code form (no PNG artboard) */
+/* Attendee login — native form (no PNG artboard) */
 .auth-login-page {
+  position: relative;
   margin-inline: auto;
+  background-color: transparent;
+}
+
+.auth-login-page__glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 45% at 50% -5%, rgb(0 168 255 / 0.14), transparent 55%),
+    radial-gradient(ellipse 60% 35% at 85% 20%, rgb(255 0 140 / 0.08), transparent 50%);
 }
 
 .auth-login-page__eyebrow {
@@ -4551,149 +4656,45 @@ html {
   color: transparent;
 }
 
-.auth-login-page__field {
-  position: relative;
-  margin-bottom: 1rem;
+.auth-login-page__divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-ui), sans-serif;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.45);
 }
 
-.auth-login-page__field-icon {
-  position: absolute;
-  top: 50%;
-  left: 1rem;
-  z-index: 1;
-  width: 1.125rem;
-  height: 1.125rem;
-  transform: translateY(-50%);
-  pointer-events: none;
+.auth-login-page__divider::before,
+.auth-login-page__divider::after {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(255 255 255 / 0.12) 20%,
+    rgb(255 255 255 / 0.12) 80%,
+    transparent
+  );
+  content: "";
 }
 
-.auth-login-page__input {
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 3rem;
-  padding: 0.875rem 1rem 0.875rem 2.85rem;
-  border: 1px solid var(--color-brand-border);
-  border-radius: 0.5rem;
-  background: rgb(255 255 255 / 0.03);
-  color: #ffffff;
-  font-size: 0.9375rem;
-  outline: none;
-  transition: border-color 0.2s ease;
+.auth-login-page__checkbox {
+  accent-color: var(--color-brand-blue);
 }
 
-.auth-login-page__input--password {
-  padding-right: 2.85rem;
-}
-
-.auth-login-page__input::placeholder {
-  color: rgb(255 255 255 / 0.38);
-}
-
-.auth-login-page__input:focus,
-.auth-login-page__input:focus-visible {
-  border-color: var(--color-brand-blue);
-  background: rgb(255 255 255 / 0.05);
-  outline: none;
-}
-
-.auth-login-page__input:-webkit-autofill,
-.auth-login-page__input:-webkit-autofill:hover,
-.auth-login-page__input:-webkit-autofill:focus,
-.auth-login-page__input:-webkit-autofill:active {
+.auth-login-page input:-webkit-autofill,
+.auth-login-page input:-webkit-autofill:hover,
+.auth-login-page input:-webkit-autofill:focus,
+.auth-login-page input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 1000px #090b13 inset !important;
   box-shadow: 0 0 0 1000px #090b13 inset !important;
   -webkit-text-fill-color: #ffffff !important;
   caret-color: #ffffff;
   transition: background-color 99999s ease-out 0s;
-}
-
-.auth-login-page__password-toggle {
-  position: absolute;
-  top: 50%;
-  right: 0.5rem;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 9999px;
-  background: transparent;
-  transform: translateY(-50%);
-  cursor: pointer;
-}
-
-.auth-login-page__options {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-}
-
-.auth-login-page__remember {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-}
-
-.auth-login-page__checkbox {
-  width: 1rem;
-  height: 1rem;
-  accent-color: var(--color-brand-blue);
-}
-
-.auth-login-page__forgot {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-}
-
-.auth-login-page__submit {
-  display: flex;
-  width: 100%;
-  min-height: 3rem;
-  align-items: center;
-  justify-content: center;
-  padding: 0.875rem 1rem;
-  border: 1px solid rgb(255 0 140 / 0.55);
-  border-radius: 0.5rem;
-  background: linear-gradient(90deg, rgb(0 168 255 / 0.22) 0%, rgb(91 66 255 / 0.28) 50%, rgb(255 0 140 / 0.22) 100%);
-  color: #ffffff;
-  cursor: pointer;
-  transition:
-    transform 0.12s ease,
-    box-shadow 0.2s ease;
-}
-
-.auth-login-page__submit:hover:not(:disabled) {
-  box-shadow: 0 0 18px rgb(255 0 140 / 0.28);
-}
-
-.auth-login-page__submit:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-.auth-login-page__submit:disabled {
-  cursor: wait;
-  opacity: 0.72;
-}
-
-.auth-login-page__secondary-link {
-  display: inline-flex;
-  min-height: 2.75rem;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  background: transparent;
-  text-decoration: none;
-  cursor: pointer;
 }
 
 /* Attendee auth — PNG overlays on unified mobile-artboard stage */
@@ -4794,6 +4795,23 @@ html {
   align-items: stretch;
 }
 
+.auth-attendee-login-form__field-icon {
+  flex: 0 0 clamp(2rem, 11cqw, 2.5rem);
+  align-self: center;
+  width: clamp(1rem, 3.5cqw, 1.125rem);
+  height: clamp(1rem, 3.5cqw, 1.125rem);
+  margin-left: clamp(0.45rem, 2.2cqw, 0.7rem);
+  pointer-events: none;
+}
+
+.auth-attendee-login-form__field-icon--email {
+  color: #00a8ff;
+}
+
+.auth-attendee-login-form__field-icon--password {
+  color: #ff008c;
+}
+
 .auth-attendee-login-form__field {
   position: static;
   top: auto;
@@ -4808,7 +4826,7 @@ html {
   border: 0;
   border-radius: 0;
   background: transparent;
-  padding: 0 12% 0 18%;
+  padding: 0 12% 0 clamp(0.25rem, 1cqw, 0.5rem);
   font-size: clamp(0.8125rem, 2.8cqw, 0.9375rem);
   line-height: 1.25;
   color: #ffffff;
@@ -4865,13 +4883,45 @@ html {
 }
 
 .auth-attendee-login-form__remember-hit {
+  position: relative;
+  display: block;
   flex: 0 0 38%;
   min-height: 2.75rem;
   margin: 0;
   cursor: pointer;
 }
 
+.auth-attendee-login-form__remember-indicator {
+  position: absolute;
+  top: 50%;
+  left: clamp(0.2rem, 1.4cqw, 0.45rem);
+  z-index: 1;
+  display: flex;
+  width: clamp(1rem, 4.8cqw, 1.25rem);
+  height: clamp(1rem, 4.8cqw, 1.25rem);
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.auth-attendee-login-form__remember-mark {
+  width: 72%;
+  height: 72%;
+}
+
+.auth-attendee-login-form__remember-mark--checked {
+  color: #00a8ff;
+  filter: drop-shadow(0 0 6px rgb(0 168 255 / 0.65));
+}
+
+.auth-attendee-login-form__remember-mark--unchecked {
+  color: rgb(255 255 255 / 0.42);
+}
+
 .auth-attendee-login-form__checkbox {
+  position: relative;
+  z-index: 2;
   width: 100%;
   height: 100%;
   margin: 0;

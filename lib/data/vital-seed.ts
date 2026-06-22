@@ -5,13 +5,6 @@ import {
 
 export { HARVEST_GOAL_DOLLARS, formatHarvestCurrency };
 
-/** Desktop art for Vital Seed giving pages (1490×1055). */
-export const VITAL_SEED_PAGE_BACKGROUND = "/images/vital-seed/desktop-background.png";
-
-/** Mobile portrait art (941×1672). */
-export const VITAL_SEED_PAGE_BACKGROUND_MOBILE =
-  "/images/vital-seed/mobile-background.png";
-
 export type ContributionStatus = "paid" | "pending" | "processing";
 
 export type ContributionEntry = {

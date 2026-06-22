@@ -1,10 +1,5 @@
-/** @deprecated Use `@/lib/prayer/contact-slots`. */
-export {
-  CONTACT_US_BAKED_FIELD_MASKS,
-  CONTACT_US_FIELD_SLOTS,
-  PRAYER_ACTION_SLOTS,
-  buildContactMailto,
-  type ContactUsOverlayRect,
-} from "@/lib/prayer/contact-slots";
+/** @deprecated Use `@/lib/prayer/contact`. */
+export { buildContactMailto } from "@/lib/prayer/contact";
 
-export type { ContactUsOverlayRect as PrayerActionSlot } from "@/lib/prayer/contact-slots";
+/** @deprecated Overlay slots removed — contact page uses native form layout. */
+export const PRAYER_ACTION_SLOTS = [] as const;

@@ -1,7 +1,5 @@
 /** Shared responsive layout tokens for 300 Awakening */
 
-import { BOTTOM_NAV_BAR_HEIGHT_PX } from "@/lib/navigation/bottom-nav-config";
-
 /** Effect tier utility classes — pair with globals.css `.effects-heavy` / `.effects-lite` */
 export const EFFECTS_TIER = {
   heavy: "effects-heavy",
@@ -94,7 +92,8 @@ export const MOBILE_ARTBOARD_STAGE = "mobile-artboard-stage";
 export const MOBILE_ARTBOARD_ART_FIT = "mobile-artboard-art-fit";
 
 /** Content offset when PNG bottom dock is present (display height + safe area). */
-export const CONTENT_WITH_NAV = `pb-[calc(${BOTTOM_NAV_BAR_HEIGHT_PX}px+env(safe-area-inset-bottom))]`;
+export const CONTENT_WITH_NAV =
+  "pb-[calc(var(--bottom-dock-display-h,76px)+env(safe-area-inset-bottom))]";
 
 /** Dashboard card grid — scales with viewport */
 export const CARD_GRID_DASHBOARD =

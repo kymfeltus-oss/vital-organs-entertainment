@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { COUNTDOWN_STARTING_SHORTLY_LABEL } from "@/lib/experience/countdown-display";
 import type { CountdownParts } from "@/lib/live/event-lobby";
 import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
 
 type ExperienceCountdownProps = {
   countdown: CountdownParts;
-  statusLabel?: string;
   isLoading?: boolean;
   showTimer?: boolean;
 };
@@ -17,7 +17,6 @@ function pad(value: number): string {
 
 export default function ExperienceCountdown({
   countdown,
-  statusLabel,
   isLoading = false,
   showTimer = true,
 }: ExperienceCountdownProps) {
@@ -36,7 +35,7 @@ export default function ExperienceCountdown({
   if (countdown.isComplete) {
     return (
       <p className="font-ui text-[0.65rem] font-bold uppercase tracking-[0.18em] exp-text-blue">
-        {statusLabel || "Event starts soon"}
+        {COUNTDOWN_STARTING_SHORTLY_LABEL}
       </p>
     );
   }

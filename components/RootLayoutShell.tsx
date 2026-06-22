@@ -14,22 +14,13 @@ type RootLayoutShellProps = {
 export default function RootLayoutShell({ children }: RootLayoutShellProps) {
   const pathname = usePathname();
   const hideNav = isNavHiddenRoute(pathname);
-  const experienceSurface =
-    pathname === ATTENDEE_DASHBOARD_PATH ||
-    pathname === "/experience" ||
-    pathname.startsWith("/experience/");
   const isExperienceDashboard = pathname === ATTENDEE_DASHBOARD_PATH;
   const isArtboardTab = isMobileArtboardTabRoute(pathname);
   const isFullHeightArtboard = isFullHeightArtboardRoute(pathname);
   const useFlexViewportShell = isArtboardTab || isFullHeightArtboard;
 
   return (
-    <div
-      className={cn(
-        "min-h-dvh w-full",
-        experienceSurface ? "bg-transparent" : "bg-brand-black",
-      )}
-    >
+    <div className="min-h-dvh w-full bg-transparent">
       {!hideNav && <BottomNavigation />}
       <div
         className={cn(

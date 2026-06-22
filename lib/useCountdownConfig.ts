@@ -6,6 +6,10 @@ import {
   type EventCountdownConfig,
 } from "@/lib/live/countdown-config";
 import {
+  COUNTDOWN_CONFIG_SYNC_MS,
+  COUNTDOWN_CONFIG_UPDATED_EVENT,
+} from "@/lib/live/countdown-config-sync";
+import {
   loadLastKnownCountdown,
   saveLastKnownCountdown,
 } from "@/lib/parable/last-known-good";
@@ -28,21 +32,34 @@ export function useCountdownConfig(options: UseCountdownConfigOptions = {}) {
   const [usingLocalFallback, setUsingLocalFallback] = useState(false);
   const shouldFetchRef = useRef(shouldFetch);
   const persistCountdownConfigRef = useRef(persistCountdownConfig);
+  const initialConfigRef = useRef(options.initialConfig);
   shouldFetchRef.current = shouldFetch;
   persistCountdownConfigRef.current = persistCountdownConfig;
+  initialConfigRef.current = options.initialConfig;
+
+  useEffect(() => {
+    if (!options.initialConfig) return;
+    saveLastKnownCountdown(options.initialConfig);
+  }, [
+    options.initialConfig,
+    options.initialConfig?.end_time,
+    options.initialConfig?.start_time,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
-    const abortController = new AbortController();
+    let abortController = new AbortController();
 
-    async function load() {
+    async function load(isInitial = false) {
       if (!shouldFetchRef.current()) {
-        const cached = loadLastKnownCountdown();
-        if (cached && !cancelled) {
-          setConfig(cached);
-          setUsingLocalFallback(true);
+        if (!initialConfigRef.current) {
+          const cached = loadLastKnownCountdown();
+          if (cached && !cancelled) {
+            setConfig(cached);
+            setUsingLocalFallback(true);
+          }
         }
-        setIsLoading(false);
+        if (isInitial && !cancelled) setIsLoading(false);
         return;
       }
 
@@ -64,36 +81,71 @@ export function useCountdownConfig(options: UseCountdownConfigOptions = {}) {
       } catch {
         if (abortController.signal.aborted || cancelled) return;
 
-        const cached = loadLastKnownCountdown();
-        if (cached) {
-          setConfig(cached);
+        if (initialConfigRef.current) {
+          setConfig(initialConfigRef.current);
           setUsingLocalFallback(true);
-        } else if (!options.initialConfig) {
-          setConfig(DEFAULT_COUNTDOWN_CONFIG);
-          setUsingLocalFallback(true);
+        } else {
+          const cached = loadLastKnownCountdown();
+          if (cached) {
+            setConfig(cached);
+            setUsingLocalFallback(true);
+          } else {
+            setConfig(DEFAULT_COUNTDOWN_CONFIG);
+            setUsingLocalFallback(true);
+          }
         }
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (isInitial && !cancelled) setIsLoading(false);
       }
     }
 
+    const startLoad = () => {
+      void load(true);
+    };
+
+    const onOpsSave = () => {
+      abortController.abort();
+      abortController = new AbortController();
+      void load(false);
+    };
+
+    window.addEventListener(COUNTDOWN_CONFIG_UPDATED_EVENT, onOpsSave);
+
     if (typeof window.requestIdleCallback === "function") {
-      const idleId = window.requestIdleCallback(() => {
-        void load();
-      }, { timeout: 1_000 });
+      const idleId = window.requestIdleCallback(startLoad, { timeout: 1_000 });
+      const pollId = window.setInterval(() => {
+        abortController.abort();
+        abortController = new AbortController();
+        void load(false);
+      }, COUNTDOWN_CONFIG_SYNC_MS);
+
       return () => {
         cancelled = true;
         abortController.abort();
         window.cancelIdleCallback(idleId);
+        window.clearInterval(pollId);
+        window.removeEventListener(COUNTDOWN_CONFIG_UPDATED_EVENT, onOpsSave);
       };
     }
 
-    void load();
+    startLoad();
+    const pollId = window.setInterval(() => {
+      abortController.abort();
+      abortController = new AbortController();
+      void load(false);
+    }, COUNTDOWN_CONFIG_SYNC_MS);
+
     return () => {
       cancelled = true;
       abortController.abort();
+      window.clearInterval(pollId);
+      window.removeEventListener(COUNTDOWN_CONFIG_UPDATED_EVENT, onOpsSave);
     };
-  }, [options.initialConfig]);
+  }, [
+    options.initialConfig?.end_time,
+    options.initialConfig?.id,
+    options.initialConfig?.start_time,
+  ]);
 
   return { config, isLoading, usingLocalFallback };
 }

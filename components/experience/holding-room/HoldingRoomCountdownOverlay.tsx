@@ -1,7 +1,12 @@
 "use client";
 
 import { useMemo, type CSSProperties } from "react";
-import { parseCountdownStartMs } from "@/lib/experience/countdown-display";
+import {
+  COUNTDOWN_STARTING_SHORTLY_LABEL,
+  getCountdownAriaLabel,
+  isCountdownStartingShortly,
+  parseCountdownStartMs,
+} from "@/lib/experience/countdown-display";
 import {
   HOLDING_ROOM_COUNTDOWN_UNITS,
   HOLDING_ROOM_COUNTDOWN_VALUE_CLASS,
@@ -9,11 +14,22 @@ import {
   type HoldingRoomCountdownRect,
   type HoldingRoomCountdownUnitId,
 } from "@/lib/experience/holding-room-countdown-slots";
+import HoldingRoomCountdownDigit from "@/components/experience/holding-room/HoldingRoomCountdownDigit";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
+import type { CountdownParts } from "@/lib/live/event-lobby";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
 
 type HoldingRoomCountdownOverlayProps = {
   initialCountdownConfig?: EventCountdownConfig;
+  initialCountdown?: CountdownParts;
+};
+
+/** Band across all four neon countdown circles on holding-room.png. */
+const STARTING_SHORTLY_BAND: HoldingRoomCountdownRect = {
+  left: 4,
+  top: 42.5,
+  width: 88,
+  height: 14,
 };
 
 function rectStyle(rect: HoldingRoomCountdownRect): CSSProperties {
@@ -51,12 +67,15 @@ function resolveUnitValues(
 
 export default function HoldingRoomCountdownOverlay({
   initialCountdownConfig,
+  initialCountdown,
 }: HoldingRoomCountdownOverlayProps) {
-  const { config, countdown, isLoading } = useLobbyCountdown({
+  const { config, countdown, eventPhase, isLoading } = useLobbyCountdown({
     initialConfig: initialCountdownConfig,
+    initialCountdown,
   });
 
   const hasStartTime = parseCountdownStartMs(config.start_time) !== null;
+  const startingShortly = isCountdownStartingShortly(countdown, eventPhase);
 
   const values = useMemo(
     () =>
@@ -69,11 +88,10 @@ export default function HoldingRoomCountdownOverlay({
     [countdown],
   );
 
-  const ariaLabel = useMemo(() => {
-    if (!hasStartTime || isLoading) return "Loading event countdown";
-    if (countdown.isComplete) return "Event starting now";
-    return `${countdown.days} days, ${countdown.hours} hours, ${countdown.minutes} minutes, ${countdown.seconds} seconds until live`;
-  }, [countdown, hasStartTime, isLoading]);
+  const ariaLabel = useMemo(
+    () => getCountdownAriaLabel(countdown, eventPhase, { isLoading, hasStartTime }),
+    [countdown, eventPhase, hasStartTime, isLoading],
+  );
 
   if (!hasStartTime) {
     return null;
@@ -85,25 +103,35 @@ export default function HoldingRoomCountdownOverlay({
       aria-live="polite"
       aria-label={ariaLabel}
     >
-      {HOLDING_ROOM_COUNTDOWN_UNITS.map((unit) => (
-        <div key={unit.id} aria-hidden="true">
-          <div
-            className="holding-room-countdown__label-unit"
-            style={rectStyle(unit.labelMask)}
-          >
-            <div className="holding-room-countdown__label-mask" />
-            <div className="holding-room-countdown__label font-ui">{unit.label}</div>
-          </div>
-          <div className="holding-room-countdown__unit" style={rectStyle(unit.valueMask)}>
-            <div className="holding-room-countdown__value-mask" aria-hidden="true" />
+      {startingShortly ? (
+        <div
+          className="holding-room-countdown__starting-soon"
+          style={rectStyle(STARTING_SHORTLY_BAND)}
+        >
+          <p className="holding-room-countdown__starting-soon-text font-ui">
+            {COUNTDOWN_STARTING_SHORTLY_LABEL}
+          </p>
+        </div>
+      ) : (
+        HOLDING_ROOM_COUNTDOWN_UNITS.map((unit) => (
+          <div key={unit.id} aria-hidden="true">
             <div
-              className={`holding-room-countdown__value font-headline ${HOLDING_ROOM_COUNTDOWN_VALUE_CLASS[unit.id]}`}
+              className="holding-room-countdown__label-unit"
+              style={rectStyle(unit.labelMask)}
             >
-              {isLoading ? "00" : values[unit.id]}
+              <div className="holding-room-countdown__label-mask" />
+              <div className="holding-room-countdown__label font-ui">{unit.label}</div>
+            </div>
+            <div className="holding-room-countdown__unit" style={rectStyle(unit.valueMask)}>
+              <div className="holding-room-countdown__value-mask" aria-hidden="true" />
+              <HoldingRoomCountdownDigit
+                value={isLoading ? "00" : values[unit.id]}
+                unitClass={HOLDING_ROOM_COUNTDOWN_VALUE_CLASS[unit.id]}
+              />
             </div>
           </div>
-        </div>
-      ))}
+        ))
+      )}
     </div>
   );
 }

@@ -5,6 +5,11 @@ import Image from "next/image";
 import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { useState } from "react";
 import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
+import type { OAuthProviderId } from "@/lib/auth/oauth-sign-in";
+import {
+  AWAKENING_AUTH_LOGIN_COMPONENTS,
+  awakeningAuthAssetUrl,
+} from "@/lib/experience/awakening-auth-assets";
 
 type AttendeeAuthLoginPlateProps = {
   createAccountHref: string;
@@ -21,9 +26,32 @@ type AttendeeAuthLoginPlateProps = {
   onRememberMeChange: (checked: boolean) => void;
   onSubmit: (event: React.FormEvent) => void;
   onGuest: () => void;
+  onOAuthSignIn: (provider: OAuthProviderId) => void;
 };
 
 const COMING_SOON_MS = 3200;
+
+const SOCIAL_BUTTONS: ReadonlyArray<{
+  provider: OAuthProviderId;
+  label: string;
+  asset: (typeof AWAKENING_AUTH_LOGIN_COMPONENTS)[keyof typeof AWAKENING_AUTH_LOGIN_COMPONENTS];
+}> = [
+  {
+    provider: "apple",
+    label: "Apple",
+    asset: AWAKENING_AUTH_LOGIN_COMPONENTS.appleButton,
+  },
+  {
+    provider: "google",
+    label: "Google",
+    asset: AWAKENING_AUTH_LOGIN_COMPONENTS.googleButton,
+  },
+  {
+    provider: "facebook",
+    label: "Facebook",
+    asset: AWAKENING_AUTH_LOGIN_COMPONENTS.facebookButton,
+  },
+];
 
 const inputClassName =
   "w-full rounded-xl border border-brand-border bg-brand-panel/80 py-3 font-body text-sm text-white outline-none transition placeholder:text-brand-muted/45 focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/25 disabled:opacity-60";
@@ -43,6 +71,7 @@ export default function AttendeeAuthLoginPlate({
   onRememberMeChange,
   onSubmit,
   onGuest,
+  onOAuthSignIn,
 }: AttendeeAuthLoginPlateProps) {
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -54,29 +83,30 @@ export default function AttendeeAuthLoginPlate({
   const displayMessage = formError ?? notice;
 
   return (
-    <div className="auth-login-page flex min-h-0 w-full flex-1 flex-col items-center overflow-y-auto px-4 py-8 pt-safe pb-safe sm:px-6 sm:py-12">
+    <div className="auth-login-page flex min-h-0 w-full flex-1 flex-col items-center overflow-y-auto py-8 pt-safe pb-safe sm:py-12">
       <div className="auth-login-page__glow pointer-events-none" aria-hidden="true" />
 
-      <div className="relative z-[1] w-full max-w-[26rem]">
+      <div className="relative z-[1] w-[var(--mobile-app-track-w)] max-w-[100vw]">
         <header className="mb-8 text-center">
-          <div className="relative mx-auto aspect-[3/2] w-full max-w-[20rem] sm:max-w-[26rem]">
+          <div className="relative aspect-[3/2] w-full">
             <Image
               src={EXPERIENCE_BRAND_ASSETS.lockup}
               alt="300 Awakening"
               fill
               priority
-              sizes="(max-width: 640px) 72vw, 304px"
-              className="object-contain"
+              sizes="min(100vw, calc(100dvh * 1080 / 1920))"
+              className="object-contain object-[center_top]"
             />
           </div>
-          <h1 className="mt-6 font-headline text-[clamp(1.75rem,7vw,2.5rem)] uppercase leading-none tracking-[0.1em] text-white">
+          <h1 className="mt-6 px-4 font-headline text-[clamp(1.75rem,7vw,2.5rem)] uppercase leading-none tracking-[0.1em] text-white sm:px-6">
             Welcome Back
           </h1>
-          <p className="mx-auto mt-3 max-w-[18rem] font-body text-sm leading-relaxed text-brand-muted">
+          <p className="mx-auto mt-3 max-w-[18rem] px-4 font-body text-sm leading-relaxed text-brand-muted sm:px-6">
             Sign in to pick up your journey where you left off.
           </p>
         </header>
 
+        <div className="px-4 sm:px-6">
         <div className="glass-panel rounded-[1.25rem] border border-brand-border p-5 shadow-[0_0_40px_rgba(0,168,255,0.06)] sm:p-7">
           <form onSubmit={onSubmit} aria-label="Log in" autoComplete="on" noValidate className="space-y-4">
             <label className="block">
@@ -196,16 +226,24 @@ export default function AttendeeAuthLoginPlate({
           </div>
 
           <div className="grid grid-cols-3 gap-2.5">
-            {(["Apple", "Google", "Facebook"] as const).map((provider) => (
+            {SOCIAL_BUTTONS.map(({ provider, label, asset }) => (
               <button
                 key={provider}
                 type="button"
                 disabled={isSubmitting}
-                aria-label={`Continue with ${provider} — coming soon`}
-                onClick={() => showComingSoon(`${provider} sign-in`)}
-                className="touch-target min-h-10 rounded-xl border border-brand-border bg-brand-black/40 font-ui text-[0.56rem] font-semibold uppercase tracking-[0.06em] text-brand-muted transition hover:border-brand-blue/35 hover:text-white"
+                aria-label={`Continue with ${label}`}
+                onClick={() => onOAuthSignIn(provider)}
+                className="touch-target overflow-hidden rounded-xl transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {provider}
+                <Image
+                  src={awakeningAuthAssetUrl(asset.src)}
+                  alt=""
+                  width={asset.width}
+                  height={asset.height}
+                  sizes="(max-width: 640px) 28vw, 120px"
+                  className="h-auto w-full object-contain"
+                />
+                <span className="sr-only">Continue with {label}</span>
               </button>
             ))}
           </div>
@@ -241,6 +279,7 @@ export default function AttendeeAuthLoginPlate({
               Continue as guest
             </button>
           </div>
+        </div>
         </div>
       </div>
     </div>

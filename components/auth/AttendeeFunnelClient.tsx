@@ -8,6 +8,7 @@ import EmailGateShell, {
   ValidationHint,
 } from "@/components/auth/EmailGateShell";
 import OtpVerificationPlaceholder from "@/components/auth/OtpVerificationPlaceholder";
+import { startOAuthSignIn, type OAuthProviderId } from "@/lib/auth/oauth-sign-in";
 import {
   AUTH_NEXT_COOKIE,
   buildAttendeeGateUrl,
@@ -64,6 +65,18 @@ export default function AttendeeFunnelClient({
   const handleAuthSuccess = () => {
     document.cookie = `${AUTH_NEXT_COOKIE}=; path=/; max-age=0`;
     window.location.assign(destination);
+  };
+
+  const handleOAuthSignIn = async (provider: OAuthProviderId) => {
+    setStatus("submitting");
+    setError(null);
+
+    const result = await startOAuthSignIn(provider, destination);
+
+    if (result.error) {
+      setError(result.error);
+      setStatus("idle");
+    }
   };
 
   const handleCredentialSubmit = async (e: React.FormEvent) => {
@@ -236,6 +249,7 @@ export default function AttendeeFunnelClient({
         setActiveTab("guest");
         setError(null);
       }}
+      onOAuthSignIn={(provider) => void handleOAuthSignIn(provider)}
     />
   );
 }

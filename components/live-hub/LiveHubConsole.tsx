@@ -10,7 +10,6 @@ import { Loader2, MonitorPlay, RefreshCw } from "lucide-react";
 import LiveHubNetworkSettingsModal from "@/components/live-hub/LiveHubNetworkSettingsModal";
 import LiveHubGoLiveModal from "@/components/live-hub/LiveHubGoLiveModal";
 import LiveHubGoLiveButton from "@/components/live-hub/LiveHubGoLiveButton";
-import LiveHubDesktopGate from "@/components/live-hub/LiveHubDesktopGate";
 import LiveHubPreviewPanel from "@/components/live-hub/LiveHubPreviewPanel";
 import LiveHubSidebar from "@/components/live-hub/LiveHubSidebar";
 import LiveHubChecklistHero from "@/components/live-hub/LiveHubChecklistHero";
@@ -23,10 +22,6 @@ import LiveHubStatusStrip from "@/components/live-hub/LiveHubStatusStrip";
 import LiveHubStreamPanels from "@/components/live-hub/LiveHubStreamPanels";
 import OperatorWebcamPreview from "@/components/live-hub/OperatorWebcamPreview";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
-import {
-  useLiveHubDesktop,
-  useLiveHubDesktopReady,
-} from "@/components/live-hub/useLiveHubDesktop";
 import type { HubNavSection } from "@/lib/live-hub/console-layout";
 import {
   buildReadinessChecks,
@@ -80,8 +75,6 @@ export default function LiveHubConsole({
   adminEmail,
   initialSnapshot,
 }: LiveHubConsoleProps) {
-  const desktopReady = useLiveHubDesktopReady();
-  const isDesktop = useLiveHubDesktop();
   const { masterVolumeLevel: localMicLevel, healingLogs, simulateAudioDrop } =
     useLiveHubMixer(IS_DEV_SANDBOX);
   const [networkSettings, patchNetworkSettings] = useLiveHubNetworkSettings();
@@ -675,18 +668,6 @@ export default function LiveHubConsole({
     void refreshAll();
     pushTimeline("readiness", "Stream Test", "Preview opened and systems synced.");
   };
-
-  if (!desktopReady) {
-    return (
-      <main className="flex min-h-dvh items-center justify-center bg-[#0B090A]">
-        <Loader2 className="h-6 w-6 animate-spin text-[#1E40AF]" />
-      </main>
-    );
-  }
-
-  if (!isDesktop) {
-    return <LiveHubDesktopGate />;
-  }
 
   return (
     <div className="flex h-dvh w-full overflow-hidden bg-[#0B090A] text-white">

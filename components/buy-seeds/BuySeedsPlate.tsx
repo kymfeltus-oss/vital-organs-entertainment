@@ -11,6 +11,7 @@ import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 import {
   BUY_SEEDS_ASSETS,
   BUY_SEEDS_HERO_CROP_RATIO,
+  BUY_SEEDS_HERO_WIDTH_SCALE,
   BUY_SEEDS_MOBILE_ART_NATIVE,
 } from "@/lib/seeds/assets";
 
@@ -25,15 +26,17 @@ export default function BuySeedsPlate({
   onProfileChange,
   children,
 }: BuySeedsPlateProps) {
+  const heroBleed = ((BUY_SEEDS_HERO_WIDTH_SCALE - 1) / 2) * 100;
+
   return (
-    <div className="auth-login-page relative flex w-full flex-col items-center px-4 py-3 pt-safe sm:px-6 sm:py-5">
+    <div className="auth-login-page relative flex min-h-0 w-full flex-1 flex-col items-center px-4 py-2 pt-safe sm:px-6 sm:py-3">
       <div className="auth-login-page__glow pointer-events-none" aria-hidden="true" />
 
-      <div className="relative z-[1] w-full max-w-[28rem] pb-2">
-        <div className="mb-2 flex items-start justify-between gap-3">
+      <div className="relative z-[1] flex w-full max-w-[28rem] flex-col pb-2">
+        <div className="mb-1.5 flex shrink-0 items-start justify-between gap-3">
           <Link
             href={ATTENDEE_DASHBOARD_PATH}
-            className="touch-target inline-flex min-h-11 items-center gap-1 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-brand-muted transition hover:text-brand-blue"
+            className="touch-target inline-flex min-h-10 items-center gap-1 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-brand-muted transition hover:text-brand-blue"
           >
             <ChevronLeft className="size-4" aria-hidden="true" />
             Back
@@ -45,26 +48,25 @@ export default function BuySeedsPlate({
           </div>
         </div>
 
-        <header className="mb-3">
-          <div className="relative h-[clamp(8.5rem,28dvh,12rem)] w-full overflow-hidden">
-            <Image
-              src={BUY_SEEDS_ASSETS.mobileBackground}
-              alt="Buy Vital Seeds"
-              width={BUY_SEEDS_MOBILE_ART_NATIVE.width}
-              height={BUY_SEEDS_MOBILE_ART_NATIVE.height}
-              priority
-              sizes="(max-width: 640px) 100vw, 448px"
-              className="absolute left-0 top-0 max-w-none object-cover object-top"
-              style={{
-                width: "100%",
-                height: `${100 / BUY_SEEDS_HERO_CROP_RATIO}%`,
-              }}
-            />
-          </div>
-        </header>
+        <div className="relative z-0 mb-4 h-[clamp(7.5rem,17dvh,9.5rem)] w-full shrink-0 overflow-hidden">
+          <Image
+            src={BUY_SEEDS_ASSETS.mobileBackground}
+            alt="Buy Vital Seeds"
+            width={BUY_SEEDS_MOBILE_ART_NATIVE.width}
+            height={BUY_SEEDS_MOBILE_ART_NATIVE.height}
+            priority
+            sizes="(max-width: 640px) 100vw, 448px"
+            className="absolute top-0 max-w-none object-cover object-top"
+            style={{
+              width: `${BUY_SEEDS_HERO_WIDTH_SCALE * 100}%`,
+              left: `-${heroBleed}%`,
+              height: `${100 / BUY_SEEDS_HERO_CROP_RATIO}%`,
+            }}
+          />
+        </div>
 
-        <div className="glass-panel rounded-[1.25rem] border border-brand-border p-4 shadow-[0_0_40px_rgba(0,168,255,0.06)] sm:p-5">
-          {children}
+        <div className="glass-panel relative z-[1] w-full shrink-0 overflow-hidden rounded-[1.25rem] border border-brand-border shadow-[0_0_40px_rgba(0,168,255,0.06)]">
+          <div className="p-3.5 sm:p-4">{children}</div>
         </div>
       </div>
     </div>

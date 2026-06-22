@@ -2,30 +2,28 @@ import { MOBILE_ARTBOARD_REF } from "@/lib/responsive";
 
 /** Vital Seed giving background plates (`/public/images/vital-seed/`). */
 
-export const VITAL_SEED_GIVING_ASSET_VERSION = "20260612";
+export const VITAL_SEED_GIVING_ASSET_VERSION = "20260622-4";
 
 export const VITAL_SEED_GIVING_ASSETS = {
-  desktopBackground: "/images/vital-seed/desktop-background.png",
+  /** Header-only plate — logo, GIVING lettering, waveforms (no form panel). */
   mobileBackground: `/vital seed/mobile-main-background.png?v=${VITAL_SEED_GIVING_ASSET_VERSION}`,
-} as const;
-
-export const VITAL_SEED_GIVING_DESKTOP_ART = {
-  width: 1536,
-  height: 1024,
 } as const;
 
 export const VITAL_SEED_GIVING_MOBILE_ART = MOBILE_ARTBOARD_REF;
 
-/** Native mobile plate (941×1672) — top-aligned on the 1080×1920 stage. */
+/** Native header plate — `/vital seed/mobile-main-background.png`. */
 export const VITAL_SEED_GIVING_MOBILE_ART_NATIVE = {
   width: 941,
-  height: 1672,
+  height: 1000,
 } as const;
 
-/** Top crop of mobile-main-background.png — logo + tagline (excludes baked form). */
-export const VITAL_SEED_GIVING_HERO_CROP_RATIO = 0.34;
+/** Header PNG bottom edge on 1080×1920 stage (object-fit: contain, top). */
+export const VITAL_SEED_GIVING_HEADER_STAGE_RATIO =
+  VITAL_SEED_GIVING_MOBILE_ART_NATIVE.height /
+  VITAL_SEED_GIVING_MOBILE_ART_NATIVE.width /
+  (MOBILE_ARTBOARD_REF.height / MOBILE_ARTBOARD_REF.width);
 
-/** Preset gift amounts — rendered as native text over empty grid slots on mobile-main-background.png. */
+/** Preset gift amounts — native form below the header plate. */
 export const givingAmounts = [
   {
     amount: 25,

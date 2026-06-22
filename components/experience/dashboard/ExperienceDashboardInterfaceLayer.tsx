@@ -12,20 +12,24 @@ import {
   AWAKENING_DASHBOARD_STORY_TOP_Y,
 } from "@/lib/experience/awakening-dashboard-assets";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
+import type { CountdownParts } from "@/lib/live/event-lobby";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
 import { MOBILE_ARTBOARD_REF, mobileArtboardStageStyle } from "@/lib/responsive";
 
 type ExperienceDashboardInterfaceLayerProps = {
   initialCountdownConfig?: EventCountdownConfig;
+  initialCountdown?: CountdownParts;
 };
 
 export default function ExperienceDashboardInterfaceLayer({
   initialCountdownConfig,
+  initialCountdown,
 }: ExperienceDashboardInterfaceLayerProps) {
   const backgroundRef = useRef<HTMLVideoElement>(null);
 
   const { config, countdown, eventPhase, isLoading, showTimer } = useLobbyCountdown({
     initialConfig: initialCountdownConfig,
+    initialCountdown,
   });
 
   useEffect(() => {

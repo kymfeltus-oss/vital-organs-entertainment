@@ -3,7 +3,7 @@
 import Image from "next/image";
 import ExperienceCountdown from "@/components/experience/live/ExperienceCountdown";
 import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
-import { shouldShowCountdownTimer } from "@/lib/experience/countdown-display";
+import { COUNTDOWN_STARTING_SHORTLY_LABEL, shouldShowCountdownTimer } from "@/lib/experience/countdown-display";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import type { CountdownParts } from "@/lib/live/event-lobby";
 
@@ -23,7 +23,7 @@ export default function IgLiveWaitingStage({
   const showCountdownTimer = shouldShowCountdownTimer(countdownConfig, countdownLoading);
 
   const statusText = countdown.isComplete
-    ? countdownConfig.status_label || "Event starts soon"
+    ? COUNTDOWN_STARTING_SHORTLY_LABEL
     : countdownConfig.status_label || "Waiting for live signal";
 
   return (
@@ -76,7 +76,6 @@ export default function IgLiveWaitingStage({
           <div className="mt-5 w-full min-w-0 px-1">
             <ExperienceCountdown
               countdown={countdown}
-              statusLabel={countdownConfig.status_label}
               isLoading={countdownLoading}
               showTimer={showCountdownTimer}
             />

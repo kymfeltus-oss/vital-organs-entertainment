@@ -3,7 +3,7 @@
 import { MOBILE_ARTBOARD_REF } from "@/lib/responsive";
 
 /** Bump when replacing PNG plates so browsers pick up new art. */
-export const AWAKENING_AUTH_ASSET_VERSION = "20260622-auth-v19";
+export const AWAKENING_AUTH_ASSET_VERSION = "20260622-auth-v20";
 
 /** Same 1080×1920 stage as attendee dashboard. */
 export const AWAKENING_AUTH_LOGIN_ART = MOBILE_ARTBOARD_REF;

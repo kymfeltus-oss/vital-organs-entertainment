@@ -1,7 +1,7 @@
 /** Awakening — canonical design tokens (source of truth) */
 
 export const BRAND_COLORS = {
-  black: "#07070A",
+  black: "#020203",
   blackDeep: "#040404",
   panel: "#0C0C10",
   blue: "#00A8FF",

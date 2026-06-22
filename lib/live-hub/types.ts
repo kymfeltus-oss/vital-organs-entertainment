@@ -68,5 +68,3 @@ export const DEFAULT_LIVE_HUB_SETTINGS: LiveHubSettings = {
   blockGoLiveWithoutRecording: false,
   blockGoLiveWithoutRestream: false,
 };
-
-export const LIVE_HUB_DESKTOP_MIN_WIDTH_PX = 1280;

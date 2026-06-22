@@ -67,7 +67,7 @@ function BuySeedsPageContent({ initialProfile }: BuySeedsPageContentProps) {
   return (
     <>
       <section
-        className={`buy-seeds-page ${CONTENT_WITH_NAV} min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden bg-brand-black text-white`}
+        className={`buy-seeds-native-page ${CONTENT_WITH_NAV} flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-brand-black text-white`}
         aria-label="Buy Vital Seeds"
       >
         <BuySeedsPlate profile={profile} onProfileChange={setProfile}>

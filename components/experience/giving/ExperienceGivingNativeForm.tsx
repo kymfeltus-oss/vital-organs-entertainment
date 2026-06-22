@@ -15,11 +15,11 @@ type ExperienceGivingNativeFormProps = {
 };
 
 const fieldClassName =
-  "w-full rounded-xl border border-brand-border bg-brand-panel/80 px-4 py-2.5 font-body text-sm text-white outline-none transition placeholder:text-brand-muted/50 focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/30";
+  "w-full rounded-xl border border-brand-border bg-brand-panel/80 px-3 py-2 font-body text-sm text-white outline-none transition placeholder:text-brand-muted/50 focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/30";
 
 function amountCardClassName(isSelected: boolean, isDimmed: boolean): string {
   return [
-    "relative flex min-h-[3.75rem] flex-col items-center justify-center gap-0.5 rounded-xl border p-2.5 transition touch-target font-ui",
+    "relative flex min-h-[2.25rem] flex-col items-center justify-center gap-0.5 rounded-xl border p-1 transition touch-target font-ui",
     isSelected
       ? "border-brand-blue/50 bg-brand-panel shadow-[0_0_22px_rgba(0,168,255,0.28),0_0_28px_rgba(255,0,140,0.2)]"
       : "border-brand-border bg-brand-panel/80",
@@ -40,13 +40,9 @@ export default function ExperienceGivingNativeForm({
   const hasSelection = activePreset != null;
 
   return (
-    <div className="w-full space-y-3">
+    <div className="flex flex-col gap-2">
       <section aria-label="Choose a gift amount">
-        <h2 className="mb-2 text-center font-ui text-[0.58rem] font-bold uppercase tracking-[0.24em] text-white">
-          Choose an amount
-        </h2>
-
-        <div role="radiogroup" aria-label="Choose a gift amount" className="grid grid-cols-2 gap-2.5">
+        <div role="radiogroup" aria-label="Choose a gift amount" className="grid grid-cols-2 gap-1.5">
           {givingAmounts.map((card) => {
             const isSelected = activePreset === card.amount;
             const isDimmed = hasSelection && !isSelected;
@@ -64,14 +60,14 @@ export default function ExperienceGivingNativeForm({
               >
                 {isSelected ? (
                   <span
-                    className="absolute left-2 top-2 flex size-4 items-center justify-center rounded-full bg-brand-pink text-white"
+                    className="absolute left-1.5 top-1.5 flex size-3.5 items-center justify-center rounded-full bg-brand-pink text-white"
                     aria-hidden="true"
                   >
                     <Check className="size-2.5" strokeWidth={3} />
                   </span>
                 ) : null}
-                <span className="font-body text-lg font-bold text-white">${card.amount}</span>
-                <span className="text-[0.54rem] font-semibold uppercase tracking-[0.14em] text-brand-muted">
+                <span className="font-body text-[0.9375rem] font-bold text-white">${card.amount}</span>
+                <span className="text-[0.48rem] font-semibold uppercase tracking-[0.12em] text-brand-muted">
                   {card.label}
                 </span>
               </button>
@@ -81,12 +77,12 @@ export default function ExperienceGivingNativeForm({
       </section>
 
       <label className="block">
-        <span className="mb-1 block font-ui text-[0.58rem] font-bold uppercase tracking-[0.16em] text-brand-muted">
+        <span className="mb-1 block font-ui text-[0.56rem] font-bold uppercase tracking-[0.14em] text-brand-muted">
           Custom amount
         </span>
         <div className="relative">
           <Pencil
-            className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-brand-blue"
+            className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-brand-blue"
             aria-hidden="true"
           />
           <input
@@ -100,38 +96,40 @@ export default function ExperienceGivingNativeForm({
             onFocus={onCustomAmountFocus}
             onClick={onCustomAmountFocus}
             onChange={(event) => onCustomAmountChange(event.target.value)}
-            className={`${fieldClassName} pl-9`}
+            className={`${fieldClassName} pl-8`}
           />
         </div>
       </label>
 
-      {error ? (
-        <p
-          role="alert"
-          className="rounded-lg border border-brand-pink/30 bg-brand-pink/10 px-3 py-1.5 font-body text-xs text-brand-pink"
-        >
-          {error}
-        </p>
-      ) : null}
+      <div className="space-y-2 border-t border-brand-border/30 pt-2">
+        {error ? (
+          <p
+            role="alert"
+            className="rounded-lg border border-brand-pink/30 bg-brand-pink/10 px-3 py-1.5 font-body text-xs text-brand-pink"
+          >
+            {error}
+          </p>
+        ) : null}
 
-      <button
-        type="button"
-        disabled={isLoading}
-        onClick={onGiveNow}
-        className="touch-target inline-flex w-full min-h-11 items-center justify-center gap-2 rounded-xl border border-brand-blue/40 bg-brand-blue/10 px-6 font-ui text-[0.65rem] font-bold uppercase tracking-[0.16em] text-brand-blue transition hover:bg-brand-blue/20 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            Preparing checkout…
-          </>
-        ) : (
-          <>
-            Give Now
-            <ArrowRight className="size-4" aria-hidden="true" />
-          </>
-        )}
-      </button>
+        <button
+          type="button"
+          disabled={isLoading}
+          onClick={onGiveNow}
+          className="touch-target inline-flex w-full min-h-11 items-center justify-center gap-2 rounded-xl border border-brand-blue/40 bg-brand-blue/10 px-6 font-ui text-[0.65rem] font-bold uppercase tracking-[0.16em] text-brand-blue transition hover:bg-brand-blue/20 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              Preparing checkout…
+            </>
+          ) : (
+            <>
+              Give Now
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }

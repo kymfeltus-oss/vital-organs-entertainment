@@ -9,6 +9,23 @@ export const PRAYER_CONTACT = {
   emailMailto: `mailto:${PRAYER_CONTACT_EMAIL}`,
 } as const;
 
+export function buildContactMailto(input: {
+  fullName: string;
+  email: string;
+  subject: string;
+  message: string;
+}): string {
+  const subject = input.subject.trim() || "Contact from 300 Awakening";
+  const body = [
+    `Name: ${input.fullName.trim()}`,
+    `Email: ${input.email.trim()}`,
+    "",
+    input.message.trim(),
+  ].join("\n");
+
+  return `mailto:${PRAYER_CONTACT.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 export const PRAYER_SOCIAL_LINKS = [
   {
     id: "facebook",
