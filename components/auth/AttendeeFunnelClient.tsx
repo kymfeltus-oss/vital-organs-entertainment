@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import AttendeeAuthArtboard from "@/components/auth/AttendeeAuthArtboard";
-import AttendeeAuthLoginMobileForm from "@/components/auth/AttendeeAuthLoginMobileForm";
+import AttendeeAuthLoginPlate from "@/components/auth/AttendeeAuthLoginPlate";
 import EmailGateShell, {
   gateFieldClass,
   PrimaryGateButton,
@@ -219,22 +218,24 @@ export default function AttendeeFunnelClient({
   }
 
   return (
-    <AttendeeAuthArtboard loginComponentPlates>
-      <AttendeeAuthLoginMobileForm
-        createAccountHref={buildCreateAccountUrl(destination)}
-        email={email}
-        password={password}
-        showPassword={showPassword}
-        rememberMe={rememberMe}
-        isSubmitting={status === "submitting"}
-        formError={displayError}
-        onEmailChange={setEmail}
-        onPasswordChange={setPassword}
-        onEmailBlur={() => setEmailTouched(true)}
-        onToggleShowPassword={() => setShowPassword((current) => !current)}
-        onRememberMeChange={setRememberMe}
-        onSubmit={(event) => void handleCredentialSubmit(event)}
-      />
-    </AttendeeAuthArtboard>
+    <AttendeeAuthLoginPlate
+      createAccountHref={buildCreateAccountUrl(destination)}
+      email={email}
+      password={password}
+      showPassword={showPassword}
+      rememberMe={rememberMe}
+      isSubmitting={status === "submitting"}
+      formError={displayError}
+      onEmailChange={setEmail}
+      onPasswordChange={setPassword}
+      onEmailBlur={() => setEmailTouched(true)}
+      onToggleShowPassword={() => setShowPassword((current) => !current)}
+      onRememberMeChange={setRememberMe}
+      onSubmit={(event) => void handleCredentialSubmit(event)}
+      onGuest={() => {
+        setActiveTab("guest");
+        setError(null);
+      }}
+    />
   );
 }

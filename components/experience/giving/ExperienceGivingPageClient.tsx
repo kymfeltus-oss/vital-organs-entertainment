@@ -1,30 +1,19 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState, type CSSProperties } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
-import ExperienceGivingMobileOverlay from "@/components/experience/giving/ExperienceGivingMobileOverlay";
-import MobileArtboardTabHeader from "@/components/navigation/MobileArtboardTabHeader";
+import ExperienceGivingNativeForm from "@/components/experience/giving/ExperienceGivingNativeForm";
+import ExperienceGivingPlate from "@/components/experience/giving/ExperienceGivingPlate";
 import { getClientAppUrl } from "@/lib/client-api";
-import {
-  GIVING_MOBILE_ART_NATIVE,
-  GIVING_MOBILE_DEFAULT_AMOUNT,
-  type GivingFrequency,
-} from "@/lib/experience/giving-mobile-slots";
-import {
-  MOBILE_ARTBOARD_ART_FIT,
-  MOBILE_ARTBOARD_TAB_SHELL,
-  MOBILE_ARTBOARD_TAB_STAGE,
-  mobileArtboardStageStyle,
-} from "@/lib/responsive";
+import { GIVING_MOBILE_DEFAULT_AMOUNT, type GivingFrequency } from "@/lib/experience/giving-mobile-slots";
+import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
+import { CONTENT_WITH_NAV } from "@/lib/responsive";
 import {
   amountToCents,
   parseAmountDollars,
   sanitizeAmountInput,
 } from "@/lib/vital-seed/custom-amount";
-import { VITAL_SEED_GIVING_ASSETS } from "@/lib/vital-seed/giving-assets";
-import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
 const MIN_GIFT_CENTS = 50;
 
@@ -132,51 +121,21 @@ function ExperienceGivingPageContent({
     <>
       <section
         id="sow-seed"
-        className={`vital-giving-page ${MOBILE_ARTBOARD_TAB_SHELL}`}
+        className={`giving-page ${CONTENT_WITH_NAV} min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden bg-brand-black text-white`}
         aria-label="Vital Seed giving"
       >
-        <div className="vital-giving-stage">
-          <div
-            className={`vital-giving-artboard vital-giving-artboard--mobile ${MOBILE_ARTBOARD_TAB_STAGE}`}
-            style={
-              mobileArtboardStageStyle({ native: GIVING_MOBILE_ART_NATIVE }) as CSSProperties
-            }
-          >
-            <div className={MOBILE_ARTBOARD_ART_FIT}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={VITAL_SEED_GIVING_ASSETS.mobileBackground}
-                alt="Vital Seed giving"
-                width={GIVING_MOBILE_ART_NATIVE.width}
-                height={GIVING_MOBILE_ART_NATIVE.height}
-                className="vital-giving-artboard__img"
-                loading="eager"
-                decoding="async"
-                draggable={false}
-              />
-              <ExperienceGivingMobileOverlay
-                activePreset={activePreset}
-                customAmount={customAmount}
-                isLoading={isLoading}
-                error={error}
-                onSelectAmount={handleSelectAmount}
-                onCustomAmountChange={handleCustomAmountChange}
-                onCustomAmountFocus={handleCustomAmountFocus}
-                onGiveNow={() => void handleGiveNow()}
-              />
-              <MobileArtboardTabHeader profile={profile} onProfileChange={setProfile} />
-            </div>
-          </div>
-        </div>
-
-        {isLoading ? (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60">
-            <div className="flex items-center gap-3 rounded-2xl border border-brand-border bg-brand-panel px-6 py-4 text-sm font-bold uppercase tracking-[0.16em] text-white">
-              <Loader2 className="h-5 w-5 animate-spin text-brand-blue" aria-hidden="true" />
-              Preparing Checkout
-            </div>
-          </div>
-        ) : null}
+        <ExperienceGivingPlate profile={profile} onProfileChange={setProfile}>
+          <ExperienceGivingNativeForm
+            activePreset={activePreset}
+            customAmount={customAmount}
+            isLoading={isLoading}
+            error={error}
+            onSelectAmount={handleSelectAmount}
+            onCustomAmountChange={handleCustomAmountChange}
+            onCustomAmountFocus={handleCustomAmountFocus}
+            onGiveNow={() => void handleGiveNow()}
+          />
+        </ExperienceGivingPlate>
       </section>
 
       <AnimatePresence>

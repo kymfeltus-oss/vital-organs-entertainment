@@ -1,8 +1,7 @@
 "use client";
 
-import { useId, useMemo, useRef, useState } from "react";
-import AttendeeAuthArtboard from "@/components/auth/AttendeeAuthArtboard";
-import CreateAccountMobileForm from "@/components/auth/CreateAccountMobileForm";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import AttendeeAuthCreateAccountPlate from "@/components/auth/AttendeeAuthCreateAccountPlate";
 import {
   formatCreateAccountPhoneInput,
   isCreateAccountFormValid,
@@ -11,11 +10,6 @@ import {
   type CreateAccountFormValues,
 } from "@/lib/auth/create-account-validation";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
-import {
-  AWAKENING_AUTH_ASSETS,
-  AWAKENING_AUTH_NATIVE,
-  AWAKENING_AUTH_SIGNUP_ART,
-} from "@/lib/experience/awakening-auth-assets";
 
 type CreateAccountClientProps = {
   nextPath: string;
@@ -43,6 +37,16 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
   const [touched, setTouched] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const avatarPreviewUrl = useMemo(() => {
+    if (!values.avatarFile) return null;
+    return URL.createObjectURL(values.avatarFile);
+  }, [values.avatarFile]);
+
+  useEffect(() => {
+    if (!avatarPreviewUrl) return;
+    return () => URL.revokeObjectURL(avatarPreviewUrl);
+  }, [avatarPreviewUrl]);
 
   const fieldErrors = useMemo(
     () => (touched ? validateCreateAccountForm(values) : {}),
@@ -135,48 +139,43 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
 
   return (
     <>
-      <AttendeeAuthArtboard
-        backgroundSrc={AWAKENING_AUTH_ASSETS.attendeeSignupPlate}
-        artboard={AWAKENING_AUTH_SIGNUP_ART}
-        nativePlate={AWAKENING_AUTH_NATIVE.signup}
-      >
-        <CreateAccountMobileForm
-          loginHref={loginHref}
-          values={values}
-          showPassword={showPassword}
-          showConfirmPassword={showConfirmPassword}
-          isSubmitting={isSubmitting}
-          canSubmit={canSubmit}
-          formError={
-            formError ??
-            (touched && Object.keys(fieldErrors).length > 0
-              ? fieldErrors.firstName ??
-                fieldErrors.lastName ??
-                fieldErrors.email ??
-                fieldErrors.phone ??
-                fieldErrors.city ??
-                fieldErrors.state ??
-                fieldErrors.password ??
-                fieldErrors.confirmPassword ??
-                fieldErrors.acceptedTerms ??
-                fieldErrors.avatarFile ??
-                "Fix the highlighted fields to continue."
-              : null)
+      <AttendeeAuthCreateAccountPlate
+        loginHref={loginHref}
+        values={values}
+        avatarPreviewUrl={avatarPreviewUrl}
+        showPassword={showPassword}
+        showConfirmPassword={showConfirmPassword}
+        isSubmitting={isSubmitting}
+        canSubmit={canSubmit}
+        formError={
+          formError ??
+          (touched && Object.keys(fieldErrors).length > 0
+            ? fieldErrors.firstName ??
+              fieldErrors.lastName ??
+              fieldErrors.email ??
+              fieldErrors.phone ??
+              fieldErrors.city ??
+              fieldErrors.state ??
+              fieldErrors.password ??
+              fieldErrors.confirmPassword ??
+              fieldErrors.acceptedTerms ??
+              fieldErrors.avatarFile ??
+              "Fix the highlighted fields to continue."
+            : null)
+        }
+        onFieldChange={(key, value) => {
+          if (key === "phone") {
+            setField("phone", formatCreateAccountPhoneInput(String(value)));
+            return;
           }
-          onFieldChange={(key, value) => {
-            if (key === "phone") {
-              setField("phone", formatCreateAccountPhoneInput(String(value)));
-              return;
-            }
-            setField(key, value);
-          }}
-          onBlur={() => setTouched(true)}
-          onToggleShowPassword={() => setShowPassword((current) => !current)}
-          onToggleShowConfirmPassword={() => setShowConfirmPassword((current) => !current)}
-          onAvatarPick={() => fileInputRef.current?.click()}
-          onSubmit={(event) => void handleSubmit(event)}
-        />
-      </AttendeeAuthArtboard>
+          setField(key, value);
+        }}
+        onBlur={() => setTouched(true)}
+        onToggleShowPassword={() => setShowPassword((current) => !current)}
+        onToggleShowConfirmPassword={() => setShowConfirmPassword((current) => !current)}
+        onAvatarPick={() => fileInputRef.current?.click()}
+        onSubmit={(event) => void handleSubmit(event)}
+      />
 
       <input
         ref={fileInputRef}

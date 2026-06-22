@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
+import { useState } from "react";
+import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
 
 type AttendeeAuthLoginPlateProps = {
   createAccountHref: string;
@@ -10,6 +13,7 @@ type AttendeeAuthLoginPlateProps = {
   showPassword: boolean;
   rememberMe: boolean;
   isSubmitting: boolean;
+  formError?: string | null;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onEmailBlur: () => void;
@@ -19,6 +23,11 @@ type AttendeeAuthLoginPlateProps = {
   onGuest: () => void;
 };
 
+const COMING_SOON_MS = 3200;
+
+const inputClassName =
+  "w-full rounded-xl border border-brand-border bg-brand-panel/80 py-3 font-body text-sm text-white outline-none transition placeholder:text-brand-muted/45 focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/25 disabled:opacity-60";
+
 export default function AttendeeAuthLoginPlate({
   createAccountHref,
   email,
@@ -26,6 +35,7 @@ export default function AttendeeAuthLoginPlate({
   showPassword,
   rememberMe,
   isSubmitting,
+  formError,
   onEmailChange,
   onPasswordChange,
   onEmailBlur,
@@ -34,135 +44,204 @@ export default function AttendeeAuthLoginPlate({
   onSubmit,
   onGuest,
 }: AttendeeAuthLoginPlateProps) {
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const showComingSoon = (label: string) => {
+    setNotice(`${label} is coming soon.`);
+    window.setTimeout(() => setNotice(null), COMING_SOON_MS);
+  };
+
+  const displayMessage = formError ?? notice;
+
   return (
-    <div className="auth-login-page w-full max-w-[min(100%,24rem)] px-5 py-8 text-center">
-      <p className="auth-login-page__eyebrow font-ui text-[0.62rem] font-bold uppercase tracking-[0.28em]">
-        Live · Empower · Transform
-      </p>
+    <div className="auth-login-page flex min-h-0 w-full flex-1 flex-col items-center overflow-y-auto px-4 py-8 pt-safe pb-safe sm:px-6 sm:py-12">
+      <div className="auth-login-page__glow pointer-events-none" aria-hidden="true" />
 
-      <h1 className="auth-login-page__title mt-8 font-headline text-fluid-section uppercase tracking-[0.12em] text-white">
-        Welcome Back
-      </h1>
-      <p className="auth-login-page__subtitle mt-2 font-body text-sm text-brand-muted">
-        Log in to continue your journey.
-      </p>
-
-      <form
-        onSubmit={onSubmit}
-        className="auth-login-page__form mt-8 text-left"
-        aria-label="Log in"
-      >
-        <div className="auth-login-page__field">
-          <label htmlFor="auth-login-email" className="sr-only">
-            Email address
-          </label>
-          <User
-            className="auth-login-page__field-icon text-brand-blue"
-            aria-hidden="true"
-            strokeWidth={2}
-          />
-          <input
-            id="auth-login-email"
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(event) => onEmailChange(event.target.value)}
-            onBlur={onEmailBlur}
-            placeholder="Email address"
-            className="auth-login-page__input font-body"
-          />
-        </div>
-
-        <div className="auth-login-page__field">
-          <label htmlFor="auth-login-password" className="sr-only">
-            Password
-          </label>
-          <Lock
-            className="auth-login-page__field-icon text-brand-pink"
-            aria-hidden="true"
-            strokeWidth={2}
-          />
-          <input
-            id="auth-login-password"
-            type={showPassword ? "text" : "password"}
-            required
-            minLength={8}
-            autoComplete="current-password"
-            value={password}
-            onChange={(event) => onPasswordChange(event.target.value)}
-            placeholder="Password"
-            className="auth-login-page__input auth-login-page__input--password font-body"
-          />
-          <button
-            type="button"
-            className="auth-login-page__password-toggle touch-target"
-            aria-label={showPassword ? "Hide password" : "Show password"}
-            onClick={onToggleShowPassword}
-          >
-            {showPassword ? (
-              <EyeOff className="h-[1.125rem] w-[1.125rem] text-brand-muted" aria-hidden="true" />
-            ) : (
-              <Eye className="h-[1.125rem] w-[1.125rem] text-brand-muted" aria-hidden="true" />
-            )}
-          </button>
-        </div>
-
-        <div className="auth-login-page__options">
-          <label className="auth-login-page__remember font-ui text-[0.78rem] text-brand-muted">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(event) => onRememberMeChange(event.target.checked)}
-              className="auth-login-page__checkbox"
+      <div className="relative z-[1] w-full max-w-[26rem]">
+        <header className="mb-8 text-center">
+          <div className="relative mx-auto aspect-[3/2] w-full max-w-[20rem] sm:max-w-[26rem]">
+            <Image
+              src={EXPERIENCE_BRAND_ASSETS.lockup}
+              alt="300 Awakening"
+              fill
+              priority
+              sizes="(max-width: 640px) 72vw, 304px"
+              className="object-contain"
             />
-            Remember me
-          </label>
-          <button
-            type="button"
-            className="auth-login-page__forgot font-ui text-[0.78rem] font-semibold text-brand-pink transition hover:opacity-80"
-            aria-label="Forgot password — coming soon"
-          >
-            Forgot password?
-          </button>
+          </div>
+          <h1 className="mt-6 font-headline text-[clamp(1.75rem,7vw,2.5rem)] uppercase leading-none tracking-[0.1em] text-white">
+            Welcome Back
+          </h1>
+          <p className="mx-auto mt-3 max-w-[18rem] font-body text-sm leading-relaxed text-brand-muted">
+            Sign in to pick up your journey where you left off.
+          </p>
+        </header>
+
+        <div className="glass-panel rounded-[1.25rem] border border-brand-border p-5 shadow-[0_0_40px_rgba(0,168,255,0.06)] sm:p-7">
+          <form onSubmit={onSubmit} aria-label="Log in" autoComplete="on" noValidate className="space-y-4">
+            <label className="block">
+              <span className="mb-1.5 block font-ui text-[0.62rem] font-bold uppercase tracking-[0.18em] text-brand-muted">
+                Email
+              </span>
+              <div className="relative">
+                <Mail
+                  className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-brand-blue"
+                  aria-hidden="true"
+                />
+                <input
+                  id="auth-login-email"
+                  name="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  disabled={isSubmitting}
+                  value={email}
+                  onChange={(event) => onEmailChange(event.target.value)}
+                  onBlur={onEmailBlur}
+                  placeholder="you@example.com"
+                  className={`${inputClassName} pl-10`}
+                />
+              </div>
+            </label>
+
+            <label className="block">
+              <span className="mb-1.5 block font-ui text-[0.62rem] font-bold uppercase tracking-[0.18em] text-brand-muted">
+                Password
+              </span>
+              <div className="relative">
+                <Lock
+                  className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-brand-pink"
+                  aria-hidden="true"
+                />
+                <input
+                  id="auth-login-password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={8}
+                  autoComplete="current-password"
+                  disabled={isSubmitting}
+                  value={password}
+                  onChange={(event) => onPasswordChange(event.target.value)}
+                  placeholder="Enter your password"
+                  className={`${inputClassName} pl-10 pr-11`}
+                />
+                <button
+                  type="button"
+                  className="touch-target absolute right-1 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-lg text-brand-muted transition hover:text-white"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  disabled={isSubmitting}
+                  onClick={onToggleShowPassword}
+                >
+                  {showPassword ? (
+                    <EyeOff className="size-4" aria-hidden="true" />
+                  ) : (
+                    <Eye className="size-4" aria-hidden="true" />
+                  )}
+                </button>
+              </div>
+            </label>
+
+            <div className="flex items-center justify-between gap-3 pt-1">
+              <label className="inline-flex cursor-pointer items-center gap-2.5 font-ui text-xs text-brand-muted">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  disabled={isSubmitting}
+                  onChange={(event) => onRememberMeChange(event.target.checked)}
+                  className="auth-login-page__checkbox size-4 rounded border-brand-border bg-brand-panel accent-brand-blue"
+                />
+                Remember me
+              </label>
+              <button
+                type="button"
+                className="font-ui text-xs font-semibold text-brand-pink transition hover:opacity-80"
+                disabled={isSubmitting}
+                onClick={() => showComingSoon("Password reset")}
+              >
+                Forgot password?
+              </button>
+            </div>
+
+            {displayMessage ? (
+              <p
+                role={formError ? "alert" : "status"}
+                className="rounded-lg border border-brand-pink/30 bg-brand-pink/10 px-3 py-2 font-body text-sm text-brand-pink"
+              >
+                {displayMessage}
+              </p>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="touch-target mt-1 inline-flex w-full min-h-11 items-center justify-center gap-2 rounded-xl border border-brand-blue/45 bg-brand-blue/12 px-6 font-ui text-[0.68rem] font-bold uppercase tracking-[0.16em] text-brand-blue transition hover:bg-brand-blue/20 disabled:cursor-not-allowed disabled:opacity-55"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                  Signing in…
+                </>
+              ) : (
+                <>
+                  Log In
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="auth-login-page__divider my-6">
+            <span>Or continue with</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2.5">
+            {(["Apple", "Google", "Facebook"] as const).map((provider) => (
+              <button
+                key={provider}
+                type="button"
+                disabled={isSubmitting}
+                aria-label={`Continue with ${provider} — coming soon`}
+                onClick={() => showComingSoon(`${provider} sign-in`)}
+                className="touch-target min-h-10 rounded-xl border border-brand-border bg-brand-black/40 font-ui text-[0.56rem] font-semibold uppercase tracking-[0.06em] text-brand-muted transition hover:border-brand-blue/35 hover:text-white"
+              >
+                {provider}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="auth-login-page__submit touch-target font-ui text-[0.72rem] font-bold uppercase tracking-[0.18em]"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-              <span className="sr-only">Signing in</span>
-            </>
-          ) : (
-            "Log In"
-          )}
-        </button>
-      </form>
+        <div className="mt-6 space-y-3 text-center">
+          <p className="font-body text-sm text-brand-muted">
+            Don&apos;t have an account?{" "}
+            <Link
+              href={createAccountHref}
+              className="font-semibold text-brand-pink transition hover:opacity-80"
+            >
+              Create account
+            </Link>
+          </p>
 
-      <div className="auth-login-page__links mt-6 flex flex-col gap-3">
-        <Link
-          href={createAccountHref}
-          className="auth-login-page__secondary-link touch-target font-ui text-[0.68rem] font-bold uppercase tracking-[0.14em] text-brand-blue"
-        >
-          Create account
-        </Link>
-        <Link
-          href="/experience/join-movement"
-          className="auth-login-page__secondary-link touch-target font-ui text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-brand-muted transition hover:text-white"
-        >
-          Join the movement
-        </Link>
-        <button
-          type="button"
-          onClick={onGuest}
-          className="auth-login-page__secondary-link touch-target font-ui text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-brand-muted transition hover:text-white"
-        >
-          Continue as guest
-        </button>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <Link
+              href="/experience/join-movement"
+              className="font-ui text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-brand-muted transition hover:text-brand-blue"
+            >
+              Join the movement
+            </Link>
+            <span className="text-brand-border" aria-hidden="true">
+              ·
+            </span>
+            <button
+              type="button"
+              onClick={onGuest}
+              disabled={isSubmitting}
+              className="font-ui text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-brand-muted transition hover:text-brand-blue"
+            >
+              Continue as guest
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
