@@ -8,14 +8,13 @@ import {
   seedPackages,
   type SeedPackageId,
 } from "@/lib/seeds/assets";
-import { getMerchProduct } from "@/lib/merch/catalog";
 import { ChevronRight, Lock } from "lucide-react";
 import type { CSSProperties } from "react";
 
 type BuySeedsOverlayProps = {
   selectedPackageId: SeedPackageId;
   isSubmitting: boolean;
-  activeProductId: string | null;
+  activePackageId: SeedPackageId | null;
   errorMessage: string | null;
   onSelectPackage: (packageId: SeedPackageId) => void;
   onContinue: () => void;
@@ -49,7 +48,7 @@ function rectStyle(rect: {
 export default function BuySeedsOverlay({
   selectedPackageId,
   isSubmitting,
-  activeProductId,
+  activePackageId,
   errorMessage,
   onSelectPackage,
   onContinue,
@@ -75,13 +74,8 @@ export default function BuySeedsOverlay({
         aria-label="Choose a seed package"
       >
         {seedPackages.map((pkg) => {
-          const product = getMerchProduct(pkg.productId);
           const isSelected = selectedPackageId === pkg.packageId;
-          const isActive = isSubmitting && activeProductId === pkg.productId;
-
-          if (!product) {
-            return null;
-          }
+          const isActive = isSubmitting && activePackageId === pkg.packageId;
 
           return (
             <button

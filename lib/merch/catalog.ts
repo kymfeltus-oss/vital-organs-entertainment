@@ -236,9 +236,13 @@ export const SEED_ECONOMY_PACKS: readonly SeedEconomyPack[] = [
   },
 ] as const;
 
-export const SEED_PACK_PRODUCT_IDS = SEED_ECONOMY_PACKS.map(
-  (pack) => pack.productId,
-) as readonly string[];
+export const SEED_PACK_PRODUCT_IDS = [
+  ...SEED_ECONOMY_PACKS.map((pack) => pack.productId),
+  "seed-pack-100",
+  "seed-pack-300",
+  "seed-pack-600",
+  "seed-pack-1200",
+] as const;
 
 export function isSeedPackProductId(productId: string): boolean {
   return (SEED_PACK_PRODUCT_IDS as readonly string[]).includes(productId);
@@ -284,8 +288,8 @@ export function getMerchCheckoutPaths(productId: string): {
 
   if (isSeedPackProductId(productId)) {
     return {
-      successPath: "/buy-seeds?success=true",
-      cancelPath: "/buy-seeds?canceled=true",
+      successPath: `${EXPERIENCE_LIVE_PATH}?payment=success`,
+      cancelPath: `${EXPERIENCE_LIVE_PATH}?payment=cancelled`,
     };
   }
 

@@ -97,17 +97,28 @@ export async function POST(request: NextRequest) {
       content,
     });
 
-    const { data, error } = insertResult;
-
-    if (error || !data) {
-      console.error("Fellowship chat insert failed:", error);
+    if (insertResult.error || !insertResult.data) {
+      console.error("Fellowship chat insert failed:", insertResult.error);
       return NextResponse.json(
         { error: "Unable to send message." },
         { status: 500 },
       );
     }
 
-    return NextResponse.json({ message: data });
+    const { broadcastAttendeeChatMessage } = await import(
+      "@/lib/experience/broadcast-attendee-chat-message"
+    );
+    void broadcastAttendeeChatMessage({
+      id: insertResult.data.id,
+      user_id: insertResult.data.user_id,
+      email: insertResult.data.email,
+      content: insertResult.data.content,
+      created_at: insertResult.data.created_at,
+    }).catch((broadcastError) => {
+      console.error("Attendee chat broadcast failed:", broadcastError);
+    });
+
+    return NextResponse.json({ message: insertResult.data });
   } catch (error) {
     console.error("Fellowship chat POST failed:", error);
     return NextResponse.json({ error: "Unable to send message." }, { status: 500 });

@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import StudioEngineSelector from "@/components/broadcast/StudioEngineSelector";
+import SimulationTestingStrip from "@/components/broadcast/SimulationTestingStrip";
 import { copyToClipboard } from "@/lib/clipboard";
 import type { PullEngineStatus } from "@/lib/ops/ops-stream-state";
 import { testHlsPreviewUrlClientOnly } from "@/lib/ops/test-hls-preview-client";
@@ -626,6 +627,8 @@ export default function RestreamConfigModal({
               {error}
             </p>
           ) : null}
+
+          <SimulationTestingStrip onShowToast={onShowToast} />
         </div>
 
         <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-brand-border pt-4">

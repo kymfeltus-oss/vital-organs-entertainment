@@ -28,11 +28,10 @@ export default function IanCraigLiveComposer({
   variant,
 }: IanCraigLiveComposerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const canCompose = session.authenticated && session.canSend;
 
   const wrapperClass =
     variant === "overlay"
-      ? "absolute inset-x-[clamp(0.75rem,3vw,1.25rem)] bottom-[calc(6.75rem+env(safe-area-inset-bottom))] z-30 lg:hidden"
+      ? "ian-craig-live-mobile-composer absolute inset-x-[clamp(0.75rem,3vw,1.25rem)] z-30"
       : "shrink-0 pt-3";
 
   if (!session.authenticated) {

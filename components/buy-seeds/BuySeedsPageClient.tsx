@@ -4,15 +4,13 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import BuySeedsPlate from "@/components/buy-seeds/BuySeedsPlate";
-import { getMerchProduct } from "@/lib/merch/catalog";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { CONTENT_WITH_NAV } from "@/lib/responsive";
 import {
   BUY_SEEDS_DEFAULT_PACKAGE_ID,
-  getSeedPackage,
   type SeedPackageId,
 } from "@/lib/seeds/assets";
-import { useMerchCheckout } from "@/lib/useMerchCheckout";
+import { useSeedCheckout } from "@/lib/useSeedCheckout";
 
 type BuySeedsPageContentProps = {
   initialProfile: AttendeeProfileSnapshot;
@@ -25,29 +23,16 @@ function BuySeedsPageContent({ initialProfile }: BuySeedsPageContentProps) {
 
   const [selectedPackageId, setSelectedPackageId] =
     useState<SeedPackageId>(BUY_SEEDS_DEFAULT_PACKAGE_ID);
-  const [activeProductId, setActiveProductId] = useState<string | null>(null);
   const [showThankYou, setShowThankYou] = useState(successParam);
   const [profile, setProfile] = useState(initialProfile);
 
-  const { isSubmitting, errorMessage, startCheckout, clearError } = useMerchCheckout();
+  const { isSubmitting, errorMessage, activePackageId, startCheckout, clearError } =
+    useSeedCheckout();
 
   useEffect(() => {
     if (!successParam) return;
     window.history.replaceState({}, "", pathname);
   }, [successParam, pathname]);
-
-  const handleBuyPack = useCallback(
-    async (productId: string) => {
-      const product = getMerchProduct(productId);
-      if (!product) return;
-
-      clearError();
-      setActiveProductId(productId);
-      await startCheckout({ product, selectedSize: "" });
-      setActiveProductId(null);
-    },
-    [clearError, startCheckout],
-  );
 
   const handleSelectPackage = useCallback(
     (packageId: SeedPackageId) => {
@@ -58,10 +43,8 @@ function BuySeedsPageContent({ initialProfile }: BuySeedsPageContentProps) {
   );
 
   const handleContinue = useCallback(() => {
-    const selectedPackage = getSeedPackage(selectedPackageId);
-    if (!selectedPackage) return;
-    void handleBuyPack(selectedPackage.productId);
-  }, [handleBuyPack, selectedPackageId]);
+    void startCheckout(selectedPackageId);
+  }, [selectedPackageId, startCheckout]);
 
   return (
     <>
@@ -74,7 +57,7 @@ function BuySeedsPageContent({ initialProfile }: BuySeedsPageContentProps) {
           onProfileChange={setProfile}
           selectedPackageId={selectedPackageId}
           isSubmitting={isSubmitting}
-          activeProductId={activeProductId}
+          activePackageId={activePackageId}
           errorMessage={errorMessage}
           onSelectPackage={handleSelectPackage}
           onContinue={handleContinue}

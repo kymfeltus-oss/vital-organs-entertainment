@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Heart, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { chatAuthorColorClass } from "@/lib/experience/chat-author-color";
 import type { IanCraigChatLine } from "@/components/experience/live/pov/ian-craig/ian-craig-live-types";
 
@@ -11,13 +11,13 @@ type IanCraigLiveChatFeedProps = {
 };
 
 export default function IanCraigLiveChatFeed({ lines, variant }: IanCraigLiveChatFeedProps) {
-  if (lines.length === 0) {
-    return variant === "sidebar" ? (
-      <p className="font-body text-sm text-brand-muted">Be the first to join the conversation.</p>
-    ) : null;
-  }
-
   if (variant === "sidebar") {
+    if (lines.length === 0) {
+      return (
+        <p className="font-body text-sm text-brand-muted">Be the first to join the conversation.</p>
+      );
+    }
+
     return (
       <div className="flex flex-col gap-3" aria-live="polite" aria-label="Live chat">
         {lines.map((line) => (
@@ -28,14 +28,18 @@ export default function IanCraigLiveChatFeed({ lines, variant }: IanCraigLiveCha
   }
 
   const wrapperClass =
-    "viewer-pov-chat-mask pointer-events-none absolute bottom-[clamp(9.5rem,22cqw,12rem)] left-[clamp(0.75rem,3vw,1.25rem)] z-20 max-h-[38%] max-w-[min(78%,20rem)] overflow-hidden";
+    "ian-craig-live-mobile-chat viewer-pov-chat-mask pointer-events-none absolute left-[clamp(0.75rem,3vw,1.25rem)] z-20 max-h-[34%] max-w-[min(82%,20rem)] overflow-hidden";
 
   return (
     <div className={wrapperClass} aria-live="polite" aria-label="Live chat">
       <div className="viewer-pov-chat-scroll flex flex-col justify-end gap-2.5">
-        {lines.map((line) => (
-          <ChatLine key={line.id} line={line} variant="overlay" />
-        ))}
+        {lines.length === 0 ? (
+          <p className="font-body text-xs text-white/55 viewer-pov-text-shadow">
+            Fellowship Chat — say hello to the room
+          </p>
+        ) : (
+          lines.map((line) => <ChatLine key={line.id} line={line} variant="overlay" />)
+        )}
       </div>
     </div>
   );

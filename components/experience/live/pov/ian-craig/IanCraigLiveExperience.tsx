@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import IanCraigLiveMobileDock from "@/components/experience/live/pov/ian-craig/IanCraigLiveMobileDock";
 import IanCraigLiveHeader from "@/components/experience/live/pov/ian-craig/IanCraigLiveHeader";
 import IanCraigLiveChatFeed, {
   IanCraigLiveChatFeedSidebar,
@@ -74,8 +75,12 @@ export default function IanCraigLiveExperience({
 
   const {
     balance: seedBalance,
+    usedFreeTaps,
     isLoading: seedBalanceLoading,
+    isSowing,
     error: seedBalanceError,
+    sowError,
+    clearSowError,
     handleAddSeeds,
     handleSowSeed,
     refreshAfterGive,
@@ -88,6 +93,73 @@ export default function IanCraigLiveExperience({
 
   const reactionTotal = REACTION_BASE_COUNT + reactionBump;
   const showSidebar = layout === "tablet-sidebar" || layout === "desktop-split";
+  const isMobileLayout = layout === "mobile";
+
+  useEffect(() => {
+    // #region agent log
+    fetch("http://127.0.0.1:7924/ingest/91e1e0f3-2fd3-4620-91fc-790155003627", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "ac75e2" },
+      body: JSON.stringify({
+        sessionId: "ac75e2",
+        runId: "post-fix",
+        hypothesisId: "H1-H5",
+        location: "IanCraigLiveExperience.tsx:layout-effect",
+        message: "live mobile shell state",
+        data: {
+          layout,
+          showSidebar,
+          isMobileLayout,
+          chatLineCount: chatLines.length,
+          sessionAuthenticated: session.authenticated,
+          sessionCanSend: session.canSend,
+          viewportWidth: typeof window !== "undefined" ? window.innerWidth : null,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+
+    if (!isMobileLayout) return;
+
+    const composerEl = document.querySelector(".ian-craig-live-mobile-composer");
+    const dockEl = document.querySelector(".ian-craig-live-mobile-dock");
+    const chatEl = document.querySelector(".ian-craig-live-mobile-chat");
+    const composerRect = composerEl?.getBoundingClientRect() ?? null;
+    const dockRect = dockEl?.getBoundingClientRect() ?? null;
+    const overlapPx =
+      composerRect && dockRect ? Math.round(composerRect.bottom - dockRect.top) : null;
+
+    // #region agent log
+    fetch("http://127.0.0.1:7924/ingest/91e1e0f3-2fd3-4620-91fc-790155003627", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "ac75e2" },
+      body: JSON.stringify({
+        sessionId: "ac75e2",
+        runId: "post-fix",
+        hypothesisId: "H3-H5",
+        location: "IanCraigLiveExperience.tsx:dom-probe",
+        message: "mobile overlay DOM visibility",
+        data: {
+          composerPresent: Boolean(composerEl),
+          dockPresent: Boolean(dockEl),
+          chatPresent: Boolean(chatEl),
+          overlapPx,
+          composerRect,
+          dockRect,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+  }, [
+    chatLines.length,
+    isMobileLayout,
+    layout,
+    session.authenticated,
+    session.canSend,
+    showSidebar,
+  ]);
 
   useEffect(() => {
     if (!showSidebar) return;
@@ -179,7 +251,11 @@ export default function IanCraigLiveExperience({
   };
 
   return (
-    <div className={`ian-craig-live ${DEVICE_FIT_VIEWPORT} bg-brand-black`}>
+    <div
+      className={`ian-craig-live ${DEVICE_FIT_VIEWPORT} bg-brand-black${
+        isMobileLayout ? " ian-craig-live--mobile" : ""
+      }`}
+    >
       <div
         className={`ian-craig-live__grid grid h-full min-h-0 w-full ${
           showSidebar
@@ -200,11 +276,36 @@ export default function IanCraigLiveExperience({
             onClose={handleCloseExperience}
           />
 
-          {!showSidebar ? (
+          {isMobileLayout ? (
             <>
               <IanCraigLiveChatFeed lines={chatLines} variant="overlay" />
               <IanCraigLiveComposer {...composerProps} variant="overlay" />
-              <IanCraigLiveDashboard {...dashboardProps} layout="overlay" />
+              {sowError ? (
+                <p
+                  className="pointer-events-none absolute inset-x-4 z-30 text-center font-body text-xs text-brand-pink viewer-pov-text-shadow"
+                  style={{ bottom: "calc(var(--ian-craig-dock-h) + var(--ian-craig-composer-h) + 0.25rem)" }}
+                  role="status"
+                >
+                  {sowError}
+                </p>
+              ) : null}
+              <IanCraigLiveMobileDock
+                seedBalance={seedBalance}
+                seedBalanceLoading={seedBalanceLoading}
+                usedFreeTaps={usedFreeTaps}
+                isSowing={isSowing}
+                shareCopied={shareCopied}
+                onAddSeeds={() => {
+                  clearSowError();
+                  handleAddSeeds();
+                }}
+                onSowSeed={() => {
+                  clearSowError();
+                  void handleSowSeed();
+                }}
+                onShare={handleShare}
+                onMore={handleMore}
+              />
             </>
           ) : null}
 

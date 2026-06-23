@@ -1,5 +1,10 @@
+import {
+  formatSeedBillingPrice,
+  SEED_BILLING_DEFAULT_PACKAGE_ID,
+  SEED_PACKAGES,
+  type SeedBillingPackageId,
+} from "@/lib/billing-config";
 import { MOBILE_ARTBOARD_REF } from "@/lib/responsive";
-import { SEED_ECONOMY_PACKS } from "@/lib/merch/catalog";
 
 /** Buy Seeds page — flat background + native overlay content. */
 
@@ -49,8 +54,8 @@ export const BUY_SEEDS_PANEL_WIDTH = `calc(100% - 2 * ${BUY_SEEDS_TAB_CONTENT_IN
 export const BUY_SEEDS_ART = BUY_SEEDS_MOBILE_ART;
 
 export type SeedPackageOverlay = {
-  packageId: string;
-  productId: string;
+  packageId: SeedBillingPackageId;
+  productType: string;
   seeds: number;
   badge: string;
   price: string;
@@ -72,41 +77,25 @@ export const BUY_SEEDS_PACKAGES_PANEL = {
   height: "21.5%",
 } as const;
 
+const SEED_PACKAGE_BADGES: Record<SeedBillingPackageId, string> = {
+  seeds_100: "POPULAR",
+  seeds_300: "SAVE 10%",
+  seeds_600: "SAVE 20%",
+  seeds_1200: "BEST VALUE",
+};
+
 /** Native package rows — text rendered in React over masked PNG slots. */
-export const seedPackages = [
-  {
-    packageId: "seed-pack-100",
-    productId: SEED_ECONOMY_PACKS[0].productId,
-    seeds: 100,
-    badge: "POPULAR",
-    price: "$1.99",
-  },
-  {
-    packageId: "seed-pack-300",
-    productId: SEED_ECONOMY_PACKS[1].productId,
-    seeds: 300,
-    badge: "SAVE 10%",
-    price: "$4.99",
-  },
-  {
-    packageId: "seed-pack-600",
-    productId: SEED_ECONOMY_PACKS[2].productId,
-    seeds: 600,
-    badge: "SAVE 20%",
-    price: "$8.99",
-  },
-  {
-    packageId: "seed-pack-1200",
-    productId: SEED_ECONOMY_PACKS[2].productId,
-    seeds: 1200,
-    badge: "BEST VALUE",
-    price: "$15.99",
-  },
-] as const satisfies ReadonlyArray<SeedPackageOverlay>;
+export const seedPackages = SEED_PACKAGES.map((pkg) => ({
+  packageId: pkg.id,
+  productType: pkg.productType,
+  seeds: pkg.count,
+  badge: SEED_PACKAGE_BADGES[pkg.id],
+  price: formatSeedBillingPrice(pkg.price),
+})) as const satisfies ReadonlyArray<SeedPackageOverlay>;
 
-export type SeedPackageId = (typeof seedPackages)[number]["packageId"];
+export type SeedPackageId = SeedBillingPackageId;
 
-export const BUY_SEEDS_DEFAULT_PACKAGE_ID: SeedPackageId = "seed-pack-100";
+export const BUY_SEEDS_DEFAULT_PACKAGE_ID: SeedPackageId = SEED_BILLING_DEFAULT_PACKAGE_ID;
 
 export const BUY_SEEDS_CONTINUE_SLOT = {
   label: "Continue to payment",

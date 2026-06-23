@@ -14,6 +14,8 @@ import ProductionTelemetryTray from "@/components/broadcast/ProductionTelemetryT
 import ReadinessGate from "@/components/broadcast/ReadinessGate";
 import StreamStatusPanel from "@/components/broadcast/StreamStatusPanel";
 import { resolveActiveOpsPreviewHlsUrl } from "@/lib/ops/resolve-active-stream-playback";
+import TroubleAlertPopup from "@/components/broadcast/TroubleAlertPopup";
+import { useOpsChatTroubleAlerts } from "@/hooks/useOpsChatTroubleAlerts";
 import { useOpsStreamStateRealtime } from "@/hooks/useOpsStreamStateRealtime";
 import { useStreamFailoverPoller } from "@/hooks/useStreamFailoverPoller";
 import {
@@ -70,6 +72,12 @@ export default function BroadcastConsole() {
     streamTelemetry: store?.streamTelemetry ?? null,
     localWebcamAudioLevel: localMeterLevel,
   });
+
+  const {
+    issueType: chatTroubleType,
+    count: chatTroubleCount,
+    clear: clearChatTroubleAlert,
+  } = useOpsChatTroubleAlerts({ enabled: Boolean(store) });
 
   const [canEditPull, setCanEditPull] = useState(false);
   const [restreamConfigOpen, setRestreamConfigOpen] = useState(false);
@@ -452,6 +460,12 @@ export default function BroadcastConsole() {
         onClose={() => setRestreamConfigOpen(false)}
         onSaved={handleRestreamConfigSaved}
         onShowToast={showToast}
+      />
+
+      <TroubleAlertPopup
+        issueType={chatTroubleType}
+        count={chatTroubleCount}
+        onClear={clearChatTroubleAlert}
       />
     </div>
   );

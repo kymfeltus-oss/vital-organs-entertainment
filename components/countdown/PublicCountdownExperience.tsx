@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import TroubleAlertPopup from "@/components/broadcast/TroubleAlertPopup";
+import PublicCountdownChatMonitor from "@/components/countdown/PublicCountdownChatMonitor";
 import PublicCountdownRings from "@/components/countdown/PublicCountdownRings";
 import { usePublicCountdownSchedule } from "@/components/countdown/usePublicCountdownSchedule";
+import { useCountdownChatTroubleAlerts } from "@/hooks/useCountdownChatTroubleAlerts";
 import {
   COUNTDOWN_STARTING_SHORTLY_LABEL,
   isCountdownStartingShortly,
@@ -45,6 +48,16 @@ export default function PublicCountdownExperience({
 
   const isEmbed = mode === "embed" || mode === "obs";
   const isObs = mode === "obs";
+  const showChatMonitor = true;
+  const chatMonitorLayout = isObs ? "ticker" : "sidebar";
+  const {
+    messages: chatMessages,
+    isLoading: chatLoading,
+    isConnected: chatConnected,
+    issueType: chatIssueType,
+    count: chatTroubleCount,
+    clear: clearChatTrouble,
+  } = useCountdownChatTroubleAlerts({ enabled: showChatMonitor });
   const startingShortly = isCountdownStartingShortly(countdown, eventPhase);
   const eventDateLabel = formatEventDate(config.start_time);
   const showRings = eventPhase === "waiting" && !startingShortly && hasSchedule;
@@ -81,6 +94,12 @@ export default function PublicCountdownExperience({
         "public-countdown",
         isEmbed ? "public-countdown--embed" : "",
         isObs ? "public-countdown--obs" : "",
+        showChatMonitor && chatMonitorLayout === "sidebar"
+          ? "public-countdown--with-chat-sidebar"
+          : "",
+        showChatMonitor && chatMonitorLayout === "ticker"
+          ? "public-countdown--with-chat-monitor"
+          : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -203,6 +222,21 @@ export default function PublicCountdownExperience({
           </motion.footer>
         ) : null}
       </div>
+
+      {showChatMonitor ? (
+        <PublicCountdownChatMonitor
+          messages={chatMessages}
+          isLoading={chatLoading}
+          isConnected={chatConnected}
+          layout={chatMonitorLayout}
+        />
+      ) : null}
+
+      <TroubleAlertPopup
+        issueType={chatIssueType}
+        count={chatTroubleCount}
+        onClear={clearChatTrouble}
+      />
     </main>
   );
 }

@@ -4852,6 +4852,30 @@ body::-webkit-scrollbar {
   object-fit: cover;
 }
 
+/* Mobile-only Ian Craig LIVE stack — full-bleed video + dock + composer + chat */
+.ian-craig-live--mobile {
+  --ian-craig-dock-h: calc(4.9rem + max(0.5rem, env(safe-area-inset-bottom)));
+  --ian-craig-composer-h: 4.5rem;
+  --ian-craig-stack-gap: 0.5rem;
+}
+
+.ian-craig-live--mobile .ian-craig-live__grid > div:first-child {
+  min-height: 100dvh;
+  height: 100dvh;
+}
+
+.ian-craig-live--mobile .ian-craig-live-mobile-composer {
+  bottom: var(--ian-craig-dock-h);
+}
+
+.ian-craig-live--mobile .ian-craig-live-mobile-chat {
+  bottom: calc(var(--ian-craig-dock-h) + var(--ian-craig-composer-h) + var(--ian-craig-stack-gap));
+}
+
+.ian-craig-live--mobile .ian-craig-live-reactions-heart {
+  bottom: calc(var(--ian-craig-dock-h) + var(--ian-craig-composer-h) + 0.75rem);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .viewer-pov-chat-scroll,
   .viewer-pov-seed-glow,
@@ -6787,6 +6811,257 @@ body::-webkit-scrollbar {
   opacity: 0.4;
 }
 
+/* Live chat monitor — /countdown production layouts (full, embed, obs) */
+.public-countdown--with-chat-sidebar {
+  padding-right: clamp(13.5rem, 21vw, 17.5rem);
+}
+
+.public-countdown--with-chat-monitor {
+  padding-bottom: clamp(3.25rem, 9vh, 4.75rem);
+}
+
+.public-countdown-chat-monitor {
+  pointer-events: none;
+  z-index: 24;
+}
+
+.public-countdown-chat-monitor--ticker {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  padding-inline: clamp(0.65rem, 2.5vw, 1.25rem);
+  padding-bottom: max(0.55rem, env(safe-area-inset-bottom));
+}
+
+.public-countdown-chat-monitor--sidebar {
+  position: fixed;
+  inset-block: 0;
+  right: 0;
+  width: clamp(12.5rem, 20vw, 16.5rem);
+  padding: clamp(0.65rem, 2vw, 1rem);
+  padding-top: max(clamp(0.65rem, 2vw, 1rem), env(safe-area-inset-top));
+  padding-bottom: max(clamp(0.65rem, 2vw, 1rem), env(safe-area-inset-bottom));
+}
+
+.public-countdown-chat-monitor__shell {
+  display: flex;
+  align-items: stretch;
+  gap: clamp(0.55rem, 1.8vw, 0.85rem);
+  width: 100%;
+  margin-inline: auto;
+  min-height: 2.35rem;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  background:
+    linear-gradient(180deg, rgb(12 12 16 / 0.82) 0%, rgb(7 7 10 / 0.9) 100%);
+  backdrop-filter: blur(10px);
+  box-shadow:
+    0 0 0 1px rgb(0 168 255 / 0.06) inset,
+    0 -8px 28px rgb(0 0 0 / 0.35);
+}
+
+.public-countdown-chat-monitor--ticker .public-countdown-chat-monitor__shell {
+  width: min(100%, 72rem);
+  border-radius: 9999px;
+}
+
+.public-countdown-chat-monitor--sidebar .public-countdown-chat-monitor__shell {
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  border-radius: 1rem;
+  box-shadow:
+    0 0 0 1px rgb(0 168 255 / 0.06) inset,
+    0 8px 28px rgb(0 0 0 / 0.35);
+}
+
+.public-countdown-chat-monitor--sidebar .public-countdown-chat-monitor__badge {
+  border-right: 0;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  justify-content: flex-start;
+}
+
+.public-countdown-chat-monitor__sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.55rem 0.65rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(0 168 255 / 0.35) transparent;
+}
+
+.public-countdown-chat-monitor__sidebar-line {
+  margin: 0;
+  font-size: clamp(0.72rem, 1.7vw, 0.82rem);
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.public-countdown--obs.public-countdown--with-chat-monitor {
+  padding-bottom: clamp(2.75rem, 8vh, 3.5rem);
+}
+
+.public-countdown--obs.public-countdown--with-chat-sidebar {
+  padding-right: 0;
+}
+
+@media (max-width: 767px) {
+  .public-countdown--with-chat-sidebar {
+    padding-right: 0;
+    padding-bottom: clamp(3.25rem, 9vh, 4.75rem);
+  }
+
+  .public-countdown-chat-monitor--sidebar {
+    inset: auto 0 0;
+    width: 100%;
+    height: auto;
+    max-height: 38vh;
+    padding-inline: clamp(0.65rem, 2.5vw, 1rem);
+    padding-bottom: max(0.55rem, env(safe-area-inset-bottom));
+  }
+
+  .public-countdown-chat-monitor--sidebar .public-countdown-chat-monitor__shell {
+    max-height: 38vh;
+  }
+
+  .public-countdown-chat-monitor--sidebar .public-countdown-chat-monitor__sidebar-scroll {
+    max-height: 22vh;
+  }
+}
+
+.public-countdown-chat-monitor__badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem 0.45rem 0.75rem;
+  border-right: 1px solid rgb(255 255 255 / 0.08);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.82);
+  white-space: nowrap;
+}
+
+.public-countdown-chat-monitor__badge-dot {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.35);
+}
+
+.public-countdown-chat-monitor__badge-dot[data-live="true"] {
+  background: #00a8ff;
+  box-shadow: 0 0 10px rgb(0 168 255 / 0.75);
+}
+
+.public-countdown-chat-monitor__badge-meta {
+  color: rgb(255 255 255 / 0.45);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.public-countdown-chat-monitor__viewport {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding-block: 0.35rem;
+  padding-inline: 0.35rem 0.85rem;
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 6%,
+    #000 94%,
+    transparent 100%
+  );
+}
+
+.public-countdown-chat-monitor__track {
+  display: inline-flex;
+  width: max-content;
+  animation: public-countdown-chat-marquee var(--chat-monitor-duration, 36s) linear infinite;
+}
+
+.public-countdown-chat-monitor__track-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 2rem);
+  padding-inline: clamp(0.5rem, 1.5vw, 1rem);
+  white-space: nowrap;
+}
+
+.public-countdown-chat-monitor__item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-size: clamp(0.72rem, 1.8vw, 0.84rem);
+  line-height: 1.35;
+  color: rgb(255 255 255 / 0.88);
+}
+
+.public-countdown-chat-monitor__author {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.public-countdown-chat-monitor__body {
+  color: rgb(255 255 255 / 0.78);
+}
+
+.public-countdown-chat-monitor__sep {
+  margin-inline-start: clamp(0.75rem, 2vw, 1.25rem);
+  color: rgb(255 255 255 / 0.22);
+}
+
+.public-countdown-chat-monitor__empty {
+  margin: 0;
+  padding-inline: 0.25rem;
+  font-size: clamp(0.72rem, 1.8vw, 0.82rem);
+  line-height: 1.35;
+  color: rgb(255 255 255 / 0.48);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes public-countdown-chat-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (min-width: 768px) {
+  .public-countdown-chat-monitor__shell {
+    min-height: 2.55rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-countdown-chat-monitor__track {
+    animation: none;
+    transform: none;
+  }
+
+  .public-countdown-chat-monitor__viewport {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .public-countdown-chat-monitor__viewport::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .public-countdown__aurora-layer,
   .public-countdown-unit--flash .public-countdown-unit__ring,
@@ -6803,6 +7078,17 @@ body::-webkit-scrollbar {
 }
 
 /* Fullscreen live stream — floating chat + reactions */
+@keyframes trouble-alert-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes live-chat-float-in {
   from {
     opacity: 0;

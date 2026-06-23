@@ -23,6 +23,8 @@ import LiveHubStreamPanels from "@/components/live-hub/LiveHubStreamPanels";
 import OperatorWebcamPreview from "@/components/live-hub/OperatorWebcamPreview";
 import LiveHubRtmpIngestPanel from "@/components/live-hub/LiveHubRtmpIngestPanel";
 import ProductionPathBanner from "@/components/ops/ProductionPathBanner";
+import TroubleAlertPopup from "@/components/broadcast/TroubleAlertPopup";
+import { useOpsChatTroubleAlerts } from "@/hooks/useOpsChatTroubleAlerts";
 import { useOpsStreamStateRealtime } from "@/hooks/useOpsStreamStateRealtime";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import type { HubNavSection } from "@/lib/live-hub/console-layout";
@@ -130,6 +132,12 @@ export default function LiveHubConsole({
     isLoading: isChatLoading,
     error: chatError,
   } = useLiveRoomChat();
+
+  const {
+    issueType: chatTroubleType,
+    count: chatTroubleCount,
+    clear: clearChatTroubleAlert,
+  } = useOpsChatTroubleAlerts();
 
   const pushTimeline = useCallback(
     (
@@ -1017,6 +1025,12 @@ export default function LiveHubConsole({
           </div>
         </div>
       ) : null}
+
+      <TroubleAlertPopup
+        issueType={chatTroubleType}
+        count={chatTroubleCount}
+        onClear={clearChatTroubleAlert}
+      />
     </div>
   );
 }

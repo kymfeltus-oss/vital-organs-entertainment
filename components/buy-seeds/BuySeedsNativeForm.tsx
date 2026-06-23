@@ -1,13 +1,12 @@
 "use client";
 
 import { Check, ChevronRight, Loader2, Lock } from "lucide-react";
-import { getMerchProduct } from "@/lib/merch/catalog";
 import { seedPackages, type SeedPackageId } from "@/lib/seeds/assets";
 
 type BuySeedsNativeFormProps = {
   selectedPackageId: SeedPackageId;
   isSubmitting: boolean;
-  activeProductId: string | null;
+  activePackageId: SeedPackageId | null;
   errorMessage: string | null;
   onSelectPackage: (packageId: SeedPackageId) => void;
   onContinue: () => void;
@@ -35,7 +34,7 @@ function packageRowClassName(isSelected: boolean): string {
 export default function BuySeedsNativeForm({
   selectedPackageId,
   isSubmitting,
-  activeProductId,
+  activePackageId,
   errorMessage,
   onSelectPackage,
   onContinue,
@@ -49,13 +48,8 @@ export default function BuySeedsNativeForm({
 
         <div role="radiogroup" aria-label="Choose a seed package" className="space-y-1.5">
           {seedPackages.map((pkg) => {
-            const product = getMerchProduct(pkg.productId);
             const isSelected = selectedPackageId === pkg.packageId;
-            const isActive = isSubmitting && activeProductId === pkg.productId;
-
-            if (!product) {
-              return null;
-            }
+            const isActive = isSubmitting && activePackageId === pkg.packageId;
 
             return (
               <button

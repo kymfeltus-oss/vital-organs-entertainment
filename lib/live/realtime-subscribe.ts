@@ -27,6 +27,13 @@ export type RealtimeBindings = {
   broadcast?: BroadcastBinding[];
 };
 
+export type RealtimeChannelOptions = {
+  broadcast?: {
+    self?: boolean;
+    ack?: boolean;
+  };
+};
+
 function channelTopic(channelName: string): string {
   return `realtime:${channelName}`;
 }
@@ -66,10 +73,14 @@ export async function createRealtimeChannel(
   channelName: string,
   bindings: RealtimeBindings,
   onSubscribe?: (status: string) => void,
+  channelOptions?: RealtimeChannelOptions,
 ): Promise<RealtimeChannel> {
   await removeChannelsByName(supabase, channelName);
 
-  let channel = supabase.channel(channelName);
+  let channel = supabase.channel(
+    channelName,
+    channelOptions ? { config: { broadcast: channelOptions.broadcast } } : undefined,
+  );
 
   for (const binding of bindings.postgres ?? []) {
     channel = channel.on(

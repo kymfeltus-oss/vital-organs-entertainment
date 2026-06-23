@@ -22,7 +22,7 @@ type BuySeedsPlateProps = {
   onProfileChange: (profile: AttendeeProfileSnapshot) => void;
   selectedPackageId: SeedPackageId;
   isSubmitting: boolean;
-  activeProductId: string | null;
+  activePackageId: SeedPackageId | null;
   errorMessage: string | null;
   onSelectPackage: (packageId: SeedPackageId) => void;
   onContinue: () => void;
@@ -33,7 +33,7 @@ export default function BuySeedsPlate({
   onProfileChange,
   selectedPackageId,
   isSubmitting,
-  activeProductId,
+  activePackageId,
   errorMessage,
   onSelectPackage,
   onContinue,
@@ -67,7 +67,7 @@ export default function BuySeedsPlate({
           <BuySeedsOverlay
             selectedPackageId={selectedPackageId}
             isSubmitting={isSubmitting}
-            activeProductId={activeProductId}
+            activePackageId={activePackageId}
             errorMessage={errorMessage}
             onSelectPackage={onSelectPackage}
             onContinue={onContinue}
