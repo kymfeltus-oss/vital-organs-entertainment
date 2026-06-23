@@ -35,6 +35,8 @@ import { computeCountdown } from "@/lib/live/event-lobby";
 type CountdownAdminClientProps = {
   adminEmail: string;
   initialConfig: EventCountdownConfig;
+  /** Server snapshot so SSR and hydration share the same clock tick. */
+  initialPreviewNowMs: number;
 };
 
 function toDatetimeLocalValue(iso: string): string {
@@ -104,12 +106,13 @@ const actionButtonClassName =
 export default function CountdownAdminClient({
   adminEmail,
   initialConfig,
+  initialPreviewNowMs,
 }: CountdownAdminClientProps) {
   const [form, setForm] = useState<EventCountdownConfig>(initialConfig);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [previewNow, setPreviewNow] = useState(() => Date.now());
+  const [previewNow, setPreviewNow] = useState(initialPreviewNowMs);
 
   useEffect(() => {
     const id = setInterval(() => setPreviewNow(Date.now()), 1000);
@@ -130,7 +133,7 @@ export default function CountdownAdminClient({
   const previewCountdown =
     previewPhase !== "waiting"
       ? { days: 0, hours: 0, minutes: 0, seconds: 0, isComplete: true }
-      : computeCountdown(form.start_time);
+      : computeCountdown(form.start_time, previewNow);
 
   const previewCta = useMemo(() => {
     if (previewPhase === "ended") {

@@ -20,14 +20,24 @@ type AttendeeLiveState = {
   isLoading: boolean;
 };
 
+type UseAttendeeLiveStateOptions = {
+  /** When false, skips network/realtime sync until lifecycle allows live routing. */
+  enabled?: boolean;
+};
+
 /** Attendee live signal — realtime first, safe polling fallback if sync fails. */
-export function useAttendeeLiveState(): AttendeeLiveState {
+export function useAttendeeLiveState(
+  options: UseAttendeeLiveStateOptions = {},
+): AttendeeLiveState {
+  const { enabled = true } = options;
   const [isLive, setIsLive] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(enabled);
   const [usePollingFallback, setUsePollingFallback] = useState(false);
   const syncRef = useRef<() => Promise<void>>(async () => {});
 
   const syncLiveState = useCallback(async () => {
+    if (!enabled) return;
+
     try {
       const evaluation = await fetchLiveAccessEvaluation();
       setIsLive(evaluation.streamIsLive);
@@ -38,11 +48,19 @@ export function useAttendeeLiveState(): AttendeeLiveState {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [enabled]);
 
   syncRef.current = syncLiveState;
 
   useEffect(() => {
+    if (!enabled) {
+      setUsePollingFallback(false);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+
     let cancelled = false;
     let supabase: ReturnType<typeof getSupabase> | null = null;
 
@@ -80,15 +98,15 @@ export function useAttendeeLiveState(): AttendeeLiveState {
         releasePlatformChannel(supabase);
       }
     };
-  }, [syncLiveState]);
+  }, [enabled, syncLiveState]);
 
   useEffect(() => {
-    if (!usePollingFallback) return;
+    if (!enabled || !usePollingFallback) return;
     const intervalId = window.setInterval(() => {
       void syncLiveState();
     }, POLL_FALLBACK_MS);
     return () => window.clearInterval(intervalId);
-  }, [syncLiveState, usePollingFallback]);
+  }, [enabled, syncLiveState, usePollingFallback]);
 
-  return { isLive, isLoading };
+  return { isLive, isLoading: enabled ? isLoading : false };
 }

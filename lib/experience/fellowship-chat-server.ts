@@ -7,20 +7,30 @@ import {
   type FellowshipChatMessageRow,
   type FellowshipChatSession,
 } from "@/lib/experience/fellowship-chat";
+import {
+  FELLOWSHIP_MESSAGE_SELECT_FULL,
+  FELLOWSHIP_MESSAGE_SELECT_LEGACY,
+  isFellowshipSchemaMismatchError,
+} from "@/lib/experience/fellowship-chat-db";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-
-const FELLOWSHIP_MESSAGE_SELECT =
-  "id, user_id, email, content, created_at, deleted_at, is_pinned, pinned_at";
 
 export async function loadActiveMuteUntil(
   admin: SupabaseClient,
   userId: string,
 ): Promise<string | null> {
-  const { data } = await admin
+  const { data, error } = await admin
     .from("chat_room_mutes")
     .select("muted_until")
     .eq("user_id", userId)
     .maybeSingle();
+
+  if (error) {
+    if (isFellowshipSchemaMismatchError(error)) {
+      return null;
+    }
+    console.warn("Fellowship mute lookup failed:", error.message);
+    return null;
+  }
 
   if (!data?.muted_until) return null;
 
@@ -59,14 +69,36 @@ export async function buildFellowshipSession(
   };
 }
 
+async function loadFellowshipChatFeedLegacy(admin: SupabaseClient): Promise<{
+  messages: FellowshipChatMessage[];
+  pinned: FellowshipChatMessage | null;
+}> {
+  const { data: messageRows, error } = await admin
+    .from("chat_messages")
+    .select(FELLOWSHIP_MESSAGE_SELECT_LEGACY)
+    .order("created_at", { ascending: false })
+    .limit(FELLOWSHIP_CHAT_HISTORY_LIMIT);
+
+  if (error) {
+    console.error("Fellowship chat legacy feed load failed:", error.message);
+    return { messages: [], pinned: null };
+  }
+
+  const messages = [...(messageRows ?? [])]
+    .reverse()
+    .map((row) => mapFellowshipChatRow(row as FellowshipChatMessageRow));
+
+  return { messages, pinned: null };
+}
+
 export async function loadFellowshipChatFeed(admin: SupabaseClient): Promise<{
   messages: FellowshipChatMessage[];
   pinned: FellowshipChatMessage | null;
 }> {
-  const [{ data: pinnedRow }, { data: messageRows }] = await Promise.all([
+  const [pinnedResult, messagesResult] = await Promise.all([
     admin
       .from("chat_messages")
-      .select(FELLOWSHIP_MESSAGE_SELECT)
+      .select(FELLOWSHIP_MESSAGE_SELECT_FULL)
       .eq("is_pinned", true)
       .is("deleted_at", null)
       .order("pinned_at", { ascending: false })
@@ -74,19 +106,37 @@ export async function loadFellowshipChatFeed(admin: SupabaseClient): Promise<{
       .maybeSingle(),
     admin
       .from("chat_messages")
-      .select(FELLOWSHIP_MESSAGE_SELECT)
+      .select(FELLOWSHIP_MESSAGE_SELECT_FULL)
       .is("deleted_at", null)
       .eq("is_pinned", false)
       .order("created_at", { ascending: false })
       .limit(FELLOWSHIP_CHAT_HISTORY_LIMIT),
   ]);
 
-  const messages = [...(messageRows ?? [])]
+  const schemaMismatch =
+    isFellowshipSchemaMismatchError(pinnedResult.error) ||
+    isFellowshipSchemaMismatchError(messagesResult.error);
+
+  if (schemaMismatch) {
+    console.warn(
+      "[fellowship-chat] Moderation columns missing — using legacy chat_messages schema.",
+    );
+    return loadFellowshipChatFeedLegacy(admin);
+  }
+
+  if (pinnedResult.error) {
+    console.error("Fellowship chat pinned load failed:", pinnedResult.error.message);
+  }
+  if (messagesResult.error) {
+    console.error("Fellowship chat feed load failed:", messagesResult.error.message);
+  }
+
+  const messages = [...(messagesResult.data ?? [])]
     .reverse()
     .map((row) => mapFellowshipChatRow(row as FellowshipChatMessageRow));
 
-  const pinned = pinnedRow
-    ? mapFellowshipChatRow(pinnedRow as FellowshipChatMessageRow)
+  const pinned = pinnedResult.data
+    ? mapFellowshipChatRow(pinnedResult.data as FellowshipChatMessageRow)
     : null;
 
   return { messages, pinned };
@@ -96,7 +146,7 @@ export async function assertFellowshipSlowMode(
   admin: SupabaseClient,
   userId: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const { data } = await admin
+  let result = await admin
     .from("chat_messages")
     .select("created_at")
     .eq("user_id", userId)
@@ -105,9 +155,24 @@ export async function assertFellowshipSlowMode(
     .limit(1)
     .maybeSingle();
 
-  if (!data?.created_at) return { ok: true };
+  if (result.error && isFellowshipSchemaMismatchError(result.error)) {
+    result = await admin
+      .from("chat_messages")
+      .select("created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+  }
 
-  const elapsedMs = Date.now() - new Date(data.created_at).getTime();
+  if (result.error) {
+    console.warn("Fellowship slow-mode lookup failed:", result.error.message);
+    return { ok: true };
+  }
+
+  if (!result.data?.created_at) return { ok: true };
+
+  const elapsedMs = Date.now() - new Date(result.data.created_at).getTime();
   const waitMs = FELLOWSHIP_SLOW_MODE_SECONDS * 1_000 - elapsedMs;
 
   if (waitMs > 0) {
@@ -119,4 +184,49 @@ export async function assertFellowshipSlowMode(
   }
 
   return { ok: true };
+}
+
+export async function insertFellowshipChatMessage(
+  admin: SupabaseClient,
+  payload: { user_id: string; email: string; content: string },
+): Promise<{ data: FellowshipChatMessageRow | null; error: string | null; usedLegacy: boolean }> {
+  let insertResult = await admin
+    .from("chat_messages")
+    .insert({
+      user_id: payload.user_id,
+      email: payload.email,
+      content: payload.content,
+      is_pinned: false,
+    })
+    .select(FELLOWSHIP_MESSAGE_SELECT_FULL)
+    .single();
+
+  if (
+    insertResult.error &&
+    isFellowshipSchemaMismatchError(insertResult.error)
+  ) {
+    insertResult = await admin
+      .from("chat_messages")
+      .insert({
+        user_id: payload.user_id,
+        email: payload.email,
+        content: payload.content,
+      })
+      .select(FELLOWSHIP_MESSAGE_SELECT_LEGACY)
+      .single();
+
+    if (!insertResult.error && insertResult.data) {
+      return {
+        data: insertResult.data as FellowshipChatMessageRow,
+        error: null,
+        usedLegacy: true,
+      };
+    }
+  }
+
+  return {
+    data: (insertResult.data as FellowshipChatMessageRow | null) ?? null,
+    error: insertResult.error?.message ?? null,
+    usedLegacy: false,
+  };
 }

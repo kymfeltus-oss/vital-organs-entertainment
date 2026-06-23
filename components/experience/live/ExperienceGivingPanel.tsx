@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 import { Heart, Loader2 } from "lucide-react";
 import { getClientAppUrl } from "@/lib/client-api";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
-import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
+import { useAttendeeLiveNavTarget } from "@/lib/experience/useAttendeeLiveNavTarget";
 
 const PRESET_AMOUNTS = [25, 50, 100, 250, 500, 1000] as const;
 
@@ -14,6 +14,7 @@ function sanitizeAmountInput(value: string): string {
 }
 
 export default function ExperienceGivingPanel() {
+  const { href: liveNavHref } = useAttendeeLiveNavTarget();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(50);
   const [customValue, setCustomValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -145,7 +146,7 @@ export default function ExperienceGivingPanel() {
           </p>
           {needsSignIn ? (
             <Link
-              href={buildAttendeeGateUrl(EXPERIENCE_LIVE_PATH)}
+              href={buildAttendeeGateUrl(liveNavHref)}
               className="mt-2 inline-flex min-h-11 items-center justify-center rounded-full border border-[#1E40AF]/50 bg-[#1E40AF]/10 px-6 py-2 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] exp-text-blue transition hover:bg-[#1E40AF]/20"
             >
               Sign In

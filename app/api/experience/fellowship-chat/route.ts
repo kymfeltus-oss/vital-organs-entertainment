@@ -3,10 +3,10 @@ import { FELLOWSHIP_MAX_CONTENT_LENGTH } from "@/lib/experience/fellowship-chat"
 import {
   assertFellowshipSlowMode,
   buildFellowshipSession,
+  insertFellowshipChatMessage,
   loadActiveMuteUntil,
   loadFellowshipChatFeed,
 } from "@/lib/experience/fellowship-chat-server";
-import { resolveAuthenticatedBuyer } from "@/lib/checkout/server";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
 
@@ -43,16 +43,27 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await resolveAuthenticatedBuyer(request);
+    const supabase = await createServerSupabaseClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-    if (!auth) {
+    if (authError || !user?.id) {
       return NextResponse.json(
         { error: "Sign in to join chat." },
         { status: 401 },
       );
     }
 
-    const { buyer, withSessionCookies } = auth;
+    const email = user.email?.trim().toLowerCase();
+    if (!email) {
+      return NextResponse.json(
+        { error: "Sign in to join chat." },
+        { status: 401 },
+      );
+    }
+
     const body = (await request.json()) as FellowshipChatPostBody;
     const content = body.content?.trim();
 
@@ -66,7 +77,7 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = getSupabaseAdmin();
-    const mutedUntil = await loadActiveMuteUntil(admin, buyer.userId);
+    const mutedUntil = await loadActiveMuteUntil(admin, user.id);
 
     if (mutedUntil) {
       return NextResponse.json(
@@ -75,33 +86,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const slowMode = await assertFellowshipSlowMode(admin, buyer.userId);
+    const slowMode = await assertFellowshipSlowMode(admin, user.id);
     if (slowMode.ok === false) {
       return NextResponse.json({ error: slowMode.error }, { status: 429 });
     }
 
-    const { data, error } = await admin
-      .from("chat_messages")
-      .insert({
-        user_id: buyer.userId,
-        email: buyer.email,
-        content,
-        is_pinned: false,
-      })
-      .select(
-        "id, user_id, email, content, created_at, deleted_at, is_pinned, pinned_at",
-      )
-      .single();
+    const insertResult = await insertFellowshipChatMessage(admin, {
+      user_id: user.id,
+      email,
+      content,
+    });
+
+    const { data, error } = insertResult;
 
     if (error || !data) {
-      console.error("Fellowship chat insert failed:", error?.message);
+      console.error("Fellowship chat insert failed:", error);
       return NextResponse.json(
         { error: "Unable to send message." },
         { status: 500 },
       );
     }
 
-    return withSessionCookies(NextResponse.json({ message: data }));
+    return NextResponse.json({ message: data });
   } catch (error) {
     console.error("Fellowship chat POST failed:", error);
     return NextResponse.json({ error: "Unable to send message." }, { status: 500 });

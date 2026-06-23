@@ -32,6 +32,7 @@ export default function AttendeeStreamPlayer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const manifestAbortRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
   const playbackUrlRef = useRef("");
   const experienceRef = useRef(experience);
@@ -56,6 +57,11 @@ export default function AttendeeStreamPlayer({
       clearTimeout(reconnectTimerRef.current);
       reconnectTimerRef.current = null;
     }
+  }, []);
+
+  const abortManifestFetch = useCallback(() => {
+    manifestAbortRef.current?.abort();
+    manifestAbortRef.current = null;
   }, []);
 
   const destroyPlayer = useCallback(() => {
@@ -136,55 +142,64 @@ export default function AttendeeStreamPlayer({
     [destroyPlayer, shouldPlay],
   );
 
-  const loadStream = useCallback(async (): Promise<string | null> => {
-    if (!shouldPlay) return null;
+  const loadStream = useCallback(
+    async (signal?: AbortSignal): Promise<string | null> => {
+      if (!shouldPlay) return null;
 
-    const requestedExperience = experienceRef.current;
+      const requestedExperience = experienceRef.current;
 
-    try {
-      const response = await fetch(
-        `/api/stream/manifest?experience=${encodeURIComponent(requestedExperience)}`,
-        {
-          method: "GET",
-          credentials: "include",
-          cache: "no-store",
-        },
-      );
+      try {
+        const response = await fetch(
+          `/api/stream/manifest?experience=${encodeURIComponent(requestedExperience)}`,
+          {
+            method: "GET",
+            credentials: "include",
+            cache: "no-store",
+            signal,
+          },
+        );
 
-      if (!response.ok) {
-        if (
-          requestedExperience !== DEFAULT_ATTENDEE_EXPERIENCE &&
-          (response.status === 503 || response.status === 400)
-        ) {
-          notifyExperienceUnavailable();
+        if (signal?.aborted) return null;
+
+        if (!response.ok) {
+          if (
+            requestedExperience !== DEFAULT_ATTENDEE_EXPERIENCE &&
+            (response.status === 503 || response.status === 400)
+          ) {
+            notifyExperienceUnavailable();
+            return null;
+          }
+          scheduleReconnectRef.current();
           return null;
         }
+
+        const data = (await response.json()) as {
+          success?: boolean;
+          playbackUrl?: string;
+        };
+
+        if (signal?.aborted) return null;
+
+        const playbackUrl = data.playbackUrl?.trim() ?? "";
+        if (!data.success || !playbackUrl) {
+          if (requestedExperience !== DEFAULT_ATTENDEE_EXPERIENCE) {
+            notifyExperienceUnavailable();
+            return null;
+          }
+          scheduleReconnectRef.current();
+          return null;
+        }
+
+        playbackUrlRef.current = playbackUrl;
+        return playbackUrl;
+      } catch (error) {
+        if (signal?.aborted) return null;
         scheduleReconnectRef.current();
         return null;
       }
-
-      const data = (await response.json()) as {
-        success?: boolean;
-        playbackUrl?: string;
-      };
-
-      const playbackUrl = data.playbackUrl?.trim() ?? "";
-      if (!data.success || !playbackUrl) {
-        if (requestedExperience !== DEFAULT_ATTENDEE_EXPERIENCE) {
-          notifyExperienceUnavailable();
-          return null;
-        }
-        scheduleReconnectRef.current();
-        return null;
-      }
-
-      playbackUrlRef.current = playbackUrl;
-      return playbackUrl;
-    } catch {
-      scheduleReconnectRef.current();
-      return null;
-    }
-  }, [notifyExperienceUnavailable, shouldPlay]);
+    },
+    [notifyExperienceUnavailable, shouldPlay],
+  );
 
   useEffect(() => {
     scheduleReconnectRef.current = scheduleReconnect;
@@ -201,6 +216,7 @@ export default function AttendeeStreamPlayer({
 
   useEffect(() => {
     if (!shouldPlay) {
+      abortManifestFetch();
       clearReconnectTimer();
       destroyPlayer();
       setIsReconnecting(false);
@@ -210,18 +226,28 @@ export default function AttendeeStreamPlayer({
       return;
     }
 
+    const controller = new AbortController();
+    manifestAbortRef.current = controller;
+    let cancelled = false;
+
     setIsReconnecting(false);
     setIsBuffering(true);
     setIsPlaying(false);
-    void loadStream().then((url) => {
-      if (url) bindSource(url);
+
+    void loadStream(controller.signal).then((url) => {
+      if (cancelled || !url) return;
+      bindSource(url);
     });
 
     return () => {
-      clearReconnectTimer();
-      destroyPlayer();
+      cancelled = true;
+      controller.abort();
+      if (manifestAbortRef.current === controller) {
+        manifestAbortRef.current = null;
+      }
     };
   }, [
+    abortManifestFetch,
     bindSource,
     clearReconnectTimer,
     destroyPlayer,
@@ -231,11 +257,20 @@ export default function AttendeeStreamPlayer({
   ]);
 
   useEffect(() => {
+    return () => {
+      abortManifestFetch();
+      clearReconnectTimer();
+      destroyPlayer();
+    };
+  }, [abortManifestFetch, clearReconnectTimer, destroyPlayer]);
+
+  useEffect(() => {
     if (!shouldPlay) return;
 
     const intervalId = window.setInterval(() => {
-      void loadStream().then((url) => {
-        if (!url || !isMountedRef.current) return;
+      const controller = new AbortController();
+      void loadStream(controller.signal).then((url) => {
+        if (controller.signal.aborted || !url || !isMountedRef.current) return;
         if (url === playbackUrlRef.current) return;
         playbackUrlRef.current = url;
         bindSource(url);

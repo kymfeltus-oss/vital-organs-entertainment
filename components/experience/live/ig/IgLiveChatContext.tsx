@@ -8,16 +8,20 @@ type IgLiveChatContextValue = {
   messages: FellowshipChatMessage[];
   session: FellowshipChatSession;
   isSending: boolean;
+  error: string | null;
   sendMessage: (content: string) => Promise<boolean>;
+  clearError: () => void;
 };
 
 const IgLiveChatContext = createContext<IgLiveChatContextValue | null>(null);
 
 export function IgLiveChatProvider({ children }: { children: ReactNode }) {
-  const { messages, session, isSending, sendMessage } = useFellowshipChat();
+  const { messages, session, isSending, error, sendMessage, clearError } = useFellowshipChat();
 
   return (
-    <IgLiveChatContext.Provider value={{ messages, session, isSending, sendMessage }}>
+    <IgLiveChatContext.Provider
+      value={{ messages, session, isSending, error, sendMessage, clearError }}
+    >
       {children}
     </IgLiveChatContext.Provider>
   );

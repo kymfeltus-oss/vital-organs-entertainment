@@ -10,8 +10,9 @@ import {
   type MouseEvent,
 } from "react";
 import { createPortal } from "react-dom";
+import AttendeeLiveNavLink from "@/components/navigation/AttendeeLiveNavLink";
 import { PERSONA_HUB_PATH } from "@/lib/auth/routing";
-import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
+import { isAttendeeLiveSurfacePath, EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,10 @@ type AwakeningMenuButtonProps = {
 };
 
 function isMenuItemActive(pathname: string, item: AwakeningMenuItem): boolean {
+  if (item.id === "live") {
+    return isAttendeeLiveSurfacePath(pathname);
+  }
+
   if (!item.match) return false;
 
   const hrefPath = item.href.split("?")[0] ?? item.href;
@@ -169,20 +174,31 @@ export default function AwakeningMenuButton({
                   <ul className="flex flex-col gap-1">
                     {items.map((item) => {
                       const active = isMenuItemActive(pathname, item);
+                      const linkClassName = cn(
+                        "awakening-menu-link font-ui",
+                        active && "awakening-menu-link--active",
+                      );
 
                       return (
                         <li key={item.id}>
-                          <Link
-                            href={item.href}
-                            className={cn(
-                              "awakening-menu-link font-ui",
-                              active && "awakening-menu-link--active",
-                            )}
-                            onClick={closeMenu}
-                            tabIndex={open ? 0 : -1}
-                          >
-                            {item.label}
-                          </Link>
+                          {item.id === "live" ? (
+                            <AttendeeLiveNavLink
+                              className={linkClassName}
+                              onClick={closeMenu}
+                              tabIndex={open ? 0 : -1}
+                            >
+                              {item.label}
+                            </AttendeeLiveNavLink>
+                          ) : (
+                            <Link
+                              href={item.href}
+                              className={linkClassName}
+                              onClick={closeMenu}
+                              tabIndex={open ? 0 : -1}
+                            >
+                              {item.label}
+                            </Link>
+                          )}
                         </li>
                       );
                     })}

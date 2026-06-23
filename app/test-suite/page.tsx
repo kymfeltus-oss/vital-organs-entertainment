@@ -54,25 +54,6 @@ export default function TestSuitePage() {
     setWindowWidth(initialWidth);
     setHasMounted(true);
 
-    // #region agent log
-    fetch("http://127.0.0.1:7924/ingest/91e1e0f3-2fd3-4620-91fc-790155003627", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "ac75e2",
-      },
-      body: JSON.stringify({
-        sessionId: "ac75e2",
-        runId: "test-suite-hydration-v2",
-        hypothesisId: "A",
-        location: "test-suite/page.tsx:useEffect-mount",
-        message: "viewport measured after mount",
-        data: { initialWidth, hasMountedAfterEffect: true },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
 

@@ -1,8 +1,9 @@
+import { DEV_MANIFEST_FALLBACK_HLS } from "@/lib/live/manifest-dev-fallback";
 import { isValidHlsUrl } from "@/lib/live/hls";
 import { LIVE_STREAM_STATE_ID } from "@/lib/live/types";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
-const DEV_FALLBACK_HLS = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
+const DEV_FALLBACK_HLS = DEV_MANIFEST_FALLBACK_HLS;
 
 /**
  * Local dev helper — repair invalid/missing primary HLS URLs so Live Hub readiness can pass.

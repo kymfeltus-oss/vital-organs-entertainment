@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import PublicCountdownRings from "@/components/countdown/PublicCountdownRings";
@@ -52,75 +51,6 @@ export default function PublicCountdownExperience({
   const showFooter = !isObs;
   const showLiveCta = mode === "full" && eventPhase === "live";
   const showWaitingMeta = eventPhase !== "waiting" || startingShortly;
-  const lockupWrapRef = useRef<HTMLDivElement>(null);
-  const [lockupReady, setLockupReady] = useState(false);
-
-  useEffect(() => {
-    const wrap = lockupWrapRef.current;
-    const main = document.querySelector(".public-countdown");
-    const img = wrap?.querySelector(".public-countdown__lockup") as HTMLImageElement | null;
-    const header = document.querySelector(".public-countdown__header");
-    if (!wrap || !main || !img) return;
-
-    const wrapStyle = getComputedStyle(wrap);
-    const mainStyle = getComputedStyle(main);
-    const imgStyle = getComputedStyle(img);
-    const headerStyle = header ? getComputedStyle(header) : null;
-
-    let cornerRgb: number[] | null = null;
-    try {
-      const rect = img.getBoundingClientRect();
-      const canvas = document.createElement("canvas");
-      canvas.width = 1;
-      canvas.height = 1;
-      const ctx = canvas.getContext("2d");
-      if (ctx && img.complete && img.naturalWidth > 0) {
-        ctx.drawImage(img, 0, 0, 1, 1, 0, 0, 1, 1);
-        const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
-        cornerRgb = [r, g, b, a];
-      }
-      const pageCanvas = document.createElement("canvas");
-      pageCanvas.width = 1;
-      pageCanvas.height = 1;
-      const pageCtx = pageCanvas.getContext("2d");
-      if (pageCtx) {
-        pageCtx.fillStyle = mainStyle.backgroundColor;
-        pageCtx.fillRect(0, 0, 1, 1);
-      }
-    } catch {
-      cornerRgb = null;
-    }
-
-    const payload = {
-      sessionId: "ac75e2",
-      runId: "post-fix-v3",
-      hypothesisId: "F",
-      location: "PublicCountdownExperience.tsx:lockup-audit",
-      message: "lockup stacking + corner pixel",
-      data: {
-        mainBg: mainStyle.backgroundColor,
-        wrapBg: wrapStyle.backgroundColor,
-        imgBlend: imgStyle.mixBlendMode,
-        headerTransform: headerStyle?.transform ?? "none",
-        headerIsolation: headerStyle?.isolation ?? "auto",
-        wrapWidth: wrap.getBoundingClientRect().width,
-        wrapHeight: wrap.getBoundingClientRect().height,
-        imgCornerSample: cornerRgb,
-      },
-      timestamp: Date.now(),
-    };
-
-    // #region agent log
-    fetch("http://127.0.0.1:7924/ingest/91e1e0f3-2fd3-4620-91fc-790155003627", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "ac75e2",
-      },
-      body: JSON.stringify(payload),
-    }).catch(() => {});
-    // #endregion
-  }, [mode, lockupReady]);
 
   const statusLabel =
     eventPhase === "live"
@@ -164,7 +94,7 @@ export default function PublicCountdownExperience({
       <div className="public-countdown__grid-noise" aria-hidden="true" />
 
       {!isObs ? (
-        <div ref={lockupWrapRef} className="public-countdown__lockup-wrap">
+        <div className="public-countdown__lockup-wrap">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={EXPERIENCE_BRAND_ASSETS.lockup}
@@ -175,7 +105,6 @@ export default function PublicCountdownExperience({
             loading="eager"
             decoding="async"
             draggable={false}
-            onLoad={() => setLockupReady(true)}
           />
         </div>
       ) : null}

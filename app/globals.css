@@ -4834,6 +4834,24 @@ body::-webkit-scrollbar {
   box-shadow: 0 0 28px rgba(255, 0, 140, 0.18);
 }
 
+/* Ian Craig LIVE — full-bleed stream stage inside immersive shell */
+.ian-craig-live-root {
+  min-height: 100dvh;
+  width: 100%;
+  background: #07070a;
+}
+
+.ian-craig-live .experience-player-fit {
+  aspect-ratio: auto;
+  height: 100%;
+  width: 100%;
+  border-radius: 0;
+}
+
+.ian-craig-live .experience-player-fit video {
+  object-fit: cover;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .viewer-pov-chat-scroll,
   .viewer-pov-seed-glow,
@@ -6781,5 +6799,43 @@ body::-webkit-scrollbar {
 
   .public-countdown-unit__digit {
     text-shadow: none;
+  }
+}
+
+/* Fullscreen live stream — floating chat + reactions */
+@keyframes live-chat-float-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes live-heart-float {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-120px) scale(1.15);
+  }
+}
+
+.live-chat-float-in {
+  animation: live-chat-float-in 0.35s ease-out both;
+}
+
+.live-heart-float {
+  animation: live-heart-float 1.8s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-chat-float-in,
+  .live-heart-float {
+    animation: none !important;
   }
 }

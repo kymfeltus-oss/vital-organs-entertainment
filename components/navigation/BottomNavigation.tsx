@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import AttendeeLiveNavLink from "@/components/navigation/AttendeeLiveNavLink";
+import Link from "next/link";
 import {
   BOTTOM_MENU_ARTBOARD,
   BOTTOM_MENU_BAR_SRC,
@@ -29,6 +30,20 @@ export default function BottomNavigation() {
         <div className="bottom-dock__hotspots">
           {BOTTOM_NAV_HOTSPOTS.map((item) => {
             const active = item.isActive(pathname);
+            const className = `bottom-dock__hit touch-target${active ? " bottom-dock__hit--active" : ""}`;
+
+            if (item.id === "live") {
+              return (
+                <AttendeeLiveNavLink
+                  key={item.id}
+                  aria-label={item.label}
+                  aria-current={active ? "page" : undefined}
+                  className={className}
+                >
+                  <span className="sr-only">{item.label}</span>
+                </AttendeeLiveNavLink>
+              );
+            }
 
             return (
               <Link
@@ -36,7 +51,7 @@ export default function BottomNavigation() {
                 href={item.href}
                 aria-label={item.label}
                 aria-current={active ? "page" : undefined}
-                className={`bottom-dock__hit touch-target${active ? " bottom-dock__hit--active" : ""}`}
+                className={className}
               >
                 <span className="sr-only">{item.label}</span>
               </Link>

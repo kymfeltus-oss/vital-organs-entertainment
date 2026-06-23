@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import ViewerPovGoLiveShell from "@/components/experience/live/pov/ViewerPovGoLiveShell";
+import ViewerPovGoLiveGatedClient from "@/components/experience/live/pov/ViewerPovGoLiveGatedClient";
+import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
 import { loadTabPageProfile } from "@/lib/experience/load-tab-page-profile";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +12,15 @@ export const metadata: Metadata = {
 
 /** Isolated visual preview — profile orb + live viewer count; sign in for full profile. */
 export default async function ViewerPovGoLivePreviewPage() {
-  const initialProfile = await loadTabPageProfile();
+  const [initialProfile, initialCountdownConfig] = await Promise.all([
+    loadTabPageProfile(),
+    loadActiveCountdownConfig(),
+  ]);
 
-  return <ViewerPovGoLiveShell initialProfile={initialProfile} />;
+  return (
+    <ViewerPovGoLiveGatedClient
+      initialProfile={initialProfile}
+      initialCountdownConfig={initialCountdownConfig}
+    />
+  );
 }

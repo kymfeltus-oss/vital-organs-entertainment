@@ -1,0 +1,251 @@
+"use client";
+
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import IanCraigLiveHeader from "@/components/experience/live/pov/ian-craig/IanCraigLiveHeader";
+import IanCraigLiveChatFeed, {
+  IanCraigLiveChatFeedSidebar,
+} from "@/components/experience/live/pov/ian-craig/IanCraigLiveChatFeed";
+import IanCraigLiveComposer from "@/components/experience/live/pov/ian-craig/IanCraigLiveComposer";
+import IanCraigLiveDashboard, {
+  IanCraigLiveDashboardSidebar,
+} from "@/components/experience/live/pov/ian-craig/IanCraigLiveDashboard";
+import IanCraigLiveReactionsRail from "@/components/experience/live/pov/ian-craig/IanCraigLiveReactionsRail";
+import IanCraigLiveVideoStage from "@/components/experience/live/pov/ian-craig/IanCraigLiveVideoStage";
+import {
+  IAN_CRAIG_TOP_SUPPORTER,
+  mapFellowshipToIanCraigLine,
+} from "@/components/experience/live/pov/ian-craig/ian-craig-live-types";
+import ExperienceGivingPanel from "@/components/experience/live/ExperienceGivingPanel";
+import ExperiencePrayerPanel from "@/components/experience/live/ExperiencePrayerPanel";
+import IgLiveSheet from "@/components/experience/live/ig/IgLiveSheet";
+import LiveActionSheet from "@/components/live/LiveActionSheet";
+import { useIgLiveChat } from "@/components/experience/live/ig/IgLiveChatContext";
+import type { IgLiveSheetAction } from "@/lib/experience/ig-live-config";
+import { useLiveAnnouncementRedirect } from "@/lib/experience/useLiveAnnouncementRedirect";
+import { useIanCraigLiveLayout } from "@/lib/experience/useIanCraigLiveLayout";
+import { useIanCraigLiveSeedActions } from "@/lib/experience/useIanCraigLiveSeedActions";
+import { useLiveElapsedTimer } from "@/lib/experience/useLiveElapsedTimer";
+import { useLiveStreamReactions } from "@/lib/experience/LiveStreamReactionsContext";
+import { useAttendeeLiveNavTarget } from "@/lib/experience/useAttendeeLiveNavTarget";
+import { useLiveViewerCount } from "@/lib/experience/useLiveViewerCount";
+import { useCountdownConfig } from "@/lib/useCountdownConfig";
+import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
+import { DEVICE_FIT_VIEWPORT } from "@/lib/responsive";
+import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
+
+const CHAT_VISIBLE_LIMIT = 12;
+const REACTION_BASE_COUNT = 1_200;
+
+type IanCraigLiveExperienceProps = {
+  profile: AttendeeProfileSnapshot;
+  onProfileChange: (profile: AttendeeProfileSnapshot) => void;
+  streamEnabled?: boolean;
+};
+
+export default function IanCraigLiveExperience({
+  profile,
+  onProfileChange,
+  streamEnabled = true,
+}: IanCraigLiveExperienceProps) {
+  useLiveAnnouncementRedirect(false);
+
+  const router = useRouter();
+  const layout = useIanCraigLiveLayout();
+  const { config } = useCountdownConfig();
+  const { href: liveNavHref } = useAttendeeLiveNavTarget();
+  const { messages, session, isSending, error: chatError, sendMessage, clearError } =
+    useIgLiveChat();
+  const { displayCount, displayLabel } = useLiveViewerCount({
+    enabled: true,
+    userId: profile.userId,
+  });
+  const { enabled: reactionsEnabled, isSending: isSendingHeart, sendReaction } =
+    useLiveStreamReactions();
+  const elapsedSeconds = useLiveElapsedTimer(config?.start_time);
+
+  const [draft, setDraft] = useState("");
+  const [sheetAction, setSheetAction] = useState<IgLiveSheetAction>(null);
+  const [actionSheetOpen, setActionSheetOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [reactionBump, setReactionBump] = useState(0);
+
+  const openGiveSheet = useCallback(() => setSheetAction("give"), []);
+
+  const {
+    balance: seedBalance,
+    isLoading: seedBalanceLoading,
+    error: seedBalanceError,
+    handleAddSeeds,
+    handleSowSeed,
+    refreshAfterGive,
+  } = useIanCraigLiveSeedActions({ onOpenGiveSheet: openGiveSheet });
+
+  const chatLines = useMemo(
+    () => messages.slice(-CHAT_VISIBLE_LIMIT).map(mapFellowshipToIanCraigLine),
+    [messages],
+  );
+
+  const reactionTotal = REACTION_BASE_COUNT + reactionBump;
+  const showSidebar = layout === "tablet-sidebar" || layout === "desktop-split";
+
+  useEffect(() => {
+    if (!showSidebar) return;
+    const node = document.getElementById("ian-craig-sidebar-chat-scroll");
+    if (!node) return;
+    node.scrollTop = node.scrollHeight;
+  }, [chatLines.length, showSidebar]);
+
+  const handleCloseExperience = useCallback(() => {
+    router.push(ATTENDEE_DASHBOARD_PATH);
+  }, [router]);
+
+  const handlePrayAction = useCallback(() => {
+    setSheetAction("prayer");
+  }, []);
+
+  const handleShare = useCallback(async () => {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: "Ian Craig — LIVE", url });
+        return;
+      }
+    } catch {
+      /* fall through */
+    }
+
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      window.setTimeout(() => setShareCopied(false), 2_000);
+    }
+  }, []);
+
+  const handleMore = useCallback(() => {
+    setActionSheetOpen(true);
+  }, []);
+
+  const handleSpawnHeart = useCallback(() => {
+    if (!reactionsEnabled || isSendingHeart) return;
+    void sendReaction("heart").then((sent) => {
+      if (sent) setReactionBump((count) => count + 1);
+    });
+  }, [isSendingHeart, reactionsEnabled, sendReaction]);
+
+  const handleCloseSheet = useCallback(() => {
+    if (sheetAction === "give") {
+      refreshAfterGive();
+    }
+    setSheetAction(null);
+  }, [refreshAfterGive, sheetAction]);
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmed = draft.trim();
+    if (!trimmed || isSending || !session.authenticated || !session.canSend) return;
+
+    void sendMessage(trimmed).then((sent) => {
+      if (sent) setDraft("");
+    });
+  };
+
+  const dashboardProps = {
+    elapsedSeconds,
+    seedBalance,
+    seedBalanceLoading,
+    seedBalanceError,
+    topSupporter: IAN_CRAIG_TOP_SUPPORTER,
+    viewerCount: displayCount,
+    shareCopied,
+    onAddSeeds: handleAddSeeds,
+    onSowSeed: handleSowSeed,
+    onPray: handlePrayAction,
+    onShare: handleShare,
+    onMore: handleMore,
+  };
+
+  const composerProps = {
+    draft,
+    onDraftChange: (value: string) => {
+      clearError();
+      setDraft(value);
+    },
+    onSubmit: handleSubmit,
+    session,
+    isSending,
+    chatError,
+    signInHref: liveNavHref,
+  };
+
+  return (
+    <div className={`ian-craig-live ${DEVICE_FIT_VIEWPORT} bg-brand-black`}>
+      <div
+        className={`ian-craig-live__grid grid h-full min-h-0 w-full ${
+          showSidebar
+            ? layout === "desktop-split"
+              ? "grid-cols-1 lg:grid-cols-[minmax(0,7fr)_minmax(18rem,3fr)]"
+              : "grid-cols-[minmax(0,1.75fr)_minmax(16rem,1fr)]"
+            : "grid-cols-1"
+        }`}
+      >
+        <div className="relative min-h-0 min-w-0">
+          <IanCraigLiveVideoStage enabled={streamEnabled} />
+
+          <IanCraigLiveHeader
+            viewerLabel={displayLabel}
+            profile={profile}
+            onProfileChange={onProfileChange}
+            onMore={handleMore}
+            onClose={handleCloseExperience}
+          />
+
+          {!showSidebar ? (
+            <>
+              <IanCraigLiveChatFeed lines={chatLines} variant="overlay" />
+              <IanCraigLiveComposer {...composerProps} variant="overlay" />
+              <IanCraigLiveDashboard {...dashboardProps} layout="overlay" />
+            </>
+          ) : null}
+
+          <IanCraigLiveReactionsRail
+            reactionTotal={reactionTotal}
+            onSpawnHeart={handleSpawnHeart}
+            isSendingHeart={isSendingHeart}
+          />
+        </div>
+
+        {showSidebar ? (
+          <aside className="flex min-h-0 min-w-0 flex-col border-l border-white/10 bg-brand-panel/80 p-[clamp(0.75rem,2vw,1.25rem)] backdrop-blur-xl">
+            <IanCraigLiveChatFeedSidebar lines={chatLines} />
+            <IanCraigLiveDashboardSidebar {...dashboardProps} />
+            <IanCraigLiveComposer {...composerProps} variant="sidebar" />
+          </aside>
+        ) : null}
+      </div>
+
+      <IgLiveSheet
+        action={sheetAction}
+        onClose={handleCloseSheet}
+        onSelectAction={(action) => setSheetAction(action)}
+      >
+        {sheetAction === "give" ? <ExperienceGivingPanel /> : null}
+        {sheetAction === "prayer" ? <ExperiencePrayerPanel /> : null}
+      </IgLiveSheet>
+
+      <LiveActionSheet
+        open={actionSheetOpen}
+        onClose={() => setActionSheetOpen(false)}
+        onReport={() => setActionSheetOpen(false)}
+        onShare={() => {
+          setActionSheetOpen(false);
+          void handleShare();
+        }}
+        onCopyLink={() => {
+          setActionSheetOpen(false);
+          void handleShare();
+        }}
+      />
+    </div>
+  );
+}

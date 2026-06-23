@@ -14,6 +14,7 @@ import {
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import type { CountdownParts } from "@/lib/live/event-lobby";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
+import { useAttendeeLiveNavTarget } from "@/lib/experience/useAttendeeLiveNavTarget";
 import { MOBILE_ARTBOARD_REF, mobileArtboardStageStyle } from "@/lib/responsive";
 
 type ExperienceDashboardInterfaceLayerProps = {
@@ -30,6 +31,9 @@ export default function ExperienceDashboardInterfaceLayer({
   const { config, countdown, eventPhase, isLoading, showTimer } = useLobbyCountdown({
     initialConfig: initialCountdownConfig,
     initialCountdown,
+  });
+  const { href: liveNavHref } = useAttendeeLiveNavTarget({
+    initialConfig: initialCountdownConfig,
   });
 
   useEffect(() => {
@@ -133,7 +137,7 @@ export default function ExperienceDashboardInterfaceLayer({
                 {AWAKENING_DASHBOARD_BUTTON_GRID.map((button) => (
                   <ExperienceDashboardGridCard
                     key={button.id}
-                    href={button.href}
+                    href={button.id === "live" ? liveNavHref : button.href}
                     src={button.src}
                     ariaLabel={button.ariaLabel}
                   />

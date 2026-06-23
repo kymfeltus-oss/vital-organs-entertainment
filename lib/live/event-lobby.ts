@@ -41,8 +41,8 @@ export type CountdownParts = {
   isComplete: boolean;
 };
 
-export function computeCountdown(targetIso: string): CountdownParts {
-  const diffMs = new Date(targetIso).getTime() - Date.now();
+export function computeCountdown(targetIso: string, nowMs = Date.now()): CountdownParts {
+  const diffMs = new Date(targetIso).getTime() - nowMs;
 
   if (diffMs <= 0) {
     return { days: 0, hours: 0, minutes: 0, seconds: 0, isComplete: true };

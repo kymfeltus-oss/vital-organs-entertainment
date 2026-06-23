@@ -7,6 +7,7 @@
  */
 
 import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
+import { isAttendeeLiveSurfacePath } from "@/lib/experience/live-routes";
 
 export const BOTTOM_MENU_BAR_SRC =
   "/bottom-menu-bar/bottom-menu-bar.png?v=1290x250-user-2";
@@ -62,7 +63,7 @@ export const BOTTOM_NAV_HOTSPOTS: readonly BottomNavHotspot[] = [
     href: "/live",
     left: TAB_WIDTH * 1,
     width: TAB_WIDTH,
-    isActive: matchesPrefix("/live"),
+    isActive: isAttendeeLiveSurfacePath,
   },
   {
     id: "giving",

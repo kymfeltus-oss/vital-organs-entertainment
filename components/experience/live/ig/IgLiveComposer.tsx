@@ -10,7 +10,7 @@ import {
 } from "react";
 import { useIgLiveChat } from "@/components/experience/live/ig/IgLiveChatContext";
 import { FELLOWSHIP_MAX_CONTENT_LENGTH } from "@/lib/experience/fellowship-chat";
-import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
+import { useAttendeeLiveNavTarget } from "@/lib/experience/useAttendeeLiveNavTarget";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
 
 export type IgLiveComposerHandle = {
@@ -23,6 +23,7 @@ type IgLiveComposerProps = {
 
 const IgLiveComposer = forwardRef<IgLiveComposerHandle, IgLiveComposerProps>(
   function IgLiveComposer({ onOpenGive }, ref) {
+    const { href: liveNavHref } = useAttendeeLiveNavTarget();
     const inputRef = useRef<HTMLInputElement>(null);
     const [draft, setDraft] = useState("");
     const { session, isSending, sendMessage } = useIgLiveChat();
@@ -51,7 +52,7 @@ const IgLiveComposer = forwardRef<IgLiveComposerHandle, IgLiveComposerProps>(
               Sign in to comment
             </p>
             <Link
-              href={buildAttendeeGateUrl(EXPERIENCE_LIVE_PATH)}
+              href={buildAttendeeGateUrl(liveNavHref)}
               className="touch-target shrink-0 rounded-full border border-brand-blue/40 bg-brand-blue/10 px-4 py-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-blue"
             >
               Sign In

@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { LIVE_STREAM_STATE_ID } from "@/lib/live/types";
 import { broadcastOpsStreamStateSync } from "@/lib/ops/broadcast-stream-state-sync";
 import { getCrewRoleFromRequest } from "@/lib/ops/crew-role-auth";
+import {
+  fetchLiveStreamStateRow,
+  isLiveStreamRtmpSchemaError,
+} from "@/lib/ops/fetch-live-stream-state-row";
 import { generateDeviceStreamKey } from "@/lib/ops/generate-device-key";
-import { isMobileOperatorStreamKey } from "@/lib/ops/resolve-mobile-operator-stream";
 import { requireOpsMetricsApiUser } from "@/lib/ops/require-ops-mutation";
 import { canAccessModule } from "@/lib/ops/team-roles";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
@@ -16,13 +19,28 @@ type SessionBody = {
 const SESSION_SELECT =
   "active_mobile_stream_key, connected_phone_clients_count, last_mobile_ping_at, updated_at, updated_by";
 
+const EMPTY_SESSION_RESPONSE = {
+  success: true as const,
+  streamKey: null,
+  connectedPhoneClientsCount: 0,
+  lastMobilePingAt: null,
+  updatedAt: null,
+  updatedBy: null,
+};
+
 function resolveOperatorName(value: unknown, fallback = "phone_operator"): string {
   if (typeof value !== "string") return fallback;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : fallback;
 }
 
-async function authorizeCameraDeskSession(request: NextRequest): Promise<NextResponse | null> {
+function isSchemaMigrationError(error: unknown): boolean {
+  return error instanceof Error && isLiveStreamRtmpSchemaError(error.message);
+}
+
+async function authorizeCameraDeskSession(
+  request: NextRequest,
+): Promise<Response | NextResponse | null> {
   const metricsGate = await requireOpsMetricsApiUser(request);
   if (metricsGate.response) return metricsGate.response;
 
@@ -48,7 +66,7 @@ function formatSessionResponse(data: {
 
   return {
     success: true as const,
-    streamKey: isMobileOperatorStreamKey(streamKey) ? streamKey : streamKey,
+    streamKey,
     connectedPhoneClientsCount: data.connected_phone_clients_count ?? 0,
     lastMobilePingAt: data.last_mobile_ping_at ?? null,
     updatedAt: data.updated_at ?? null,
@@ -70,7 +88,12 @@ async function registerMobileSession(
     .eq("id", LIVE_STREAM_STATE_ID)
     .maybeSingle();
 
-  if (loadError) throw loadError;
+  if (loadError) {
+    if (isSchemaMigrationError(loadError)) {
+      throw new Error("SCHEMA_MIGRATION_REQUIRED");
+    }
+    throw loadError;
+  }
 
   const nextClientCount =
     (existing?.connected_phone_clients_count ?? 0) + (options.incrementClients ? 1 : 0);
@@ -88,8 +111,15 @@ async function registerMobileSession(
     .select(SESSION_SELECT)
     .single();
 
-  if (error || !data) {
+  if (error) {
+    if (isSchemaMigrationError(error)) {
+      throw new Error("SCHEMA_MIGRATION_REQUIRED");
+    }
     throw error ?? new Error("Stream state row not found.");
+  }
+
+  if (!data) {
+    throw new Error("Stream state row not found.");
   }
 
   try {
@@ -116,8 +146,15 @@ async function pingMobileSession(): Promise<ReturnType<typeof formatSessionRespo
     .select(SESSION_SELECT)
     .single();
 
-  if (error || !data) {
+  if (error) {
+    if (isSchemaMigrationError(error)) {
+      throw new Error("SCHEMA_MIGRATION_REQUIRED");
+    }
     throw error ?? new Error("Stream state row not found.");
+  }
+
+  if (!data) {
+    throw new Error("Stream state row not found.");
   }
 
   return formatSessionResponse(data);
@@ -129,23 +166,24 @@ export async function GET(request: NextRequest) {
 
   try {
     const admin = getSupabaseAdmin();
-    const { data, error } = await admin
-      .from("live_stream_state")
-      .select(SESSION_SELECT)
-      .eq("id", LIVE_STREAM_STATE_ID)
-      .maybeSingle();
+    const row = await fetchLiveStreamStateRow(admin);
 
-    if (error) throw error;
-    if (!data) {
-      return NextResponse.json(
-        { success: true, streamKey: null, connectedPhoneClientsCount: 0, lastMobilePingAt: null },
-        { headers: { "Cache-Control": "private, no-store" } },
-      );
+    if (!row) {
+      return NextResponse.json(EMPTY_SESSION_RESPONSE, {
+        headers: { "Cache-Control": "private, no-store" },
+      });
     }
 
-    return NextResponse.json(formatSessionResponse(data), {
-      headers: { "Cache-Control": "private, no-store" },
-    });
+    return NextResponse.json(
+      formatSessionResponse({
+        active_mobile_stream_key: row.active_mobile_stream_key,
+        connected_phone_clients_count: row.connected_phone_clients_count,
+        last_mobile_ping_at: row.last_mobile_ping_at,
+        updated_at: row.updated_at,
+        updated_by: row.updated_by,
+      }),
+      { headers: { "Cache-Control": "private, no-store" } },
+    );
   } catch (error) {
     console.error("[OPS_CAMERA_DESK_SESSION_GET_ERR]:", error);
     return NextResponse.json(
@@ -187,6 +225,18 @@ export async function PATCH(request: NextRequest) {
       headers: { "Cache-Control": "private, no-store" },
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "SCHEMA_MIGRATION_REQUIRED") {
+      return NextResponse.json(
+        {
+          ...EMPTY_SESSION_RESPONSE,
+          schemaMigrationRequired: true,
+          error:
+            "Mobile session columns are not migrated yet. Apply migration 0018_active_mobile_stream_session.sql.",
+        },
+        { status: 503, headers: { "Cache-Control": "private, no-store" } },
+      );
+    }
+
     console.error("[OPS_CAMERA_DESK_SESSION_PATCH_ERR]:", error);
     const message =
       error instanceof Error ? error.message : "Unable to register camera desk session.";

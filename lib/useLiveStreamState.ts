@@ -14,19 +14,29 @@ import { getSupabase } from "@/lib/supabase/client";
 
 const STREAM_STATE_LISTENER_ID = "live-stream-state-broadcast";
 
+type UseLiveStreamStateOptions = {
+  /** When false, skips network/realtime sync until lifecycle allows live routing. */
+  enabled?: boolean;
+};
+
 type UseLiveStreamStateResult = {
   isLive: boolean;
   isLoading: boolean;
   error: string | null;
 };
 
-export function useLiveStreamState(): UseLiveStreamStateResult {
+export function useLiveStreamState(
+  options: UseLiveStreamStateOptions = {},
+): UseLiveStreamStateResult {
+  const { enabled = true } = options;
   const [isLive, setIsLive] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const syncRef = useRef<() => Promise<void>>(async () => {});
 
   const syncFromAccessApi = useCallback(async () => {
+    if (!enabled) return;
+
     try {
       const evaluation = await fetchLiveAccessEvaluation();
       setIsLive(evaluation.streamIsLive);
@@ -37,11 +47,18 @@ export function useLiveStreamState(): UseLiveStreamStateResult {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [enabled]);
 
   syncRef.current = syncFromAccessApi;
 
   useEffect(() => {
+    if (!enabled) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+
     let cancelled = false;
     let supabase: ReturnType<typeof getSupabase>;
 
@@ -80,11 +97,11 @@ export function useLiveStreamState(): UseLiveStreamStateResult {
       unregisterPlatformListener(STREAM_STATE_LISTENER_ID);
       releasePlatformChannel(supabase);
     };
-  }, [syncFromAccessApi]);
+  }, [enabled, syncFromAccessApi]);
 
   return {
     isLive,
-    isLoading,
-    error,
+    isLoading: enabled ? isLoading : false,
+    error: enabled ? error : null,
   };
 }

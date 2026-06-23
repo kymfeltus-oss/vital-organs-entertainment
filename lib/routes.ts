@@ -70,3 +70,12 @@ export function isNavHiddenRoute(pathname: string): boolean {
 
 /** @deprecated Use isNavHiddenRoute — kept for existing imports. */
 export type NavHiddenRoute = string;
+
+export {
+  buildLiveStreamPath,
+  buildSeedsCheckoutPath,
+  buildSeedsHubPath,
+  LIVE_STREAM_CLOSE_PATH,
+  SEED_PACKAGES,
+} from "@/lib/live-stream-routes";
+export type { SeedPackageId } from "@/lib/live-stream-routes";

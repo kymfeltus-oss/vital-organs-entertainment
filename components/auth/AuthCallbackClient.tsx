@@ -11,35 +11,6 @@ import {
 } from "@/lib/auth/routing";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
-const DEBUG_ENDPOINT =
-  "http://127.0.0.1:7924/ingest/91e1e0f3-2fd3-4620-91fc-790155003627";
-
-function debugLog(
-  hypothesisId: string,
-  message: string,
-  data: Record<string, unknown>,
-  runId = "auth-callback-v1",
-) {
-  // #region agent log
-  fetch(DEBUG_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "ac75e2",
-    },
-    body: JSON.stringify({
-      sessionId: "ac75e2",
-      runId,
-      hypothesisId,
-      location: "AuthCallbackClient.tsx",
-      message,
-      data,
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
-}
-
 function redirectToLoginWithError(nextPath: string, confirmedOnly = false) {
   const url = new URL(buildAttendeeGateUrl(nextPath), window.location.origin);
   if (confirmedOnly) {
@@ -86,17 +57,7 @@ export default function AuthCallbackClient() {
       const accessToken = hashParams.get("access_token");
       const refreshToken = hashParams.get("refresh_token");
 
-      debugLog("H1", "callback_start", {
-        hasCode: Boolean(code),
-        hasTokenHash: Boolean(tokenHash),
-        type,
-        oauthError,
-        hasHashTokens: Boolean(accessToken && refreshToken),
-        nextPath,
-      });
-
       if (oauthError) {
-        debugLog("H2", "oauth_error_param", { oauthError }, "auth-callback-v1");
         redirectToLoginWithError(nextPath);
         return;
       }
@@ -105,10 +66,6 @@ export default function AuthCallbackClient() {
         const { error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
-        });
-        debugLog("H3", "hash_set_session", {
-          ok: !error,
-          error: error?.message ?? null,
         });
         if (!error) {
           await syncProfileIdentity();
@@ -122,12 +79,6 @@ export default function AuthCallbackClient() {
           token_hash: tokenHash,
           type,
         });
-        debugLog("H4", "verify_otp", {
-          ok: !error,
-          type,
-          error: error?.message ?? null,
-          hasUser: Boolean(data.user),
-        });
         if (!error && data.user) {
           await syncProfileIdentity();
           window.location.assign(nextPath);
@@ -140,12 +91,6 @@ export default function AuthCallbackClient() {
         const verifierMissing = /code verifier|both auth code and code verifier/i.test(
           error?.message ?? "",
         );
-        debugLog("H5", "exchange_code", {
-          ok: !error,
-          error: error?.message ?? null,
-          verifierMissing,
-          hasUser: Boolean(data.user),
-        });
         if (!error && data.user) {
           await syncProfileIdentity();
           window.location.assign(nextPath);
@@ -162,17 +107,11 @@ export default function AuthCallbackClient() {
         data: { session },
       } = await supabase.auth.getSession();
       if (session?.user) {
-        debugLog("H6", "existing_session", { userId: session.user.id });
         await syncProfileIdentity();
         window.location.assign(nextPath);
         return;
       }
 
-      debugLog("H7", "callback_failed", {
-        hadCode: Boolean(code),
-        hadTokenHash: Boolean(tokenHash),
-        hadHashTokens: Boolean(accessToken && refreshToken),
-      });
       setStatusMessage("Confirmation link expired. Redirecting to sign in…");
       redirectToLoginWithError(nextPath);
     }

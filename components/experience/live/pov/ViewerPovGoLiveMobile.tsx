@@ -1,22 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { Heart, MoreHorizontal, ShoppingBag, Sprout, X } from "lucide-react";
+import { useIgLiveChat } from "@/components/experience/live/ig/IgLiveChatContext";
 import ProfileOrbEditor from "@/components/profile/ProfileOrbEditor";
-import {
-  POV_MOCK_CHAT_MESSAGES,
-  POV_MOCK_CREATOR,
-} from "@/lib/experience/live-pov-mock";
+import { buildAttendeeGateUrl } from "@/lib/auth/routing";
+import { chatAuthorColorClass } from "@/lib/experience/chat-author-color";
+import { FELLOWSHIP_MAX_CONTENT_LENGTH } from "@/lib/experience/fellowship-chat";
+import { POV_MOCK_CREATOR } from "@/lib/experience/live-pov-mock";
+import { useAttendeeLiveNavTarget } from "@/lib/experience/useAttendeeLiveNavTarget";
 import { useLiveViewerCount } from "@/lib/experience/useLiveViewerCount";
 import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
-const NAME_CLASS = {
-  blue: "text-brand-blue",
-  pink: "text-brand-pink",
-  purple: "text-brand-purple",
-} as const;
+const FLOATING_CHAT_LIMIT = 8;
 
 type ViewerPovGoLiveMobileProps = {
   profile: AttendeeProfileSnapshot;
@@ -28,10 +26,27 @@ export default function ViewerPovGoLiveMobile({
   onProfileChange,
 }: ViewerPovGoLiveMobileProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [draft, setDraft] = useState("");
+  const { href: liveNavHref } = useAttendeeLiveNavTarget();
+  const { messages, session, isSending, error: chatError, sendMessage, clearError } =
+    useIgLiveChat();
   const { displayLabel: viewerLabel } = useLiveViewerCount({
     enabled: true,
     userId: profile.userId,
   });
+
+  const chatLines = messages.slice(-FLOATING_CHAT_LIMIT);
+  const canCompose = session.authenticated && session.canSend;
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmed = draft.trim();
+    if (!trimmed || isSending || !canCompose) return;
+
+    void sendMessage(trimmed).then((sent) => {
+      if (sent) setDraft("");
+    });
+  };
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-brand-black">
@@ -70,11 +85,7 @@ export default function ViewerPovGoLiveMobile({
         </div>
 
         <div className="viewer-pov-profile-orb shrink-0">
-          <ProfileOrbEditor
-            profile={profile}
-            onProfileChange={onProfileChange}
-            size={40}
-          />
+          <ProfileOrbEditor profile={profile} onProfileChange={onProfileChange} size={40} />
         </div>
 
         <button
@@ -96,48 +107,90 @@ export default function ViewerPovGoLiveMobile({
         </Link>
       </div>
 
-      {/* Raw floating chat — no boxes, fade mask */}
-      <div className="viewer-pov-chat-mask pointer-events-none absolute bottom-[clamp(5.5rem,14cqw,7.5rem)] left-[clamp(0.75rem,3.5cqw,1rem)] z-10 max-h-[42%] max-w-[75%] overflow-hidden">
-        <div className="viewer-pov-chat-scroll flex flex-col justify-end gap-2.5 pr-2">
-          {POV_MOCK_CHAT_MESSAGES.map((entry) => (
-            <p key={entry.id} className="font-body text-[0.9rem] leading-snug viewer-pov-text-shadow">
-              <span className={`font-ui text-xs font-bold ${NAME_CLASS[entry.accent]}`}>
-                {entry.user}
-              </span>{" "}
-              <span className="text-white">
-                {entry.type === "seed" ? (
-                  <>
-                    <span className="text-amber-300">✦ </span>
-                    {entry.text}
-                  </>
-                ) : (
-                  entry.text
-                )}
-              </span>
-            </p>
-          ))}
-        </div>
-      </div>
-
-      {/* Bottom controls */}
-      <div className="absolute bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-[clamp(0.75rem,3.5cqw,1rem)] right-[clamp(0.75rem,3.5cqw,1rem)] z-20 flex items-center gap-[clamp(0.5rem,2cqw,0.625rem)]">
-        <label className="sr-only" htmlFor="viewer-pov-mobile-comment">
-          Join the conversation
-        </label>
-        <input
-          id="viewer-pov-mobile-comment"
-          type="text"
-          readOnly
-          placeholder="Join the conversation..."
-          className="h-12 min-w-0 flex-1 rounded-full border-0 bg-black/50 px-5 font-body text-sm text-white placeholder:text-white/50 backdrop-blur-md viewer-pov-text-shadow focus:outline-none focus:ring-2 focus:ring-white/20"
-        />
-        <button
-          type="button"
-          className="viewer-pov-seed-glow touch-target flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-emerald-500 text-black shadow-[0_0_24px_rgba(250,204,21,0.45)]"
-          aria-label="Vital Seed"
+      {/* Fellowship chat feed */}
+      {chatLines.length > 0 ? (
+        <div
+          className="viewer-pov-chat-mask pointer-events-none absolute bottom-[clamp(5.5rem,14cqw,7.5rem)] left-[clamp(0.75rem,3.5cqw,1rem)] z-10 max-h-[42%] max-w-[75%] overflow-hidden"
+          aria-live="polite"
+          aria-label="Live chat"
         >
-          <Sprout className="h-5 w-5" aria-hidden="true" />
-        </button>
+          <div className="viewer-pov-chat-scroll flex flex-col justify-end gap-2.5 pr-2">
+            {chatLines.map((line) => (
+              <p key={line.id} className="font-body text-[0.9rem] leading-snug viewer-pov-text-shadow">
+                <span
+                  className={`font-ui text-xs font-bold ${chatAuthorColorClass(line.userId)}`}
+                >
+                  {line.author}
+                </span>{" "}
+                <span className="text-white">{line.body}</span>
+              </p>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Bottom chat composer */}
+      <div className="absolute bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-[clamp(0.75rem,3.5cqw,1rem)] right-[clamp(0.75rem,3.5cqw,1rem)] z-20">
+        {!session.authenticated ? (
+          <div className="flex items-center gap-[clamp(0.5rem,2cqw,0.625rem)]">
+            <p className="min-w-0 flex-1 rounded-full bg-black/50 px-5 py-3 font-body text-sm text-white/70 backdrop-blur-md viewer-pov-text-shadow">
+              Sign in to join the conversation
+            </p>
+            <Link
+              href={buildAttendeeGateUrl(liveNavHref)}
+              className="touch-target shrink-0 rounded-full border border-brand-blue/40 bg-brand-blue/10 px-4 py-3 font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-blue"
+            >
+              Sign In
+            </Link>
+          </div>
+        ) : !session.canSend ? (
+          <p className="rounded-full bg-black/50 px-5 py-3 text-center font-body text-sm text-brand-muted backdrop-blur-md viewer-pov-text-shadow">
+            You are muted in Fellowship Chat.
+          </p>
+        ) : (
+          <div className="relative">
+            {chatError ? (
+              <p className="mb-2 truncate text-center font-body text-xs text-brand-pink viewer-pov-text-shadow">
+                {chatError}
+              </p>
+            ) : null}
+            <form
+              onSubmit={handleSubmit}
+              className="flex items-center gap-[clamp(0.5rem,2cqw,0.625rem)]"
+            >
+            <label className="sr-only" htmlFor="viewer-pov-mobile-comment">
+              Join the conversation
+            </label>
+            <input
+              id="viewer-pov-mobile-comment"
+              type="text"
+              value={draft}
+              onChange={(event) => {
+                clearError();
+                setDraft(event.target.value);
+              }}
+              placeholder="Join the conversation..."
+              disabled={isSending}
+              maxLength={FELLOWSHIP_MAX_CONTENT_LENGTH}
+              className="h-12 min-w-0 flex-1 rounded-full border-0 bg-black/50 px-5 font-body text-sm text-white placeholder:text-white/50 backdrop-blur-md viewer-pov-text-shadow focus:outline-none focus:ring-2 focus:ring-white/20"
+            />
+            <button
+              type="submit"
+              disabled={isSending || !draft.trim()}
+              className="touch-target rounded-full border border-brand-blue/40 bg-brand-blue/15 px-4 py-3 font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-blue disabled:opacity-40"
+            >
+              Send
+            </button>
+            <button
+              type="button"
+              className="viewer-pov-seed-glow touch-target flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-emerald-500 text-black shadow-[0_0_24px_rgba(250,204,21,0.45)]"
+              aria-label="Vital Seed"
+            >
+              <Sprout className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </form>
+          </div>
+        )}
       </div>
 
       {/* Slide-up action sheet — secondary options only when requested */}

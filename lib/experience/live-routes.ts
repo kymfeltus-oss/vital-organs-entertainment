@@ -1,6 +1,19 @@
 /** Canonical attendee live experience — Viewer POV Go Live at /live. */
 export const EXPERIENCE_LIVE_PATH = "/live";
 
+/** Public shareable countdown — rings + event date (pre-show announcement surface). */
+export const PUBLIC_COUNTDOWN_PATH = "/countdown";
+
+/** True when pathname is an attendee live or countdown destination. */
+export function isAttendeeLiveSurfacePath(pathname: string): boolean {
+  return (
+    pathname === EXPERIENCE_LIVE_PATH ||
+    pathname.startsWith(`${EXPERIENCE_LIVE_PATH}/`) ||
+    pathname === PUBLIC_COUNTDOWN_PATH ||
+    pathname.startsWith(`${PUBLIC_COUNTDOWN_PATH}/`)
+  );
+}
+
 /** Legacy `/experience/live` and aliases forward here. */
 export function experienceLivePathWithQuery(searchParams: URLSearchParams): string {
   const query = searchParams.toString();

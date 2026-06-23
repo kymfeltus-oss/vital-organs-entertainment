@@ -1,11 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import PublicCountdownExperience from "@/components/countdown/PublicCountdownExperience";
 import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
 import GoingLiveTransition from "@/components/experience/live/GoingLiveTransition";
 import ViewerPovGoLiveShell from "@/components/experience/live/pov/ViewerPovGoLiveShell";
 import PassActivatingShell from "@/components/live/PassActivatingShell";
+import LightweightLiveLoading from "@/components/live/LightweightLiveLoading";
+import {
+  computeEventLifecycleStage,
+  isPreLiveLifecycleStage,
+  resolveAttendeeLifecycleStage,
+  type EventLifecycleStage,
+} from "@/lib/experience/event-lifecycle";
+import { useLiveAnnouncementRedirect } from "@/lib/experience/useLiveAnnouncementRedirect";
+import {
+  isLivePreviewOverride,
+  shouldDeferBackgroundLiveSync,
+  shouldInitializeLiveStream,
+  shouldShowLiveRoomShell,
+} from "@/lib/experience/live-stream-gate";
 import { GOING_LIVE_TRANSITION_MS } from "@/lib/experience/live-go-live-transition";
 import {
   computeEventCountdownPhase,
@@ -13,9 +29,11 @@ import {
   type EventCountdownPhase,
 } from "@/lib/live/countdown-config";
 import type { CountdownParts } from "@/lib/live/event-lobby";
+import { computeCountdown } from "@/lib/live/event-lobby";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
+import { useAttendeeLiveState } from "@/lib/experience/useAttendeeLiveState";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
 import { BroadcastHealthProvider } from "@/lib/parable/BroadcastHealthContext";
 import { useLiveAccessVerification } from "@/lib/useLiveAccessVerification";
@@ -36,12 +54,14 @@ function resolveAttendeeEventPhase(
 type LiveExperienceClientProps = {
   initialCountdownConfig?: EventCountdownConfig;
   initialCountdown?: CountdownParts;
+  initialLifecycleStage: EventLifecycleStage;
   initialProfile: AttendeeProfileSnapshot;
 };
 
 export default function LiveExperienceClient({
   initialCountdownConfig,
   initialCountdown,
+  initialLifecycleStage,
   initialProfile,
 }: LiveExperienceClientProps) {
   return (
@@ -49,6 +69,7 @@ export default function LiveExperienceClient({
       <LiveExperienceClientInner
         initialCountdownConfig={initialCountdownConfig}
         initialCountdown={initialCountdown}
+        initialLifecycleStage={initialLifecycleStage}
         initialProfile={initialProfile}
       />
     </BroadcastHealthProvider>
@@ -58,44 +79,101 @@ export default function LiveExperienceClient({
 function LiveExperienceClientInner({
   initialCountdownConfig,
   initialCountdown,
+  initialLifecycleStage,
   initialProfile,
 }: LiveExperienceClientProps) {
+  const searchParams = useSearchParams();
+  const previewOverride = isLivePreviewOverride(searchParams);
   const { phase, verificationAttempt } = useLiveAccessVerification();
+  const accessGateReady =
+    phase !== "checking" && phase !== "activating_pass" && phase !== "locked";
   const { refresh: refreshSeedBalance } = useLiveSeedWallet();
-  const { config: countdownConfig, eventPhase, isLoading: countdownLoading } = useLobbyCountdown({
+  const {
+    config: countdownConfig,
+    eventPhase,
+    isLoading: countdownLoading,
+  } = useLobbyCountdown({
     initialConfig: initialCountdownConfig,
     initialCountdown,
   });
 
+  const scheduleStage = useMemo(() => {
+    const startIso =
+      countdownLoading && initialCountdownConfig
+        ? initialCountdownConfig.start_time
+        : countdownConfig.start_time;
+    const endIso =
+      countdownLoading && initialCountdownConfig
+        ? initialCountdownConfig.end_time
+        : countdownConfig.end_time;
+
+    return computeEventLifecycleStage(startIso, endIso);
+  }, [
+    countdownConfig.end_time,
+    countdownConfig.start_time,
+    countdownLoading,
+    initialCountdownConfig,
+  ]);
+
+  const deferBackgroundLiveSync = shouldDeferBackgroundLiveSync(
+    scheduleStage,
+    countdownLoading,
+    previewOverride,
+  );
+
+  const { isLive: broadcastIsLive } = useAttendeeLiveState({
+    enabled: !deferBackgroundLiveSync,
+  });
+
   const serverPhase = computeEventCountdownPhase(
-    initialCountdownConfig.start_time,
-    initialCountdownConfig.end_time,
+    initialCountdownConfig?.start_time ?? countdownConfig.start_time,
+    initialCountdownConfig?.end_time ?? countdownConfig.end_time,
   );
   const routingPhase = resolveAttendeeEventPhase(eventPhase, serverPhase);
 
+  const lifecycleStage = useMemo(() => {
+    if (countdownLoading && !previewOverride) {
+      return scheduleStage;
+    }
+
+    return resolveAttendeeLifecycleStage(scheduleStage, {
+      broadcastIsLive: deferBackgroundLiveSync ? false : broadcastIsLive,
+      countdownPhase: routingPhase,
+    });
+  }, [
+    broadcastIsLive,
+    countdownLoading,
+    deferBackgroundLiveSync,
+    previewOverride,
+    routingPhase,
+    scheduleStage,
+  ]);
+
   const [openingLiveRoom, setOpeningLiveRoom] = useState(false);
   const wasPreConcertRef = useRef<boolean | null>(null);
+
+  useLiveAnnouncementRedirect(accessGateReady);
 
   useEffect(() => {
     if (countdownLoading) return;
 
     if (wasPreConcertRef.current === null) {
-      wasPreConcertRef.current = routingPhase === "waiting";
+      wasPreConcertRef.current = isPreLiveLifecycleStage(lifecycleStage);
       return;
     }
 
-    if (routingPhase === "live" && wasPreConcertRef.current) {
+    if (lifecycleStage === "live" && wasPreConcertRef.current) {
       setOpeningLiveRoom(true);
       const timerId = window.setTimeout(() => setOpeningLiveRoom(false), GOING_LIVE_MS);
       wasPreConcertRef.current = false;
       return () => window.clearTimeout(timerId);
     }
 
-    if (routingPhase === "waiting") {
+    if (isPreLiveLifecycleStage(lifecycleStage)) {
       wasPreConcertRef.current = true;
       setOpeningLiveRoom(false);
     }
-  }, [countdownLoading, routingPhase]);
+  }, [countdownLoading, lifecycleStage]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -110,6 +188,16 @@ function LiveExperienceClientInner({
     window.history.replaceState({}, "", query ? `${url.pathname}?${query}` : url.pathname);
   }, [refreshSeedBalance]);
 
+  const streamGateInput = {
+    lifecycleStage,
+    countdownLoading,
+    openingLiveRoom,
+    previewOverride,
+  };
+
+  const showLiveRoom = shouldShowLiveRoomShell(streamGateInput);
+  const streamEnabled = shouldInitializeLiveStream(streamGateInput);
+
   if (phase === "checking" || phase === "activating_pass") {
     return <PassActivatingShell attempt={verificationAttempt} />;
   }
@@ -118,34 +206,52 @@ function LiveExperienceClientInner({
     return (
       <main className="live-access-page experience-live-root pb-safe pt-safe text-white">
         <div className="live-access-page__track">
-        <div className="w-full rounded-2xl border border-white/8 bg-brand-panel p-8 text-center">
-          <p className="font-ui text-[0.6rem] font-bold uppercase tracking-[0.24em] text-brand-blue">
-            Vital Organs Entertainment
-          </p>
-          <h1 className="mt-4 font-headline text-2xl uppercase tracking-[0.12em]">
-            300 Awakening Live Experience
-          </h1>
-          <p className="mt-4 font-body text-sm text-brand-muted">
-            This live experience is free. Sign in to enter the holding room and join when the
-            broadcast goes live.
-          </p>
-          <Link
-            href={buildAttendeeGateUrl(EXPERIENCE_LIVE_PATH)}
-            className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full border border-brand-blue/50 bg-brand-blue/10 px-8 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-brand-blue transition hover:bg-brand-blue/20"
-          >
-            Sign In to Enter
-          </Link>
-        </div>
+          <div className="w-full rounded-2xl border border-white/8 bg-brand-panel p-8 text-center">
+            <p className="font-ui text-[0.6rem] font-bold uppercase tracking-[0.24em] text-brand-blue">
+              Vital Organs Entertainment
+            </p>
+            <h1 className="mt-4 font-headline text-2xl uppercase tracking-[0.12em]">
+              300 Awakening Live Experience
+            </h1>
+            <p className="mt-4 font-body text-sm text-brand-muted">
+              This live experience is free. Sign in to enter the holding room and join when the
+              broadcast goes live.
+            </p>
+            <Link
+              href={buildAttendeeGateUrl(EXPERIENCE_LIVE_PATH)}
+              className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full border border-brand-blue/50 bg-brand-blue/10 px-8 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-brand-blue transition hover:bg-brand-blue/20"
+            >
+              Sign In to Enter
+            </Link>
+          </div>
         </div>
       </main>
     );
   }
 
-  const showLiveRoom = routingPhase === "live" && !openingLiveRoom;
+  const announcementConfig = initialCountdownConfig ?? countdownConfig;
+  const announcementCountdown =
+    initialCountdown ?? computeCountdown(announcementConfig.start_time);
 
   if (!showLiveRoom) {
     if (openingLiveRoom) {
       return <GoingLiveTransition visible durationMs={GOING_LIVE_MS} />;
+    }
+
+    if (lifecycleStage === "announcement") {
+      return <LightweightLiveLoading />;
+    }
+
+    if (lifecycleStage === "ended") {
+      return (
+        <main className="live-announcement-shell">
+          <PublicCountdownExperience
+            initialConfig={announcementConfig}
+            initialCountdown={announcementCountdown}
+            mode="full"
+          />
+        </main>
+      );
     }
 
     return (
@@ -159,5 +265,5 @@ function LiveExperienceClientInner({
     );
   }
 
-  return <ViewerPovGoLiveShell initialProfile={initialProfile} />;
+  return <ViewerPovGoLiveShell initialProfile={initialProfile} streamEnabled={streamEnabled} />;
 }
