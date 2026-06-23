@@ -31,7 +31,6 @@ import {
 } from "@/lib/live/countdown-schedule-helpers";
 import { saveLastKnownCountdown } from "@/lib/parable/last-known-good";
 import { computeCountdown } from "@/lib/live/event-lobby";
-import { PAGE_GRID } from "@/lib/responsive";
 
 type CountdownAdminClientProps = {
   adminEmail: string;
@@ -97,7 +96,7 @@ function SectionHeader({
 }
 
 const inputClassName =
-  "w-full rounded-xl border border-brand-border bg-brand-panel/80 px-4 py-3 font-body text-sm text-white outline-none transition placeholder:text-brand-muted/45 focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/25";
+  "w-full min-h-11 rounded-xl border border-brand-border bg-brand-panel/80 px-4 py-3 font-body text-base text-white outline-none transition placeholder:text-brand-muted/45 focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/25 md:min-h-10 md:py-2.5 md:text-sm";
 
 const actionButtonClassName =
   "touch-target inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 font-ui text-[0.58rem] font-bold uppercase tracking-[0.14em] transition disabled:opacity-60";
@@ -220,6 +219,13 @@ export default function CountdownAdminClient({
     }
   };
 
+  const handleRampLivePreview = useCallback(() => {
+    const rampStart = new Date(previewNow);
+    rampStart.setMinutes(rampStart.getMinutes() - 5);
+    updateField("start_time", rampStart.toISOString());
+    setStatus("Preview ramped to live phase — save to publish.");
+  }, [previewNow, updateField]);
+
   const handleReset = () => {
     setForm(DEFAULT_COUNTDOWN_CONFIG);
     setStatus("Reset to defaults. Save to publish.");
@@ -319,11 +325,110 @@ export default function CountdownAdminClient({
         )}
       </section>
 
-      <div className="relative w-full px-4 py-6 md:px-8 lg:px-10">
+      <div className="relative w-full px-[clamp(0.75rem,3vw,2.5rem)] py-6 md:px-8 lg:px-10">
+        <div className="mx-auto grid w-full max-w-[90rem] grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:gap-8">
+          {/* Live Preview — first on mobile/tablet, sticky right column on desktop (~60%) */}
+          <aside className="order-1 lg:order-2 lg:col-span-7 xl:col-span-7">
+            <section className="glass-panel rounded-2xl border border-brand-border p-4 sm:p-5 lg:sticky lg:top-6 lg:p-6">
+              <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <Sparkles className="h-4 w-4 shrink-0 text-brand-pink" aria-hidden="true" />
+                  <div>
+                    <h2 className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.22em] text-white">
+                      Live Preview
+                    </h2>
+                    <p className="mt-1 font-ui text-[0.48rem] font-bold uppercase tracking-[0.14em] text-brand-muted">
+                      Attendee /live: {attendeeLiveSurface}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleRampLivePreview}
+                    className="touch-target inline-flex min-h-11 items-center rounded-full border border-brand-pink/50 bg-brand-pink/15 px-4 py-1.5 font-ui text-[0.52rem] font-bold uppercase tracking-[0.14em] text-brand-pink transition hover:bg-brand-pink/25"
+                  >
+                    Ramp Live
+                  </button>
+                  <span
+                    className={`rounded-full border px-3 py-1 font-ui text-[0.52rem] font-bold uppercase tracking-[0.14em] ${phaseBadgeClass}`}
+                  >
+                    Phase: {previewPhase}
+                  </span>
+                </div>
+              </div>
 
-        <div className={`${PAGE_GRID} items-start`}>
-          <div className="md:col-span-5 xl:col-span-5">
-            <div className="space-y-6">
+              <div className="mx-auto w-full max-w-full overflow-hidden rounded-2xl border border-brand-border bg-brand-panel/80">
+                <div
+                  className="relative aspect-[9/16] w-full max-h-[min(72vh,40rem)] sm:aspect-[3/4] lg:aspect-[9/16] lg:max-h-none"
+                  aria-label="Attendee holding room preview"
+                >
+                  <div className="absolute inset-0 flex flex-col bg-brand-black/90">
+                    <div className="border-b border-brand-border bg-brand-black/60 px-4 py-3 text-center sm:px-6">
+                      <p className="font-ui text-[clamp(0.55rem,2.5vw,0.62rem)] font-bold uppercase tracking-[0.2em] text-brand-blue">
+                        {form.eyebrow.trim() || "YOU'RE ALMOST LIVE"}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-6 text-center sm:gap-5 sm:px-6 sm:py-8">
+                      <p className="font-headline text-[clamp(1.1rem,4.5vw,1.75rem)] uppercase leading-tight tracking-[0.08em] text-white">
+                        {form.headline.trim() || "THE AWAKENING BEGINS SOON"}
+                      </p>
+                      <p className="max-w-md font-body text-[clamp(0.65rem,2.8vw,0.75rem)] uppercase tracking-[0.12em] text-brand-muted">
+                        {form.subtitle.trim() || "Subtitle"}
+                      </p>
+
+                      {form.status_label.trim() ? (
+                        <p className="font-ui text-[0.52rem] font-bold uppercase tracking-[0.16em] text-brand-purple">
+                          {form.status_label}
+                        </p>
+                      ) : null}
+
+                      {shouldShowCountdownTimer(form, false) && previewPhase === "waiting" ? (
+                        <div className="w-full max-w-xs scale-[0.92] sm:scale-100">
+                          <LobbyCountdownTimer
+                            config={form}
+                            countdown={previewCountdown}
+                            eventPhase={previewPhase}
+                            showTimer
+                            variant="hms"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full max-w-xs rounded-xl border border-dashed border-brand-border/80 px-3 py-6 sm:px-4 sm:py-8">
+                          <p className="font-ui text-[0.48rem] font-bold uppercase tracking-[0.14em] text-brand-muted sm:text-[0.52rem]">
+                            {previewPhase === "live"
+                              ? "Countdown hidden — live stream active"
+                              : "Countdown not shown in this phase"}
+                          </p>
+                        </div>
+                      )}
+
+                      <span
+                        className={`inline-flex min-h-11 min-w-[min(100%,14rem)] items-center justify-center rounded-full border px-6 font-ui text-[clamp(0.52rem,2.5vw,0.58rem)] font-bold uppercase tracking-[0.12em] ${
+                          previewCta.disabled
+                            ? "cursor-not-allowed border-brand-border bg-brand-panel text-brand-muted"
+                            : "border-brand-pink/40 bg-brand-pink/10 text-brand-pink"
+                        }`}
+                        aria-disabled={previewCta.disabled}
+                      >
+                        {previewCta.label.trim() || "ENTER LIVE EXPERIENCE"}
+                      </span>
+
+                      {form.helper_text.trim() ? (
+                        <p className="max-w-sm font-body text-[clamp(0.65rem,2.5vw,0.75rem)] leading-relaxed text-brand-muted">
+                          {form.helper_text}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </aside>
+
+          {/* Editor controls — below preview on mobile/tablet, left column on desktop (~40%) */}
+          <div className="order-2 space-y-6 lg:order-1 lg:col-span-5 xl:col-span-5">
               <section className="glass-panel rounded-2xl border border-brand-border p-5 sm:p-6">
                 <SectionHeader icon={<Type className="h-4 w-4" />} title="Hero Copy" />
 
@@ -533,90 +638,7 @@ export default function CountdownAdminClient({
                   </span>
                 </label>
               </section>
-            </div>
           </div>
-
-          <aside className="md:col-span-7 xl:col-span-7">
-            <section className="glass-panel sticky top-6 rounded-2xl border border-brand-border p-5 sm:p-6">
-              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <Sparkles className="h-4 w-4 text-brand-pink" aria-hidden="true" />
-                  <h2 className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.22em] text-white">
-                    Live Preview
-                  </h2>
-                </div>
-                <span
-                  className={`rounded-full border px-3 py-1 font-ui text-[0.52rem] font-bold uppercase tracking-[0.14em] ${phaseBadgeClass}`}
-                >
-                  Phase: {previewPhase}
-                </span>
-              </div>
-
-              <p className="mb-5 font-ui text-[0.52rem] font-bold uppercase tracking-[0.14em] text-brand-muted">
-                Attendee /live: {attendeeLiveSurface}
-              </p>
-
-              <div className="overflow-hidden rounded-2xl border border-brand-border bg-brand-panel/80">
-                <div className="border-b border-brand-border bg-brand-black/60 px-4 py-3">
-                  <p className="font-ui text-[0.52rem] font-bold uppercase tracking-[0.18em] text-brand-blue">
-                    {form.eyebrow || "Eyebrow"}
-                  </p>
-                </div>
-
-                <div className="space-y-4 px-4 py-6 sm:px-6">
-                  <p className="font-headline text-[clamp(1.25rem,3vw,1.75rem)] uppercase leading-tight tracking-[0.08em] text-white">
-                    {form.headline || "Headline"}
-                  </p>
-                  <p className="font-body text-xs uppercase tracking-[0.12em] text-brand-muted">
-                    {form.subtitle || "Subtitle"}
-                  </p>
-
-                  {shouldShowCountdownTimer(form, false) && previewPhase === "waiting" ? (
-                    <div className="py-2">
-                      <LobbyCountdownTimer
-                        config={form}
-                        countdown={previewCountdown}
-                        eventPhase={previewPhase}
-                        showTimer
-                        variant="hms"
-                      />
-                    </div>
-                  ) : (
-                    <div className="rounded-xl border border-dashed border-brand-border/80 px-4 py-8 text-center">
-                      <p className="font-ui text-[0.52rem] font-bold uppercase tracking-[0.14em] text-brand-muted">
-                        {previewPhase === "live"
-                          ? "Countdown hidden — live stream active"
-                          : "Countdown not shown in this phase"}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex flex-wrap items-center gap-3 pt-2">
-                    <span
-                      className={`inline-flex min-h-11 items-center rounded-full border px-5 font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] ${
-                        previewCta.disabled
-                          ? "border-brand-border bg-brand-panel text-brand-muted"
-                          : "border-brand-pink/40 bg-brand-pink/10 text-brand-pink"
-                      }`}
-                    >
-                      {previewCta.label}
-                    </span>
-                    {previewCta.disabled ? (
-                      <span className="font-ui text-[0.48rem] uppercase tracking-[0.12em] text-brand-muted">
-                        (disabled in preview)
-                      </span>
-                    ) : null}
-                  </div>
-
-                  {form.helper_text ? (
-                    <p className="border-t border-brand-border pt-4 font-body text-xs leading-relaxed text-brand-muted">
-                      {form.helper_text}
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-            </section>
-          </aside>
         </div>
       </div>
     </main>

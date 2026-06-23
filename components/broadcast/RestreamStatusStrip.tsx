@@ -6,6 +6,7 @@ import type { PullEngineStatus } from "@/lib/ops/ops-stream-state";
 
 export type RestreamStatusStripTelemetry = {
   pullEngineStatus?: PullEngineStatus;
+  activeSource?: string;
   uptime?: string;
   videoResolution?: string;
   fps?: number;
@@ -20,176 +21,80 @@ export type RestreamStatusStripTelemetry = {
 
 type RestreamStatusStripProps = {
   engineMode: StudioEngineMode;
+  activeSource?: "primary" | "backup" | "offline" | string;
   opsStream: RestreamStatusStripTelemetry | null;
 };
 
-function StatusMetric({
-  label,
-  value,
-  fixHint,
-  detailTitle,
-  tone = "neutral",
-  warn = false,
-}: {
-  label: string;
-  value: string;
-  fixHint?: string;
-  detailTitle?: string;
-  tone?: "healthy" | "neutral" | "warning" | "critical";
-  warn?: boolean;
-}) {
-  const toneClass =
-    tone === "healthy"
-      ? "text-emerald-400"
-      : tone === "warning"
-        ? "text-amber-400 animate-pulse"
-        : tone === "critical"
-          ? "text-red-400 animate-pulse"
-          : "text-zinc-300";
-
-  return (
-    <span
-      className={`inline-flex max-w-full flex-col font-ui text-[0.48rem] font-medium uppercase ${toneClass}`}
-      title={detailTitle}
-    >
-      <span className="inline-flex items-center gap-1">
-        {warn ? <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden="true" /> : null}
-        <span className="text-brand-muted">{label}:</span>
-        <span>{value}</span>
-      </span>
-      {fixHint && warn ? (
-        <span className="mt-0.5 normal-case tracking-normal text-[0.44rem] text-amber-300/90">
-          Fix: {fixHint}
-        </span>
-      ) : null}
-    </span>
-  );
-}
-
 export default function RestreamStatusStrip({
   engineMode,
+  activeSource,
   opsStream,
 }: RestreamStatusStripProps) {
+  const resolvedSource =
+    activeSource ?? opsStream?.activeSource ?? (opsStream?.isLive ? "primary" : "offline");
+  const isFailoverActive = resolvedSource === "backup";
   const isInternalStudio = engineMode === "internal_studio";
-
-  const pullEngineStatus = opsStream?.pullEngineStatus ?? "stopped";
-  const uptime = opsStream?.uptime ?? "00:00:00";
-  const droppedFramesPercent = opsStream?.droppedFramesPercent ?? 0;
-  const latencySeconds = opsStream?.latencySeconds ?? 0;
-  const outputsActive = opsStream?.outputsActive ?? 0;
-  const outputsTotal = opsStream?.outputsTotal ?? 4;
-  const localInputsActive = opsStream?.localInputsActive ?? 0;
   const isLive = opsStream?.isLive === true;
-  const apiOk = opsStream?.apiOk !== false;
+  const droppedFramesPercent = opsStream?.droppedFramesPercent ?? 0;
+  const videoResolution = opsStream?.videoResolution ?? "1080p";
 
-  const droppedWarn = droppedFramesPercent > 1.0;
-  const latencyWarn = latencySeconds > 4;
-  const outputsWarn = outputsActive < outputsTotal;
-  const engineError = pullEngineStatus === "error" || !apiOk;
-  const engineRunning = pullEngineStatus === "running" && apiOk;
+  if (isFailoverActive) {
+    return (
+      <div
+        aria-label="Automatic failover engaged"
+        className="flex w-full animate-pulse items-center justify-between rounded-lg border border-amber-500/70 bg-amber-500/5 px-4 py-2 font-ui text-xs font-bold text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.12)] transition-all"
+      >
+        <div className="flex min-w-0 items-center gap-2">
+          <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="uppercase tracking-[0.08em]">
+            Engine Warning: Automatic Failover Circuit Engaged
+          </span>
+        </div>
+        <div className="shrink-0 rounded bg-amber-500/20 px-2 py-0.5 text-[0.68rem] uppercase tracking-wider text-amber-300">
+          Routing Stream via Restream Cloud Backup
+        </div>
+      </div>
+    );
+  }
 
-  const containerBorder = engineError
-    ? "border-red-500/70 shadow-[0_0_12px_rgba(239,68,68,0.1)]"
-    : droppedWarn || latencyWarn || outputsWarn
-      ? "border-amber-400/70 shadow-[0_0_12px_rgba(251,191,36,0.1)]"
-      : "border-zinc-800/60";
-
-  const systemLabel = engineRunning
-    ? "Healthy & Running"
-    : engineError
-      ? "Needs Attention"
-      : "Standby";
+  const engineLabel = isInternalStudio
+    ? "Internal Engine: Running"
+    : opsStream?.pullEngineStatus === "error"
+      ? "Pull Engine: Needs Attention"
+      : "Pull Engine: Running";
 
   return (
     <div
       aria-label="Live show health status"
-      className={`rounded-lg border bg-brand-black/60 px-3 py-1.5 ${containerBorder}`}
+      className="flex w-full items-center justify-between rounded-lg border border-brand-border bg-brand-black/60 px-4 py-2 font-ui text-xs text-brand-muted transition-all"
     >
-      <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-        <p className="font-ui text-[0.45rem] font-bold uppercase tracking-[0.16em] text-brand-muted">
-          Live show health
-        </p>
-        <div className="font-ui text-[0.52rem] font-bold uppercase">
-          {isLive ? (
-            <span className="inline-flex items-center gap-1 text-brand-pink">
-              <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-              Viewers Are Watching Live
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-brand-purple">
-              <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" />
-              Practice Mode — Not On Air Yet
-            </span>
-          )}
-        </div>
+      <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1">
+        <span className="inline-flex items-center gap-1.5 text-emerald-400">
+          <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
+          {engineLabel}
+        </span>
+        <span className="hidden text-brand-border sm:inline" aria-hidden="true">
+          |
+        </span>
+        <span>Resolution: {videoResolution}</span>
+        <span className="hidden text-brand-border sm:inline" aria-hidden="true">
+          |
+        </span>
+        <span>Dropped Frames: {droppedFramesPercent.toFixed(2)}%</span>
       </div>
 
-      <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
-        <StatusMetric
-          label="System"
-          value={systemLabel}
-          tone={engineError ? "critical" : engineRunning ? "healthy" : "neutral"}
-          warn={engineError}
-          fixHint={
-            engineError
-              ? "Open Settings and confirm your camera stream links are saved."
-              : undefined
-          }
-        />
-        <StatusMetric label="Show Running For" value={uptime} tone="neutral" />
-        <StatusMetric
-          label="Picture Quality"
-          value={isLive ? "Clear (HD)" : "Waiting for show start"}
-          tone="neutral"
-          detailTitle={
-            opsStream?.videoResolution && opsStream.videoResolution !== "—"
-              ? `Technical: ${opsStream.videoResolution}${opsStream.fps ? ` · ${opsStream.fps} FPS` : ""}`
-              : undefined
-          }
-        />
-        <StatusMetric
-          label={droppedWarn ? "Warning: Blurry or Stuttering Video" : "Video Smoothness"}
-          value={droppedWarn ? `${droppedFramesPercent.toFixed(2)}% issues` : "Looking good"}
-          tone={droppedWarn ? "warning" : "healthy"}
-          warn={droppedWarn}
-          fixHint={
-            droppedWarn
-              ? "Ask the camera operator to move closer to their Wi-Fi router."
-              : undefined
-          }
-        />
-        <StatusMetric
-          label={latencyWarn ? "Warning: Video is Lagging Behind" : "Live Delay"}
-          value={latencyWarn ? `${latencySeconds.toFixed(1)}s behind` : "In sync"}
-          tone={latencyWarn ? "warning" : latencySeconds <= 4 ? "healthy" : "neutral"}
-          warn={latencyWarn}
-          fixHint={
-            latencyWarn
-              ? "The video signal is lagging behind real life — check internet on the camera side."
-              : undefined
-          }
-        />
-        <StatusMetric
-          label={
-            outputsWarn
-              ? "Setup"
-              : isInternalStudio
-                ? "Local Cameras Ready"
-                : "Display Targets Connected"
-          }
-          value={
-            isInternalStudio
-              ? `${localInputsActive} of ${outputsTotal} ready`
-              : `${outputsActive} of ${outputsTotal} connected`
-          }
-          tone={outputsWarn ? "warning" : "healthy"}
-          warn={outputsWarn}
-          fixHint={
-            outputsWarn
-              ? "Check the settings menu to connect the final display platform."
-              : undefined
-          }
-        />
+      <div className="flex shrink-0 items-center gap-1.5 text-[0.68rem] font-bold uppercase">
+        {isLive ? (
+          <span className="inline-flex animate-pulse items-center gap-1 text-brand-pink">
+            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+            Distributing Live Stream
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-brand-purple">
+            <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" />
+            Rehearsal Mode Active
+          </span>
+        )}
       </div>
     </div>
   );

@@ -77,6 +77,7 @@ export default function LiveHubRtmpIngestPanel({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [isProvisioning, setIsProvisioning] = useState(false);
+  const [isGeneratingKey, setIsGeneratingKey] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -119,6 +120,47 @@ export default function LiveHubRtmpIngestPanel({
     }
   }, [backupDraft, onSaved, primaryDraft]);
 
+  const generateCameraStreamKey = useCallback(async () => {
+    setIsGeneratingKey(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/ops/stream-ingest/generate", {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+      });
+
+      const data = (await response.json()) as {
+        error?: string;
+        success?: boolean;
+        primaryRtmpIngestUrl?: string | null;
+        streamKey?: string;
+      };
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error ?? "Unable to generate camera stream key.");
+      }
+
+      if (data.primaryRtmpIngestUrl) {
+        setPrimaryDraft(data.primaryRtmpIngestUrl);
+      }
+
+      const keyLabel = data.streamKey ? ` (${data.streamKey})` : "";
+      setMessage(`New camera stream key generated${keyLabel}.`);
+      await onSaved?.();
+    } catch (generateError) {
+      setError(
+        generateError instanceof Error
+          ? generateError.message
+          : "Unable to generate camera stream key.",
+      );
+    } finally {
+      setIsGeneratingKey(false);
+    }
+  }, [onSaved]);
+
   const provisionFromRestream = useCallback(async () => {
     setIsProvisioning(true);
     setMessage(null);
@@ -160,7 +202,7 @@ export default function LiveHubRtmpIngestPanel({
     }
   }, [onSaved]);
 
-  const isBusy = isSaving || isProvisioning;
+  const isBusy = isSaving || isProvisioning || isGeneratingKey;
 
   return (
     <section className="rounded-2xl border border-brand-purple/30 bg-brand-panel p-4 shadow-[0_0_20px_rgba(138,46,255,0.12)]">
@@ -220,6 +262,19 @@ export default function LiveHubRtmpIngestPanel({
           </label>
           <p className="text-[0.58rem] text-brand-muted">{RTMP_INGEST_REQUIREMENT}</p>
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={isBusy}
+              onClick={() => void generateCameraStreamKey()}
+              className="touch-target inline-flex items-center gap-2 rounded-full border border-brand-pink/50 bg-brand-pink/15 px-4 py-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-white transition hover:bg-brand-pink/25 disabled:opacity-60"
+            >
+              {isGeneratingKey ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+              ) : (
+                <Radio className="h-3.5 w-3.5 text-brand-pink" aria-hidden="true" />
+              )}
+              Generate Camera Stream Key
+            </button>
             <button
               type="button"
               disabled={isBusy}

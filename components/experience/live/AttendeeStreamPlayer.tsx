@@ -9,6 +9,8 @@ import {
 
 const RECONNECT_DELAY_MS = 3_500;
 
+const MANIFEST_HOT_SWAP_MS = 3_000;
+
 type AttendeeStreamPlayerProps = {
   experience?: AttendeeExperienceKey;
   enabled: boolean;
@@ -227,6 +229,23 @@ export default function AttendeeStreamPlayer({
     loadStream,
     shouldPlay,
   ]);
+
+  useEffect(() => {
+    if (!shouldPlay) return;
+
+    const intervalId = window.setInterval(() => {
+      void loadStream().then((url) => {
+        if (!url || !isMountedRef.current) return;
+        if (url === playbackUrlRef.current) return;
+        playbackUrlRef.current = url;
+        bindSource(url);
+      });
+    }, MANIFEST_HOT_SWAP_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [bindSource, loadStream, shouldPlay]);
 
   useEffect(() => {
     const video = videoRef.current;

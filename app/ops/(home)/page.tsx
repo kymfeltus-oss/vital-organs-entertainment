@@ -1,4 +1,4 @@
-import OpsCommandCenter from "@/components/ops/OpsCommandCenter";
+import CleanOpsCommandCenter from "@/components/ops/CleanOpsCommandCenter";
 import { requireOpsAdminUser } from "@/lib/ops/assert-ops-admin";
 import { loadOpsSnapshot } from "@/lib/ops/snapshot";
 
@@ -7,9 +7,9 @@ export default async function OpsPage() {
   const snapshot = await loadOpsSnapshot();
 
   return (
-    <OpsCommandCenter
+    <CleanOpsCommandCenter
       initialSnapshot={snapshot}
-      adminEmail={user.email ?? "unknown"}
+      operatorEmail={user.email ?? "operator"}
     />
   );
 }

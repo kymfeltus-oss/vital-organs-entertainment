@@ -22,6 +22,7 @@ type LiveStreamConfigRow = {
   playback_url: string | null;
   primary_playback_url: string | null;
   backup_playback_url: string | null;
+  camera_preview_hls_url: string | null;
 };
 
 type MainStageResolution = {
@@ -99,6 +100,13 @@ function resolveMainStagePlaybackUrl(
     if (isValidHlsUrl(config.backup_playback_url)) {
       return {
         playbackUrl: config.backup_playback_url.trim(),
+        activeSource: "backup",
+      };
+    }
+
+    if (isValidHlsUrl(config.camera_preview_hls_url)) {
+      return {
+        playbackUrl: config.camera_preview_hls_url.trim(),
         activeSource: "backup",
       };
     }
@@ -188,7 +196,7 @@ export async function GET(request: NextRequest) {
     const { data: streamState, error: streamError } = await admin
       .from("live_stream_state")
       .select(
-        "is_live, active_source, playback_url, primary_playback_url, backup_playback_url",
+        "is_live, active_source, playback_url, primary_playback_url, backup_playback_url, camera_preview_hls_url",
       )
       .eq("id", LIVE_STREAM_STATE_ID)
       .maybeSingle();

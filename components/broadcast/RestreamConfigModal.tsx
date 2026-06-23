@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  CheckCircle2,
+  Check,
   Copy,
   HelpCircle,
+  KeyRound,
   Link2,
   Loader2,
   Play,
@@ -20,6 +21,7 @@ import {
   DEFAULT_STUDIO_ENGINE_MODE,
   type StudioEngineMode,
 } from "@/lib/ops/studio-engine-mode";
+import { splitRtmpIngestUrl } from "@/lib/stream-keys";
 
 export type RestreamStreamConfig = {
   primaryRtmpIngestUrl: string | null;
@@ -41,51 +43,184 @@ type RestreamConfigModalProps = {
   onShowToast?: (message: string) => void;
 };
 
-function CopyableBlock({
-  label,
-  value,
-  inactiveLabel,
-}: {
-  label: string;
-  value: string;
-  inactiveLabel?: string;
-}) {
-  const [copied, setCopied] = useState(false);
+type StreamKeyCredentials = {
+  serverUrl: string;
+  streamKey: string;
+};
 
-  const handleCopy = useCallback(async () => {
-    const ok = await copyToClipboard(value);
-    setCopied(ok);
-    window.setTimeout(() => setCopied(false), 1800);
-  }, [value]);
+type StreamKeyGeneratorCardProps = {
+  canEdit: boolean;
+  initialCredentials?: StreamKeyCredentials | null;
+  onGenerated?: (payload: StreamKeyCredentials & { primaryRtmpIngestUrl?: string | null }) => void;
+  onError?: (message: string) => void;
+};
+
+export function StreamKeyGeneratorCard({
+  canEdit,
+  initialCredentials = null,
+  onGenerated,
+  onError,
+}: StreamKeyGeneratorCardProps) {
+  const [loading, setLoading] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
+  const [credentials, setCredentials] = useState<StreamKeyCredentials | null>(
+    initialCredentials,
+  );
+
+  useEffect(() => {
+    setCredentials(initialCredentials);
+  }, [initialCredentials]);
+
+  const handleGenerateKey = useCallback(async () => {
+    if (!canEdit) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch("/api/ops/stream-ingest/generate", {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+      });
+      const data = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+        serverUrl?: string;
+        streamKey?: string;
+        primaryRtmpIngestUrl?: string | null;
+      };
+
+      if (data.success && data.serverUrl && data.streamKey) {
+        const nextCredentials = {
+          serverUrl: data.serverUrl,
+          streamKey: data.streamKey,
+        };
+        setCredentials(nextCredentials);
+        onGenerated?.({ ...nextCredentials, primaryRtmpIngestUrl: data.primaryRtmpIngestUrl });
+      } else {
+        const message = data.error ?? "Unable to generate camera stream key.";
+        onError?.(message);
+        console.error("Failed to generate stream key:", message);
+      }
+    } catch (generateError) {
+      const message =
+        generateError instanceof Error
+          ? generateError.message
+          : "Network error while generating stream key.";
+      onError?.(message);
+      console.error("Network error while generating stream key:", generateError);
+    } finally {
+      setLoading(false);
+    }
+  }, [canEdit, onError, onGenerated]);
+
+  const handleCopy = useCallback(async (text: string, type: "url" | "key") => {
+    const success = await copyToClipboard(text);
+    if (!success) return;
+
+    if (type === "url") {
+      setCopiedUrl(true);
+      window.setTimeout(() => setCopiedUrl(false), 2000);
+    } else {
+      setCopiedKey(true);
+      window.setTimeout(() => setCopiedKey(false), 2000);
+    }
+  }, []);
 
   return (
-    <div className="min-w-0 rounded-lg border border-brand-purple/30 bg-brand-purple/10 p-3">
-      <div className="mb-1 flex items-center justify-between gap-2">
-        <p className="font-ui text-[0.55rem] font-bold uppercase tracking-[0.14em] text-brand-purple">
-          {label}
-        </p>
-        <button
-          type="button"
-          onClick={() => void handleCopy()}
-          className="touch-target inline-flex items-center gap-1 rounded border border-brand-border px-1.5 py-0.5 font-ui text-[0.45rem] uppercase text-brand-muted transition hover:text-white"
-          aria-label={`Copy ${label}`}
-        >
-          {copied ? (
-            <CheckCircle2 className="h-3 w-3 text-brand-blue" aria-hidden="true" />
-          ) : (
-            <Copy className="h-3 w-3" aria-hidden="true" />
-          )}
-          {copied ? "Copied" : "Copy"}
-        </button>
+    <div className="w-full rounded-xl border border-brand-border bg-brand-black p-4 text-white">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-brand-border pb-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <KeyRound className="h-4 w-4 shrink-0 text-brand-purple" aria-hidden="true" />
+          <span className="font-ui text-[0.55rem] font-bold uppercase tracking-[0.14em] text-brand-muted">
+            Host Ingest Configuration (For External Cameras)
+          </span>
+        </div>
+        {canEdit ? (
+          <button
+            type="button"
+            onClick={() => void handleGenerateKey()}
+            disabled={loading}
+            className="touch-target inline-flex items-center gap-1.5 rounded-lg border border-brand-purple/50 bg-brand-purple/20 px-3 py-1.5 font-ui text-[0.52rem] font-bold uppercase tracking-[0.1em] text-white shadow-[0_0_15px_rgba(138,46,255,0.15)] transition hover:bg-brand-purple/30 disabled:opacity-50"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                <span>Generating…</span>
+              </>
+            ) : (
+              <span>Generate New Operator Path</span>
+            )}
+          </button>
+        ) : null}
       </div>
-      <code className="block min-w-0 overflow-hidden text-ellipsis break-all font-mono text-xs text-brand-muted">
-        {value}
-      </code>
-      {inactiveLabel ? (
-        <p className="mt-2 font-ui text-[0.52rem] font-bold uppercase text-brand-pink">
-          {inactiveLabel}
-        </p>
-      ) : null}
+
+      {credentials ? (
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 flex items-center gap-1.5 font-ui text-[0.52rem] font-bold uppercase tracking-[0.12em] text-brand-muted">
+              RTMP Server URL
+            </label>
+            <div className="flex items-center gap-2 rounded-lg border border-brand-border bg-brand-panel/60 p-2">
+              <code className="min-w-0 flex-1 truncate font-mono text-xs text-white">
+                {credentials.serverUrl}
+              </code>
+              <button
+                type="button"
+                onClick={() => void handleCopy(credentials.serverUrl, "url")}
+                className="touch-target shrink-0 rounded p-1 text-brand-muted transition hover:bg-brand-black hover:text-white"
+                title="Copy Server URL"
+                aria-label="Copy Server URL"
+              >
+                {copiedUrl ? (
+                  <Check className="h-3.5 w-3.5 text-brand-blue" aria-hidden="true" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 flex items-center gap-1.5 font-ui text-[0.52rem] font-bold uppercase tracking-[0.12em] text-brand-muted">
+              Secure Stream Key
+            </label>
+            <div className="flex items-center gap-2 rounded-lg border border-brand-border bg-brand-panel/60 p-2">
+              <code className="min-w-0 flex-1 truncate font-mono text-xs font-bold text-brand-purple">
+                {credentials.streamKey}
+              </code>
+              <button
+                type="button"
+                onClick={() => void handleCopy(credentials.streamKey, "key")}
+                className="touch-target shrink-0 rounded p-1 text-brand-muted transition hover:bg-brand-black hover:text-white"
+                title="Copy Stream Key"
+                aria-label="Copy Stream Key"
+              >
+                {copiedKey ? (
+                  <Check className="h-3.5 w-3.5 text-brand-blue" aria-hidden="true" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <p className="mt-2 font-body text-[0.58rem] italic leading-normal text-brand-muted">
+            Safe Launch Mode: copy and send both generated parameters directly to your external
+            camera operator.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-brand-border p-6 text-center text-brand-muted">
+          <HelpCircle className="mb-1 h-6 w-6 text-brand-muted/60" aria-hidden="true" />
+          <p className="font-ui text-xs">No active ingest target generated.</p>
+          <p className="mt-0.5 font-body text-[0.58rem] text-brand-muted/80">
+            {canEdit
+              ? "Click the button above to provision credentials for an external provider."
+              : "An admin or producer must generate ingest credentials for you."}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -273,6 +408,26 @@ export default function RestreamConfigModal({
     setIsTesting(false);
   }, [hlsUrl]);
 
+  const handleStreamKeyGenerated = useCallback(
+    (payload: { serverUrl: string; streamKey: string; primaryRtmpIngestUrl?: string | null }) => {
+      setConfig((current) =>
+        current
+          ? {
+              ...current,
+              primaryRtmpIngestUrl:
+                payload.primaryRtmpIngestUrl ?? current.primaryRtmpIngestUrl,
+              primaryRtmpConfigured: true,
+            }
+          : current,
+      );
+      onSaved?.();
+      onShowToast?.(
+        "New operator path generated. Copy the server URL and stream key to your encoder.",
+      );
+    },
+    [onSaved, onShowToast],
+  );
+
   const handleGenerateInvite = useCallback(async () => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const inviteUrl = `${origin}/dashboard/broadcast?webrtc=1&t=${Date.now()}`;
@@ -295,8 +450,7 @@ export default function RestreamConfigModal({
 
   if (!isOpen) return null;
 
-  const ingestDisplay =
-    config?.primaryRtmpIngestUrl ?? "rtmp://live.restream.io/live/{streamKey}";
+  const ingestCredentials = splitRtmpIngestUrl(config?.primaryRtmpIngestUrl);
   const isRestreamMode = studioEngineMode === "restream_api";
   const engineStatus = engineOverride ?? pullEngineStatus;
   const engineStatusLabel =
@@ -351,14 +505,18 @@ export default function RestreamConfigModal({
 
           {isRestreamMode ? (
             <>
-              <CopyableBlock
-                label="Camera Upload Link (for the field operator)"
-                value={ingestDisplay}
-                inactiveLabel={
-                  config?.primaryRtmpConfigured
-                    ? undefined
-                    : "Camera upload link is not active yet"
+              <StreamKeyGeneratorCard
+                canEdit={canEdit}
+                initialCredentials={
+                  ingestCredentials
+                    ? {
+                        serverUrl: ingestCredentials.serverUrl,
+                        streamKey: ingestCredentials.streamKey,
+                      }
+                    : null
                 }
+                onGenerated={handleStreamKeyGenerated}
+                onError={setError}
               />
 
               <div>

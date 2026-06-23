@@ -5,6 +5,8 @@ import RestreamCameraCard from "@/components/broadcast/RestreamCameraCard";
 import SourceInputCard, {
   MediaSlotPlaceholderCard,
 } from "@/components/broadcast/SourceInputCard";
+import { resolveActiveOpsPreviewHlsUrl } from "@/lib/ops/resolve-active-stream-playback";
+import { resolveMobileOperatorPreviewHlsUrl } from "@/lib/ops/resolve-mobile-operator-stream";
 import type { BroadcastSource } from "@/lib/broadcast/types";
 import type { OpsSnapshot } from "@/lib/ops/types";
 
@@ -14,6 +16,7 @@ type CameraGridProps = {
   programSourceId: string | null;
   platformIsLive: boolean;
   opsStream: OpsSnapshot["stream"] | null;
+  monitorHlsUrl?: string | null;
   onSelectPreview: (sourceId: string) => void;
   onOpenRestreamConfig: () => void;
   onLocalAudioUpdate?: (db: number) => void;
@@ -26,20 +29,30 @@ export default function CameraGrid({
   programSourceId,
   platformIsLive,
   opsStream,
+  monitorHlsUrl,
   onSelectPreview,
   onOpenRestreamConfig,
   onLocalAudioUpdate,
   emptyLabel,
 }: CameraGridProps) {
   const engineMode = opsStream?.studioEngineMode ?? "restream_api";
-  const previewHlsUrl = opsStream?.cameraPreviewHlsUrl ?? null;
+  const activeMobileStreamKey = opsStream?.activeMobileStreamKey ?? null;
+  const mobileOperatorHlsUrl = resolveMobileOperatorPreviewHlsUrl(activeMobileStreamKey);
+  const previewHlsUrl = monitorHlsUrl ?? resolveActiveOpsPreviewHlsUrl(opsStream);
+  const cameraGuyHlsUrl = mobileOperatorHlsUrl ?? previewHlsUrl;
+  const isFailoverActive = opsStream?.activeSource === "backup";
+  const isInternalStudio = engineMode === "internal_studio";
   const pullConfigured = opsStream?.primaryRtmpPullConfigured === true;
   const previewConfigured = opsStream?.cameraPreviewConfigured === true;
-  const urlExists = pullConfigured || previewConfigured || Boolean(previewHlsUrl?.trim());
+  const urlExists =
+    pullConfigured ||
+    previewConfigured ||
+    Boolean(previewHlsUrl?.trim()) ||
+    Boolean(activeMobileStreamKey);
   const isStreaming =
     engineMode === "restream_api"
       ? previewConfigured && (platformIsLive || Boolean(previewHlsUrl?.trim()))
-      : platformIsLive;
+      : platformIsLive || (isInternalStudio && Boolean(activeMobileStreamKey));
 
   const stageSource = sources[0] ?? null;
   const extraSources = sources.slice(1, 2);
@@ -77,8 +90,10 @@ export default function CameraGrid({
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 md:grid-cols-3">
         <RestreamCameraCard
           urlExists={urlExists}
-          isStreaming={isStreaming}
-          hlsUrl={previewHlsUrl}
+          isStreaming={isStreaming || Boolean(activeMobileStreamKey)}
+          hlsUrl={cameraGuyHlsUrl}
+          streamKeyLabel={activeMobileStreamKey}
+          isFailoverActive={isFailoverActive}
           engineMode={engineMode}
           onConfigClick={onOpenRestreamConfig}
           onLocalAudioUpdate={onLocalAudioUpdate}

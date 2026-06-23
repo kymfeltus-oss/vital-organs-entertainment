@@ -16,6 +16,7 @@ const ROLE_OPTIONS: OpsTeamRole[] = [
   "producer",
   "broadcast_operator",
   "prayer_team",
+  "camera_crew",
 ];
 
 type LiveHubRoleRouterClientProps = {

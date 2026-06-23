@@ -12,6 +12,7 @@ import {
 import type { OpsSnapshot, OpsStreamAction } from "@/lib/ops/types";
 import type { LiveHubHeartbeatPayload } from "@/lib/ops/live-hub-heartbeat";
 import ProductionPathBanner from "@/components/ops/ProductionPathBanner";
+import PastBroadcastsPanel from "@/components/ops/PastBroadcastsPanel";
 import { useOpsStreamStateRealtime } from "@/hooks/useOpsStreamStateRealtime";
 import { DEVICE_FIT_VIEWPORT } from "@/lib/responsive";
 
@@ -467,6 +468,10 @@ export default function OpsCommandCenter({
           </table>
         </div>
       </section>
+
+      <div className="mt-5 shrink-0">
+        <PastBroadcastsPanel />
+      </div>
     </div>
   );
 }

@@ -16,13 +16,16 @@ export type LiveStreamStateRow = {
   primary_rtmp_pull_url: string | null;
   backup_rtmp_pull_url: string | null;
   camera_preview_hls_url: string | null;
+  active_mobile_stream_key: string | null;
+  connected_phone_clients_count: number | null;
+  last_mobile_ping_at: string | null;
   studio_engine_mode: StudioEngineMode | null;
   updated_at: string | null;
   updated_by: string | null;
 };
 
 const SELECT_FULL =
-  "is_live, active_source, primary_playback_url, backup_playback_url, primary_rtmp_ingest_url, backup_rtmp_ingest_url, primary_rtmp_pull_url, backup_rtmp_pull_url, camera_preview_hls_url, studio_engine_mode, updated_at, updated_by";
+  "is_live, active_source, primary_playback_url, backup_playback_url, primary_rtmp_ingest_url, backup_rtmp_ingest_url, primary_rtmp_pull_url, backup_rtmp_pull_url, camera_preview_hls_url, active_mobile_stream_key, connected_phone_clients_count, last_mobile_ping_at, studio_engine_mode, updated_at, updated_by";
 
 const SELECT_OPS_CORE =
   "is_live, active_source, primary_playback_url, backup_playback_url, studio_engine_mode, updated_at, updated_by";
@@ -50,6 +53,16 @@ function normalizeRow(
     primary_rtmp_pull_url: defaults.primary_rtmp_pull_url ?? null,
     backup_rtmp_pull_url: defaults.backup_rtmp_pull_url ?? null,
     camera_preview_hls_url: defaults.camera_preview_hls_url ?? null,
+    active_mobile_stream_key:
+      (row.active_mobile_stream_key as string | null | undefined) ??
+      (row.mobile_operator_stream_key as string | null | undefined) ??
+      defaults.active_mobile_stream_key ??
+      null,
+    connected_phone_clients_count:
+      typeof row.connected_phone_clients_count === "number"
+        ? row.connected_phone_clients_count
+        : (defaults.connected_phone_clients_count ?? 0),
+    last_mobile_ping_at: (row.last_mobile_ping_at as string | null | undefined) ?? null,
     studio_engine_mode:
       row.studio_engine_mode !== undefined
         ? normalizeStudioEngineMode(row.studio_engine_mode)

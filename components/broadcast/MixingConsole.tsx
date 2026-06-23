@@ -311,6 +311,13 @@ export default function MixingConsole({
           />
           <RestreamStatusStrip
             engineMode={engineMode}
+            activeSource={
+              opsStream?.activeSource === "backup"
+                ? "backup"
+                : opsStream?.activeSource === "primary"
+                  ? "primary"
+                  : "offline"
+            }
             opsStream={opsState}
           />
         </div>

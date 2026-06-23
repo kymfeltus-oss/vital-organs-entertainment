@@ -3,6 +3,7 @@ import {
   executeGoLiveSequence,
   executeStopStreamSequence,
 } from "@/lib/live-hub/go-live/execute";
+import { schedulePastBroadcastRecordingSync } from "@/lib/ops/past-broadcast-recordings";
 import { requireOpsStreamMutationApiUser } from "@/lib/ops/require-ops-mutation";
 
 type GoLiveAction = "go_live" | "stop_stream";
@@ -34,6 +35,7 @@ export async function POST(request: NextRequest) {
       if (!result.ok) {
         return NextResponse.json(result, { status: 503 });
       }
+      schedulePastBroadcastRecordingSync({ streamTitle: "300 Awakening Broadcast" });
       return NextResponse.json({ ok: true, action: "stop_stream" });
     }
 

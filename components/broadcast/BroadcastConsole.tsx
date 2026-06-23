@@ -13,7 +13,9 @@ import ProductionSafetyPanel from "@/components/broadcast/ProductionSafetyPanel"
 import ProductionTelemetryTray from "@/components/broadcast/ProductionTelemetryTray";
 import ReadinessGate from "@/components/broadcast/ReadinessGate";
 import StreamStatusPanel from "@/components/broadcast/StreamStatusPanel";
+import { resolveActiveOpsPreviewHlsUrl } from "@/lib/ops/resolve-active-stream-playback";
 import { useOpsStreamStateRealtime } from "@/hooks/useOpsStreamStateRealtime";
+import { useStreamFailoverPoller } from "@/hooks/useStreamFailoverPoller";
 import {
   applyLocalWebcamToAudioChannels,
   localMicDbToMeterLevel,
@@ -69,9 +71,30 @@ export default function BroadcastConsole() {
     localWebcamAudioLevel: localMeterLevel,
   });
 
+  const [canEditPull, setCanEditPull] = useState(false);
+  const [restreamConfigOpen, setRestreamConfigOpen] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const [sandboxModalAction, setSandboxModalAction] = useState<
+    "go_live" | "end_live" | null
+  >(null);
+
+  useStreamFailoverPoller({
+    enabled:
+      opsStream?.isLive === true &&
+      opsStream.activeSource === "primary" &&
+      canEditPull,
+  });
+
   const activeOpsState = useMemo(() => {
     if (!opsState) return null;
-    if (opsState.studioEngineMode !== "internal_studio") return opsState;
+
+    const merged = {
+      ...opsState,
+      activeSource: opsStream?.activeSource,
+      isLive: opsStream?.isLive === true,
+    };
+
+    if (opsState.studioEngineMode !== "internal_studio") return merged;
 
     const cam1Meter = Math.max(opsState.audioLevels.cam1, localMeterLevel);
     const masterValues = [
@@ -84,7 +107,7 @@ export default function BroadcastConsole() {
     ].filter((value) => value > 4);
 
     return {
-      ...opsState,
+      ...merged,
       audioLevels: {
         ...opsState.audioLevels,
         cam1: cam1Meter,
@@ -94,14 +117,7 @@ export default function BroadcastConsole() {
             : 0,
       },
     };
-  }, [localMeterLevel, opsState]);
-
-  const [canEditPull, setCanEditPull] = useState(false);
-  const [restreamConfigOpen, setRestreamConfigOpen] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const [sandboxModalAction, setSandboxModalAction] = useState<
-    "go_live" | "end_live" | null
-  >(null);
+  }, [localMeterLevel, opsState, opsStream?.activeSource, opsStream?.isLive]);
 
   useEffect(() => {
     let cancelled = false;
@@ -152,6 +168,11 @@ export default function BroadcastConsole() {
   );
 
   const platformIsLive = opsStream?.isLive === true;
+
+  const computedMonitorHlsUrl = useMemo(
+    () => resolveActiveOpsPreviewHlsUrl(opsStream),
+    [opsStream],
+  );
 
   const handleRestreamConfigSaved = useCallback(() => {
     void (async () => {
@@ -359,6 +380,7 @@ export default function BroadcastConsole() {
             programSourceId={store.programSourceId}
             platformIsLive={platformIsLive}
             opsStream={opsStream}
+            monitorHlsUrl={computedMonitorHlsUrl}
             onSelectPreview={handleSelectPreview}
             onOpenRestreamConfig={openRestreamConfig}
             onLocalAudioUpdate={setLocalAudioLevel}

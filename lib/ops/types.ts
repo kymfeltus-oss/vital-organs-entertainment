@@ -14,6 +14,8 @@ export type OpsSnapshot = {
   stream: {
     isLive: boolean;
     activeSource: string;
+    primaryPlaybackUrl: string | null;
+    backupPlaybackUrl: string | null;
     primaryConfigured: boolean;
     backupConfigured: boolean;
     primaryPlaybackUrlStatus: "valid" | "invalid" | "missing";
@@ -33,6 +35,9 @@ export type OpsSnapshot = {
     primaryRtmpPullConfigured: boolean;
     backupRtmpPullConfigured: boolean;
     cameraPreviewConfigured: boolean;
+    activeMobileStreamKey: string | null;
+    connectedPhoneClientsCount: number;
+    lastMobilePingAt: string | null;
     storedRestreamOutputs: {
       pushConfigured: boolean;
       pullConfigured: boolean;

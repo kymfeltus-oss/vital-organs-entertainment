@@ -1,5 +1,5 @@
 import { LIVE_STREAM_ACCESS_PRODUCT_IDS } from "@/lib/merch/catalog";
-import { resolvePlaybackUrlStatus } from "@/lib/live/hls";
+import { resolvePlaybackUrlStatus, isValidHlsUrl } from "@/lib/live/hls";
 import { fetchHarvestProgressCents } from "@/lib/live/harvest-metrics";
 import {
   HARVEST_GOAL_DOLLARS,
@@ -41,15 +41,23 @@ function buildOpsStreamSnapshot(
   );
   const storedRestreamOutputs = buildStoredRestreamOutputLanes(streamState);
 
+  const primaryPlaybackUrl = streamState?.primary_playback_url?.trim() ?? "";
+  const backupPlaybackUrl = streamState?.backup_playback_url?.trim() ?? "";
+
   return {
     isLive: streamState?.is_live === true,
     activeSource: streamState?.active_source ?? "offline",
+    primaryPlaybackUrl: isValidHlsUrl(primaryPlaybackUrl) ? primaryPlaybackUrl : null,
+    backupPlaybackUrl: isValidHlsUrl(backupPlaybackUrl) ? backupPlaybackUrl : null,
     primaryConfigured: primaryPlaybackUrlStatus === "valid",
     backupConfigured: backupPlaybackUrlStatus === "valid",
     primaryPlaybackUrlStatus,
     backupPlaybackUrlStatus,
     ...rtmp,
     ...pull,
+    activeMobileStreamKey: streamState?.active_mobile_stream_key?.trim() || null,
+    connectedPhoneClientsCount: streamState?.connected_phone_clients_count ?? 0,
+    lastMobilePingAt: streamState?.last_mobile_ping_at ?? null,
     storedRestreamOutputs,
     studioEngineMode: normalizeStudioEngineMode(streamState?.studio_engine_mode),
     updatedAt: streamState?.updated_at ?? new Date(0).toISOString(),

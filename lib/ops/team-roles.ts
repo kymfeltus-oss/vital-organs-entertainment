@@ -4,7 +4,8 @@ export type OpsTeamRole =
   | "admin"
   | "producer"
   | "broadcast_operator"
-  | "prayer_team";
+  | "prayer_team"
+  | "camera_crew";
 
 export type OpsHubModuleId =
   | "crew_console"
@@ -12,7 +13,8 @@ export type OpsHubModuleId =
   | "broadcast_console"
   | "prayer_queue"
   | "incident"
-  | "ops_home";
+  | "ops_home"
+  | "camera_desk";
 
 export type OpsHubModule = {
   id: OpsHubModuleId;
@@ -65,20 +67,39 @@ export const OPS_HUB_MODULES: readonly OpsHubModule[] = [
     href: "/ops",
     badge: "Overview",
   },
+  {
+    id: "camera_desk",
+    title: "Camera Mobile Desk",
+    description:
+      "Phone-optimized studio controller. Stream from your mobile lens and hot-swap local inputs.",
+    href: "/ops/camera-desk",
+    badge: "Mobile",
+  },
 ] as const;
 
-const ROLE_MODULE_ACCESS: Record<OpsTeamRole, readonly OpsHubModuleId[]> = {
-  admin: OPS_HUB_MODULES.map((module) => module.id),
-  producer: ["crew_console", "readiness"],
+export const ROLE_MODULE_ACCESS: Record<OpsTeamRole, readonly OpsHubModuleId[]> = {
+  admin: [
+    "crew_console",
+    "readiness",
+    "broadcast_console",
+    "prayer_queue",
+    "incident",
+    "ops_home",
+    "camera_desk",
+  ],
+  producer: ["crew_console", "readiness", "broadcast_console"],
   broadcast_operator: ["broadcast_console"],
   prayer_team: ["prayer_queue"],
+  camera_crew: ["camera_desk"],
 };
+
+const ROLE_MODULE_ACCESS_LOOKUP = ROLE_MODULE_ACCESS;
 
 export function canAccessModule(
   role: OpsTeamRole,
   moduleId: OpsHubModuleId,
 ): boolean {
-  return ROLE_MODULE_ACCESS[role].includes(moduleId);
+  return ROLE_MODULE_ACCESS_LOOKUP[role].includes(moduleId);
 }
 
 export function isOpsTeamRole(value: string | null | undefined): value is OpsTeamRole {
@@ -86,12 +107,13 @@ export function isOpsTeamRole(value: string | null | undefined): value is OpsTea
     value === "admin" ||
     value === "producer" ||
     value === "broadcast_operator" ||
-    value === "prayer_team"
+    value === "prayer_team" ||
+    value === "camera_crew"
   );
 }
 
 export function modulesForRole(role: OpsTeamRole): OpsHubModule[] {
-  const allowed = new Set(ROLE_MODULE_ACCESS[role]);
+  const allowed = new Set(ROLE_MODULE_ACCESS_LOOKUP[role]);
   return OPS_HUB_MODULES.filter((module) => allowed.has(module.id));
 }
 
@@ -105,6 +127,8 @@ export function roleLabel(role: OpsTeamRole): string {
       return "Broadcast Operator";
     case "prayer_team":
       return "Prayer Team";
+    case "camera_crew":
+      return "Camera Crew";
     default:
       return role;
   }

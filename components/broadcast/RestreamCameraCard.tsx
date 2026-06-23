@@ -10,6 +10,8 @@ export type RestreamCameraCardProps = {
   urlExists: boolean;
   isStreaming: boolean;
   hlsUrl?: string | null;
+  streamKeyLabel?: string | null;
+  isFailoverActive?: boolean;
   engineMode: StudioEngineMode;
   onLocalAudioUpdate?: (db: number) => void;
   onConfigClick: () => void;
@@ -19,6 +21,8 @@ export default function RestreamCameraCard({
   urlExists,
   isStreaming,
   hlsUrl = null,
+  streamKeyLabel = null,
+  isFailoverActive = false,
   engineMode,
   onLocalAudioUpdate,
   onConfigClick,
@@ -50,7 +54,9 @@ export default function RestreamCameraCard({
 
   const footerType = isInternalStudio
     ? "Type: Testing Camera"
-    : "Source: External Field Camera";
+    : isFailoverActive
+      ? "Source: Cloud Failover (Restream)"
+      : "Source: External Field Camera";
 
   const borderAccent = isInternalStudio
     ? "border-brand-purple/40"
@@ -129,16 +135,23 @@ export default function RestreamCameraCard({
         )}
       </div>
 
-      <div className="mt-2 flex min-w-0 items-center justify-between gap-2 font-ui text-[0.48rem] text-brand-muted">
-        <span className="min-w-0 truncate">{footerType}</span>
-        <button
-          type="button"
-          onClick={onConfigClick}
-          className="touch-target inline-flex shrink-0 items-center gap-1 text-brand-purple transition hover:text-brand-pink"
-        >
-          <Settings className="h-3 w-3" aria-hidden="true" />
-          <span className="font-bold uppercase tracking-[0.08em]">Setup</span>
-        </button>
+      <div className="mt-2 flex min-w-0 flex-col gap-1 font-ui text-[0.48rem] text-brand-muted">
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <span className="min-w-0 truncate">{footerType}</span>
+          <button
+            type="button"
+            onClick={onConfigClick}
+            className="touch-target inline-flex shrink-0 items-center gap-1 text-brand-purple transition hover:text-brand-pink"
+          >
+            <Settings className="h-3 w-3" aria-hidden="true" />
+            <span className="font-bold uppercase tracking-[0.08em]">Setup</span>
+          </button>
+        </div>
+        {streamKeyLabel ? (
+          <p className="truncate font-mono text-[0.44rem] text-brand-blue" title={streamKeyLabel}>
+            Listening: {streamKeyLabel}
+          </p>
+        ) : null}
       </div>
     </div>
   );

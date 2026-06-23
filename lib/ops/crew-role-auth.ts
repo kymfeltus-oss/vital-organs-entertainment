@@ -34,7 +34,7 @@ export function isOpsRoleCheckBypassed(user: User): boolean {
 }
 
 export function canPerformStreamMutation(role: OpsTeamRole): boolean {
-  return role === "admin" || role === "producer";
+  return role === "admin" || role === "producer" || role === "camera_crew";
 }
 
 export function canPerformOpsMutation(role: OpsTeamRole): boolean {
@@ -53,7 +53,8 @@ export function buildCrewRoleCapabilities(
       bypassed ||
       role === "admin" ||
       role === "producer" ||
-      role === "broadcast_operator",
+      role === "broadcast_operator" ||
+      role === "camera_crew",
   };
 }
 
@@ -105,6 +106,7 @@ export function assertOpsStreamMutationAllowed(
   capabilities: CrewRoleCapabilities,
 ): NextResponse | null {
   if (isOpsRoleCheckBypassed(user)) return null;
+  if (inspectOpsAdminAccess(user).allowed) return null;
   if (!capabilities.canStreamMutate) {
     return opsStreamMutationForbiddenResponse();
   }

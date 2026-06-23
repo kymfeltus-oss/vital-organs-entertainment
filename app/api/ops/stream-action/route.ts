@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { syncCountdownScheduleForGoLive } from "@/lib/live-hub/go-live/sync-attendee-countdown";
+import { executeStreamToggle } from "@/lib/ops/execute-stream-toggle";
+import { schedulePastBroadcastRecordingSync } from "@/lib/ops/past-broadcast-recordings";
 import { requireOpsStreamMutationApiUser } from "@/lib/ops/require-ops-mutation";
 import type { OpsStreamAction } from "@/lib/ops/types";
 
@@ -7,14 +9,14 @@ type StreamActionBody = {
   action?: OpsStreamAction;
 };
 
-function resolveTogglePayload(action: OpsStreamAction): Record<string, unknown> {
+function resolveTogglePayload(action: OpsStreamAction) {
   switch (action) {
     case "go_live":
-      return { isLive: true, activeSource: "primary" };
+      return { isLive: true as const, activeSource: "primary" as const };
     case "switch_backup":
-      return { isLive: true, activeSource: "backup" };
+      return { isLive: true as const, activeSource: "backup" as const };
     case "emergency_offline":
-      return { isLive: false };
+      return { isLive: false as const };
   }
 }
 
@@ -22,8 +24,7 @@ export async function POST(request: NextRequest) {
   const gate = await requireOpsStreamMutationApiUser(request);
   if (gate.response) return gate.response;
 
-  const adminSecret = process.env.ADMIN_SECRET_KEY;
-  if (!adminSecret) {
+  if (!process.env.ADMIN_SECRET_KEY) {
     return NextResponse.json(
       { error: "Stream controls are not configured." },
       { status: 500 },
@@ -42,31 +43,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid stream action." }, { status: 400 });
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
-    const toggleResponse = await fetch(`${appUrl}/api/stream/toggle`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Admin-Secret-Key": adminSecret,
-      },
-      body: JSON.stringify(resolveTogglePayload(action)),
-      cache: "no-store",
-    });
+    const toggleResult = await executeStreamToggle(resolveTogglePayload(action));
 
-    const toggleData = (await toggleResponse.json()) as {
-      success?: boolean;
-      state?: {
-        is_live?: boolean;
-        active_source?: string;
-      } | null;
-      error?: string;
-    };
-
-    if (!toggleResponse.ok) {
-      return NextResponse.json(
-        { error: toggleData.error ?? "Stream action failed." },
-        { status: toggleResponse.status },
-      );
+    if (!toggleResult.ok) {
+      return NextResponse.json({ error: toggleResult.error }, { status: toggleResult.status });
     }
 
     let countdownSynced = false;
@@ -78,17 +58,19 @@ export async function POST(request: NextRequest) {
       } catch (error) {
         console.error("[OPS_STREAM_ACTION_COUNTDOWN_SYNC_ERR]:", error);
       }
+    } else if (action === "emergency_offline") {
+      schedulePastBroadcastRecordingSync({ streamTitle: "300 Awakening Broadcast" });
     }
 
-    const streamState = toggleData.state ?? null;
+    const streamState = toggleResult.state;
 
     return NextResponse.json({
       success: true,
       action,
       actionExecuted: action,
       state: streamState,
-      isLive: streamState?.is_live ?? action !== "emergency_offline",
-      useBackup: streamState?.active_source === "backup",
+      isLive: streamState.is_live,
+      useBackup: streamState.active_source === "backup",
       countdownSynced,
     });
   } catch (error) {

@@ -1,10 +1,14 @@
+import {
+  executeStreamToggle,
+  type StreamToggleInput,
+} from "@/lib/ops/execute-stream-toggle";
+
 export type PlatformLiveResult =
   | { ok: true }
   | { ok: false; error: string; code: string };
 
-async function postStreamToggle(body: Record<string, unknown>): Promise<PlatformLiveResult> {
-  const adminSecret = process.env.ADMIN_SECRET_KEY?.trim();
-  if (!adminSecret) {
+async function postStreamToggle(body: StreamToggleInput): Promise<PlatformLiveResult> {
+  if (!process.env.ADMIN_SECRET_KEY?.trim()) {
     return {
       ok: false,
       error: "Stream controls are not configured.",
@@ -12,37 +16,17 @@ async function postStreamToggle(body: Record<string, unknown>): Promise<Platform
     };
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
+  const result = await executeStreamToggle(body);
 
-  try {
-    const response = await fetch(`${appUrl}/api/stream/toggle`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Admin-Secret-Key": adminSecret,
-      },
-      body: JSON.stringify(body),
-      cache: "no-store",
-    });
-
-    const payload = (await response.json()) as { success?: boolean; error?: string };
-
-    if (!response.ok || payload.success !== true) {
-      return {
-        ok: false,
-        error: payload.error ?? "Platform stream toggle failed.",
-        code: "PLATFORM_TOGGLE_FAILED",
-      };
-    }
-
-    return { ok: true };
-  } catch {
+  if (!result.ok) {
     return {
       ok: false,
-      error: "Platform stream toggle unreachable.",
-      code: "PLATFORM_UNREACHABLE",
+      error: result.error,
+      code: "PLATFORM_TOGGLE_FAILED",
     };
   }
+
+  return { ok: true };
 }
 
 /** Step 3 — open the attendee platform on the primary HLS lane. */
