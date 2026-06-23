@@ -3,7 +3,7 @@ import { SEED_ECONOMY_PACKS } from "@/lib/merch/catalog";
 
 /** Buy Seeds page — flat background + native overlay content. */
 
-export const BUY_SEEDS_ASSET_VERSION = "20260622-4";
+export const BUY_SEEDS_ASSET_VERSION = "20260622-9";
 
 export const BUY_SEEDS_ASSETS = {
   mobileBackground: `/buy-seeds/mobile-main-background.png?v=${BUY_SEEDS_ASSET_VERSION}`,
@@ -14,24 +14,36 @@ export const BUY_SEEDS_MOBILE_ART = MOBILE_ARTBOARD_REF;
 /** Native PNG plate — same 1080×1920 stage as attendee dashboard. */
 export const BUY_SEEDS_MOBILE_ART_NATIVE = MOBILE_ARTBOARD_REF;
 
+/** Matches `--mobile-tab-content-inset-left` (40 / 1080) — overlay buttons stay here. */
+export const BUY_SEEDS_TAB_CONTENT_INSET_PX = 40;
+
 /**
- * Measured active art bounds on mobile-main-background.png (1080×1920).
- * Hero + UI art spans cols 96–983 (~82% canvas); scale X to fill dashboard track.
+ * Baked UI column on mobile-main-background.png (1080×1920).
+ * Balance card + package rows share cols 145–934 (~73%).
  */
-export const BUY_SEEDS_ARTBOARD_CONTENT_BOUNDS = {
-  left: 96,
-  right: 983,
-  width: 887,
+export const BUY_SEEDS_BODY_ART_BOUNDS = {
+  left: 145,
+  right: 934,
+  width: 790,
   canvasWidth: 1080,
 } as const;
 
-/** Horizontal scale — removes PNG side letterbox on the full plate. */
-export const BUY_SEEDS_ARTBOARD_WIDTH_SCALE =
-  BUY_SEEDS_ARTBOARD_CONTENT_BOUNDS.canvasWidth /
-  BUY_SEEDS_ARTBOARD_CONTENT_BOUNDS.width;
+/** Hero waveform is wider (96–983) — scaled with body so tab-column overlays align. */
+export const BUY_SEEDS_HERO_ART_BOUNDS = {
+  left: 96,
+  right: 983,
+  width: 888,
+  canvasWidth: 1080,
+} as const;
 
-/** @deprecated Use BUY_SEEDS_ARTBOARD_WIDTH_SCALE */
-export const BUY_SEEDS_HERO_WIDTH_SCALE = BUY_SEEDS_ARTBOARD_WIDTH_SCALE;
+/** Scale PNG horizontally so baked body column matches tab-content button width. */
+export const BUY_SEEDS_ARTBOARD_WIDTH_SCALE =
+  (BUY_SEEDS_BODY_ART_BOUNDS.canvasWidth - 2 * BUY_SEEDS_TAB_CONTENT_INSET_PX) /
+  BUY_SEEDS_BODY_ART_BOUNDS.width;
+
+export const BUY_SEEDS_PANEL_INSET_LEFT = `calc(${BUY_SEEDS_TAB_CONTENT_INSET_PX} / ${BUY_SEEDS_BODY_ART_BOUNDS.canvasWidth} * 100%)`;
+
+export const BUY_SEEDS_PANEL_WIDTH = `calc(100% - 2 * ${BUY_SEEDS_TAB_CONTENT_INSET_PX} / ${BUY_SEEDS_BODY_ART_BOUNDS.canvasWidth} * 100%)`;
 
 /** @deprecated Use BUY_SEEDS_MOBILE_ART */
 export const BUY_SEEDS_ART = BUY_SEEDS_MOBILE_ART;
@@ -54,9 +66,9 @@ export const BUY_SEEDS_BAKED_CONTROLS_MASK = {
 
 /** Native package list panel — aligned to four baked row slots on the PNG. */
 export const BUY_SEEDS_PACKAGES_PANEL = {
-  left: "calc(40 / 1080 * 100%)",
+  left: BUY_SEEDS_PANEL_INSET_LEFT,
   top: "54.45%",
-  width: "calc(100% - 2 * 40 / 1080 * 100%)",
+  width: BUY_SEEDS_PANEL_WIDTH,
   height: "21.5%",
 } as const;
 
@@ -98,16 +110,16 @@ export const BUY_SEEDS_DEFAULT_PACKAGE_ID: SeedPackageId = "seed-pack-100";
 
 export const BUY_SEEDS_CONTINUE_SLOT = {
   label: "Continue to payment",
-  left: "calc(40 / 1080 * 100%)",
+  left: BUY_SEEDS_PANEL_INSET_LEFT,
   top: "81.2%",
-  width: "calc(100% - 2 * 40 / 1080 * 100%)",
+  width: BUY_SEEDS_PANEL_WIDTH,
   height: "6.2%",
 } as const;
 
 export const BUY_SEEDS_ERROR_SLOT = {
-  left: "calc(40 / 1080 * 100%)",
+  left: BUY_SEEDS_PANEL_INSET_LEFT,
   top: "79.4%",
-  width: "calc(100% - 2 * 40 / 1080 * 100%)",
+  width: BUY_SEEDS_PANEL_WIDTH,
   height: "1.6%",
 } as const;
 

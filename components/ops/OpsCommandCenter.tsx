@@ -10,9 +10,12 @@ import {
   computeHarvestProgressPercent,
 } from "@/lib/live/harvest-metrics";
 import type { OpsSnapshot, OpsStreamAction } from "@/lib/ops/types";
+import type { LiveHubHeartbeatPayload } from "@/lib/ops/live-hub-heartbeat";
+import ProductionPathBanner from "@/components/ops/ProductionPathBanner";
+import { useOpsStreamStateRealtime } from "@/hooks/useOpsStreamStateRealtime";
 import { DEVICE_FIT_VIEWPORT } from "@/lib/responsive";
 
-const METRICS_POLL_INTERVAL_MS = 8_000;
+const HEARTBEAT_POLL_INTERVAL_MS = 10_000;
 
 type OpsCommandCenterProps = {
   initialSnapshot: OpsSnapshot;
@@ -107,26 +110,39 @@ export default function OpsCommandCenter({
   const [pendingAction, setPendingAction] = useState<OpsStreamAction | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
+  const patchStreamState = useCallback((stream: OpsSnapshot["stream"]) => {
+    setSnapshot((current) => ({
+      ...current,
+      stream,
+      realtime: {
+        ...current.realtime,
+        lastStreamStateSyncAt: stream.updatedAt,
+      },
+    }));
+  }, []);
+
+  useOpsStreamStateRealtime(patchStreamState);
+
   const refreshSnapshot = useCallback(async (silent = false) => {
     if (!silent) setIsRefreshing(true);
 
     try {
-      const response = await fetch("/api/ops/metrics", {
+      const response = await fetch("/api/ops/live-hub/heartbeat", {
         method: "GET",
         credentials: "include",
         cache: "no-store",
       });
 
       if (!response.ok) {
-        throw new Error("Unable to refresh operations metrics.");
+        throw new Error("Unable to refresh operations heartbeat.");
       }
 
-      const next = (await response.json()) as OpsSnapshot;
-      setSnapshot(next);
+      const data = (await response.json()) as LiveHubHeartbeatPayload;
+      setSnapshot(data.opsSnapshot);
       setRefreshError(null);
     } catch (error) {
       setRefreshError(
-        error instanceof Error ? error.message : "Unable to refresh operations metrics.",
+        error instanceof Error ? error.message : "Unable to refresh operations heartbeat.",
       );
     } finally {
       if (!silent) setIsRefreshing(false);
@@ -136,7 +152,7 @@ export default function OpsCommandCenter({
   useEffect(() => {
     const intervalId = setInterval(() => {
       void refreshSnapshot(true);
-    }, METRICS_POLL_INTERVAL_MS);
+    }, HEARTBEAT_POLL_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
   }, [refreshSnapshot]);
@@ -157,17 +173,24 @@ export default function OpsCommandCenter({
           cache: "no-store",
         });
 
-        const data = (await response.json()) as { error?: string; success?: boolean };
+        const data = (await response.json()) as {
+          error?: string;
+          success?: boolean;
+          countdownSynced?: boolean;
+        };
 
         if (!response.ok || !data.success) {
           throw new Error(data.error ?? "Stream action failed.");
         }
 
+        const countdownNote =
+          data.countdownSynced === true ? " Attendee countdown synced to now." : "";
+
         setActionMessage(
           action === "go_live"
-            ? "Primary lane is live."
+            ? `Primary lane is live.${countdownNote}`
             : action === "switch_backup"
-              ? "Backup lane is active."
+              ? `Backup lane is active.${countdownNote}`
               : "Stream is offline.",
         );
         await refreshSnapshot(true);
@@ -190,6 +213,7 @@ export default function OpsCommandCenter({
 
   return (
     <div className={`flex ${DEVICE_FIT_VIEWPORT} flex-col bg-[#0B090A] p-[clamp(1rem,2vw,1.5rem)] text-white`}>
+      <ProductionPathBanner isLive={snapshot.stream.isLive} />
       <header className="mb-5 flex shrink-0 items-start justify-between gap-4 border-b border-white/10 pb-4">
         <div>
           <p className="text-[0.62rem] font-bold uppercase tracking-[0.32em] text-[#1E40AF]">
@@ -330,7 +354,8 @@ export default function OpsCommandCenter({
             </div>
           </dl>
           <p className="text-[0.58rem] uppercase tracking-[0.16em] text-zinc-500">
-            Realtime channel activity polled every {METRICS_POLL_INTERVAL_MS / 1000}s
+            Stream state via realtime broadcast; full heartbeat every{" "}
+            {HEARTBEAT_POLL_INTERVAL_MS / 1000}s
           </p>
         </HealthCard>
 

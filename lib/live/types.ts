@@ -34,6 +34,8 @@ export type LiveStreamStateRow = {
   active_source: "offline" | "primary" | "backup";
   primary_playback_url: string | null;
   backup_playback_url: string | null;
+  primary_rtmp_ingest_url: string | null;
+  backup_rtmp_ingest_url: string | null;
   updated_at: string;
   updated_by: string | null;
 };

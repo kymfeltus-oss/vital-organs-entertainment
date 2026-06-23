@@ -6,6 +6,7 @@ import {
   closePlatformLive,
   openPlatformLive,
 } from "@/lib/live-hub/go-live/platform";
+import { syncCountdownScheduleForGoLive } from "@/lib/live-hub/go-live/sync-attendee-countdown";
 import { runVmixAdapterCommand } from "@/lib/live-hub/vmix/adapter";
 import { isVmixAdapterFailure } from "@/lib/live-hub/vmix/types";
 
@@ -17,6 +18,7 @@ export type GoLiveExecutionResult =
       activatedChannelIds: number[];
       vmixStreaming: boolean;
       platformLive: boolean;
+      countdownSynced: boolean;
     }
   | {
       ok: false;
@@ -81,11 +83,20 @@ export async function executeGoLiveSequence(): Promise<GoLiveExecutionResult> {
     };
   }
 
+  let countdownSynced = false;
+  try {
+    const syncResult = await syncCountdownScheduleForGoLive();
+    countdownSynced = syncResult.updated;
+  } catch (error) {
+    console.error("[GO_LIVE_COUNTDOWN_SYNC_ERR]:", error);
+  }
+
   return {
     ok: true,
     activatedChannelIds,
     vmixStreaming: vmixResult.state.isStreaming,
     platformLive: true,
+    countdownSynced,
   };
 }
 

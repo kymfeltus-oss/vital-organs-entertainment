@@ -63,6 +63,8 @@ function warningIssue(id: string, label: string, detail: string): SafetyIssue {
 export function evaluateGoLiveDecision(input: GoLiveEvaluationInput): GoLiveDecision {
   const criticalIssues: SafetyIssue[] = [];
   const warnings: SafetyIssue[] = [];
+  // Inlined at build time — production builds always enforce hard blocks.
+  const isDevSandbox = process.env.NODE_ENV === "development";
 
   if (!input.networkOnline) {
     criticalIssues.push(
@@ -78,31 +80,61 @@ export function evaluateGoLiveDecision(input: GoLiveEvaluationInput): GoLiveDeci
   }
 
   if (!isVmixReachable(input.vmix)) {
-    criticalIssues.push(
-      criticalIssue(
-        "vmix_unreachable",
-        "vMix Unreachable",
-        input.vmix?.connectionStatus === "stale"
-          ? "vMix telemetry is stale."
-          : "vMix encoder is not connected.",
-      ),
-    );
+    if (isDevSandbox && input.vmix?.source === "mock") {
+      warnings.push(
+        warningIssue(
+          "vmix_mock_dev",
+          "vMix Mock Encoder",
+          "Development mock encoder active — real vMix not required locally.",
+        ),
+      );
+    } else {
+      criticalIssues.push(
+        criticalIssue(
+          "vmix_unreachable",
+          "vMix Unreachable",
+          input.vmix?.connectionStatus === "stale"
+            ? "vMix telemetry is stale."
+            : "vMix encoder is not connected.",
+        ),
+      );
+    }
   }
 
   if (input.vmix?.isStale) {
-    criticalIssues.push(
-      criticalIssue("vmix_stale", "Stale vMix Telemetry", "Refresh vMix state before going live."),
-    );
+    if (isDevSandbox && input.vmix.source === "mock") {
+      warnings.push(
+        warningIssue(
+          "vmix_mock_refresh",
+          "vMix Mock Telemetry",
+          "Development mock encoder — telemetry refreshed on each heartbeat.",
+        ),
+      );
+    } else {
+      criticalIssues.push(
+        criticalIssue("vmix_stale", "Stale vMix Telemetry", "Refresh vMix state before going live."),
+      );
+    }
   }
 
   if (input.restream?.isStale) {
-    criticalIssues.push(
-      criticalIssue(
-        "restream_stale",
-        "Stale Restream Telemetry",
-        "Refresh Restream status before going live.",
-      ),
-    );
+    if (isDevSandbox && input.restream.source === "mock") {
+      warnings.push(
+        warningIssue(
+          "restream_mock_refresh",
+          "Restream Mock Telemetry",
+          "Development mock distribution — telemetry refreshed on each heartbeat.",
+        ),
+      );
+    } else {
+      criticalIssues.push(
+        criticalIssue(
+          "restream_stale",
+          "Stale Restream Telemetry",
+          "Refresh Restream status before going live.",
+        ),
+      );
+    }
   }
 
   const destinationCheck = input.checks.find((check) => check.id === "stream_destination");
@@ -136,9 +168,19 @@ export function evaluateGoLiveDecision(input: GoLiveEvaluationInput): GoLiveDeci
 
   const uploadCheck = input.checks.find((check) => check.id === "upload_speed");
   if (uploadCheck?.status === "fail") {
-    criticalIssues.push(
-      criticalIssue("upload_insufficient", "Upload Speed Insufficient", uploadCheck.detail),
-    );
+    if (isDevSandbox) {
+      warnings.push(
+        warningIssue(
+          "upload_dev_bypass",
+          "Upload Speed (Dev Bypass)",
+          `${uploadCheck.detail} — local development bypass active.`,
+        ),
+      );
+    } else {
+      criticalIssues.push(
+        criticalIssue("upload_insufficient", "Upload Speed Insufficient", uploadCheck.detail),
+      );
+    }
   } else if (uploadCheck?.status === "warn") {
     warnings.push(
       warningIssue("upload_degraded", "Upload Speed Degraded", uploadCheck.detail),
@@ -146,7 +188,7 @@ export function evaluateGoLiveDecision(input: GoLiveEvaluationInput): GoLiveDeci
   }
 
   const cameraCheck = input.checks.find((check) => check.id === "camera_feeds");
-  if (cameraCheck && cameraCheck.status !== "pass") {
+  if (cameraCheck && cameraCheck.status !== "pass" && cameraCheck.status !== "unknown") {
     criticalIssues.push(
       criticalIssue(
         "video_layers_missing",
@@ -154,11 +196,15 @@ export function evaluateGoLiveDecision(input: GoLiveEvaluationInput): GoLiveDeci
         "Program and preview inputs must both be loaded before Go Live.",
       ),
     );
+  } else if (cameraCheck?.status === "unknown" && isDevSandbox) {
+    warnings.push(
+      warningIssue(
+        "camera_dev_unknown",
+        "Camera Feeds Unverified",
+        "Camera readiness could not be verified — development bypass active.",
+      ),
+    );
   }
-
-  // Stripe gate with development sandbox bypass: NODE_ENV is inlined at build
-  // time, so production builds always enforce the hard block.
-  const isDevSandbox = process.env.NODE_ENV === "development";
 
   if (input.stripeApiLive !== true) {
     if (isDevSandbox) {

@@ -6,21 +6,22 @@ import { EMAIL_GATE_ACTION_SLOTS, type EmailGateActionSlot } from "@/lib/email-g
 import {
   buildAttendeeGateUrl,
   buildTeamGateUrl,
+  resolveAttendeeDestination,
   sanitizeNextPath,
   setAuthNextCookie,
   DEFAULT_ATTENDEE_NEXT,
-  DEFAULT_TEAM_NEXT,
 } from "@/lib/auth/routing";
 
 export default function EmailGateOverlay() {
   const searchParams = useSearchParams();
   const rawNext = searchParams.get("next");
-  const attendeeNext = sanitizeNextPath(rawNext, DEFAULT_ATTENDEE_NEXT);
-  const teamNext = sanitizeNextPath(rawNext, DEFAULT_TEAM_NEXT);
+  const attendeeNext = resolveAttendeeDestination(
+    sanitizeNextPath(rawNext, DEFAULT_ATTENDEE_NEXT),
+  );
 
   const hrefById: Record<EmailGateActionSlot["id"], string> = {
     attendee: buildAttendeeGateUrl(attendeeNext),
-    team: buildTeamGateUrl(rawNext?.startsWith("/ops") ? rawNext : teamNext),
+    team: buildTeamGateUrl(rawNext),
   };
 
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertOctagon, AlertTriangle, Ban, CheckCircle2 } from "lucide-react";
+import { toLaymanCheckLabel, toLaymanCheckMessage } from "@/lib/broadcast/layman-copy";
 import { PARABLE_SHELL, PARABLE_STATUS } from "@/lib/broadcast/parable-tokens";
 import type { HealthStatus, ProductionSafetyAction, ReadinessCheck } from "@/lib/broadcast/types";
 import { HEALTH_STATUS_LABEL } from "@/lib/broadcast/types";
@@ -39,7 +40,7 @@ export default function ProductionSafetyPanel({
   return (
     <section className="rounded-md border border-white/10 bg-[#111111] p-1.5">
       <p className={`font-ui text-[0.45rem] font-bold uppercase tracking-[0.14em] ${PARABLE_SHELL.muted}`}>
-        Production Safety Engine
+        Production Safety Checks
       </p>
 
       <ul className="mt-1 max-h-[96px] space-y-0.5 overflow-y-auto">
@@ -66,10 +67,10 @@ export default function ProductionSafetyPanel({
                     <Icon className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
                     <div className="min-w-0">
                       <p className="truncate font-ui text-[0.48rem] font-bold uppercase tracking-[0.04em]">
-                        {check.label}
+                        {toLaymanCheckLabel(check.label)}
                       </p>
                       <p className="mt-px truncate font-body text-[0.62rem] leading-snug opacity-90">
-                        {check.message}
+                        {toLaymanCheckMessage(check.message)}
                       </p>
                       <p className="mt-px font-ui text-[0.42rem] font-bold uppercase tracking-[0.08em] opacity-75">
                         {HEALTH_STATUS_LABEL[check.severity]}

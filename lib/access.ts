@@ -79,9 +79,10 @@ export function evaluateLiveAccessFromFlags(
   hasPaidPass: boolean,
 ): LiveAccessEvaluation {
   const authenticated = Boolean(email);
-  const canViewStream = hasPaidPass;
-  const showStreamPaywall = authenticated && isGuest && !hasPaidPass;
-  const showFullLockdown = authenticated && !isGuest && !hasPaidPass;
+  /** Live concert is free — signed-in attendees enter; only auth is required. */
+  const canViewStream = authenticated;
+  const showStreamPaywall = false;
+  const showFullLockdown = !authenticated;
 
   return {
     authenticated,

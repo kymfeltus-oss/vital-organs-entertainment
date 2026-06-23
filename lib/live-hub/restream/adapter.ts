@@ -43,7 +43,7 @@ const disconnectedMockState = (): RestreamState => ({
   source: "mock",
 });
 
-let mockRestreamState: RestreamState = disconnectedMockState();
+let mockRestreamState: RestreamState = connectedMockState();
 
 function connectedMockState(): RestreamState {
   return {
@@ -272,12 +272,20 @@ async function fetchLiveRestreamState(token: string): Promise<RestreamAdapterRes
 
 export async function getRestreamAdapterState(): Promise<RestreamAdapterResult> {
   const token = process.env.RESTREAM_API_TOKEN?.trim();
+  const isDev = process.env.NODE_ENV === "development";
 
   if (!token) {
-    return { ok: true, state: markRestreamStale(mockRestreamState) };
+    mockRestreamState = connectedMockState();
+    return { ok: true, state: mockRestreamState };
   }
 
-  return fetchLiveRestreamState(token);
+  const live = await fetchLiveRestreamState(token);
+  if (live.ok === false && isDev) {
+    mockRestreamState = connectedMockState();
+    return { ok: true, state: mockRestreamState };
+  }
+
+  return live;
 }
 
 export async function runRestreamAdapterCommand(

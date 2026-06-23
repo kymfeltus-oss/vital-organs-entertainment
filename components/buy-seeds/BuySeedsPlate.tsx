@@ -11,8 +11,8 @@ import {
   mobileArtboardStageStyle,
 } from "@/lib/responsive";
 import {
-  BUY_SEEDS_ASSETS,
   BUY_SEEDS_ARTBOARD_WIDTH_SCALE,
+  BUY_SEEDS_ASSETS,
   BUY_SEEDS_MOBILE_ART_NATIVE,
   type SeedPackageId,
 } from "@/lib/seeds/assets";

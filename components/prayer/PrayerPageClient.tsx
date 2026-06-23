@@ -6,6 +6,7 @@ import { ChevronLeft } from "lucide-react";
 import ContactUsForm, { type ContactUsFormValues } from "@/components/prayer/ContactUsForm";
 import AwakeningMenuButton from "@/components/AwakeningMenuButton";
 import ProfileOrbEditor from "@/components/profile/ProfileOrbEditor";
+import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
 import { buildContactMailto } from "@/lib/prayer/contact";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
@@ -72,31 +73,53 @@ export default function ContactUsPageClient({ initialProfile }: ContactUsPageCli
   };
 
   return (
-    <div className={`contact-us-page ${CONTENT_WITH_NAV} min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden bg-brand-black text-white`}>
-      <div className="mx-auto w-full max-w-2xl px-4 py-5 pt-safe sm:px-6 sm:py-8 lg:px-8">
-        <header className="mb-6 flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
+    <div className={`contact-us-page ${CONTENT_WITH_NAV} relative min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden bg-brand-black text-white`}>
+      <div className="contact-us-page__glow pointer-events-none" aria-hidden="true" />
+
+      <div className="relative z-[1] mx-auto w-full max-w-2xl px-4 py-5 pt-safe sm:px-6 sm:py-8 lg:px-8">
+        <header className="mb-8">
+          <div className="flex items-start justify-between gap-3">
             <Link
               href={ATTENDEE_DASHBOARD_PATH}
-              className="touch-target mb-4 inline-flex min-h-11 items-center gap-1 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-brand-muted transition hover:text-brand-blue"
+              className="touch-target inline-flex min-h-11 items-center gap-1 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-brand-muted transition hover:text-brand-blue"
             >
               <ChevronLeft className="size-4" aria-hidden="true" />
               Back
             </Link>
+
+            <div className="flex shrink-0 items-center gap-2">
+              <ProfileOrbEditor profile={profile} onProfileChange={setProfile} size={40} />
+              <AwakeningMenuButton className="shrink-0" />
+            </div>
+          </div>
+
+          <div className="contact-us-page__hero mx-auto mt-6 max-w-md text-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={EXPERIENCE_BRAND_ASSETS.lockup}
+              alt="300 Awakening"
+              width={1536}
+              height={1024}
+              className="contact-us-page__lockup mx-auto w-full max-w-[min(100%,22rem)]"
+              loading="eager"
+              decoding="async"
+              draggable={false}
+            />
+            <p className="contact-us-page__tagline mt-3 font-ui text-[0.58rem] font-bold uppercase tracking-[0.28em] text-brand-blue">
+              Live · Empower · Transform
+            </p>
+          </div>
+
+          <div className="mt-8 text-center">
             <p className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.24em] text-brand-blue">
               Vital Organs Entertainment
             </p>
             <h1 className="mt-2 font-headline text-fluid-section uppercase tracking-[0.12em] text-white">
               Contact Us
             </h1>
-            <p className="mt-2 max-w-lg font-body text-sm leading-relaxed text-brand-muted">
+            <p className="mx-auto mt-3 max-w-lg font-body text-sm leading-relaxed text-brand-muted">
               We&apos;d love to hear from you. Send a message and our team will get back to you soon.
             </p>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-2 pt-1">
-            <ProfileOrbEditor profile={profile} onProfileChange={setProfile} size={40} />
-            <AwakeningMenuButton className="shrink-0" />
           </div>
         </header>
 

@@ -44,8 +44,8 @@ function clearCheckoutSuccessParam(): void {
 
 /**
  * Server-backed live access gate for `/live`.
- * Post-checkout returns (`?success=true`) enter activating_pass and poll
- * /api/access/live until the Stripe webhook fulfills the ticket order.
+ * Free event — any signed-in attendee is cleared; only auth is required.
+ * Post-checkout returns (`?success=true`) still poll until access confirms.
  */
 export function useLiveAccessVerification(): UseLiveAccessVerificationResult {
   const searchParams = useSearchParams();

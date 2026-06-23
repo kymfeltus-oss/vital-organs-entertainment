@@ -10,8 +10,7 @@ import EmailGateShell, {
 import {
   buildPersonaHubUrl,
   buildTeamPostAuthUrl,
-  sanitizeNextPath,
-  DEFAULT_TEAM_NEXT,
+  resolveTeamDestination,
 } from "@/lib/auth/routing";
 import { emailValidationState } from "@/lib/auth/validation";
 
@@ -21,7 +20,7 @@ type TeamLoginClientProps = {
 };
 
 export default function TeamLoginClient({ nextPath, authError }: TeamLoginClientProps) {
-  const resolvedNext = sanitizeNextPath(nextPath, DEFAULT_TEAM_NEXT);
+  const resolvedNext = resolveTeamDestination(nextPath);
   const hubBackHref = buildPersonaHubUrl(resolvedNext);
   const isCountdownOps =
     resolvedNext === "/ops/countdown" || resolvedNext.startsWith("/ops/countdown/");
@@ -128,7 +127,7 @@ export default function TeamLoginClient({ nextPath, authError }: TeamLoginClient
           ) : isCountdownOps ? (
             "Continue to Countdown Editor"
           ) : (
-            "Sign In to Production Console"
+            "Sign In — Choose Console"
           )}
         </PrimaryGateButton>
       </form>

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import TeamLoginClient from "@/components/auth/TeamLoginClient";
-import { DEFAULT_TEAM_NEXT, sanitizeNextPath } from "@/lib/auth/routing";
+import { resolveTeamDestination } from "@/lib/auth/routing";
 
 type TeamGatePageProps = {
   searchParams: Promise<{ next?: string; error?: string }>;
@@ -19,7 +19,7 @@ function TeamGateContent({
 
 export default async function TeamGatePage({ searchParams }: TeamGatePageProps) {
   const params = await searchParams;
-  const nextPath = sanitizeNextPath(params.next, DEFAULT_TEAM_NEXT);
+  const nextPath = resolveTeamDestination(params.next);
 
   return (
     <Suspense

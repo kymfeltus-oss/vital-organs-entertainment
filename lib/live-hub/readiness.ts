@@ -103,6 +103,19 @@ function resolveUploadSpeed(inputs: ReadinessInputs): ReadinessCheck {
 
   const overrideSuffix = inputs.uploadSpeedDevOverride ? " — dev override" : "";
 
+  if (
+    inputs.uploadSpeedDevOverride &&
+    process.env.NODE_ENV === "development"
+  ) {
+    return {
+      id: "upload_speed",
+      label: CHECK_LABELS.upload_speed,
+      status: "pass",
+      detail: `20.0 Mbps upload (dev override)${overrideSuffix}`,
+      lastUpdatedAt: nowIso(),
+    };
+  }
+
   if (inputs.uploadSpeedMbps === null) {
     return {
       id: "upload_speed",

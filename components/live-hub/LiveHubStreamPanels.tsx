@@ -9,6 +9,7 @@ import type { RestreamState } from "@/lib/live-hub/restream/types";
 import { VMIX_OPERATOR_GUIDANCE } from "@/lib/live-hub/readiness";
 import type { VmixCommandType, VmixState } from "@/lib/live-hub/vmix/types";
 import { formatPlaybackLaneLabel } from "@/lib/live/hls";
+import { formatRtmpIngestLaneLabel } from "@/lib/live/rtmp";
 import type { OpsSnapshot } from "@/lib/ops/types";
 import type { ChecklistPhase } from "@/lib/live-hub/types";
 
@@ -132,6 +133,24 @@ export default function LiveHubStreamPanels({
               {formatPlaybackLaneLabel(
                 snapshot.stream.backupPlaybackUrlStatus,
                 snapshot.stream.backupConfigured,
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt>Primary RTMP</dt>
+            <dd className="font-mono text-zinc-200">
+              {formatRtmpIngestLaneLabel(
+                snapshot.stream.primaryRtmpIngestUrlStatus,
+                snapshot.stream.primaryRtmpConfigured,
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt>Backup RTMP</dt>
+            <dd className="font-mono text-zinc-200">
+              {formatRtmpIngestLaneLabel(
+                snapshot.stream.backupRtmpIngestUrlStatus,
+                snapshot.stream.backupRtmpConfigured,
               )}
             </dd>
           </div>

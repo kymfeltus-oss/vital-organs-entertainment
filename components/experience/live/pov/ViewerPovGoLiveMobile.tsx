@@ -3,12 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Heart, MoreHorizontal, ShoppingBag, Sprout, X } from "lucide-react";
+import ProfileOrbEditor from "@/components/profile/ProfileOrbEditor";
 import {
   POV_MOCK_CHAT_MESSAGES,
   POV_MOCK_CREATOR,
-  formatPovViewerCount,
 } from "@/lib/experience/live-pov-mock";
+import { useLiveViewerCount } from "@/lib/experience/useLiveViewerCount";
 import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
+import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
 const NAME_CLASS = {
   blue: "text-brand-blue",
@@ -16,8 +18,20 @@ const NAME_CLASS = {
   purple: "text-brand-purple",
 } as const;
 
-export default function ViewerPovGoLiveMobile() {
+type ViewerPovGoLiveMobileProps = {
+  profile: AttendeeProfileSnapshot;
+  onProfileChange: (profile: AttendeeProfileSnapshot) => void;
+};
+
+export default function ViewerPovGoLiveMobile({
+  profile,
+  onProfileChange,
+}: ViewerPovGoLiveMobileProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { displayLabel: viewerLabel } = useLiveViewerCount({
+    enabled: true,
+    userId: profile.userId,
+  });
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-brand-black">
@@ -50,9 +64,17 @@ export default function ViewerPovGoLiveMobile() {
               Live
             </span>
             <span className="rounded-full bg-black/45 px-2.5 py-0.5 font-ui text-[0.58rem] font-semibold text-white backdrop-blur-sm viewer-pov-text-shadow">
-              👁️ {formatPovViewerCount(POV_MOCK_CREATOR.viewerCount)}
+              👁️ {viewerLabel}
             </span>
           </div>
+        </div>
+
+        <div className="viewer-pov-profile-orb shrink-0">
+          <ProfileOrbEditor
+            profile={profile}
+            onProfileChange={onProfileChange}
+            size={40}
+          />
         </div>
 
         <button

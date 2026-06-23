@@ -5,12 +5,67 @@ import {
   HARVEST_GOAL_DOLLARS,
   LIVE_ROOM_PLATFORM_CHANNEL,
   LIVE_STREAM_STATE_BROADCAST_EVENT,
-  LIVE_STREAM_STATE_ID,
 } from "@/lib/live/types";
 import type { OpsSnapshot, StreamAccessLogRow } from "@/lib/ops/types";
+import { buildRtmpIngestFields } from "@/lib/ops/resolve-stream-rtmp-ingest";
+import { buildRtmpPullFields } from "@/lib/ops/resolve-stream-rtmp-pull";
+import { buildStoredRestreamOutputLanes } from "@/lib/ops/restream-output-lanes";
+import {
+  fetchLiveStreamStateRow,
+  type LiveStreamStateRow,
+} from "@/lib/ops/fetch-live-stream-state-row";
+import { normalizeStudioEngineMode } from "@/lib/ops/studio-engine-mode";
+import { ensureDevStreamPlaybackConfigured } from "@/lib/ops/ensure-dev-stream-playback";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 const ACCESS_LOG_LIMIT = 80;
+
+function buildOpsStreamSnapshot(
+  streamState: LiveStreamStateRow | null,
+): OpsSnapshot["stream"] {
+  const primaryPlaybackUrlStatus = resolvePlaybackUrlStatus(
+    streamState?.primary_playback_url,
+  );
+  const backupPlaybackUrlStatus = resolvePlaybackUrlStatus(
+    streamState?.backup_playback_url,
+  );
+  const rtmp = buildRtmpIngestFields(
+    streamState?.primary_rtmp_ingest_url,
+    streamState?.backup_rtmp_ingest_url,
+  );
+  const pull = buildRtmpPullFields(
+    streamState?.primary_rtmp_pull_url,
+    streamState?.backup_rtmp_pull_url,
+    streamState?.camera_preview_hls_url,
+    streamState?.primary_playback_url,
+  );
+  const storedRestreamOutputs = buildStoredRestreamOutputLanes(streamState);
+
+  return {
+    isLive: streamState?.is_live === true,
+    activeSource: streamState?.active_source ?? "offline",
+    primaryConfigured: primaryPlaybackUrlStatus === "valid",
+    backupConfigured: backupPlaybackUrlStatus === "valid",
+    primaryPlaybackUrlStatus,
+    backupPlaybackUrlStatus,
+    ...rtmp,
+    ...pull,
+    storedRestreamOutputs,
+    studioEngineMode: normalizeStudioEngineMode(streamState?.studio_engine_mode),
+    updatedAt: streamState?.updated_at ?? new Date(0).toISOString(),
+    updatedBy: streamState?.updated_by ?? null,
+  };
+}
+
+/** Lightweight stream-only read for ops realtime patches. */
+export async function loadOpsStreamSnapshot(): Promise<OpsSnapshot["stream"]> {
+  await ensureDevStreamPlaybackConfigured();
+
+  const admin = getSupabaseAdmin();
+  const data = await fetchLiveStreamStateRow(admin);
+
+  return buildOpsStreamSnapshot(data);
+}
 
 function uniquePaidAttendees(
   rows: Array<{ email: string | null }> | null,
@@ -26,12 +81,16 @@ function uniquePaidAttendees(
 }
 
 export async function loadOpsSnapshot(): Promise<OpsSnapshot> {
+  await ensureDevStreamPlaybackConfigured();
+
   const admin = getSupabaseAdmin();
   const chatWindowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString();
   const stripeWindowStart = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
+  const streamStatePromise = fetchLiveStreamStateRow(admin);
+
   const [
-    streamStateResult,
+    streamState,
     paidAttendeeOrdersResult,
     paidOrders24hResult,
     totalPaidOrdersResult,
@@ -41,13 +100,7 @@ export async function loadOpsSnapshot(): Promise<OpsSnapshot> {
     accessLogsResult,
     harvestTotalCents,
   ] = await Promise.all([
-    admin
-      .from("live_stream_state")
-      .select(
-        "is_live, active_source, primary_playback_url, backup_playback_url, updated_at, updated_by",
-      )
-      .eq("id", LIVE_STREAM_STATE_ID)
-      .maybeSingle(),
+    streamStatePromise,
     admin
       .from("orders")
       .select("email")
@@ -82,10 +135,6 @@ export async function loadOpsSnapshot(): Promise<OpsSnapshot> {
     fetchHarvestProgressCents(admin),
   ]);
 
-  if (streamStateResult.error) {
-    throw new Error(streamStateResult.error.message);
-  }
-
   if (paidAttendeeOrdersResult.error) {
     throw new Error(paidAttendeeOrdersResult.error.message);
   }
@@ -98,13 +147,7 @@ export async function loadOpsSnapshot(): Promise<OpsSnapshot> {
     throw new Error(accessLogsResult.error.message);
   }
 
-  const streamState = streamStateResult.data;
-  const primaryPlaybackUrlStatus = resolvePlaybackUrlStatus(
-    streamState?.primary_playback_url,
-  );
-  const backupPlaybackUrlStatus = resolvePlaybackUrlStatus(
-    streamState?.backup_playback_url,
-  );
+  const stream = buildOpsStreamSnapshot(streamState);
 
   const seedCoinsDistributed = (seedWalletsResult.data ?? []).reduce(
     (sum, wallet) => sum + (typeof wallet.balance === "number" ? wallet.balance : 0),
@@ -112,21 +155,12 @@ export async function loadOpsSnapshot(): Promise<OpsSnapshot> {
   );
 
   return {
-    stream: {
-      isLive: streamState?.is_live === true,
-      activeSource: streamState?.active_source ?? "offline",
-      primaryConfigured: primaryPlaybackUrlStatus === "valid",
-      backupConfigured: backupPlaybackUrlStatus === "valid",
-      primaryPlaybackUrlStatus,
-      backupPlaybackUrlStatus,
-      updatedAt: streamState?.updated_at ?? new Date(0).toISOString(),
-      updatedBy: streamState?.updated_by ?? null,
-    },
+    stream,
     realtime: {
       platformChannel: LIVE_ROOM_PLATFORM_CHANNEL,
       broadcastEvent: LIVE_STREAM_STATE_BROADCAST_EVENT,
       recentChatMessages10m: chatActivityResult.count ?? 0,
-      lastStreamStateSyncAt: streamState?.updated_at ?? new Date(0).toISOString(),
+      lastStreamStateSyncAt: stream.updatedAt,
     },
     stripe: {
       paidOrdersLast24h: paidOrders24hResult.count ?? 0,

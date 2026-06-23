@@ -13,6 +13,7 @@ type LiveHubChecklistHeroProps = {
   isLive?: boolean;
   onStop?: () => void;
   isStopping?: boolean;
+  mutationsDisabled?: boolean;
 };
 
 export default function LiveHubChecklistHero({
@@ -24,6 +25,7 @@ export default function LiveHubChecklistHero({
   isLive = false,
   onStop,
   isStopping = false,
+  mutationsDisabled = false,
 }: LiveHubChecklistHeroProps) {
   const phaseMap = Object.fromEntries(phases.map((phase) => [phase.id, phase]));
 
@@ -61,6 +63,7 @@ export default function LiveHubChecklistHero({
             isLive={isLive}
             onStop={onStop}
             isStopping={isStopping}
+            mutationsDisabled={mutationsDisabled}
             variant="hero"
           />
         </div>

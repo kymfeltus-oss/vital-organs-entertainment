@@ -251,6 +251,7 @@ export default function CountdownAdminClient({
         <div className="mx-auto mt-6 flex w-full max-w-6xl flex-wrap items-center justify-between gap-3">
           <Link
             href="/ops"
+            prefetch={false}
             className="inline-flex min-h-11 items-center gap-2 font-ui text-[0.62rem] font-bold uppercase tracking-[0.16em] text-brand-muted transition hover:text-brand-blue"
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />

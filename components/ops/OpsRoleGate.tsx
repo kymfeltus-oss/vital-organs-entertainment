@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   canAccessModule,
   isOpsTeamRole,
-  OPS_TEAM_ROLE_STORAGE_KEY,
   type OpsHubModuleId,
   type OpsTeamRole,
 } from "@/lib/ops/team-roles";
@@ -20,15 +19,42 @@ export default function OpsRoleGate({ moduleId, children }: OpsRoleGateProps) {
   const [allowed, setAllowed] = useState(false);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem(OPS_TEAM_ROLE_STORAGE_KEY);
-    const role: OpsTeamRole = isOpsTeamRole(stored) ? stored : "admin";
+    let cancelled = false;
 
-    if (!canAccessModule(role, moduleId)) {
-      router.replace("/ops/live-hub");
-      return;
+    async function resolveRole() {
+      try {
+        const response = await fetch("/api/ops/crew-role", {
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          router.replace("/ops/live-hub");
+          return;
+        }
+
+        const data = (await response.json()) as { role?: string };
+        const role: OpsTeamRole = isOpsTeamRole(data.role) ? data.role : "admin";
+
+        if (cancelled) return;
+
+        if (!canAccessModule(role, moduleId)) {
+          router.replace("/ops/live-hub");
+          return;
+        }
+
+        setAllowed(true);
+      } catch {
+        if (!cancelled) {
+          router.replace("/ops/live-hub");
+        }
+      }
     }
 
-    setAllowed(true);
+    void resolveRole();
+
+    return () => {
+      cancelled = true;
+    };
   }, [moduleId, router]);
 
   if (!allowed) {

@@ -10,6 +10,8 @@ import {
   type CreateAccountFormValues,
 } from "@/lib/auth/create-account-validation";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
+import { buildClientAuthCallbackUrl } from "@/lib/auth/oauth-sign-in";
+import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
 type CreateAccountClientProps = {
   nextPath: string;
@@ -37,6 +39,7 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
   const [touched, setTouched] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
   const avatarPreviewUrl = useMemo(() => {
     if (!values.avatarFile) return null;
@@ -110,21 +113,38 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
     setFormError(null);
 
     try {
-      const response = await fetch("/api/auth", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          ...serializeCreateAccountPayload(values),
-          next: nextPath,
-        }),
+      const payload = serializeCreateAccountPayload(values);
+      const supabase = createBrowserSupabaseClient();
+      const { data, error } = await supabase.auth.signUp({
+        email: payload.email,
+        password: payload.password,
+        options: {
+          data: {
+            is_guest: false,
+            first_name: payload.firstName,
+            last_name: payload.lastName,
+            phone: payload.phone,
+            city: payload.city,
+            state: payload.state,
+          },
+          emailRedirectTo: buildClientAuthCallbackUrl(nextPath),
+        },
       });
 
-      const result = (await response.json()) as { success?: boolean; error?: string };
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error ?? "Unable to create account.");
+      if (error || !data.user) {
+        throw new Error(error?.message ?? "Unable to create account.");
       }
+
+      if (!data.session) {
+        setConfirmationSent(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      await fetch("/api/auth/sync-identity", {
+        method: "POST",
+        credentials: "include",
+      });
 
       if (values.avatarFile) {
         await uploadAvatar();
@@ -139,7 +159,25 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
 
   return (
     <>
-      <AttendeeAuthCreateAccountPlate
+      {confirmationSent ? (
+        <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 px-4 py-10 text-center">
+          <p className="font-headline text-xl uppercase tracking-[0.12em] text-white">
+            Check Your Email
+          </p>
+          <p className="font-body text-sm text-brand-muted">
+            We sent a confirmation link to{" "}
+            <span className="text-white">{values.email}</span>. Open it on this device to finish
+            setting up your account, then sign in.
+          </p>
+          <a
+            href={loginHref}
+            className="font-ui text-sm font-medium uppercase tracking-[0.1em] text-brand-blue hover:underline"
+          >
+            Back to Log In
+          </a>
+        </div>
+      ) : (
+        <AttendeeAuthCreateAccountPlate
         loginHref={loginHref}
         values={values}
         avatarPreviewUrl={avatarPreviewUrl}
@@ -176,6 +214,7 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
         onAvatarPick={() => fileInputRef.current?.click()}
         onSubmit={(event) => void handleSubmit(event)}
       />
+      )}
 
       <input
         ref={fileInputRef}

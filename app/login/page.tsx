@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 type LoginPageProps = {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; confirmed?: string }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
@@ -31,7 +31,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-brand-black"
       aria-label="Log in page"
     >
-      <AttendeeFunnelClient nextPath={nextPath} authError={params.error ?? null} />
+      <AttendeeFunnelClient
+        nextPath={nextPath}
+        authError={params.error ?? null}
+        emailConfirmed={params.confirmed === "1"}
+      />
     </main>
   );
 }

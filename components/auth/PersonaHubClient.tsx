@@ -6,22 +6,21 @@ import EmailGateShell from "@/components/auth/EmailGateShell";
 import {
   buildAttendeeGateUrl,
   buildTeamGateUrl,
+  resolveAttendeeDestination,
   sanitizeNextPath,
   setAuthNextCookie,
   DEFAULT_ATTENDEE_NEXT,
-  DEFAULT_TEAM_NEXT,
 } from "@/lib/auth/routing";
 
 export default function PersonaHubClient() {
   const searchParams = useSearchParams();
   const rawNext = searchParams.get("next");
-  const attendeeNext = sanitizeNextPath(rawNext, DEFAULT_ATTENDEE_NEXT);
-  const teamNext = sanitizeNextPath(rawNext, DEFAULT_TEAM_NEXT);
+  const attendeeNext = resolveAttendeeDestination(
+    sanitizeNextPath(rawNext, DEFAULT_ATTENDEE_NEXT),
+  );
 
   const attendeeHref = buildAttendeeGateUrl(attendeeNext);
-  const teamHref = buildTeamGateUrl(
-    rawNext?.startsWith("/ops") ? rawNext : teamNext,
-  );
+  const teamHref = buildTeamGateUrl(rawNext);
 
   return (
     <EmailGateShell>

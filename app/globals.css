@@ -2372,7 +2372,7 @@ body::-webkit-scrollbar {
 }
 
 .buy-seeds-page__bg--base {
-  transform: scale(var(--buy-seeds-artboard-width-scale, 1.367), 1);
+  transform: scale(var(--buy-seeds-artboard-width-scale, 1.266), 1);
   transform-origin: top center;
 }
 
@@ -6154,17 +6154,22 @@ body::-webkit-scrollbar {
 /* ── Public countdown — shareable / OBS / social (fed by /api/countdown) ── */
 .public-countdown {
   --public-countdown-max-w: min(100%, 72rem);
+  --public-countdown-glossy-surface:
+    radial-gradient(ellipse 120% 88% at 50% -16%, rgb(255 255 255 / 0.042) 0%, transparent 54%),
+    radial-gradient(ellipse 90% 62% at 50% 112%, rgb(0 168 255 / 0.022) 0%, transparent 50%),
+    linear-gradient(180deg, #050507 0%, #020203 56%, #010102 100%);
   position: relative;
   display: flex;
   min-height: 100dvh;
   width: 100%;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   overflow: hidden;
-  background-color: #020203;
+  background-color: var(--color-brand-black-base);
   background-image: var(--app-glossy-background);
+  background-attachment: fixed;
   color: #ffffff;
-  isolation: isolate;
 }
 
 .public-countdown__aurora {
@@ -6179,7 +6184,7 @@ body::-webkit-scrollbar {
   position: absolute;
   border-radius: 9999px;
   filter: blur(80px);
-  opacity: 0.55;
+  opacity: 0.28;
   mix-blend-mode: screen;
 }
 
@@ -6268,18 +6273,20 @@ body::-webkit-scrollbar {
   height: 100%;
   object-fit: cover;
   object-position: center 20%;
-  opacity: 0.22;
+  opacity: 0.12;
 }
 
 .public-countdown__hero-scrim {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgb(2 2 3 / 0.55) 0%,
-    rgb(2 2 3 / 0.82) 45%,
-    rgb(2 2 3 / 0.96) 100%
-  );
+  background:
+    linear-gradient(
+      180deg,
+      rgb(2 2 3 / 0.72) 0%,
+      rgb(2 2 3 / 0.9) 45%,
+      rgb(2 2 3 / 0.98) 100%
+    ),
+    var(--app-glossy-background);
 }
 
 .public-countdown__content {
@@ -6291,10 +6298,10 @@ body::-webkit-scrollbar {
   min-height: 0;
   flex-direction: column;
   align-items: center;
-  gap: clamp(1.25rem, 4vw, 2.25rem);
-  padding: clamp(1.5rem, 5vw, 3rem) clamp(1rem, 4vw, 2rem);
-  padding-top: max(clamp(1.5rem, 5vw, 3rem), env(safe-area-inset-top));
-  padding-bottom: max(clamp(1.5rem, 5vw, 3rem), env(safe-area-inset-bottom));
+  gap: clamp(1rem, 3vw, 1.75rem);
+  padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2rem);
+  padding-top: clamp(0.35rem, 1.5vw, 0.75rem);
+  padding-bottom: max(clamp(1rem, 3vw, 2rem), env(safe-area-inset-bottom));
   text-align: center;
 }
 
@@ -6303,29 +6310,28 @@ body::-webkit-scrollbar {
   width: 100%;
   flex-direction: column;
   align-items: center;
-  gap: clamp(0.5rem, 2vw, 0.85rem);
+  gap: clamp(0.35rem, 1.5vw, 0.65rem);
 }
 
 .public-countdown__lockup-wrap {
   position: relative;
-  width: min(100%, 22rem);
-  aspect-ratio: 3 / 2;
-}
-
-.public-countdown__lockup-glow {
-  position: absolute;
-  inset: -18%;
-  border-radius: 9999px;
-  background: radial-gradient(circle, rgb(0 168 255 / 0.28) 0%, transparent 68%);
-  filter: blur(24px);
+  z-index: 2;
+  width: min(100%, 34rem);
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 2rem);
+  padding-top: max(clamp(0.65rem, 2.5vw, 1.25rem), env(safe-area-inset-top));
+  background: transparent;
+  pointer-events: none;
 }
 
 .public-countdown__lockup {
-  position: relative;
-  z-index: 1;
+  display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
   object-fit: contain;
+  object-position: center top;
+  /* Lockup PNG matte is #000 — lighten merges into glossy page behind content layer */
+  mix-blend-mode: lighten;
 }
 
 .public-countdown__eyebrow {
@@ -6363,10 +6369,12 @@ body::-webkit-scrollbar {
   gap: 0.55rem;
   margin-top: 0.25rem;
   padding: 0.45rem 0.95rem;
-  border: 1px solid rgb(255 255 255 / 0.12);
+  border: 1px solid var(--color-brand-border);
   border-radius: 9999px;
-  background: rgb(0 0 0 / 0.45);
-  backdrop-filter: blur(12px);
+  background-color: var(--color-brand-black-base);
+  background-image: var(--public-countdown-glossy-surface);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   font-size: clamp(0.52rem, 1.7vw, 0.68rem);
   font-weight: 700;
   letter-spacing: 0.2em;
@@ -6466,15 +6474,20 @@ body::-webkit-scrollbar {
   width: clamp(3.25rem, 10vw, 4.75rem);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .public-countdown-unit__ring {
-    animation: public-countdown-ring-spin 10s linear infinite;
+@keyframes public-countdown-unit-flash {
+  0% {
+    filter: brightness(1);
+    transform: scale(1);
   }
-}
 
-@keyframes public-countdown-ring-spin {
-  to {
-    transform: rotate(360deg);
+  35% {
+    filter: brightness(1.85);
+    transform: scale(1.05);
+  }
+
+  100% {
+    filter: brightness(1);
+    transform: scale(1);
   }
 }
 
@@ -6484,7 +6497,7 @@ body::-webkit-scrollbar {
   z-index: 0;
   border-radius: inherit;
   filter: blur(16px);
-  opacity: 0.65;
+  opacity: 0.38;
   background: inherit;
 }
 
@@ -6513,7 +6526,9 @@ body::-webkit-scrollbar {
   align-items: center;
   justify-content: center;
   border-radius: inherit;
-  background: radial-gradient(circle at 50% 35%, rgb(18 22 36 / 0.95) 0%, rgb(0 0 0 / 0.98) 72%);
+  background-color: var(--color-brand-black-base);
+  background-image: var(--public-countdown-glossy-surface);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
 }
 
 .public-countdown-unit__digit {
@@ -6521,6 +6536,13 @@ body::-webkit-scrollbar {
   line-height: 1;
   letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .public-countdown-unit--flash .public-countdown-unit__ring,
+  .public-countdown-unit--flash .public-countdown-unit__digit {
+    animation: public-countdown-unit-flash 0.52s ease-out;
+  }
 }
 
 .public-countdown-unit__digit--days {
@@ -6541,48 +6563,6 @@ body::-webkit-scrollbar {
 .public-countdown-unit__digit--seconds {
   color: #ff2faf;
   text-shadow: 0 0 20px rgb(255 47 175 / 0.9);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .public-countdown-unit__digit--tick {
-    animation: public-countdown-digit-tick 0.52s ease-out;
-  }
-
-  .public-countdown-unit__digit--pulse {
-    animation: public-countdown-digit-pulse 1s ease-in-out infinite;
-  }
-
-  .public-countdown-unit__digit--tick.public-countdown-unit__digit--pulse {
-    animation: public-countdown-digit-tick 0.52s ease-out;
-  }
-}
-
-@keyframes public-countdown-digit-tick {
-  0% {
-    transform: scale(1);
-    filter: brightness(1);
-  }
-
-  45% {
-    transform: scale(1.16);
-    filter: brightness(1.45);
-  }
-
-  100% {
-    transform: scale(1);
-    filter: brightness(1);
-  }
-}
-
-@keyframes public-countdown-digit-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.78;
-  }
 }
 
 .public-countdown-unit__label {
@@ -6690,7 +6670,9 @@ body::-webkit-scrollbar {
   justify-content: center;
   padding: 0.65rem 1.35rem;
   border-radius: 9999px;
-  background: #000000;
+  background-color: var(--color-brand-black-base);
+  background-image: var(--public-countdown-glossy-surface);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
   font-size: clamp(0.58rem, 1.8vw, 0.68rem);
   font-weight: 700;
   letter-spacing: 0.16em;
@@ -6789,11 +6771,11 @@ body::-webkit-scrollbar {
 
 @media (prefers-reduced-motion: reduce) {
   .public-countdown__aurora-layer,
-  .public-countdown-unit__ring,
+  .public-countdown-unit--flash .public-countdown-unit__ring,
+  .public-countdown-unit--flash .public-countdown-unit__digit,
   .public-countdown__starting-soon,
   .public-countdown__live-burst,
-  .public-countdown__status-dot,
-  .public-countdown-unit__digit--pulse {
+  .public-countdown__status-dot {
     animation: none !important;
   }
 

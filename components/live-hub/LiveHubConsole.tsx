@@ -21,6 +21,9 @@ import LiveHubAudioHealthLog from "@/components/live-hub/LiveHubAudioHealthLog";
 import LiveHubStatusStrip from "@/components/live-hub/LiveHubStatusStrip";
 import LiveHubStreamPanels from "@/components/live-hub/LiveHubStreamPanels";
 import OperatorWebcamPreview from "@/components/live-hub/OperatorWebcamPreview";
+import LiveHubRtmpIngestPanel from "@/components/live-hub/LiveHubRtmpIngestPanel";
+import ProductionPathBanner from "@/components/ops/ProductionPathBanner";
+import { useOpsStreamStateRealtime } from "@/hooks/useOpsStreamStateRealtime";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import type { HubNavSection } from "@/lib/live-hub/console-layout";
 import {
@@ -40,7 +43,6 @@ import { evaluateGoLiveDecision } from "@/lib/live-hub/safety";
 import { useLiveHubMixer } from "@/hooks/use-live-hub-mixer";
 import { useLiveHubNetworkSettings } from "@/hooks/useLiveHubNetworkSettings";
 import {
-  fetchRestreamState,
   sendRestreamCommand,
 } from "@/lib/live-hub/restream/client";
 import type { RestreamState } from "@/lib/live-hub/restream/types";
@@ -55,9 +57,9 @@ import {
   type ChecklistPhaseId,
   type ReadinessCheckId,
 } from "@/lib/live-hub/types";
-import { fetchVmixState } from "@/lib/live-hub/vmix/client";
 import type { VmixAdapterResult, VmixCommandType, VmixState } from "@/lib/live-hub/vmix/types";
 import { isVmixAdapterFailure } from "@/lib/live-hub/vmix/types";
+import type { LiveHubHeartbeatPayload } from "@/lib/ops/live-hub-heartbeat";
 import type { OpsSnapshot } from "@/lib/ops/types";
 import { useLiveRoomChat } from "@/lib/useLiveRoomChat";
 
@@ -121,6 +123,7 @@ export default function LiveHubConsole({
   const [isSyncing, setIsSyncing] = useState(false);
   const [isNetworkSettingsOpen, setIsNetworkSettingsOpen] = useState(false);
   const [isNetworkTesting, setIsNetworkTesting] = useState(false);
+  const [canStreamMutate, setCanStreamMutate] = useState(true);
 
   const {
     messages: chatMessages,
@@ -141,60 +144,63 @@ export default function LiveHubConsole({
     [],
   );
 
-  const refreshSnapshot = useCallback(async () => {
-    const response = await fetch("/api/ops/metrics", {
-      credentials: "include",
-      cache: "no-store",
-    });
-    if (!response.ok) return;
-    const next = (await response.json()) as OpsSnapshot;
-    setSnapshot(next);
-  }, []);
+  const applyHeartbeatPayload = useCallback((data: LiveHubHeartbeatPayload) => {
+    setSnapshot(data.opsSnapshot);
 
-  const refreshVmix = useCallback(async (): Promise<boolean> => {
-    const result = await fetchVmixState();
-    if (isVmixAdapterFailure(result)) {
-      setVmixError(result.error);
+    if (isVmixAdapterFailure(data.vmixState)) {
+      setVmixError(data.vmixState.error);
       setVmixState(null);
-      return false;
+    } else {
+      setVmixState(data.vmixState.state);
+      setVmixError(null);
     }
-    setVmixState(result.state);
-    setVmixError(null);
-    return true;
+
+    if (isRestreamAdapterFailure(data.restreamState)) {
+      setRestreamError(data.restreamState.error);
+      setRestreamState(null);
+    } else {
+      setRestreamState(data.restreamState.state);
+      setRestreamError(null);
+    }
+
+    setStripeApiLive(data.stripeHealth.live === true);
   }, []);
 
-  const refreshRestream = useCallback(async () => {
-    const result = await fetchRestreamState();
-    if (isRestreamAdapterFailure(result)) {
-      setRestreamError(result.error);
-      pushTimeline("restream", "Restream Refresh Failed", result.error);
-      return;
+  const patchStreamState = useCallback((stream: OpsSnapshot["stream"]) => {
+    setSnapshot((current) => ({
+      ...current,
+      stream,
+      realtime: {
+        ...current.realtime,
+        lastStreamStateSyncAt: stream.updatedAt,
+      },
+    }));
+  }, []);
+
+  useOpsStreamStateRealtime(patchStreamState);
+
+  const refreshHeartbeat = useCallback(async (): Promise<LiveHubHeartbeatPayload | null> => {
+    try {
+      const response = await fetch("/api/ops/live-hub/heartbeat", {
+        credentials: "include",
+        cache: "no-store",
+      });
+
+      if (!response.ok) return null;
+
+      const data = (await response.json()) as LiveHubHeartbeatPayload;
+      applyHeartbeatPayload(data);
+      return data;
+    } catch (error) {
+      console.error("[HEARTBEAT_CLIENT_ERR]:", error);
+      return null;
     }
-    setRestreamState(result.state);
-    setRestreamError(null);
-  }, [pushTimeline]);
+  }, [applyHeartbeatPayload]);
 
   const refreshNetworkProbe = useCallback(async (): Promise<NetworkTelemetry> => {
     const next = await probeNetworkTelemetry();
     setNetworkTelemetry(next);
     return next;
-  }, []);
-
-  const refreshStripeHealth = useCallback(async () => {
-    try {
-      const response = await fetch("/api/ops/live-hub/stripe", {
-        credentials: "include",
-        cache: "no-store",
-      });
-      if (!response.ok) {
-        setStripeApiLive(false);
-        return;
-      }
-      const payload = (await response.json()) as { live?: boolean };
-      setStripeApiLive(payload.live === true);
-    } catch {
-      setStripeApiLive(false);
-    }
   }, []);
 
   const refreshUploadSpeed = useCallback(() => {
@@ -207,45 +213,66 @@ export default function LiveHubConsole({
     setIsSyncing(true);
     try {
       refreshUploadSpeed();
-      await Promise.all([
-        refreshNetworkProbe(),
-        refreshSnapshot(),
-        refreshVmix(),
-        refreshRestream(),
-        refreshStripeHealth(),
-      ]);
+      await Promise.all([refreshNetworkProbe(), refreshHeartbeat()]);
       setPreviewRefreshSignal((current) => current + 1);
       setActionMessage(
         uploadSpeedDevOverride
           ? `Systems synced at ${new Date().toLocaleTimeString()} — upload dev override held at ${DEV_UPLOAD_SPEED_OVERRIDE_MBPS.toFixed(1)} Mbps.`
-          : `Systems synced at ${new Date().toLocaleTimeString()} — metrics, vMix, Restream, Stripe, and upload estimate refreshed.`,
+          : `Systems synced at ${new Date().toLocaleTimeString()} — heartbeat, network probe, and upload estimate refreshed.`,
       );
     } finally {
       setIsSyncing(false);
     }
   }, [
+    refreshHeartbeat,
     refreshNetworkProbe,
-    refreshRestream,
-    refreshSnapshot,
-    refreshStripeHealth,
     refreshUploadSpeed,
-    refreshVmix,
     uploadSpeedDevOverride,
   ]);
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      void refreshAll();
-    }, 0);
-    const intervalId = window.setInterval(() => {
-      void refreshAll();
-    }, POLL_INTERVAL_MS);
+    let cancelled = false;
+
+    async function loadCrewRole() {
+      try {
+        const response = await fetch("/api/ops/crew-role", {
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!response.ok || cancelled) return;
+
+        const data = (await response.json()) as {
+          capabilities?: { canStreamMutate?: boolean };
+          canStreamMutate?: boolean;
+        };
+
+        const allowed =
+          data.capabilities?.canStreamMutate ?? data.canStreamMutate ?? true;
+        if (!cancelled) {
+          setCanStreamMutate(allowed);
+        }
+      } catch {
+        if (!cancelled) {
+          setCanStreamMutate(true);
+        }
+      }
+    }
+
+    void loadCrewRole();
 
     return () => {
-      window.clearTimeout(timeoutId);
-      window.clearInterval(intervalId);
+      cancelled = true;
     };
-  }, [refreshAll]);
+  }, []);
+
+  useEffect(() => {
+    void refreshHeartbeat();
+    const intervalId = window.setInterval(() => {
+      void refreshHeartbeat();
+    }, POLL_INTERVAL_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [refreshHeartbeat]);
 
   useEffect(() => {
     const handleConnectivityChange = () => {
@@ -445,6 +472,11 @@ export default function LiveHubConsole({
   }, [liveStartedAt, snapshot.stream.isLive]);
 
   const handleGoLiveConfirm = useCallback(async () => {
+    if (!canStreamMutate) {
+      pushTimeline("blocked", "Go Live Blocked", "Insufficient crew role permissions.");
+      return;
+    }
+
     if (goLiveDecision.blocked || !operatorApproved) {
       pushTimeline("blocked", "Go Live Blocked", "Critical issues unresolved.");
       return;
@@ -466,6 +498,7 @@ export default function LiveHubConsole({
         ok?: boolean;
         error?: string;
         step?: string;
+        countdownSynced?: boolean;
       };
 
       if (!response.ok || !data.ok) {
@@ -478,12 +511,18 @@ export default function LiveHubConsole({
       pushTimeline(
         "go_live",
         "Broadcast Live",
-        "Restream lanes armed, vMix streaming started, attendee platform opened.",
+        data.countdownSynced
+          ? "Restream armed, vMix streaming, platform live, attendee countdown synced to NOW."
+          : "Restream lanes armed, vMix streaming started, attendee platform opened.",
       );
-      setActionMessage("Platform is live on primary lane.");
+      setActionMessage(
+        data.countdownSynced
+          ? "Platform is live — attendee schedule synced to now."
+          : "Platform is live on primary lane.",
+      );
       setIsGoLiveOpen(false);
       setOperatorApproved(false);
-      await Promise.all([refreshSnapshot(), refreshVmix(), refreshRestream()]);
+      await refreshHeartbeat();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Go Live failed.";
       pushTimeline("blocked", "Go Live Failed", message);
@@ -493,22 +532,25 @@ export default function LiveHubConsole({
     }
   }, [
     adminEmail,
+    canStreamMutate,
     goLiveDecision.blocked,
     operatorApproved,
     pushTimeline,
-    refreshRestream,
-    refreshSnapshot,
-    refreshVmix,
+    refreshHeartbeat,
   ]);
 
   const openStopConfirm = useCallback(() => {
+    if (!canStreamMutate) {
+      setActionMessage("Stop stream requires admin or producer crew role.");
+      return;
+    }
     pushTimeline(
       "go_live",
       "Stop Stream Requested",
       `Operator ${adminEmail} opened end-broadcast confirmation.`,
     );
     setIsStopConfirmOpen(true);
-  }, [adminEmail, pushTimeline]);
+  }, [adminEmail, canStreamMutate, pushTimeline]);
 
   const handleStopStream = useCallback(async () => {
     setIsStopConfirmOpen(false);
@@ -543,7 +585,7 @@ export default function LiveHubConsole({
         "vMix streaming stopped and attendee platform closed.",
       );
       setActionMessage("Stream stopped — post-event summary ready in Pre-Live Check.");
-      await Promise.all([refreshSnapshot(), refreshVmix(), refreshRestream()]);
+      await refreshHeartbeat();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Stop stream failed.";
@@ -555,9 +597,7 @@ export default function LiveHubConsole({
   }, [
     adminEmail,
     pushTimeline,
-    refreshRestream,
-    refreshSnapshot,
-    refreshVmix,
+    refreshHeartbeat,
   ]);
 
   const toggleManualPhase = (phaseId: ChecklistPhaseId) => {
@@ -599,8 +639,10 @@ export default function LiveHubConsole({
         }
 
         if (checkId === "encoder_vmix") {
-          const connected = await refreshVmix();
-          if (connected) {
+          const heartbeat = await refreshHeartbeat();
+          const vmixOk =
+            heartbeat !== null && !isVmixAdapterFailure(heartbeat.vmixState);
+          if (vmixOk) {
             setActionMessage("Encoder re-check passed — Encoder & Software is ready.");
             pushTimeline("vmix", "Encoder Re-check", "vMix reachable — encoder ready.");
           } else {
@@ -608,7 +650,7 @@ export default function LiveHubConsole({
             pushTimeline(
               "vmix",
               "Encoder Re-check",
-              `Blocked — vMix unreachable or invalid response.`,
+              "Blocked — vMix unreachable or invalid response.",
             );
           }
           return;
@@ -642,7 +684,7 @@ export default function LiveHubConsole({
         setRecheckingId(null);
       }
     },
-    [networkSettings.requireServerProbe, pushTimeline, refreshNetworkProbe, refreshVmix],
+    [networkSettings.requireServerProbe, pushTimeline, refreshHeartbeat, refreshNetworkProbe],
   );
 
   const openGoLiveModal = () => {
@@ -677,6 +719,7 @@ export default function LiveHubConsole({
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
+        <ProductionPathBanner isLive={snapshot.stream.isLive} />
         <header className="flex shrink-0 flex-col gap-3 border-b border-white/10 bg-[#0B090A] px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0 shrink">
             <p className="text-[0.55rem] font-bold uppercase tracking-[0.28em] text-[#1E40AF]">
@@ -724,6 +767,7 @@ export default function LiveHubConsole({
               isLive={snapshot.stream.isLive}
               onStop={openStopConfirm}
               isStopping={isStopSubmitting}
+              mutationsDisabled={!canStreamMutate}
               variant="header"
             />
           </div>
@@ -748,6 +792,7 @@ export default function LiveHubConsole({
                   isLive={snapshot.stream.isLive}
                   onStop={openStopConfirm}
                   isStopping={isStopSubmitting}
+                  mutationsDisabled={!canStreamMutate}
                 />
                 <LiveHubReadinessPanel
                   checks={readinessChecks}
@@ -761,6 +806,11 @@ export default function LiveHubConsole({
                   uploadSpeedDevOverride={uploadSpeedDevOverride}
                 />
                 <OperatorWebcamPreview />
+                <LiveHubRtmpIngestPanel
+                  snapshot={snapshot}
+                  canEdit={canStreamMutate}
+                  onSaved={refreshHeartbeat}
+                />
                 <LiveHubAudioHealthLog
                   healingLogs={healingLogs}
                   onSimulateSilence={IS_DEV_SANDBOX ? simulateAudioDrop : undefined}
@@ -784,6 +834,7 @@ export default function LiveHubConsole({
                     isLive={snapshot.stream.isLive}
                     onStop={openStopConfirm}
                     isStopping={isStopSubmitting}
+                    mutationsDisabled={!canStreamMutate}
                     variant="sticky"
                   />
                   <p className="mt-2 text-center text-[0.5rem] uppercase tracking-[0.12em] text-brand-muted">

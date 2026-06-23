@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Shield } from "lucide-react";
 import type { OpsSnapshot } from "@/lib/ops/types";
 import {
   isOpsTeamRole,
   modulesForRole,
-  OPS_TEAM_ROLE_STORAGE_KEY,
   roleLabel,
   type OpsTeamRole,
 } from "@/lib/ops/team-roles";
@@ -29,20 +28,57 @@ export default function LiveHubRoleRouterClient({
   initialSnapshot,
 }: LiveHubRoleRouterClientProps) {
   const [role, setRole] = useState<OpsTeamRole>("admin");
+  const [isSavingRole, setIsSavingRole] = useState(false);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem(OPS_TEAM_ROLE_STORAGE_KEY);
-    if (isOpsTeamRole(stored)) {
-      setRole(stored);
+    let cancelled = false;
+
+    async function loadRole() {
+      try {
+        const response = await fetch("/api/ops/crew-role", {
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!response.ok || cancelled) return;
+
+        const data = (await response.json()) as { role?: string };
+        if (isOpsTeamRole(data.role)) {
+          setRole(data.role);
+        }
+      } catch {
+        // Keep default admin until server role resolves.
+      }
     }
+
+    void loadRole();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const visibleModules = useMemo(() => modulesForRole(role), [role]);
 
-  const handleRoleChange = (nextRole: OpsTeamRole) => {
-    setRole(nextRole);
-    sessionStorage.setItem(OPS_TEAM_ROLE_STORAGE_KEY, nextRole);
-  };
+  const handleRoleChange = useCallback(async (nextRole: OpsTeamRole) => {
+    setIsSavingRole(true);
+    try {
+      const response = await fetch("/api/ops/crew-role", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: nextRole }),
+        cache: "no-store",
+      });
+
+      if (!response.ok) return;
+
+      setRole(nextRole);
+    } catch {
+      // Role cookie unchanged on failure.
+    } finally {
+      setIsSavingRole(false);
+    }
+  }, []);
 
   return (
     <main className="min-h-dvh w-full bg-brand-black pt-safe pb-safe text-white">
@@ -55,7 +91,8 @@ export default function LiveHubRoleRouterClient({
             Live Hub Router
           </h1>
           <p className="mt-3 font-body text-sm text-brand-muted">
-            Signed in as {adminEmail}. Select a mock crew role to simulate staff access boundaries.
+            Signed in as {adminEmail}. Select a crew role simulation — stored in a secure server
+            cookie and enforced on mutation endpoints.
           </p>
         </header>
 
@@ -63,7 +100,7 @@ export default function LiveHubRoleRouterClient({
           <div className="mb-4 flex items-center gap-3">
             <Shield className="h-5 w-5 text-brand-pink" aria-hidden="true" />
             <p className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.18em] text-brand-muted">
-              Mock Role Profile
+              Crew Role Profile
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -71,9 +108,10 @@ export default function LiveHubRoleRouterClient({
               <button
                 key={option}
                 type="button"
-                onClick={() => handleRoleChange(option)}
+                onClick={() => void handleRoleChange(option)}
+                disabled={isSavingRole}
                 aria-pressed={role === option}
-                className={`touch-target rounded-full border px-4 py-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] transition ${
+                className={`touch-target rounded-full border px-4 py-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] transition disabled:opacity-60 ${
                   role === option
                     ? "border-brand-blue/50 bg-brand-blue/15 text-white"
                     : "border-brand-border bg-brand-panel text-brand-muted hover:border-brand-blue/30 hover:text-white"

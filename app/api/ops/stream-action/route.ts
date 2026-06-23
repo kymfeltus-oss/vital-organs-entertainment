@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireOpsAdminApiUser } from "@/lib/ops/assert-ops-admin";
+import { syncCountdownScheduleForGoLive } from "@/lib/live-hub/go-live/sync-attendee-countdown";
+import { requireOpsStreamMutationApiUser } from "@/lib/ops/require-ops-mutation";
 import type { OpsStreamAction } from "@/lib/ops/types";
 
 type StreamActionBody = {
@@ -18,7 +19,7 @@ function resolveTogglePayload(action: OpsStreamAction): Record<string, unknown> 
 }
 
 export async function POST(request: NextRequest) {
-  const gate = await requireOpsAdminApiUser();
+  const gate = await requireOpsStreamMutationApiUser(request);
   if (gate.response) return gate.response;
 
   const adminSecret = process.env.ADMIN_SECRET_KEY;
@@ -54,7 +55,10 @@ export async function POST(request: NextRequest) {
 
     const toggleData = (await toggleResponse.json()) as {
       success?: boolean;
-      state?: unknown;
+      state?: {
+        is_live?: boolean;
+        active_source?: string;
+      } | null;
       error?: string;
     };
 
@@ -65,10 +69,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let countdownSynced = false;
+
+    if (action === "go_live" || action === "switch_backup") {
+      try {
+        const syncResult = await syncCountdownScheduleForGoLive();
+        countdownSynced = syncResult.updated;
+      } catch (error) {
+        console.error("[OPS_STREAM_ACTION_COUNTDOWN_SYNC_ERR]:", error);
+      }
+    }
+
+    const streamState = toggleData.state ?? null;
+
     return NextResponse.json({
       success: true,
       action,
-      state: toggleData.state ?? null,
+      actionExecuted: action,
+      state: streamState,
+      isLive: streamState?.is_live ?? action !== "emergency_offline",
+      useBackup: streamState?.active_source === "backup",
+      countdownSynced,
     });
   } catch (error) {
     console.error("[OPS_STREAM_ACTION_ERR]:", error);

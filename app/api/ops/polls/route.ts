@@ -6,6 +6,7 @@ import {
   validateCreatePollInput,
 } from "@/lib/experience/polls-server";
 import { requireOpsAdminApiUser } from "@/lib/ops/assert-ops-admin";
+import { requireOpsStreamMutationApiUser } from "@/lib/ops/require-ops-mutation";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 type OpsPollActionBody = {
@@ -32,7 +33,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const gate = await requireOpsAdminApiUser();
+  const gate = await requireOpsStreamMutationApiUser(request);
   if (gate.response) return gate.response;
 
   try {

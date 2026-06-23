@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isValidHlsUrl } from "@/lib/live/hls";
-import { LIVE_STREAM_ACCESS_PRODUCT_IDS } from "@/lib/merch/catalog";
 import { LIVE_STREAM_STATE_ID } from "@/lib/live/types";
 import { parseAccessContext } from "@/lib/access";
-import { isLiveAccessDevBypassEnabled } from "@/lib/access/live-dev-bypass";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
@@ -167,33 +165,6 @@ export async function GET(request: NextRequest) {
     if (!context.email) {
       await logStreamAccess(null, "denied", "UNAUTHENTICATED", clientIp, userAgent);
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-    }
-
-    const normalizedEmail = context.email.trim().toLowerCase();
-
-    const devBypass = isLiveAccessDevBypassEnabled();
-
-    if (!devBypass) {
-      const { data: orders, error: orderError } = await supabase
-        .from("orders")
-        .select("id, status, product_type")
-        .eq("email", normalizedEmail)
-        .eq("status", "paid")
-        .in("product_type", [...LIVE_STREAM_ACCESS_PRODUCT_IDS])
-        .limit(1);
-
-      if (orderError) {
-        console.error("Manifest paywall verification failed:", orderError.message);
-        return NextResponse.json(
-          { error: "Unable to verify stream access." },
-          { status: 500 },
-        );
-      }
-
-      if (!Array.isArray(orders) || orders.length === 0) {
-        await logStreamAccess(user.id, "denied", "NO_PAID_TICKET", clientIp, userAgent);
-        return NextResponse.json({ error: "Forbidden." }, { status: 403 });
-      }
     }
 
     const experience = parseExperience(request);

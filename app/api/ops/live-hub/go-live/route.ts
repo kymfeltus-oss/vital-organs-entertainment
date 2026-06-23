@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireOpsAdminApiUser } from "@/lib/ops/assert-ops-admin";
 import {
   executeGoLiveSequence,
   executeStopStreamSequence,
 } from "@/lib/live-hub/go-live/execute";
+import { requireOpsStreamMutationApiUser } from "@/lib/ops/require-ops-mutation";
 
 type GoLiveAction = "go_live" | "stop_stream";
 
@@ -15,7 +15,7 @@ function parseAction(body: unknown): GoLiveAction | null {
 }
 
 export async function POST(request: NextRequest) {
-  const gate = await requireOpsAdminApiUser();
+  const gate = await requireOpsStreamMutationApiUser(request);
   if (gate.response) return gate.response;
 
   try {
@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
       activatedChannelIds: result.activatedChannelIds,
       vmixStreaming: result.vmixStreaming,
       platformLive: result.platformLive,
+      countdownSynced: result.countdownSynced,
     });
   } catch (error) {
     console.error("[LIVE_HUB_GO_LIVE_ERR]:", error);

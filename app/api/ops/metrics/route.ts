@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
-import { requireOpsAdminApiUser } from "@/lib/ops/assert-ops-admin";
+import { NextRequest, NextResponse } from "next/server";
+import { requireOpsMetricsApiUser } from "@/lib/ops/require-ops-mutation";
 import { loadOpsSnapshot } from "@/lib/ops/snapshot";
 
-export async function GET() {
-  const gate = await requireOpsAdminApiUser();
+export async function GET(request: NextRequest) {
+  const gate = await requireOpsMetricsApiUser(request);
   if (gate.response) return gate.response;
 
   try {

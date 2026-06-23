@@ -15,6 +15,7 @@ import {
 import type { CountdownParts } from "@/lib/live/event-lobby";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
+import { buildAttendeeGateUrl } from "@/lib/auth/routing";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
 import { BroadcastHealthProvider } from "@/lib/parable/BroadcastHealthContext";
 import { useLiveAccessVerification } from "@/lib/useLiveAccessVerification";
@@ -125,13 +126,14 @@ function LiveExperienceClientInner({
             300 Awakening Live Experience
           </h1>
           <p className="mt-4 font-body text-sm text-brand-muted">
-            A live pass is required to join the experience when the broadcast goes live.
+            This live experience is free. Sign in to enter the holding room and join when the
+            broadcast goes live.
           </p>
           <Link
-            href="/dashboard/merch"
+            href={buildAttendeeGateUrl(EXPERIENCE_LIVE_PATH)}
             className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full border border-brand-blue/50 bg-brand-blue/10 px-8 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-brand-blue transition hover:bg-brand-blue/20"
           >
-            Get Your Pass
+            Sign In to Enter
           </Link>
         </div>
         </div>
@@ -157,5 +159,5 @@ function LiveExperienceClientInner({
     );
   }
 
-  return <ViewerPovGoLiveShell />;
+  return <ViewerPovGoLiveShell initialProfile={initialProfile} />;
 }

@@ -1,79 +1,116 @@
 "use client";
 
-import { MicOff, Shield } from "lucide-react";
-import { PARABLE_SHELL, PARABLE_STATUS } from "@/lib/broadcast/parable-tokens";
+import { MicOff } from "lucide-react";
 import type { AudioChannel } from "@/lib/broadcast/types";
+import { formatAudioDb } from "@/lib/ops/ops-stream-state";
 
 type AudioMixerProps = {
   channels: AudioChannel[];
 };
 
-function MiniMeter({ level, clipping }: { level: number; clipping: boolean }) {
+const SILENT_FLOOR = 4;
+
+function isRestreamPullChannel(name: string): boolean {
+  const lower = name.toLowerCase();
+  return /cam\s*1|camera guy|restream pull/.test(lower);
+}
+
+function isSilentCamChannel(name: string, level: number): boolean {
+  const lower = name.toLowerCase();
+  const isCam34OrMedia = /cam\s*[34]|media\s*[12]/.test(lower);
+  return isCam34OrMedia && level <= SILENT_FLOOR;
+}
+
+function VerticalMeter({ level, clipping }: { level: number; clipping: boolean }) {
   return (
-    <div className="relative h-7 w-1 overflow-hidden rounded-full bg-black/50">
+    <div className="relative mx-auto h-28 w-2 overflow-hidden rounded-full bg-brand-black">
       <div
-        className={`absolute bottom-0 w-full ${clipping ? "bg-[#B0267A]" : "bg-[#1E40AF]"}`}
-        style={{ height: `${Math.min(100, Math.max(6, level))}%` }}
+        className={`absolute bottom-0 w-full rounded-full transition-[height] duration-150 ${
+          clipping ? "bg-brand-pink" : "bg-brand-blue"
+        }`}
+        style={{ height: `${Math.min(100, Math.max(4, level))}%` }}
       />
+    </div>
+  );
+}
+
+function ChannelStrip({ channel }: { channel: AudioChannel }) {
+  const restreamPull = isRestreamPullChannel(channel.name);
+  const silentLabel = isSilentCamChannel(channel.name, channel.meterLevel);
+  const meterLabel = silentLabel ? "-∞ dB" : formatAudioDb(channel.meterLevel);
+
+  return (
+    <div
+      className={`flex min-w-[72px] shrink-0 flex-col items-center rounded-xl border px-2 py-2 ${
+        restreamPull
+          ? "border-brand-pink/50 bg-brand-pink/5 shadow-[0_0_12px_rgba(255,47,175,0.12)]"
+          : channel.clipping
+            ? "border-brand-pink/40 bg-brand-pink/5"
+            : "border-brand-border bg-brand-black"
+      }`}
+    >
+      <VerticalMeter level={channel.meterLevel} clipping={channel.clipping} />
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={channel.meterLevel}
+        readOnly
+        aria-label={`${channel.name} fader`}
+        className="mt-2 h-24 w-2 cursor-default appearance-none bg-transparent [writing-mode:vertical-lr] direction-rtl accent-brand-blue opacity-80"
+      />
+      <p className="mt-2 max-w-full truncate text-center font-ui text-[0.42rem] font-bold uppercase text-white">
+        {channel.name}
+        {restreamPull ? (
+          <span className="mt-0.5 block text-[0.34rem] text-brand-pink">Restream Pull</span>
+        ) : null}
+      </p>
+      <p
+        className={`font-ui text-[0.38rem] uppercase ${
+          channel.clipping ? "text-brand-pink" : silentLabel ? "text-brand-muted" : "text-brand-muted"
+        }`}
+      >
+        {meterLabel}
+      </p>
+      <button
+        type="button"
+        disabled
+        aria-disabled="true"
+        className="mt-1 inline-flex cursor-not-allowed items-center gap-0.5 rounded border border-brand-border px-1 py-0.5 font-ui text-[0.34rem] uppercase text-brand-muted opacity-60"
+      >
+        <MicOff className="h-2.5 w-2.5" />
+        Mute
+      </button>
     </div>
   );
 }
 
 export default function AudioMixer({ channels }: AudioMixerProps) {
   return (
-    <div className="rounded-md border border-white/10 bg-[#111111] px-2 py-1">
-      <div className="mb-1 flex items-center justify-between">
-        <p className="font-ui text-[0.45rem] font-bold uppercase tracking-[0.12em] text-white/45">
-          Audio Telemetry
+    <section
+      aria-label="Sound module"
+      className="flex min-h-0 flex-1 flex-col rounded-2xl border border-brand-border bg-brand-panel/50 p-2"
+    >
+      <div className="mb-2 px-1">
+        <p className="font-ui text-[0.52rem] font-bold uppercase tracking-[0.2em] text-brand-purple">
+          Digital Audio Mixer
         </p>
-        <span className="font-ui text-[0.4rem] uppercase tracking-[0.08em] text-white/30">
-          Telemetry Monitor Mode Only
-        </span>
+        <p className="font-ui text-[0.48rem] text-brand-muted">
+          Live meters · CAM 3 / CAM 4 show −∞ dB when silent
+        </p>
       </div>
 
       {channels.length === 0 ? (
-        <p className={`py-1 text-center font-ui text-[0.45rem] uppercase ${PARABLE_SHELL.muted}`}>
+        <p className="flex flex-1 items-center justify-center py-4 text-center font-ui text-[0.48rem] uppercase text-brand-muted">
           No adapter audio meters
         </p>
       ) : (
-        <div className="flex gap-1 overflow-x-auto">
+        <div className="flex min-w-0 gap-2 overflow-x-auto pb-1">
           {channels.map((channel) => (
-            <div
-              key={channel.id}
-              className={`flex min-w-[120px] shrink-0 flex-col rounded border px-1.5 py-1 ${
-                channel.clipping ? "border-[#B0267A]/35" : "border-white/8"
-              } bg-[#0B090A] opacity-90`}
-            >
-              <div className="flex items-end gap-1">
-                <MiniMeter level={channel.meterLevel} clipping={channel.clipping} />
-                <div className="min-w-0 flex-1 pb-0.5">
-                  <p className="truncate font-ui text-[0.42rem] font-bold uppercase text-white/75">
-                    {channel.name}
-                  </p>
-                  <p className={`font-ui text-[0.38rem] uppercase ${channel.clipping ? PARABLE_STATUS.red.text : "text-white/35"}`}>
-                    {channel.meterLevel}%
-                  </p>
-                </div>
-              </div>
-              <div className="mt-1 flex gap-1">
-                <button
-                  type="button"
-                  disabled
-                  aria-disabled="true"
-                  className="inline-flex flex-1 cursor-not-allowed items-center justify-center gap-0.5 rounded border border-white/10 px-1 py-0.5 font-ui text-[0.38rem] font-bold uppercase text-white/35 opacity-60"
-                >
-                  <MicOff className="h-2.5 w-2.5" />
-                  Mute
-                </button>
-                <span className="inline-flex flex-1 cursor-not-allowed items-center justify-center gap-0.5 rounded border border-white/10 px-1 py-0.5 font-ui text-[0.34rem] font-bold uppercase leading-tight text-white/35 opacity-60">
-                  <Shield className="h-2.5 w-2.5 shrink-0" />
-                  Auto-Gain / Safety Leveler
-                </span>
-              </div>
-            </div>
+            <ChannelStrip key={channel.id} channel={channel} />
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }

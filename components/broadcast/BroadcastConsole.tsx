@@ -1,22 +1,31 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import AssistedProducerRoadmap from "@/components/broadcast/AssistedProducerRoadmap";
 import AudioMixer from "@/components/broadcast/AudioMixer";
-import InputTray from "@/components/broadcast/InputTray";
-import PreviewProgram from "@/components/broadcast/PreviewProgram";
+import BroadcastPathBanner from "@/components/broadcast/BroadcastPathBanner";
+import CameraGrid from "@/components/broadcast/CameraGrid";
+import MixingConsole from "@/components/broadcast/MixingConsole";
+import RestreamConfigModal from "@/components/broadcast/RestreamConfigModal";
+import ParableSandboxActionModal from "@/components/broadcast/ParableSandboxActionModal";
 import ProductionEventsPanel from "@/components/broadcast/ProductionEventsPanel";
 import ProductionSafetyPanel from "@/components/broadcast/ProductionSafetyPanel";
 import ProductionTelemetryTray from "@/components/broadcast/ProductionTelemetryTray";
 import ReadinessGate from "@/components/broadcast/ReadinessGate";
 import StreamStatusPanel from "@/components/broadcast/StreamStatusPanel";
+import { useOpsStreamStateRealtime } from "@/hooks/useOpsStreamStateRealtime";
+import {
+  applyLocalWebcamToAudioChannels,
+  localMicDbToMeterLevel,
+} from "@/hooks/useLocalWebcam";
 import { useProductionStore } from "@/hooks/useProductionStore";
 import { PARABLE_SHELL } from "@/lib/broadcast/parable-tokens";
-import { useBroadcastHealth } from "@/lib/parable/BroadcastHealthContext";
 import {
   canGoLive,
   deriveReadinessChecks,
 } from "@/lib/broadcast/readinessEngine";
+import { isOpsTeamRole } from "@/lib/ops/team-roles";
+import { useBroadcastHealth } from "@/lib/parable/BroadcastHealthContext";
 import {
   resolveExecutionFlags,
   resolveVmixAdapter,
@@ -39,14 +48,91 @@ export default function BroadcastConsole() {
   } = useProductionStore();
   const health = useBroadcastHealth();
 
+  const uiViews = useMemo(() => (store ? mapStoreToUiViews(store) : null), [store]);
+
+  const [localAudioLevel, setLocalAudioLevel] = useState<number>(-Infinity);
+
+  const localMeterLevel = useMemo(
+    () => localMicDbToMeterLevel(localAudioLevel),
+    [localAudioLevel],
+  );
+
+  const mergedAudioChannels = useMemo(() => {
+    const channels = uiViews?.audioChannels ?? [];
+    if (localMeterLevel <= 4) return channels;
+    return applyLocalWebcamToAudioChannels(channels, localMeterLevel);
+  }, [localMeterLevel, uiViews?.audioChannels]);
+
+  const { stream: opsStream, opsState } = useOpsStreamStateRealtime({
+    audioChannels: mergedAudioChannels,
+    streamTelemetry: store?.streamTelemetry ?? null,
+    localWebcamAudioLevel: localMeterLevel,
+  });
+
+  const activeOpsState = useMemo(() => {
+    if (!opsState) return null;
+    if (opsState.studioEngineMode !== "internal_studio") return opsState;
+
+    const cam1Meter = Math.max(opsState.audioLevels.cam1, localMeterLevel);
+    const masterValues = [
+      cam1Meter,
+      opsState.audioLevels.cam2,
+      opsState.audioLevels.cam3,
+      opsState.audioLevels.cam4,
+      opsState.audioLevels.media1,
+      opsState.audioLevels.media2,
+    ].filter((value) => value > 4);
+
+    return {
+      ...opsState,
+      audioLevels: {
+        ...opsState.audioLevels,
+        cam1: cam1Meter,
+        master:
+          masterValues.length > 0
+            ? Math.round(masterValues.reduce((sum, value) => sum + value, 0) / masterValues.length)
+            : 0,
+      },
+    };
+  }, [localMeterLevel, opsState]);
+
+  const [canEditPull, setCanEditPull] = useState(false);
+  const [restreamConfigOpen, setRestreamConfigOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [sandboxModalAction, setSandboxModalAction] = useState<
+    "go_live" | "end_live" | null
+  >(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCrewRole() {
+      try {
+        const response = await fetch("/api/ops/crew-role", {
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!response.ok || cancelled) return;
+        const data = (await response.json()) as { role?: string };
+        if (isOpsTeamRole(data.role)) {
+          setCanEditPull(data.role === "admin" || data.role === "producer");
+        }
+      } catch {
+        // Default read-only pull panel.
+      }
+    }
+
+    void loadCrewRole();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const showToast = useCallback((message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(null), 3200);
   }, []);
-
-  const uiViews = useMemo(() => (store ? mapStoreToUiViews(store) : null), [store]);
 
   const readinessChecks = useMemo(
     () => (store ? deriveReadinessChecks(store) : []),
@@ -64,6 +150,27 @@ export default function BroadcastConsole() {
         : false,
     [store],
   );
+
+  const platformIsLive = opsStream?.isLive === true;
+
+  const handleRestreamConfigSaved = useCallback(() => {
+    void (async () => {
+      try {
+        const response = await fetch("/api/ops/stream-state", {
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        await response.json();
+      } catch {
+        // Realtime hook will catch up on next broadcast.
+      }
+    })();
+  }, []);
+
+  const openRestreamConfig = useCallback(() => {
+    setRestreamConfigOpen(true);
+  }, []);
 
   const handleSelectPreview = useCallback(
     async (sourceId: string) => {
@@ -101,7 +208,7 @@ export default function BroadcastConsole() {
     [recordMitigation, showToast],
   );
 
-  const handleGoLive = useCallback(async () => {
+  const executeSandboxGoLive = useCallback(async () => {
     if (!goLiveAllowed) return;
 
     if (health.requiresCommandConfirmation("go_live")) {
@@ -126,9 +233,9 @@ export default function BroadcastConsole() {
     }
   }, [goLive, goLiveAllowed, health, showToast]);
 
-  const handleEndLive = useCallback(async () => {
+  const executeSandboxEndLive = useCallback(async () => {
     const confirmed = window.confirm(
-      "Stop live broadcast?\n\nThis ends the sacred media path. Confirm to proceed.",
+      "Stop sandbox broadcast?\n\nThis ends the in-memory PARABLE path only.",
     );
     if (!confirmed) return;
 
@@ -140,9 +247,34 @@ export default function BroadcastConsole() {
     }
   }, [endLive, showToast]);
 
+  const handleGoLive = useCallback(() => {
+    if (!goLiveAllowed) return;
+    setSandboxModalAction("go_live");
+  }, [goLiveAllowed]);
+
+  const handleEndLive = useCallback(() => {
+    setSandboxModalAction("end_live");
+  }, []);
+
+  const handleSandboxModalContinue = useCallback(async () => {
+    const action = sandboxModalAction;
+    setSandboxModalAction(null);
+    if (action === "go_live") {
+      await executeSandboxGoLive();
+    } else if (action === "end_live") {
+      await executeSandboxEndLive();
+    }
+  }, [executeSandboxEndLive, executeSandboxGoLive, sandboxModalAction]);
+
+  const handleSandboxModalCancel = useCallback(() => {
+    setSandboxModalAction(null);
+  }, []);
+
   if (loading && !store) {
     return (
-      <div className={`flex min-h-dvh min-w-[1280px] ${PARABLE_SHELL.page} items-center justify-center ${PARABLE_SHELL.muted}`}>
+      <div
+        className={`flex min-h-dvh min-w-[1280px] ${PARABLE_SHELL.page} items-center justify-center ${PARABLE_SHELL.muted}`}
+      >
         <p className="font-ui text-sm uppercase tracking-[0.2em]">Loading production store…</p>
       </div>
     );
@@ -150,7 +282,9 @@ export default function BroadcastConsole() {
 
   if (!store || !uiViews) {
     return (
-      <div className={`flex min-h-dvh min-w-[1280px] ${PARABLE_SHELL.page} items-center justify-center px-6 text-center`}>
+      <div
+        className={`flex min-h-dvh min-w-[1280px] ${PARABLE_SHELL.page} items-center justify-center px-6 text-center`}
+      >
         <p className={`font-body ${PARABLE_SHELL.muted}`}>
           {error ?? "Production store unavailable."}
         </p>
@@ -164,7 +298,9 @@ export default function BroadcastConsole() {
   const latestHealthAlert = health.alerts[0]?.message ?? null;
 
   return (
-    <div className={`flex min-h-dvh min-w-[1280px] flex-col overflow-x-auto ${PARABLE_SHELL.page}`}>
+    <div className={`flex min-h-dvh min-w-[1280px] flex-col overflow-x-auto bg-brand-black`}>
+      <BroadcastPathBanner platformIsLive={platformIsLive} />
+
       <ProductionTelemetryTray
         architectureVersion={store.meta.architectureVersion ?? "1.0"}
         rehearsalMode={store.meta.rehearsalMode === true}
@@ -186,30 +322,46 @@ export default function BroadcastConsole() {
 
       {toast ? (
         <p
-          className={`mx-2 mt-1 rounded border px-2 py-1 font-ui text-[0.65rem] text-white ${PARABLE_SHELL.borderBlue} bg-[#1E40AF]/10`}
+          className="mx-2 mt-1 rounded border border-brand-blue/40 bg-brand-blue/10 px-2 py-1 font-ui text-[0.65rem] text-white"
           role="status"
         >
           {toast}
         </p>
       ) : null}
 
-      <main className="grid min-h-0 flex-1 grid-cols-12 gap-1 px-2 py-1">
-        <div className="col-span-9 flex min-h-0 flex-col gap-1">
-          <PreviewProgram
-            sources={uiViews.sources}
-            previewSourceId={store.previewSourceId}
-            programSourceId={store.programSourceId}
-            production={store.production}
-            isLive={store.production.isLive}
-            audioChannels={uiViews.audioChannels}
-            onTransition={handleTransition}
-          />
+      <main className="flex min-h-0 flex-1 flex-col gap-2 px-2 py-2">
+        <MixingConsole
+          sources={uiViews.sources}
+          previewSourceId={store.previewSourceId}
+          programSourceId={store.programSourceId}
+          production={store.production}
+          sandboxIsLive={store.production.isLive}
+          platformIsLive={platformIsLive}
+          opsStream={opsStream}
+          opsState={activeOpsState}
+          audioChannels={mergedAudioChannels}
+          readinessScore={store.readinessReport.score}
+          canGoLive={goLiveAllowed}
+          rehearsalMode={store.meta.rehearsalMode === true}
+          pushConfigured={opsStream?.primaryRtmpConfigured === true}
+          pullConfigured={opsStream?.primaryRtmpPullConfigured === true}
+          previewConfigured={opsStream?.cameraPreviewConfigured === true}
+          onOpenRestreamConfig={openRestreamConfig}
+          onTransition={handleTransition}
+          onGoLive={handleGoLive}
+          onEndLive={handleEndLive}
+        />
 
-          <InputTray
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 lg:grid-cols-2">
+          <CameraGrid
             sources={uiViews.sources}
             previewSourceId={store.previewSourceId}
             programSourceId={store.programSourceId}
+            platformIsLive={platformIsLive}
+            opsStream={opsStream}
             onSelectPreview={handleSelectPreview}
+            onOpenRestreamConfig={openRestreamConfig}
+            onLocalAudioUpdate={setLocalAudioLevel}
             emptyLabel={
               store.sources.length === 0
                 ? store.meta.devMode
@@ -218,46 +370,67 @@ export default function BroadcastConsole() {
                 : undefined
             }
           />
-
-          <AudioMixer channels={uiViews.audioChannels} />
-
-          <ProductionEventsPanel entries={store.productionLog} />
+          <AudioMixer channels={mergedAudioChannels} />
         </div>
 
-        <aside className="col-span-3 flex min-h-0 flex-col gap-1">
-          <ReadinessGate
-            score={store.readinessReport.score}
-            checks={readinessChecks}
-            canGoLive={goLiveAllowed}
-            isLive={store.production.isLive}
-            rehearsalMode={store.meta.rehearsalMode === true}
-            criticalCount={store.readinessReport.criticalFailures.length}
-            supervisorOverride={store.production.supervisorOverride}
-            supervisorReason={store.production.supervisorReason}
-            onSupervisorOverrideChange={(enabled, reason) =>
-              setUiOverrides({ supervisorOverride: enabled, supervisorReason: reason })
-            }
-            onGoLive={handleGoLive}
-            onEndLive={handleEndLive}
-          />
+        <div className="grid shrink-0 grid-cols-1 gap-2 xl:grid-cols-12">
+          <div className="xl:col-span-4">
+            <ReadinessGate
+              score={store.readinessReport.score}
+              checks={readinessChecks}
+              canGoLive={goLiveAllowed}
+              isLive={store.production.isLive}
+              rehearsalMode={store.meta.rehearsalMode === true}
+              criticalCount={store.readinessReport.criticalFailures.length}
+              supervisorOverride={store.production.supervisorOverride}
+              supervisorReason={store.production.supervisorReason}
+              onSupervisorOverrideChange={(enabled, reason) =>
+                setUiOverrides({ supervisorOverride: enabled, supervisorReason: reason })
+              }
+              onGoLive={handleGoLive}
+              onEndLive={handleEndLive}
+            />
+          </div>
+          <div className="xl:col-span-4">
+            <ProductionSafetyPanel
+              checks={readinessChecks}
+              safetyActions={store.safetyActions}
+              onMitigation={handleMitigation}
+            />
+          </div>
+          <div className="xl:col-span-4">
+            <StreamStatusPanel
+              destinations={store.streamTelemetry.destinations}
+              isLive={store.production.isLive || platformIsLive}
+              streamBitrateKbps={store.streamTelemetry.bitrateKbps}
+              packetLossPercent={store.streamTelemetry.packetLossPercent}
+              pipelineAvailable={store.streamTelemetry.pipelineAvailable}
+            />
+          </div>
+        </div>
 
-          <ProductionSafetyPanel
-            checks={readinessChecks}
-            safetyActions={store.safetyActions}
-            onMitigation={handleMitigation}
-          />
+        <ProductionEventsPanel entries={store.productionLog} />
 
-          <StreamStatusPanel
-            destinations={store.streamTelemetry.destinations}
-            isLive={store.production.isLive}
-            streamBitrateKbps={store.streamTelemetry.bitrateKbps}
-            packetLossPercent={store.streamTelemetry.packetLossPercent}
-            pipelineAvailable={store.streamTelemetry.pipelineAvailable}
-          />
-
-          <AssistedProducerRoadmap />
-        </aside>
+        <AssistedProducerRoadmap />
       </main>
+
+      {sandboxModalAction ? (
+        <ParableSandboxActionModal
+          action={sandboxModalAction}
+          onCancel={handleSandboxModalCancel}
+          onContinue={() => void handleSandboxModalContinue()}
+        />
+      ) : null}
+
+      <RestreamConfigModal
+        isOpen={restreamConfigOpen}
+        canEdit={canEditPull}
+        initialStudioEngineMode={opsStream?.studioEngineMode}
+        pullEngineStatus={opsState?.pullEngineStatus}
+        onClose={() => setRestreamConfigOpen(false)}
+        onSaved={handleRestreamConfigSaved}
+        onShowToast={showToast}
+      />
     </div>
   );
 }

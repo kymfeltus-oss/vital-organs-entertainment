@@ -9,6 +9,8 @@ type LiveHubGoLiveButtonProps = {
   isLive?: boolean;
   onStop?: () => void;
   isStopping?: boolean;
+  /** When false, stream mutations are forbidden for the current crew role. */
+  mutationsDisabled?: boolean;
   /** header = top bar; hero = checklist; sticky = bottom action bar */
   variant?: "header" | "hero" | "sticky";
 };
@@ -20,6 +22,7 @@ export default function LiveHubGoLiveButton({
   isLive = false,
   onStop,
   isStopping = false,
+  mutationsDisabled = false,
   variant = "header",
 }: LiveHubGoLiveButtonProps) {
   const sizeStyles =
@@ -34,8 +37,12 @@ export default function LiveHubGoLiveButton({
       <button
         type="button"
         onClick={onStop}
-        disabled={isStopping}
-        title="Open end-broadcast confirmation — stops vMix and closes attendee access"
+        disabled={isStopping || mutationsDisabled}
+        title={
+          mutationsDisabled
+            ? "Stop stream requires admin or producer crew role"
+            : "Open end-broadcast confirmation — stops vMix and closes attendee access"
+        }
         className={`touch-target inline-flex shrink-0 items-center rounded-full border border-brand-pink/70 bg-brand-pink/20 font-bold uppercase text-white transition hover:bg-brand-pink/30 disabled:cursor-wait disabled:opacity-60 neon-pink-glow ${sizeStyles}`}
       >
         <Square className={variant === "sticky" ? "h-5 w-5" : "h-4 w-4"} aria-hidden="true" />
@@ -53,13 +60,20 @@ export default function LiveHubGoLiveButton({
     <button
       type="button"
       onClick={onClick}
+      disabled={mutationsDisabled}
       title={
-        blocked
-          ? `${criticalIssueCount} critical blocker(s) — click to review before going live`
-          : "Open Go Live review"
+        mutationsDisabled
+          ? "Go Live requires admin or producer crew role"
+          : blocked
+            ? `${criticalIssueCount} critical blocker(s) — click to review before going live`
+            : "Open Go Live review"
       }
       className={`touch-target inline-flex shrink-0 items-center rounded-full border font-bold uppercase transition ${sizeStyles} ${
-        blocked ? blockedStyles : readyStyles
+        mutationsDisabled
+          ? "cursor-not-allowed border-brand-border bg-brand-panel text-brand-muted opacity-60"
+          : blocked
+            ? blockedStyles
+            : readyStyles
       }`}
     >
       <Radio className={variant === "sticky" ? "h-5 w-5" : "h-4 w-4"} aria-hidden="true" />

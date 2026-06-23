@@ -212,32 +212,40 @@ async function executeLiveVmixCommand(
 
 export async function getVmixAdapterState(): Promise<VmixAdapterResult> {
   const baseUrl = process.env.VMIX_API_BASE_URL?.trim();
+  const isDev = process.env.NODE_ENV === "development";
 
   if (!baseUrl) {
-    const state = markVmixStale(mockVmixState);
-    if (
-      state.lastUpdatedAt &&
-      Date.now() - new Date(state.lastUpdatedAt).getTime() > VMIX_STALE_THRESHOLD_MS
-    ) {
-      mockVmixState = { ...state, connectionStatus: "stale", isStale: true };
-    }
+    mockVmixState = connectedMockState();
     return { ok: true, state: mockVmixState };
   }
 
-  return fetchLiveVmixState(baseUrl);
+  const live = await fetchLiveVmixState(baseUrl);
+  if (live.ok === false && isDev) {
+    mockVmixState = connectedMockState();
+    return { ok: true, state: mockVmixState };
+  }
+
+  return live;
 }
 
 export async function runVmixAdapterCommand(
   command: VmixCommand,
 ): Promise<VmixAdapterResult> {
   const baseUrl = process.env.VMIX_API_BASE_URL?.trim();
+  const isDev = process.env.NODE_ENV === "development";
 
   if (!baseUrl) {
     const state = applyMockCommand(command);
-    return { ok: true, state: markVmixStale(state) };
+    return { ok: true, state };
   }
 
-  return executeLiveVmixCommand(baseUrl, command);
+  const live = await executeLiveVmixCommand(baseUrl, command);
+  if (live.ok === false && isDev) {
+    const state = applyMockCommand(command);
+    return { ok: true, state };
+  }
+
+  return live;
 }
 
 export function resetMockVmixStateForTests(disconnected = false): void {

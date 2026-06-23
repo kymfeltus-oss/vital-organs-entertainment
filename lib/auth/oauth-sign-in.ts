@@ -12,7 +12,7 @@ const PROVIDER_LABELS: Record<OAuthProviderId, string> = {
   facebook: "Facebook",
 };
 
-function buildClientAuthCallbackUrl(nextPath: string): string {
+export function buildClientAuthCallbackUrl(nextPath: string): string {
   const url = new URL("/auth/callback", window.location.origin);
   url.searchParams.set("next", nextPath);
   return url.toString();

@@ -19,6 +19,7 @@ type AttendeeAuthLoginPlateProps = {
   rememberMe: boolean;
   isSubmitting: boolean;
   formError?: string | null;
+  formNotice?: string | null;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onEmailBlur: () => void;
@@ -64,6 +65,7 @@ export default function AttendeeAuthLoginPlate({
   rememberMe,
   isSubmitting,
   formError,
+  formNotice,
   onEmailChange,
   onPasswordChange,
   onEmailBlur,
@@ -80,7 +82,8 @@ export default function AttendeeAuthLoginPlate({
     window.setTimeout(() => setNotice(null), COMING_SOON_MS);
   };
 
-  const displayMessage = formError ?? notice;
+  const displayMessage = formError ?? formNotice ?? notice;
+  const messageIsError = Boolean(formError);
 
   return (
     <div className="auth-login-page flex min-h-0 w-full flex-1 flex-col items-center overflow-y-auto py-8 pt-safe pb-safe sm:py-12">
@@ -195,8 +198,12 @@ export default function AttendeeAuthLoginPlate({
 
             {displayMessage ? (
               <p
-                role={formError ? "alert" : "status"}
-                className="rounded-lg border border-brand-pink/30 bg-brand-pink/10 px-3 py-2 font-body text-sm text-brand-pink"
+                role={messageIsError ? "alert" : "status"}
+                className={
+                  messageIsError
+                    ? "rounded-lg border border-brand-pink/30 bg-brand-pink/10 px-3 py-2 font-body text-sm text-brand-pink"
+                    : "rounded-lg border border-brand-blue/30 bg-brand-blue/10 px-3 py-2 font-body text-sm text-brand-blue"
+                }
               >
                 {displayMessage}
               </p>

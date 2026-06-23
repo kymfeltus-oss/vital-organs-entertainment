@@ -48,7 +48,7 @@ export default function ReadinessGate({
   return (
     <section className="rounded-md border border-white/10 bg-[#111111] p-1.5">
       <p className={`font-ui text-[0.45rem] font-bold uppercase tracking-[0.14em] ${PARABLE_SHELL.muted}`}>
-        Readiness Gate
+        Pre-Show Checklist
       </p>
 
       <div className="mt-1 flex items-center gap-1.5">
@@ -60,11 +60,11 @@ export default function ReadinessGate({
         <div className="min-w-0 flex-1">
           <p className="font-ui text-[0.55rem] font-bold uppercase tracking-[0.05em] text-white">
             {criticalCount > 0 || hardBlockCount > 0
-              ? `${criticalCount + hardBlockCount} blockers`
-              : "Interlock clear"}
+              ? `${criticalCount + hardBlockCount} items need fixing`
+              : "Ready to go live"}
           </p>
           <p className={`font-ui text-[0.45rem] ${PARABLE_SHELL.muted}`}>
-            {failingCount} open · override ≥8
+            {failingCount} open · supervisor note ≥8 chars
           </p>
         </div>
       </div>
@@ -78,14 +78,14 @@ export default function ReadinessGate({
               onClick={onGoLive}
               className={`touch-target w-full rounded border px-2 py-1.5 font-ui text-[0.55rem] font-bold uppercase tracking-[0.08em] text-white disabled:opacity-40 ${PARABLE_SHELL.btnPrimary}`}
             >
-              {rehearsalMode ? "Simulate Go Live" : "Go Live"}
+              {rehearsalMode ? "Practice Go Live" : "🚀 Click to Start the Show"}
             </button>
             <button
               type="button"
               onClick={() => setShowOverride((v) => !v)}
               className={`touch-target w-full rounded border border-white/12 px-2 py-1 font-ui text-[0.48rem] font-bold uppercase tracking-[0.06em] ${PARABLE_SHELL.muted}`}
             >
-              Supervisor Override
+              Supervisor Override (advanced)
             </button>
           </>
         ) : (
@@ -94,7 +94,7 @@ export default function ReadinessGate({
             onClick={onEndLive}
             className={`touch-target w-full rounded border px-2 py-1.5 font-ui text-[0.55rem] font-bold uppercase tracking-[0.08em] ${PARABLE_STATUS.red.border} ${PARABLE_STATUS.red.text}`}
           >
-            {rehearsalMode ? "End Rehearsal" : "Stop Live"}
+            {rehearsalMode ? "End Practice" : "Stop the Show"}
           </button>
         )}
       </div>

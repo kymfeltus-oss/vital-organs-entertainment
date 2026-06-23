@@ -6,9 +6,8 @@ import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 
 export default function TestSuitePage() {
   const [logs, setLogs] = useState<string[]>([]);
-  const [windowWidth, setWindowWidth] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth : 0,
-  );
+  const [hasMounted, setHasMounted] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(0);
 
   const addLog = useCallback((message: string) => {
     setLogs((prev) => [
@@ -51,13 +50,34 @@ export default function TestSuitePage() {
   );
 
   useEffect(() => {
+    const initialWidth = window.innerWidth;
+    setWindowWidth(initialWidth);
+    setHasMounted(true);
+
+    // #region agent log
+    fetch("http://127.0.0.1:7924/ingest/91e1e0f3-2fd3-4620-91fc-790155003627", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "ac75e2",
+      },
+      body: JSON.stringify({
+        sessionId: "ac75e2",
+        runId: "test-suite-hydration-v2",
+        hypothesisId: "A",
+        location: "test-suite/page.tsx:useEffect-mount",
+        message: "viewport measured after mount",
+        data: { initialWidth, hasMountedAfterEffect: true },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
 
-    void Promise.resolve().then(() => {
-      addLog("🚀 Initializing Awakening Application Diagnostics Suite...");
-      runDiagnostics(window.innerWidth);
-    });
+    addLog("🚀 Initializing Awakening Application Diagnostics Suite...");
+    runDiagnostics(initialWidth);
 
     return () => window.removeEventListener("resize", handleResize);
   }, [addLog, runDiagnostics]);
@@ -157,7 +177,7 @@ export default function TestSuitePage() {
       <div className="flex h-[50dvh] flex-1 flex-col rounded-xl border border-white/10 bg-black p-4 md:h-auto">
         <div className="mb-2 flex items-center justify-between text-[10px] text-zinc-500 uppercase">
           <span>Diagnostic Log Stream Output</span>
-          <span>Width: {windowWidth}px</span>
+          <span>Width: {hasMounted ? `${windowWidth}px` : "—"}</span>
         </div>
         <div className="custom-scrollbar flex-1 space-y-1 overflow-y-auto rounded-lg border border-white/5 bg-zinc-950 p-3 text-zinc-300">
           {logs.map((log, index) => (

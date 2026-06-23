@@ -1,3 +1,5 @@
+import type { StudioEngineMode } from "@/lib/ops/studio-engine-mode";
+
 export type StreamAccessLogRow = {
   id: string;
   user_id: string | null;
@@ -16,6 +18,30 @@ export type OpsSnapshot = {
     backupConfigured: boolean;
     primaryPlaybackUrlStatus: "valid" | "invalid" | "missing";
     backupPlaybackUrlStatus: "valid" | "invalid" | "missing";
+    primaryRtmpIngestUrl: string | null;
+    backupRtmpIngestUrl: string | null;
+    primaryRtmpIngestUrlStatus: "valid" | "invalid" | "missing";
+    backupRtmpIngestUrlStatus: "valid" | "invalid" | "missing";
+    primaryRtmpConfigured: boolean;
+    backupRtmpConfigured: boolean;
+    primaryRtmpPullUrl: string | null;
+    backupRtmpPullUrl: string | null;
+    cameraPreviewHlsUrl: string | null;
+    primaryRtmpPullUrlStatus: "valid" | "invalid" | "missing";
+    backupRtmpPullUrlStatus: "valid" | "invalid" | "missing";
+    cameraPreviewHlsUrlStatus: "valid" | "invalid" | "missing";
+    primaryRtmpPullConfigured: boolean;
+    backupRtmpPullConfigured: boolean;
+    cameraPreviewConfigured: boolean;
+    storedRestreamOutputs: {
+      pushConfigured: boolean;
+      pullConfigured: boolean;
+      previewConfigured: boolean;
+      playbackConfigured: boolean;
+      provisionedCount: number;
+      totalLanes: 4;
+    };
+    studioEngineMode: StudioEngineMode;
     updatedAt: string;
     updatedBy: string | null;
   };

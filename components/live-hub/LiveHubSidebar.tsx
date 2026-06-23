@@ -180,6 +180,7 @@ export default function LiveHubSidebar({
         </div>
         <Link
           href="/ops"
+          prefetch={false}
           className="mt-3 block text-center text-[0.55rem] font-bold uppercase tracking-[0.14em] text-zinc-600 transition hover:text-[#93c5fd]"
         >
           ← Ops Command Center

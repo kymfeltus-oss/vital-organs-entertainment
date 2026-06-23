@@ -30,11 +30,13 @@ type AttendeeTab = "login" | "guest";
 type AttendeeFunnelClientProps = {
   nextPath: string;
   authError?: string | null;
+  emailConfirmed?: boolean;
 };
 
 export default function AttendeeFunnelClient({
   nextPath,
   authError = null,
+  emailConfirmed = false,
 }: AttendeeFunnelClientProps) {
   const destination = resolveAttendeeDestination(nextPath);
   const hubBackHref = buildPersonaHubUrl(destination);
@@ -56,7 +58,11 @@ export default function AttendeeFunnelClient({
     authError === "auth_callback_failed"
       ? "Email confirmation failed or expired. Sign in again or request a new confirmation email."
       : null;
+  const confirmedMessage = emailConfirmed
+    ? "Your email is confirmed. Sign in with your password to continue."
+    : null;
   const displayError = error ?? callbackFailureMessage;
+  const displayNotice = !displayError && confirmedMessage ? confirmedMessage : null;
 
   const emailState = emailValidationState(email, emailTouched);
   const phoneState = phoneValidationState(phone, phoneTouched);
@@ -239,6 +245,7 @@ export default function AttendeeFunnelClient({
       rememberMe={rememberMe}
       isSubmitting={status === "submitting"}
       formError={displayError}
+      formNotice={displayNotice}
       onEmailChange={setEmail}
       onPasswordChange={setPassword}
       onEmailBlur={() => setEmailTouched(true)}

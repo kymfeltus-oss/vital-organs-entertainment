@@ -7,8 +7,8 @@ export const TEAM_GATE_PATH = "/email-gate/team";
 export const AUTH_NEXT_COOKIE = "auth_next";
 
 export const DEFAULT_ATTENDEE_NEXT = ATTENDEE_DASHBOARD_PATH;
-export const DEFAULT_TEAM_NEXT = "/dashboard/broadcast";
 export const DEFAULT_OPS_NEXT = "/ops/live-hub";
+export const DEFAULT_TEAM_NEXT = DEFAULT_OPS_NEXT;
 
 const ATTENDEE_PROTECTED_EXACT = new Set(["/dashboard"]);
 const ATTENDEE_PROTECTED_PREFIXES = ["/experience", ATTENDEE_DASHBOARD_PATH];
@@ -58,8 +58,9 @@ export function resolveAttendeeDestination(nextPath: string): string {
   return sanitized;
 }
 
-export function buildAttendeeGateUrl(_nextPath?: string | null): string {
-  return ATTENDEE_GATE_PATH;
+export function buildAttendeeGateUrl(nextPath?: string | null): string {
+  if (!nextPath) return ATTENDEE_GATE_PATH;
+  return buildGateUrl(ATTENDEE_GATE_PATH, sanitizeNextPath(nextPath, DEFAULT_ATTENDEE_NEXT));
 }
 
 export function buildCreateAccountUrl(_nextPath?: string | null): string {
@@ -76,7 +77,7 @@ export function setAuthNextCookie(nextPath: string): void {
 export function buildTeamGateUrl(nextPath?: string | null): string {
   return buildGateUrl(
     TEAM_GATE_PATH,
-    sanitizeNextPath(nextPath, DEFAULT_TEAM_NEXT),
+    resolveTeamDestination(nextPath),
     { persona: "team" },
   );
 }
@@ -94,7 +95,21 @@ export function isTeamProtectedPath(pathname: string): boolean {
   );
 }
 
+/** True when `next` is a valid post-login destination for production team auth. */
+export function isTeamDestinationPath(pathname: string): boolean {
+  return isTeamProtectedPath(pathname);
+}
+
+/** Strip attendee return paths — team login should never land on attendee surfaces. */
+export function resolveTeamDestination(nextPath: string | null | undefined): string {
+  const sanitized = sanitizeNextPath(nextPath, DEFAULT_TEAM_NEXT);
+  if (isTeamDestinationPath(sanitized)) {
+    return sanitized;
+  }
+  return DEFAULT_TEAM_NEXT;
+}
+
 /** Resolve the team destination after gate auth (no redundant query params). */
 export function buildTeamPostAuthUrl(nextPath?: string | null): string {
-  return sanitizeNextPath(nextPath, DEFAULT_TEAM_NEXT);
+  return resolveTeamDestination(nextPath);
 }

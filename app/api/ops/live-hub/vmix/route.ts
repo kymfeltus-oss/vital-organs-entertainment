@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireOpsAdminApiUser } from "@/lib/ops/assert-ops-admin";
+import { requireOpsStreamMutationApiUser } from "@/lib/ops/require-ops-mutation";
 import { getVmixAdapterState, runVmixAdapterCommand } from "@/lib/live-hub/vmix/adapter";
 import type { VmixCommand, VmixCommandType } from "@/lib/live-hub/vmix/types";
 
@@ -38,7 +39,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const gate = await requireOpsAdminApiUser();
+  const gate = await requireOpsStreamMutationApiUser(request);
   if (gate.response) return gate.response;
 
   try {

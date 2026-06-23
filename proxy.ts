@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import type { User } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import {
   ATTENDEE_GATE_PATH,
@@ -7,10 +8,65 @@ import {
   isAttendeeProtectedPath,
   isTeamProtectedPath,
 } from "@/lib/auth/routing";
+import { inspectOpsAdminAccess } from "@/lib/ops/admin-auth";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
+
+/** Fail fast when Supabase is slow/unreachable — avoids 10s hangs on client navigation. */
+const PROXY_AUTH_LOOKUP_TIMEOUT_MS = 2_500;
+
+function isAuthTransportError(message: string): boolean {
+  return /ENOTFOUND|fetch failed|Failed to fetch|ECONNREFUSED|ETIMEDOUT|timeout|UND_ERR_CONNECT_TIMEOUT/i.test(
+    message,
+  );
+}
+
+function authErrorMessage(error: unknown): string {
+  if (
+    error instanceof Error &&
+    "cause" in error &&
+    error.cause instanceof Error
+  ) {
+    return error.cause.message;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return "unknown";
+}
+
+async function getProxyAuthUser(
+  supabase: ReturnType<typeof createServerClient>,
+): Promise<{ user: User | null; transportFailed: boolean }> {
+  try {
+    const { data } = await Promise.race([
+      supabase.auth.getUser(),
+      new Promise<never>((_, reject) => {
+        setTimeout(
+          () => reject(new Error("proxy auth lookup timeout")),
+          PROXY_AUTH_LOOKUP_TIMEOUT_MS,
+        );
+      }),
+    ]);
+    return { user: data.user, transportFailed: false };
+  } catch (authError) {
+    return {
+      user: null,
+      transportFailed: isAuthTransportError(authErrorMessage(authError)),
+    };
+  }
+}
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (/^\/countdown/i.test(pathname)) {
+    const normalized = pathname.replace(/^\/countdown/i, "/countdown");
+    if (normalized !== pathname) {
+      const url = request.nextUrl.clone();
+      url.pathname = normalized;
+      return NextResponse.redirect(url, 308);
+    }
+  }
 
   if (
     pathname.startsWith("/email-gate") ||
@@ -67,29 +123,29 @@ export async function proxy(request: NextRequest) {
   });
 
   let user = null;
-  try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
-  } catch (authError) {
-    const cause =
-      authError instanceof Error &&
-      "cause" in authError &&
-      authError.cause instanceof Error
-        ? authError.cause.message
-        : authError instanceof Error
-          ? authError.message
-          : "unknown";
+  let authTransportFailed = false;
+  const authResult = await getProxyAuthUser(supabase);
+  user = authResult.user;
+  authTransportFailed = authResult.transportFailed;
 
-    if (/ENOTFOUND|fetch failed|Failed to fetch|ECONNREFUSED|ETIMEDOUT/i.test(cause)) {
-      request.cookies.getAll().forEach(({ name }) => {
-        if (/^sb-.*-auth-token(\.\d+)?$/.test(name)) {
-          response.cookies.delete(name);
-        }
-      });
-    }
+  if (authTransportFailed) {
+    request.cookies.getAll().forEach(({ name }) => {
+      if (/^sb-.*-auth-token(\.\d+)?$/.test(name)) {
+        response.cookies.delete(name);
+      }
+    });
   }
 
   if (user) {
+    if (
+      (pathname === "/ops" || pathname.startsWith("/ops/")) &&
+      !inspectOpsAdminAccess(user).allowed
+    ) {
+      const nextPath = `${pathname}${request.nextUrl.search}`;
+      const redirectUrl = new URL(buildTeamGateUrl(nextPath), request.url);
+      return NextResponse.redirect(redirectUrl);
+    }
+
     return response;
   }
 
@@ -112,6 +168,10 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/countdown",
+    "/countdown/:path*",
+    "/COUNTDOWN",
+    "/COUNTDOWN/:path*",
     "/dashboard",
     "/dashboard/:path*",
     "/attendee-dashboard",

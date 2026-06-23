@@ -1,5 +1,6 @@
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { buildTeamGateUrl } from "@/lib/auth/routing";
 import { inspectOpsAdminAccess } from "@/lib/ops/admin-auth";
 import {
@@ -8,12 +9,36 @@ import {
 } from "@/lib/ops/auth-diagnostics";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
 
-export async function requireOpsAdminUser(returnPath = "/ops") {
-  const supabase = await createServerSupabaseClient();
+async function resolveOpsAdminGateUser(supabase: SupabaseClient): Promise<{
+  user: User | null;
+  error: Error | null;
+}> {
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    return { user: null, error: error ?? null };
+  }
+
+  if (inspectOpsAdminAccess(user).allowed) {
+    return { user, error: null };
+  }
+
+  const { data: refreshData, error: refreshError } =
+    await supabase.auth.refreshSession();
+
+  if (!refreshError && refreshData.user && inspectOpsAdminAccess(refreshData.user).allowed) {
+    return { user: refreshData.user, error: null };
+  }
+
+  return { user, error: null };
+}
+
+export async function requireOpsAdminUser(returnPath = "/ops") {
+  const supabase = await createServerSupabaseClient();
+  const { user, error } = await resolveOpsAdminGateUser(supabase);
 
   const inspection = inspectOpsAdminAccess(user);
 
@@ -29,12 +54,8 @@ export async function requireOpsAdminUser(returnPath = "/ops") {
     }),
   );
 
-  if (error || !user) {
+  if (error || !user || !inspection.allowed) {
     redirect(buildTeamGateUrl(returnPath));
-  }
-
-  if (!inspection.allowed) {
-    notFound();
   }
 
   return user;
