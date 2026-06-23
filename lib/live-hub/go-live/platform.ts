@@ -18,7 +18,7 @@ async function postStreamToggle(body: StreamToggleInput): Promise<PlatformLiveRe
 
   const result = await executeStreamToggle(body);
 
-  if (!result.ok) {
+  if (result.ok === false) {
     return {
       ok: false,
       error: result.error,

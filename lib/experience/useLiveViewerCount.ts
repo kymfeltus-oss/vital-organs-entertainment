@@ -49,12 +49,12 @@ export function useLiveViewerCount({
       .subscribe(async (status) => {
         if (status !== "SUBSCRIBED") return;
 
-        const { error } = await channel.track({
+        const trackStatus = await channel.track({
           online_at: new Date().toISOString(),
         });
 
-        if (error) {
-          console.error("Live viewer presence track failed:", error.message);
+        if (trackStatus !== "ok") {
+          console.error("Live viewer presence track failed:", trackStatus);
         }
 
         syncCount();

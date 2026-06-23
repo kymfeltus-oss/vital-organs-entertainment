@@ -43,7 +43,24 @@ const disconnectedMockState = (): RestreamState => ({
   source: "mock",
 });
 
-let mockRestreamState: RestreamState = connectedMockState();
+let mockRestreamState: RestreamState = initialConnectedMockState();
+
+function initialConnectedMockState(): RestreamState {
+  return {
+    connectionStatus: "connected",
+    lastUpdatedAt: new Date().toISOString(),
+    streamTitle: "300 Awakening Live Experience",
+    streamStatus: "Offline",
+    multistreamDestinations: [
+      { id: "yt", name: "YouTube", platform: "YouTube", healthy: true },
+      { id: "fb", name: "Facebook", platform: "Facebook", healthy: true },
+      { id: "web", name: "Web Player", platform: "HLS", healthy: true },
+    ],
+    chatConnected: true,
+    isStale: false,
+    source: "mock",
+  };
+}
 
 function connectedMockState(): RestreamState {
   return {

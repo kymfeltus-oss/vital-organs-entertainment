@@ -10,7 +10,6 @@ import {
   isOpsTeamRole,
   modulesForRole,
   roleLabel,
-  type OpsTeamRole,
 } from "@/lib/ops/team-roles";
 
 export async function GET(request: NextRequest) {
@@ -45,12 +44,12 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as CrewRoleBody;
     const nextRole = body.role ?? body.requestedRole;
 
-    if (!isOpsTeamRole(nextRole)) {
+    if (typeof nextRole !== "string" || !isOpsTeamRole(nextRole)) {
       return NextResponse.json({ error: "Invalid crew role." }, { status: 400 });
     }
 
     const assignment = validateCrewRoleAssignment(gate.user, nextRole);
-    if (!assignment.allowed) {
+    if (assignment.allowed === false) {
       console.warn("[OPS_CREW_ROLE_DENIED]:", {
         email: gate.user.email,
         requestedRole: nextRole,
@@ -63,7 +62,7 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({
       success: true,
-      role: nextRole as OpsTeamRole,
+      role: nextRole,
       assignedRole: nextRole,
       roleLabel: roleLabel(nextRole),
       capabilities,

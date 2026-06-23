@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     if (action === "stop_stream") {
       const result = await executeStopStreamSequence();
-      if (!result.ok) {
+      if (result.ok === false) {
         return NextResponse.json(result, { status: 503 });
       }
       schedulePastBroadcastRecordingSync({ streamTitle: "300 Awakening Broadcast" });
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await executeGoLiveSequence();
-    if (!result.ok) {
+    if (result.ok === false) {
       return NextResponse.json(result, { status: 503 });
     }
 

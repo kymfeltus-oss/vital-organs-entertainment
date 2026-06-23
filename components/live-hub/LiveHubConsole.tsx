@@ -809,7 +809,7 @@ export default function LiveHubConsole({
                 <LiveHubRtmpIngestPanel
                   snapshot={snapshot}
                   canEdit={canStreamMutate}
-                  onSaved={refreshHeartbeat}
+                  onSaved={() => void refreshHeartbeat()}
                 />
                 <LiveHubAudioHealthLog
                   healingLogs={healingLogs}

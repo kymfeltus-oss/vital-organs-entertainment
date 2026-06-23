@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const provision = await provisionRestreamRtmpIngestUrl();
-    if (!provision.ok) {
+    if (provision.ok === false) {
       const status = provision.code === "RESTREAM_TOKEN_MISSING" ? 503 : 502;
       return NextResponse.json({ error: provision.error, code: provision.code }, { status });
     }

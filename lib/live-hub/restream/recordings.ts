@@ -103,7 +103,7 @@ export async function fetchRestreamEventRecordings(
     `/v2/user/events/${encodeURIComponent(eventId)}/recordings`,
   );
 
-  if (!result.ok) return result;
+  if (result.ok === false) return result;
 
   return {
     ok: true,
@@ -131,7 +131,7 @@ export async function fetchRestreamRecordingDownloadUrl(
     },
   );
 
-  if (!result.ok) return result;
+  if (result.ok === false) return result;
 
   const downloadUrl = result.data.downloadUrl?.trim();
   if (!downloadUrl) {
@@ -153,7 +153,7 @@ export async function fetchLatestFinishedRestreamEvent(): Promise<
     "/v2/user/events/history?page=1&limit=5",
   );
 
-  if (!result.ok) return result;
+  if (result.ok === false) return result;
 
   const event =
     result.data.items?.find((item) => item.status === "finished") ?? result.data.items?.[0];
@@ -200,7 +200,7 @@ export async function resolveRestreamRecordingDownloadLinks(
       eventId,
       primaryFile.fileName,
     );
-    if (!primaryDownload.ok) return primaryDownload;
+    if (primaryDownload.ok === false) return primaryDownload;
     recordingUrl = primaryDownload.downloadUrl;
   }
 
@@ -209,7 +209,7 @@ export async function resolveRestreamRecordingDownloadLinks(
       eventId,
       audioFile.fileName,
     );
-    if (!audioDownload.ok) return audioDownload;
+    if (audioDownload.ok === false) return audioDownload;
     audioOnlyUrl = audioDownload.downloadUrl;
   }
 

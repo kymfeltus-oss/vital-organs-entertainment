@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     const toggleResult = await executeStreamToggle(resolveTogglePayload(action));
 
-    if (!toggleResult.ok) {
+    if (toggleResult.ok === false) {
       return NextResponse.json({ error: toggleResult.error }, { status: toggleResult.status });
     }
 

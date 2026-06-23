@@ -79,7 +79,9 @@ export async function fetchManifestStreamConfig(
 
     if (!error) {
       return {
-        config: normalizeManifestStreamConfig(data as Record<string, unknown> | null),
+        config: normalizeManifestStreamConfig(
+          data as unknown as Record<string, unknown> | null,
+        ),
         error: null,
         selectUsed: selectClause,
       };

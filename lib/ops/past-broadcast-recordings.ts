@@ -88,7 +88,7 @@ export async function syncPastBroadcastRecording(
 
   if (!eventId) {
     const latestEvent = await fetchLatestFinishedRestreamEvent();
-    if (!latestEvent.ok) return latestEvent;
+    if (latestEvent.ok === false) return latestEvent;
     eventId = latestEvent.event.id;
     streamTitle = streamTitle || latestEvent.event.title?.trim() || "300 Awakening Broadcast";
     broadcastDate = resolveBroadcastDate(latestEvent.event.finishedAt);
@@ -97,13 +97,13 @@ export async function syncPastBroadcastRecording(
   }
 
   const recordingsResult = await fetchRestreamEventRecordings(eventId);
-  if (!recordingsResult.ok) return recordingsResult;
+  if (recordingsResult.ok === false) return recordingsResult;
 
   const linksResult = await resolveRestreamRecordingDownloadLinks(
     eventId,
     recordingsResult.recordings,
   );
-  if (!linksResult.ok) return linksResult;
+  if (linksResult.ok === false) return linksResult;
 
   const admin = getSupabaseAdmin();
   const now = new Date().toISOString();

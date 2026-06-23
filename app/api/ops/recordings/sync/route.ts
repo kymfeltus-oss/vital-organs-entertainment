@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     const result = await syncPastBroadcastRecording({ eventId, streamTitle });
 
-    if (!result.ok) {
+    if (result.ok === false) {
       const status =
         result.code === "RESTREAM_TOKEN_MISSING" || result.code === "MIGRATION_REQUIRED"
           ? 503
