@@ -13,6 +13,7 @@ import {
   STREAM_SCHEMA_MIGRATION_HINT,
 } from "@/lib/ops/stream-state-schema-deferred";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { resolveRtmpIngestCredentials } from "@/lib/stream-keys";
 
 type StreamIngestPatchBody = {
   primaryRtmpIngestUrl?: unknown;
@@ -61,10 +62,13 @@ export async function GET(request: NextRequest) {
       data?.primary_rtmp_ingest_url,
       data?.backup_rtmp_ingest_url,
     );
+    const credentials = resolveRtmpIngestCredentials(ingest.primaryRtmpIngestUrl);
 
     return NextResponse.json(
       {
         ...ingest,
+        serverUrl: credentials?.serverUrl ?? null,
+        streamKey: credentials?.streamKey ?? null,
         updatedAt: data?.updated_at ?? null,
         updatedBy: data?.updated_by ?? null,
       },

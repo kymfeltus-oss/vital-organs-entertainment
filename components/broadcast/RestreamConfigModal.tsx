@@ -83,12 +83,14 @@ export function StreamKeyGeneratorCard({
   const [manualStreamKey, setManualStreamKey] = useState("");
 
   useEffect(() => {
-    setCredentials(initialCredentials);
-    if (initialCredentials) {
-      setManualServerUrl(initialCredentials.serverUrl);
-      setManualStreamKey(initialCredentials.streamKey);
-    }
-  }, [initialCredentials]);
+    const serverUrl = initialCredentials?.serverUrl?.trim() ?? "";
+    const streamKey = initialCredentials?.streamKey?.trim() ?? "";
+    if (!serverUrl || !streamKey) return;
+
+    setCredentials({ serverUrl, streamKey });
+    setManualServerUrl(serverUrl);
+    setManualStreamKey(streamKey);
+  }, [initialCredentials?.serverUrl, initialCredentials?.streamKey]);
 
   const handleGenerateKey = useCallback(async () => {
     if (!canEdit) return;
@@ -113,8 +115,13 @@ export function StreamKeyGeneratorCard({
           serverUrl: data.serverUrl,
           streamKey: data.streamKey,
         };
+        const primaryRtmpIngestUrl =
+          data.primaryRtmpIngestUrl ??
+          buildPrimaryRtmpIngestUrl(data.streamKey, data.serverUrl);
         setCredentials(nextCredentials);
-        onGenerated?.({ ...nextCredentials, primaryRtmpIngestUrl: data.primaryRtmpIngestUrl });
+        setManualServerUrl(nextCredentials.serverUrl);
+        setManualStreamKey(nextCredentials.streamKey);
+        onGenerated?.({ ...nextCredentials, primaryRtmpIngestUrl });
       } else {
         const message = data.error ?? "Unable to generate camera stream key.";
         onError?.(message);
@@ -171,6 +178,7 @@ export function StreamKeyGeneratorCard({
         streamKey: trimmedKey,
       };
       setCredentials(nextCredentials);
+      onGenerated?.({ ...nextCredentials, primaryRtmpIngestUrl: fullUrl });
     } catch (saveError) {
       onError?.(
         saveError instanceof Error ? saveError.message : "Unable to save Host Ingest.",
@@ -344,6 +352,10 @@ export default function RestreamConfigModal({
   const [engineOverride, setEngineOverride] = useState<PullEngineStatus | null>(null);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [ingestCredentials, setIngestCredentials] = useState<{
+    serverUrl: string;
+    streamKey: string;
+  } | null>(null);
 
   const loadConfig = useCallback(async () => {
     setError(null);
@@ -372,6 +384,8 @@ export default function RestreamConfigModal({
         ? ((await ingestRes.json()) as {
             primaryRtmpIngestUrl?: string | null;
             primaryRtmpConfigured?: boolean;
+            serverUrl?: string | null;
+            streamKey?: string | null;
           })
         : null;
 
@@ -405,6 +419,19 @@ export default function RestreamConfigModal({
       }
 
       setHlsUrl(merged.cameraPreviewHlsUrl ?? "");
+
+      const loadedCredentials =
+        ingestData?.serverUrl && ingestData?.streamKey
+          ? { serverUrl: ingestData.serverUrl, streamKey: ingestData.streamKey }
+          : splitRtmpIngestUrl(merged.primaryRtmpIngestUrl);
+      setIngestCredentials(
+        loadedCredentials
+          ? {
+              serverUrl: loadedCredentials.serverUrl,
+              streamKey: loadedCredentials.streamKey,
+            }
+          : null,
+      );
     } catch {
       setError("Unable to load broadcast engine configuration.");
     }
@@ -606,6 +633,10 @@ export default function RestreamConfigModal({
 
   const handleStreamKeyGenerated = useCallback(
     (payload: { serverUrl: string; streamKey: string; primaryRtmpIngestUrl?: string | null }) => {
+      setIngestCredentials({
+        serverUrl: payload.serverUrl,
+        streamKey: payload.streamKey,
+      });
       setConfig((current) =>
         current
           ? {
@@ -663,6 +694,13 @@ export default function RestreamConfigModal({
             }
           : current,
       );
+      const savedCredentials = splitRtmpIngestUrl(normalized);
+      if (savedCredentials) {
+        setIngestCredentials({
+          serverUrl: savedCredentials.serverUrl,
+          streamKey: savedCredentials.streamKey,
+        });
+      }
       await loadConfig();
       onSaved?.();
       onShowToast?.("Host Ingest saved — use Start Camera Stream or push from OBS.");
@@ -713,7 +751,6 @@ export default function RestreamConfigModal({
 
   if (!isOpen) return null;
 
-  const ingestCredentials = splitRtmpIngestUrl(config?.primaryRtmpIngestUrl);
   const isRestreamMode = studioEngineMode === "restream_api";
   const isDevBuild = process.env.NODE_ENV === "development";
   const engineStatus = engineOverride ?? pullEngineStatus;
@@ -767,24 +804,16 @@ export default function RestreamConfigModal({
             onChange={(mode) => void handleEngineModeChange(mode)}
           />
 
+          <StreamKeyGeneratorCard
+            canEdit={canEdit}
+            initialCredentials={ingestCredentials}
+            onGenerated={handleStreamKeyGenerated}
+            onError={setError}
+            onSaveIngest={saveHostIngest}
+          />
+
           {isRestreamMode ? (
             <>
-              <StreamKeyGeneratorCard
-                canEdit={canEdit}
-                initialCredentials={
-                  ingestCredentials
-                    ? {
-                        serverUrl: ingestCredentials.serverUrl,
-                        streamKey: ingestCredentials.streamKey,
-                      }
-                    : null
-                }
-                onGenerated={handleStreamKeyGenerated}
-                onError={setError}
-                onSaveIngest={saveHostIngest}
-              />
-
-              <div>
                 <p className="mb-2 font-ui text-[0.55rem] font-bold uppercase tracking-[0.14em] text-brand-muted">
                   Stream Monitoring Links
                 </p>
@@ -843,7 +872,6 @@ export default function RestreamConfigModal({
                     </p>
                   </label>
                 </div>
-              </div>
             </>
           ) : (
             <div className="space-y-3 rounded-lg border border-brand-purple/30 bg-brand-purple/10 p-3">

@@ -9,6 +9,7 @@ import MobileActionDock from "@/components/broadcast/MobileActionDock";
 import MobileEditorTabs, { type MobileEditorTab } from "@/components/broadcast/MobileEditorTabs";
 import PermissionsPanel from "@/components/broadcast/PermissionsPanel";
 import RealtimeChatFeed from "@/components/broadcast/RealtimeChatFeed";
+import ResponsiveStatusBanner from "@/components/broadcast/ResponsiveStatusBanner";
 import ResponsiveStatusStrip from "@/components/broadcast/ResponsiveStatusStrip";
 import ShowSchedulePanel from "@/components/broadcast/ShowSchedulePanel";
 import TroubleAlertPopup from "@/components/broadcast/TroubleAlertPopup";
@@ -16,9 +17,9 @@ import type {
   HeroCopyFormState,
   OpsStreamTelemetryView,
   RoleGateResult,
-  TroubleAlert,
 } from "@/lib/broadcast/countdown-console-types";
 import type { RealtimeAttendeeChatRow } from "@/lib/broadcast/countdown-console-types";
+import type { ChatTroubleCategory } from "@/lib/ops/chat-scanner";
 import { OPS_HOME_PATH } from "@/lib/broadcastRoutes";
 
 type MobileCountdownConsoleProps = {
@@ -30,7 +31,8 @@ type MobileCountdownConsoleProps = {
   chatMessages: RealtimeAttendeeChatRow[];
   chatLoading: boolean;
   chatConnected: boolean;
-  activeAlert: TroubleAlert | null;
+  issueType: ChatTroubleCategory | null;
+  troubleCount: number;
   mobileTab: MobileEditorTab;
   onMobileTabChange: (tab: MobileEditorTab) => void;
   isSaving: boolean;
@@ -44,6 +46,7 @@ type MobileCountdownConsoleProps = {
     value: HeroCopyFormState[K],
   ) => void;
   onSave: () => void;
+  onReset: () => void;
   onGoLiveOpen: () => void;
   onGoLiveClose: () => void;
   onGoLiveConfirm: () => void;
@@ -59,7 +62,8 @@ export default function MobileCountdownConsole({
   chatMessages,
   chatLoading,
   chatConnected,
-  activeAlert,
+  issueType,
+  troubleCount,
   mobileTab,
   onMobileTabChange,
   isSaving,
@@ -70,6 +74,7 @@ export default function MobileCountdownConsole({
   isGoLiveOpen,
   onFieldChange,
   onSave,
+  onReset,
   onGoLiveOpen,
   onGoLiveClose,
   onGoLiveConfirm,
@@ -91,10 +96,13 @@ export default function MobileCountdownConsole({
           </Link>
           <p className="truncate font-body text-[0.65rem] text-brand-muted">{adminEmail}</p>
         </div>
+
+        <ResponsiveStatusBanner isLive={isLive} />
+
         <CountdownPreviewPlayer playbackUrl={playbackUrl} className="rounded-none border-0" />
       </div>
 
-      <div className="py-2">
+      <div className="p-3">
         <ResponsiveStatusStrip opsStream={opsStream} variant="mobile" />
       </div>
 
@@ -124,12 +132,18 @@ export default function MobileCountdownConsole({
           <ShowSchedulePanel
             formState={formState}
             canEdit={roleGate.canEdit}
+            canSave={roleGate.canSave}
+            isSaving={isSaving}
+            saveSuccess={saveSuccess}
+            saveError={saveError}
             onFieldChange={onFieldChange}
+            onSave={onSave}
+            onReset={onReset}
           />
           <PermissionsPanel role={roleGate.role} />
         </div>
       ) : (
-        <div className="px-3 py-3">
+        <div className="min-h-[45vh] px-3 py-3">
           <RealtimeChatFeed
             messages={chatMessages}
             isLoading={chatLoading}
@@ -151,7 +165,8 @@ export default function MobileCountdownConsole({
       />
 
       <TroubleAlertPopup
-        alert={activeAlert}
+        issueType={issueType}
+        count={troubleCount}
         onClear={onClearAlert}
         canClear={roleGate.canClearAlerts}
         variant="mobile"
@@ -160,6 +175,7 @@ export default function MobileCountdownConsole({
       <GoLiveConfirmModal
         isOpen={isGoLiveOpen}
         isLaunching={isLaunching}
+        alreadyLive={isLive}
         onClose={onGoLiveClose}
         onConfirm={onGoLiveConfirm}
       />

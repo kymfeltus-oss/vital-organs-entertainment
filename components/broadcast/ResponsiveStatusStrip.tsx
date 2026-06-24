@@ -7,22 +7,27 @@ type ResponsiveStatusStripProps = {
   variant: "desktop" | "mobile";
 };
 
+type MetricStatus = "healthy" | "warning" | "critical" | "neutral";
+
 function MetricBox({
   label,
   value,
-  alert = false,
-  fault = false,
+  statusLabel,
+  status = "neutral",
 }: {
   label: string;
   value: string;
-  alert?: boolean;
-  fault?: boolean;
+  statusLabel: string;
+  status?: MetricStatus;
 }) {
-  const tone = fault
-    ? "border-red-500/70 text-red-400 motion-safe:animate-pulse"
-    : alert
-      ? "border-amber-500/40 text-amber-400 motion-safe:animate-pulse"
-      : "border-brand-border text-zinc-300";
+  const tone =
+    status === "critical"
+      ? "border-red-500/70 text-red-400 motion-safe:animate-pulse"
+      : status === "warning"
+        ? "border-amber-500/40 text-amber-400 motion-safe:animate-pulse"
+        : status === "healthy"
+          ? "border-emerald-500/30 text-emerald-400"
+          : "border-brand-border text-white";
 
   return (
     <div className={`rounded-lg border bg-brand-black/50 p-2.5 ${tone}`}>
@@ -30,6 +35,9 @@ function MetricBox({
         {label}
       </p>
       <p className="mt-1 font-mono text-xs font-bold tabular-nums">{value}</p>
+      <p className="mt-1 font-ui text-[0.46rem] font-bold uppercase tracking-[0.12em] text-brand-muted">
+        {statusLabel}
+      </p>
     </div>
   );
 }
@@ -40,49 +48,91 @@ export default function ResponsiveStatusStrip({
 }: ResponsiveStatusStripProps) {
   const dropped = opsStream?.droppedFramesPercent ?? 0;
   const latency = opsStream?.latencySeconds ?? 0;
-  const droppedAlert = dropped > 1;
-  const latencyAlert = latency > 4;
+  const droppedWarning = dropped > 1;
+  const latencyWarning = latency > 4;
   const fatalError = opsStream?.fatalError ?? null;
   const ingestConnected = opsStream?.ingestStatus === "connected";
+  const ingestError = opsStream?.ingestStatus === "error";
 
-  const ingestLabel = ingestConnected
-    ? "Connected"
-    : opsStream?.ingestStatus === "error"
-      ? "Error"
-      : "Standby";
+  const ingestStatus: MetricStatus = fatalError || ingestError
+    ? "critical"
+    : ingestConnected
+      ? "healthy"
+      : "warning";
+
+  const droppedStatus: MetricStatus = fatalError
+    ? "critical"
+    : droppedWarning
+      ? "warning"
+      : dropped > 0
+        ? "healthy"
+        : "neutral";
+
+  const latencyStatus: MetricStatus = fatalError
+    ? "critical"
+    : latencyWarning
+      ? "warning"
+      : latency > 0
+        ? "healthy"
+        : "neutral";
 
   const resolution = opsStream?.resolutionLabel ?? "—";
+  const bitrateMbps = opsStream?.bitrateMbps;
   const bitrate =
-    opsStream?.bitrateMbps && opsStream.bitrateMbps > 0
-      ? `${opsStream.bitrateMbps.toFixed(1)} Mbps`
+    bitrateMbps != null && bitrateMbps > 0
+      ? `${bitrateMbps.toFixed(1)} Mbps`
       : "—";
 
-  const stripClass = fatalError
-    ? "border-red-500/70"
-    : "border-brand-border";
+  const bitrateStatus: MetricStatus =
+    bitrateMbps != null && bitrateMbps > 0 ? "healthy" : "neutral";
+
+  const stripClass = fatalError ? "border-red-500/70" : "border-brand-border";
 
   if (variant === "mobile") {
     return (
-      <div className={`mx-3 rounded-lg border bg-brand-panel/60 p-2 ${stripClass}`}>
-        <div className="grid grid-cols-2 gap-2 text-[11px]">
+      <div className={`rounded-lg border bg-brand-panel/60 p-2 ${stripClass}`}>
+        <div className="grid grid-cols-2 gap-2">
           <MetricBox
             label="Ingest Port"
-            value={`RTMP · ${ingestLabel}`}
-            fault={Boolean(fatalError)}
-            alert={ingestConnected}
+            value="RTMP 1935"
+            statusLabel={
+              ingestStatus === "critical"
+                ? "Critical"
+                : ingestConnected
+                  ? "Connected"
+                  : "Warning"
+            }
+            status={ingestStatus}
           />
-          <MetricBox label="Resolution" value={resolution} />
           <MetricBox
             label="Dropped Frames"
             value={`${dropped.toFixed(2)}%`}
-            alert={droppedAlert}
-            fault={Boolean(fatalError)}
+            statusLabel={
+              droppedStatus === "critical"
+                ? "Critical"
+                : droppedWarning
+                  ? "Warning"
+                  : "Good"
+            }
+            status={droppedStatus}
           />
           <MetricBox
             label="Latency"
             value={`${latency.toFixed(1)}s`}
-            alert={latencyAlert}
-            fault={Boolean(fatalError)}
+            statusLabel={
+              latencyStatus === "critical"
+                ? "Critical"
+                : latencyWarning
+                  ? "Warning"
+                  : "Good"
+            }
+            status={latencyStatus}
+          />
+          <MetricBox
+            label="Bitrate"
+            value={bitrate}
+            statusLabel={bitrateStatus === "healthy" ? "Stable" : "—"}
+            status={bitrateStatus}
           />
         </div>
       </div>
@@ -93,24 +143,31 @@ export default function ResponsiveStatusStrip({
     <div className={`grid grid-cols-5 gap-2 rounded-xl border bg-brand-panel/40 p-3 ${stripClass}`}>
       <MetricBox
         label="Ingest Port"
-        value={`RTMP 1935 · ${ingestLabel}`}
-        alert={ingestConnected}
-        fault={Boolean(fatalError)}
+        value={`RTMP 1935 · ${ingestConnected ? "Connected" : ingestError ? "Error" : "Standby"}`}
+        statusLabel={
+          ingestStatus === "critical" ? "Critical" : ingestConnected ? "Connected" : "Warning"
+        }
+        status={ingestStatus}
       />
-      <MetricBox label="Resolution" value={resolution} />
+      <MetricBox label="Resolution" value={resolution} statusLabel="Clear HD" status="neutral" />
       <MetricBox
         label="Dropped Frames"
         value={`${dropped.toFixed(2)}%`}
-        alert={droppedAlert}
-        fault={Boolean(fatalError)}
+        statusLabel={droppedWarning ? "Warning" : "Good"}
+        status={droppedStatus}
       />
       <MetricBox
         label="Latency"
         value={`${latency.toFixed(1)}s`}
-        alert={latencyAlert}
-        fault={Boolean(fatalError)}
+        statusLabel={latencyWarning ? "Warning" : "Good"}
+        status={latencyStatus}
       />
-      <MetricBox label="Bitrate" value={bitrate} />
+      <MetricBox
+        label="Bitrate"
+        value={bitrate}
+        statusLabel={bitrateStatus === "healthy" ? "Stable" : "—"}
+        status={bitrateStatus}
+      />
     </div>
   );
 }

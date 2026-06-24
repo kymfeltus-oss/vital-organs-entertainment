@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
       success: true,
       serverUrl,
       streamKey,
+      primaryRtmpIngestUrl,
       ...ingest,
       updatedAt: data.updated_at,
       updatedBy: data.updated_by,

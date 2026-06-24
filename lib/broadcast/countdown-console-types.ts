@@ -37,7 +37,13 @@ export type TroubleAlert = {
   fix: string;
 };
 
-export type UserRole = "admin" | "producer" | "broadcast_operator" | "viewer";
+export type UserRole =
+  | "admin"
+  | "producer"
+  | "broadcast_operator"
+  | "prayer_team"
+  | "camera_crew"
+  | "unknown";
 
 export type RoleGateResult = {
   role: UserRole;
@@ -52,7 +58,7 @@ export const HERO_FIELD_LIMITS = {
   eyebrow: 80,
   headline: 120,
   subtitle: 120,
-  statusLabel: 40,
+  statusLabel: 80,
 } as const;
 
 export type HeroCopyFieldKey = keyof typeof HERO_FIELD_LIMITS;

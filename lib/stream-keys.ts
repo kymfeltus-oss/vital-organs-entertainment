@@ -41,6 +41,16 @@ export type RtmpIngestParts = {
   fullUrl: string;
 };
 
+const RTMP_APP_MOUNT_SEGMENTS = new Set(["live", "app", "stream"]);
+
+function isLikelyDedicatedStreamKey(segment: string): boolean {
+  const trimmed = segment.trim();
+  if (!trimmed) return false;
+  if (trimmed.startsWith(`${DEFAULT_STREAM_KEY_PREFIX}_`)) return true;
+  if (trimmed.startsWith("re_")) return true;
+  return trimmed.length >= 12 && !RTMP_APP_MOUNT_SEGMENTS.has(trimmed.toLowerCase());
+}
+
 /** Split a stored RTMP ingest URL into encoder server + stream key fields. */
 export function splitRtmpIngestUrl(fullUrl: string | null | undefined): RtmpIngestParts | null {
   const trimmed = fullUrl?.trim() ?? "";
@@ -51,8 +61,20 @@ export function splitRtmpIngestUrl(fullUrl: string | null | undefined): RtmpInge
     const segments = parsed.pathname.split("/").filter(Boolean);
     if (segments.length === 0) return null;
 
+    if (segments.length === 1) {
+      const only = segments[0] ?? "";
+      if (!isLikelyDedicatedStreamKey(only)) return null;
+      return {
+        serverUrl: `${parsed.protocol}//${parsed.host}`,
+        streamKey: only,
+        fullUrl: trimmed,
+      };
+    }
+
     const streamKey = segments[segments.length - 1] ?? "";
-    if (!streamKey) return null;
+    if (!streamKey || RTMP_APP_MOUNT_SEGMENTS.has(streamKey.toLowerCase())) {
+      return null;
+    }
 
     const serverPath = segments.slice(0, -1);
     const serverUrl = `${parsed.protocol}//${parsed.host}${
@@ -63,4 +85,10 @@ export function splitRtmpIngestUrl(fullUrl: string | null | undefined): RtmpInge
   } catch {
     return null;
   }
+}
+
+export function resolveRtmpIngestCredentials(
+  fullUrl: string | null | undefined,
+): RtmpIngestParts | null {
+  return splitRtmpIngestUrl(fullUrl);
 }

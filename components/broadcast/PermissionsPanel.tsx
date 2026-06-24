@@ -7,9 +7,23 @@ type PermissionsPanelProps = {
   role: UserRole;
 };
 
-export default function PermissionsPanel({ role }: PermissionsPanelProps) {
-  const isPrivileged = role === "admin" || role === "producer";
+function roleDescription(role: UserRole): string {
+  if (role === "admin" || role === "producer") {
+    return "You have full access to edit and launch.";
+  }
+  if (role === "broadcast_operator") {
+    return "Monitor-only mode. You can watch telemetry and chat, but cannot save or go live.";
+  }
+  if (role === "camera_crew") {
+    return "Camera crew access. Countdown editor controls are read-only on this console.";
+  }
+  if (role === "prayer_team") {
+    return "Prayer team access. Countdown editor controls are read-only on this console.";
+  }
+  return "Read-only access — editor controls are disabled.";
+}
 
+export default function PermissionsPanel({ role }: PermissionsPanelProps) {
   return (
     <section className="glass-panel rounded-2xl border border-brand-border p-4 sm:p-5">
       <div className="mb-3 flex items-center gap-2">
@@ -25,11 +39,7 @@ export default function PermissionsPanel({ role }: PermissionsPanelProps) {
       </p>
 
       <p className="mt-2 font-body text-sm leading-relaxed text-brand-muted">
-        {isPrivileged
-          ? "You have full access to edit and launch."
-          : role === "viewer"
-            ? "View-only access — editor controls are hidden."
-            : "Read-only mode. You can monitor, but cannot save or launch."}
+        {roleDescription(role)}
       </p>
     </section>
   );

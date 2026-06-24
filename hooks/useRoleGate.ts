@@ -13,14 +13,17 @@ function mapOpsRoleToUserRole(role: OpsTeamRole | null | undefined): UserRole {
       return "producer";
     case "broadcast_operator":
       return "broadcast_operator";
+    case "prayer_team":
+      return "prayer_team";
+    case "camera_crew":
+      return "camera_crew";
     default:
-      return "broadcast_operator";
+      return "unknown";
   }
 }
 
 function buildGateResult(role: UserRole, canStreamMutate: boolean): RoleGateResult {
   const isPrivileged = role === "admin" || role === "producer";
-  const isOperator = role === "broadcast_operator";
 
   return {
     role,
@@ -28,7 +31,7 @@ function buildGateResult(role: UserRole, canStreamMutate: boolean): RoleGateResu
     canSave: isPrivileged,
     canGoLive: isPrivileged && canStreamMutate,
     canClearAlerts: isPrivileged,
-    isReadOnly: isOperator || role === "viewer",
+    isReadOnly: !isPrivileged,
   };
 }
 
@@ -36,7 +39,7 @@ const DEFAULT_GATE = buildGateResult("broadcast_operator", false);
 
 /** Resolve crew permissions for countdown production console. */
 export function useRoleGate(): RoleGateResult {
-  const [role, setRole] = useState<UserRole>("broadcast_operator");
+  const [role, setRole] = useState<UserRole>("unknown");
   const [canStreamMutate, setCanStreamMutate] = useState(false);
 
   useEffect(() => {
@@ -57,7 +60,7 @@ export function useRoleGate(): RoleGateResult {
 
         const mapped = isOpsTeamRole(data.role)
           ? mapOpsRoleToUserRole(data.role)
-          : "broadcast_operator";
+          : "unknown";
 
         if (!cancelled) {
           setRole(mapped);
@@ -65,7 +68,7 @@ export function useRoleGate(): RoleGateResult {
         }
       } catch {
         if (!cancelled) {
-          setRole("broadcast_operator");
+          setRole("unknown");
           setCanStreamMutate(false);
         }
       }

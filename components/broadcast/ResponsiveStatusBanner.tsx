@@ -11,7 +11,7 @@ export default function ResponsiveStatusBanner({ isLive }: ResponsiveStatusBanne
         className="border-b border-brand-pink/20 bg-brand-pink/10 py-1.5 text-center font-ui text-xs font-semibold uppercase tracking-[0.14em] text-brand-pink motion-safe:animate-pulse"
         role="status"
       >
-        🔴 Broadcasting Live to Attendees
+        🔴 Broadcasting Live
       </div>
     );
   }

@@ -34,7 +34,7 @@ export default function GoLiveConfirmModal({
               id="countdown-go-live-title"
               className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.18em] text-brand-pink"
             >
-              Confirm Production Launch
+              Confirm Go Live
             </h2>
           </div>
           <button
@@ -50,8 +50,8 @@ export default function GoLiveConfirmModal({
 
         <p className="mt-4 font-body text-sm leading-relaxed text-brand-muted">
           {alreadyLive
-            ? "The broadcast is already live. Confirming again re-runs the platform go-live action and re-syncs the attendee countdown schedule for /live."
-            : "Are you sure you want to drop the runway gate and broadcast live to attendees? This runs the production go-live sequence and opens the public live experience."}
+            ? "The broadcast is already live. Confirming again re-runs the go-live action and re-syncs the attendee schedule."
+            : "Are you sure you want to broadcast live to attendees?"}
         </p>
 
         <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
@@ -80,7 +80,7 @@ export default function GoLiveConfirmModal({
             {isLaunching ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             ) : null}
-            <span>{isLaunching ? "Launching…" : "Yes, Launch Show"}</span>
+            <span>{isLaunching ? "Launching…" : "Confirm Go Live"}</span>
           </button>
         </div>
       </div>

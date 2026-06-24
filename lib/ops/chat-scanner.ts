@@ -11,11 +11,13 @@ const TROUBLE_KEYWORDS: Record<ChatTroubleCategory, readonly string[]> = {
     "cant hear anything",
     "can't hear anything",
     "audio not working",
+    "sound not working",
   ],
   video: [
     "cant see",
     "can't see",
     "black screen",
+    "screen black",
     "frozen",
     "blurry",
     "cannot see",

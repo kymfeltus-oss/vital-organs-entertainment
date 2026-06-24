@@ -35,7 +35,7 @@ export default function RealtimeChatFeed({
       <div className="mb-2 flex items-center justify-between gap-2">
         <h3 className="flex items-center gap-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.16em] text-white">
           <MessageSquare className="h-4 w-4 text-brand-blue" aria-hidden="true" />
-          Live Attendee Chat
+          💬 Live Attendee Chat
         </h3>
         <span
           className={`font-ui text-[0.48rem] font-bold uppercase tracking-[0.12em] ${

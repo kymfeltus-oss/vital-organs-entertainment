@@ -1,31 +1,28 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { HeroCopyFormState } from "@/lib/broadcast/countdown-console-types";
 import { DEFAULT_HERO_COPY_FORM } from "@/lib/broadcast/countdown-console-types";
 import {
   ADMIN_COUNTDOWN_API_PATH,
-  OPS_GO_LIVE_API_PATH,
+  OPS_STREAM_ACTION_API_PATH,
 } from "@/lib/broadcastRoutes";
 import { COUNTDOWN_CONFIG_UPDATED_EVENT } from "@/lib/live/countdown-config-sync";
 import {
-  DEFAULT_COUNTDOWN_CONFIG,
   type EventCountdownConfig,
 } from "@/lib/live/countdown-config";
+import { validateCountdownScheduleTimes } from "@/lib/live/datetime-local";
+import {
+  isoToScheduleDatetimeLocal,
+  resolveScheduleTimezone,
+  scheduleDatetimeLocalToIso,
+} from "@/lib/live/schedule-timezone";
 import { saveLastKnownCountdown } from "@/lib/parable/last-known-good";
 
-function pad2(value: number): string {
-  return String(value).padStart(2, "0");
-}
-
 export function heroFormFromConfig(config: EventCountdownConfig): HeroCopyFormState {
-  const start = new Date(config.start_time);
-  const showDate = Number.isNaN(start.getTime())
-    ? ""
-    : `${start.getFullYear()}-${pad2(start.getMonth() + 1)}-${pad2(start.getDate())}`;
-  const showTime = Number.isNaN(start.getTime())
-    ? ""
-    : `${pad2(start.getHours())}:${pad2(start.getMinutes())}`;
+  const timezone = resolveScheduleTimezone(config.schedule_timezone);
+  const localStart = isoToScheduleDatetimeLocal(config.start_time, timezone);
+  const [showDate = "", showTime = ""] = localStart.split("T");
 
   return {
     eyebrow: config.eyebrow || DEFAULT_HERO_COPY_FORM.eyebrow,
@@ -34,29 +31,34 @@ export function heroFormFromConfig(config: EventCountdownConfig): HeroCopyFormSt
     statusLabel: config.status_label || DEFAULT_HERO_COPY_FORM.statusLabel,
     showDate,
     showTime,
-    timezone: DEFAULT_HERO_COPY_FORM.timezone,
+    timezone,
   };
-}
-
-function scheduleToIso(showDate: string, showTime: string): string | null {
-  if (!showDate || !showTime) return null;
-  const ms = new Date(`${showDate}T${showTime}`).getTime();
-  if (Number.isNaN(ms)) return null;
-  return new Date(ms).toISOString();
 }
 
 function configFromHeroForm(
   form: HeroCopyFormState,
   base: EventCountdownConfig,
-): EventCountdownConfig {
-  const startIso = scheduleToIso(form.showDate, form.showTime) ?? base.start_time;
+): EventCountdownConfig | null {
+  const timezone = resolveScheduleTimezone(form.timezone);
+  let start_time = base.start_time;
+
+  if (form.showDate && form.showTime) {
+    const iso = scheduleDatetimeLocalToIso(`${form.showDate}T${form.showTime}`, timezone);
+    if (!iso) return null;
+    start_time = iso;
+  }
+
+  const scheduleError = validateCountdownScheduleTimes(start_time, base.end_time);
+  if (scheduleError) return null;
+
   return {
     ...base,
     eyebrow: form.eyebrow.trim(),
     headline: form.headline.trim(),
     subtitle: form.subtitle.trim(),
     status_label: form.statusLabel.trim(),
-    start_time: startIso,
+    start_time,
+    schedule_timezone: timezone,
   };
 }
 
@@ -69,6 +71,7 @@ type UseCountdownHeroEditorResult = {
   config: EventCountdownConfig;
   setField: <K extends keyof HeroCopyFormState>(key: K, value: HeroCopyFormState[K]) => void;
   saveHeroCopyForm: () => Promise<boolean>;
+  resetToLoadedState: () => void;
   launchBroadcast: () => Promise<boolean>;
   isSaving: boolean;
   saveError: string | null;
@@ -81,6 +84,7 @@ type UseCountdownHeroEditorResult = {
 export function useCountdownHeroEditor({
   initialConfig,
 }: UseCountdownHeroEditorOptions): UseCountdownHeroEditorResult {
+  const loadedConfigRef = useRef<EventCountdownConfig>(initialConfig);
   const [config, setConfig] = useState<EventCountdownConfig>(initialConfig);
   const [formState, setFormState] = useState<HeroCopyFormState>(() =>
     heroFormFromConfig(initialConfig),
@@ -100,22 +104,33 @@ export function useCountdownHeroEditor({
     [],
   );
 
-  const mergedConfig = useMemo(
-    () => configFromHeroForm(formState, config),
-    [config, formState],
-  );
+  const resetToLoadedState = useCallback(() => {
+    const loaded = loadedConfigRef.current;
+    setConfig(loaded);
+    setFormState(heroFormFromConfig(loaded));
+    setSaveSuccess(false);
+    setSaveError(null);
+    setLaunchError(null);
+  }, []);
 
   const saveHeroCopyForm = useCallback(async (): Promise<boolean> => {
+    const payload = configFromHeroForm(formState, config);
+    if (!payload) {
+      setSaveError("Enter a valid show date, time, and timezone.");
+      return false;
+    }
+
     setIsSaving(true);
     setSaveError(null);
     setSaveSuccess(false);
 
     try {
-      const payload = configFromHeroForm(formState, config);
       const response = await fetch(ADMIN_COUNTDOWN_API_PATH, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        cache: "no-store",
       });
 
       const data = (await response.json()) as EventCountdownConfig & { error?: string };
@@ -123,6 +138,7 @@ export function useCountdownHeroEditor({
         throw new Error(data.error ?? "Unable to save configuration.");
       }
 
+      loadedConfigRef.current = data;
       setConfig(data);
       setFormState(heroFormFromConfig(data));
       saveLastKnownCountdown(data);
@@ -142,7 +158,7 @@ export function useCountdownHeroEditor({
     setLaunchError(null);
 
     try {
-      const response = await fetch(OPS_GO_LIVE_API_PATH, {
+      const response = await fetch(OPS_STREAM_ACTION_API_PATH, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -150,11 +166,15 @@ export function useCountdownHeroEditor({
         cache: "no-store",
       });
 
-      const data = (await response.json()) as { ok?: boolean; error?: string };
-      if (!response.ok || !data.ok) {
+      const data = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+      };
+      if (!response.ok || !data.success) {
         throw new Error(data.error ?? "Go Live failed.");
       }
 
+      window.dispatchEvent(new Event(COUNTDOWN_CONFIG_UPDATED_EVENT));
       return true;
     } catch (error) {
       setLaunchError(error instanceof Error ? error.message : "Go Live failed.");
@@ -164,11 +184,15 @@ export function useCountdownHeroEditor({
     }
   }, []);
 
+  const mergedConfig =
+    configFromHeroForm(formState, config) ?? config;
+
   return {
     formState,
     config: mergedConfig,
     setField,
     saveHeroCopyForm,
+    resetToLoadedState,
     launchBroadcast,
     isSaving,
     saveError,
@@ -177,5 +201,3 @@ export function useCountdownHeroEditor({
     launchError,
   };
 }
-
-export { DEFAULT_COUNTDOWN_CONFIG };

@@ -2,6 +2,7 @@
 
 import { AlertTriangle, EyeOff, VolumeX, X } from "lucide-react";
 import type { TroubleAlert } from "@/lib/broadcast/countdown-console-types";
+import { TROUBLE_ALERT_COPY } from "@/lib/broadcast/countdown-console-types";
 import type { ChatTroubleCategory } from "@/lib/ops/chat-scanner";
 
 type TroubleAlertPopupProps = {
@@ -36,12 +37,18 @@ export default function TroubleAlertPopup({
   const message =
     alert?.message ??
     (activeType === "audio"
-      ? "Multiple viewers are reporting they CANNOT HEAR the broadcast right now!"
-      : "Multiple viewers are reporting they CANNOT SEE the broadcast right now!");
+      ? TROUBLE_ALERT_COPY.audio.message
+      : activeType === "video"
+        ? TROUBLE_ALERT_COPY.video.message
+        : "");
 
   const fix =
     alert?.fix ??
-    "Fix check: verify mixer faders, Restream ingest, and vMix encoder output.";
+    (activeType === "audio"
+      ? TROUBLE_ALERT_COPY.audio.fix
+      : activeType === "video"
+        ? TROUBLE_ALERT_COPY.video.fix
+        : "");
 
   return (
     <div
@@ -63,7 +70,7 @@ export default function TroubleAlertPopup({
             <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>Audience Alert</span>
           </h4>
-          <p className="mt-1 font-body text-sm font-medium leading-snug text-zinc-200">{message}</p>
+          <p className="mt-1 font-body text-sm font-medium leading-snug text-white">{message}</p>
           <p className="mt-2 font-body text-[0.68rem] italic leading-snug text-brand-muted">{fix}</p>
         </div>
 

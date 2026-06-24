@@ -31,7 +31,10 @@ export function toOpsStreamTelemetryView(
       ? "Stream ingest unavailable — verify Restream and encoder paths."
       : null;
 
-  const bitrateMbps = opsState.isLive ? 4.2 : 0;
+  const bitrateMbps =
+    opsState.bitrateKbps != null && opsState.bitrateKbps > 0
+      ? opsState.bitrateKbps / 1000
+      : undefined;
 
   return {
     isLive: opsState.isLive,
