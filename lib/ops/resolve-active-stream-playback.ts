@@ -1,4 +1,8 @@
 import { isValidHlsUrl } from "@/lib/live/hls";
+import {
+  DEV_MANIFEST_FALLBACK_HLS,
+  isDevManifestFallbackEnabled,
+} from "@/lib/live/manifest-dev-fallback";
 import type { OpsSnapshot } from "@/lib/ops/types";
 
 type StreamPlaybackFields = Pick<
@@ -36,5 +40,22 @@ export function resolveActiveOpsPreviewHlsUrl(
 
   if (isValidHlsUrl(preview)) return preview;
   if (isValidHlsUrl(primary)) return primary;
+  return null;
+}
+
+/**
+ * Broadcast desk camera preview — uses dev Mux fallback when no valid HLS is stored,
+ * matching RestreamConfigModal "Test Connection" desk-test behavior.
+ */
+export function resolveBroadcastDeskPreviewHlsUrl(
+  stream: StreamPlaybackFields | null | undefined,
+): string | null {
+  const resolved = resolveActiveOpsPreviewHlsUrl(stream);
+  if (resolved) return resolved;
+
+  if (isDevManifestFallbackEnabled()) {
+    return DEV_MANIFEST_FALLBACK_HLS;
+  }
+
   return null;
 }

@@ -14,7 +14,7 @@ function statusLabel(status: SystemHealthRow["status"]): string {
     case "critical":
       return "Critical";
     default:
-      return "Unknown";
+      return "Unavailable";
   }
 }
 

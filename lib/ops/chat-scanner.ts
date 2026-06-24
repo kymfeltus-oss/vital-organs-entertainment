@@ -10,6 +10,7 @@ const TROUBLE_KEYWORDS: Record<ChatTroubleCategory, readonly string[]> = {
     "cannot hear",
     "cant hear anything",
     "can't hear anything",
+    "audio not working",
   ],
   video: [
     "cant see",
@@ -20,6 +21,7 @@ const TROUBLE_KEYWORDS: Record<ChatTroubleCategory, readonly string[]> = {
     "cannot see",
     "no video",
     "blank screen",
+    "video not working",
   ],
 };
 

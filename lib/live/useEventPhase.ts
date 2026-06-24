@@ -12,7 +12,12 @@ export function useEventPhase(startTime: string, endTime: string): EventCountdow
   );
 
   useEffect(() => {
-    const tick = () => setPhase(computeEventCountdownPhase(startTime, endTime));
+    const tick = () => {
+      setPhase((previous) => {
+        const next = computeEventCountdownPhase(startTime, endTime);
+        return previous === next ? previous : next;
+      });
+    };
     tick();
     const intervalId = window.setInterval(tick, 1_000);
     return () => window.clearInterval(intervalId);

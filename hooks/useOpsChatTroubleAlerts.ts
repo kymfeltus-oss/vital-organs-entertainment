@@ -13,6 +13,7 @@ import {
   parseTroubleCreatedAtMs,
   pruneTroubleComplaints,
   registerTroubleComplaint,
+  TROUBLE_ALERT_WINDOW_MS,
   type TroubleComplaint,
 } from "@/lib/ops/trouble-alert-engine";
 import {
@@ -24,6 +25,8 @@ import { getSupabase } from "@/lib/supabase/client";
 
 type UseOpsChatTroubleAlertsOptions = {
   enabled?: boolean;
+  /** When false, skip Supabase subscription — feed messages via ingestMessage (polled chat). */
+  realtime?: boolean;
 };
 
 type UseOpsChatTroubleAlertsResult = {
@@ -31,6 +34,10 @@ type UseOpsChatTroubleAlertsResult = {
   count: number;
   audioCount: number;
   videoCount: number;
+  windowComplaintCount: number;
+  windowAudioCount: number;
+  windowVideoCount: number;
+  ingestMessage: (messageId: string, content: string, createdAt?: string) => void;
   clear: () => void;
 };
 
@@ -38,7 +45,7 @@ type UseOpsChatTroubleAlertsResult = {
 export function useOpsChatTroubleAlerts(
   options: UseOpsChatTroubleAlertsOptions = {},
 ): UseOpsChatTroubleAlertsResult {
-  const { enabled = true } = options;
+  const { enabled = true, realtime = true } = options;
   const instanceId = useId().replace(/:/g, "");
   const channelRef = useRef<Awaited<ReturnType<typeof createRealtimeChannel>> | null>(null);
   const scannedMessageIdsRef = useRef<Set<string>>(new Set());
@@ -47,7 +54,15 @@ export function useOpsChatTroubleAlerts(
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
-    const intervalId = window.setInterval(() => setNowMs(Date.now()), 1_000);
+    const intervalId = window.setInterval(() => {
+      const nextNowMs = Date.now();
+      setNowMs(nextNowMs);
+      setComplaints((current) => {
+        const next = pruneTroubleComplaints(current, nextNowMs);
+        if (next.length === current.length) return current;
+        return next;
+      });
+    }, 1_000);
     return () => window.clearInterval(intervalId);
   }, []);
 
@@ -75,10 +90,12 @@ export function useOpsChatTroubleAlerts(
   }, []);
 
   useEffect(() => {
-    if (!enabled) {
-      setComplaints([]);
-      scannedMessageIdsRef.current.clear();
-      setCooldownUntilMs(0);
+    if (!enabled || !realtime) {
+      if (!enabled) {
+        scannedMessageIdsRef.current.clear();
+        setCooldownUntilMs(0);
+        setComplaints((current) => (current.length === 0 ? current : []));
+      }
       return;
     }
 
@@ -153,11 +170,19 @@ export function useOpsChatTroubleAlerts(
         await teardownRealtimeChannel(supabase, channel);
       })();
     };
-  }, [enabled, instanceId, registerTroubleMessage]);
+  }, [enabled, instanceId, realtime, registerTroubleMessage]);
 
-  useEffect(() => {
-    setComplaints((current) => pruneTroubleComplaints(current, nowMs));
-  }, [nowMs]);
+  const windowCounts = useMemo(() => {
+    const windowStartMs = nowMs - TROUBLE_ALERT_WINDOW_MS;
+    const recent = complaints.filter((complaint) => complaint.createdAtMs >= windowStartMs);
+    const windowAudioCount = recent.filter((complaint) => complaint.category === "audio").length;
+    const windowVideoCount = recent.filter((complaint) => complaint.category === "video").length;
+    return {
+      windowComplaintCount: recent.length,
+      windowAudioCount,
+      windowVideoCount,
+    };
+  }, [complaints, nowMs]);
 
   const evaluation = useMemo(
     () => evaluateTroubleAlert(complaints, nowMs, cooldownUntilMs),
@@ -169,6 +194,10 @@ export function useOpsChatTroubleAlerts(
     count: evaluation.count,
     audioCount: evaluation.audioCount,
     videoCount: evaluation.videoCount,
+    windowComplaintCount: windowCounts.windowComplaintCount,
+    windowAudioCount: windowCounts.windowAudioCount,
+    windowVideoCount: windowCounts.windowVideoCount,
+    ingestMessage: registerTroubleMessage,
     clear,
   };
 }

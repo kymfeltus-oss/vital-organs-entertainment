@@ -5,7 +5,7 @@ import RestreamCameraCard from "@/components/broadcast/RestreamCameraCard";
 import SourceInputCard, {
   MediaSlotPlaceholderCard,
 } from "@/components/broadcast/SourceInputCard";
-import { resolveActiveOpsPreviewHlsUrl } from "@/lib/ops/resolve-active-stream-playback";
+import { resolveBroadcastDeskPreviewHlsUrl } from "@/lib/ops/resolve-active-stream-playback";
 import { resolveMobileOperatorPreviewHlsUrl } from "@/lib/ops/resolve-mobile-operator-stream";
 import type { BroadcastSource } from "@/lib/broadcast/types";
 import type { OpsSnapshot } from "@/lib/ops/types";
@@ -40,8 +40,10 @@ export default function CameraGrid({
   const engineMode = opsStream?.studioEngineMode ?? "restream_api";
   const activeMobileStreamKey = opsStream?.activeMobileStreamKey ?? null;
   const mobileOperatorHlsUrl = resolveMobileOperatorPreviewHlsUrl(activeMobileStreamKey);
-  const previewHlsUrl = monitorHlsUrl ?? resolveActiveOpsPreviewHlsUrl(opsStream);
-  const cameraGuyHlsUrl = mobileOperatorHlsUrl ?? previewHlsUrl;const isFailoverActive = opsStream?.activeSource === "backup";
+  const previewHlsUrl = monitorHlsUrl ?? resolveBroadcastDeskPreviewHlsUrl(opsStream);
+  const cameraGuyHlsUrl = mobileOperatorHlsUrl ?? previewHlsUrl;
+
+  const isFailoverActive = opsStream?.activeSource === "backup";
   const isInternalStudio = engineMode === "internal_studio";
   const pullConfigured = opsStream?.primaryRtmpPullConfigured === true;
   const previewConfigured = opsStream?.cameraPreviewConfigured === true;

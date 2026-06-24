@@ -1,6 +1,23 @@
 const HOLDING_STREAM_HOURS = 4;
 
-/** Build a future pre-show window so /live routes to the holding room. */
+/** Minutes until go-live — inside the 2-hour holding-room window on /live. */
+const HOLDING_ROOM_START_OFFSET_MS = 90 * 60 * 1000;
+
+/** Build a near-term pre-show window so /live opens the holding room immediately. */
+export function buildHoldingRoomScheduleNow(nowMs = Date.now()): {
+  start_time: string;
+  end_time: string;
+} {
+  const startMs = nowMs + HOLDING_ROOM_START_OFFSET_MS;
+  const endMs = startMs + HOLDING_STREAM_HOURS * 60 * 60 * 1000;
+
+  return {
+    start_time: new Date(startMs).toISOString(),
+    end_time: new Date(endMs).toISOString(),
+  };
+}
+
+/** Build a far-future announcement window (public /countdown surface). */
 export function buildFutureHoldingSchedule(nowMs = Date.now()): {
   start_time: string;
   end_time: string;

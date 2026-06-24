@@ -28,10 +28,13 @@ export type OpsStreamState = {
   fps: number;
   droppedFramesPercent: number;
   latencySeconds: number;
+  bitrateKbps: number | null;
   outputsActive: number;
   outputsTotal: number;
   localInputsActive: number;
   audioLevels: OpsStreamAudioLevels;
+  /** True when Broadcast Desk encoder telemetry is wired in. */
+  encoderTelemetryAvailable: boolean;
 };
 
 export type OpsStreamTelemetryInput = {
@@ -45,7 +48,12 @@ export type OpsStreamTelemetryInput = {
   localPeerCount?: number;
 };
 
-const SILENT_METER_FLOOR = 4;
+export const SILENT_METER_FLOOR = 4;
+
+export function isMasterAudioSilent(opsState: OpsStreamState | null): boolean {
+  if (!opsState?.isLive) return false;
+  return opsState.audioLevels.master <= SILENT_METER_FLOOR;
+}
 
 export function formatAudioDb(level: number | null | undefined): string {
   if (level == null || level <= SILENT_METER_FLOOR) return "-∞ dB";
@@ -155,28 +163,19 @@ export function buildOpsStreamState(input: OpsStreamTelemetryInput): OpsStreamSt
   const isLive = stream?.isLive === true;
   const studioEngineMode = stream?.studioEngineMode ?? DEFAULT_STUDIO_ENGINE_MODE;
 
+  const encoderTelemetryAvailable = Boolean(streamTelemetry);
+
   const latencySeconds =
-    streamTelemetry?.latencyMs != null
-      ? streamTelemetry.latencyMs / 1000
-      : isLive
-        ? 2.4
-        : 0;
+    streamTelemetry?.latencyMs != null ? streamTelemetry.latencyMs / 1000 : 0;
 
-  const droppedFramesPercent = isLive
-    ? Math.max(
-        streamTelemetry?.packetLossPercent ?? 0,
-        streamTelemetry?.droppedFrames && streamTelemetry.droppedFrames > 0 ? 1.2 : 0,
-      )
-    : 0;
+  const droppedFramesPercent = streamTelemetry?.packetLossPercent ?? 0;
 
-  const fps =
-    isLive && streamTelemetry?.destinations?.[0]
-      ? 29.97
-      : isLive
-        ? 29.97
-        : 0;
+  const fps = 0;
 
-  const videoResolution = isLive ? "1920×1080" : "—";
+  const videoResolution = "—";
+
+  const bitrateKbps =
+    streamTelemetry && streamTelemetry.bitrateKbps > 0 ? streamTelemetry.bitrateKbps : null;
 
   const localInputsActive =
     studioEngineMode === "internal_studio"
@@ -202,9 +201,11 @@ export function buildOpsStreamState(input: OpsStreamTelemetryInput): OpsStreamSt
     fps,
     droppedFramesPercent,
     latencySeconds,
+    bitrateKbps,
     outputsActive: outputs.provisionedCount,
     outputsTotal: outputs.totalLanes,
     localInputsActive,
     audioLevels: buildOpsStreamAudioLevels(audioChannels, localWebcamAudioLevel),
+    encoderTelemetryAvailable,
   };
 }

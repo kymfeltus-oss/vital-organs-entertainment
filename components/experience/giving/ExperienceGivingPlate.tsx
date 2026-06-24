@@ -45,6 +45,9 @@ export default function ExperienceGivingPlate({
     const formTopPct = Math.min(paintedBottomPct + 1.25, 62);
 
     overlay.style.setProperty("--vital-giving-form-top", `${formTopPct}%`);
+    // #region agent log
+    fetch('http://127.0.0.1:7924/ingest/91e1e0f3-2fd3-4620-91fc-790155003627',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ac75e2'},body:JSON.stringify({sessionId:'ac75e2',location:'ExperienceGivingPlate.tsx:sync',message:'form placement',data:{formTopPct,paintedBottomPct,stageH:stageRect.height,stageW:stageRect.width},timestamp:Date.now(),hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
   }, []);
 
   useEffect(() => {

@@ -21,7 +21,7 @@ const PRODUCTION_TOOLS: NavGroup = {
   items: [
     { label: "Countdown Admin", href: "/ops/countdown" },
     { label: "Broadcast Desk", href: "/dashboard/broadcast" },
-    { label: "Live Hub", href: "/ops/live-hub/console" },
+    { label: "Live Hub", href: "/ops/live-hub" },
   ],
 };
 

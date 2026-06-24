@@ -17,7 +17,7 @@ export default function ReadOnlyDashboardNotice() {
         <Link href="/dashboard/broadcast" className="text-brand-blue transition hover:text-white">
           Broadcast Desk
         </Link>
-        <Link href="/ops/live-hub/console" className="text-brand-blue transition hover:text-white">
+        <Link href="/ops/live-hub" className="text-brand-blue transition hover:text-white">
           Live Hub
         </Link>
       </nav>

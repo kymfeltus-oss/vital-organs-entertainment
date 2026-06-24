@@ -23,6 +23,7 @@ import MobileEditorTabs, {
   type MobileEditorTab,
 } from "@/components/broadcast/MobileEditorTabs";
 import TroubleAlertPopup from "@/components/broadcast/TroubleAlertPopup";
+import CountdownAdminChatDock from "@/components/ops/CountdownAdminChatDock";
 import PublicCountdownChatMonitor from "@/components/countdown/PublicCountdownChatMonitor";
 import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
 import { useCountdownChatTroubleAlerts } from "@/hooks/useCountdownChatTroubleAlerts";
@@ -37,10 +38,18 @@ import {
 } from "@/lib/live/countdown-config";
 import { COUNTDOWN_CONFIG_UPDATED_EVENT } from "@/lib/live/countdown-config-sync";
 import {
+  OPS_STREAM_ACTION_API_PATH,
+  ADMIN_COUNTDOWN_API_PATH,
+} from "@/lib/broadcastRoutes";
+import {
+  datetimeLocalValueToIso,
+  isoToDatetimeLocalValue,
+  validateCountdownScheduleTimes,
+} from "@/lib/live/datetime-local";
+import {
   alignStartForHoldingRoom,
-  buildFutureHoldingSchedule,
+  buildHoldingRoomScheduleNow,
 } from "@/lib/live/countdown-schedule-helpers";
-import { OPS_GO_LIVE_API_PATH } from "@/lib/broadcastRoutes";
 import { saveLastKnownCountdown } from "@/lib/parable/last-known-good";
 import { computeCountdown } from "@/lib/live/event-lobby";
 
@@ -50,19 +59,6 @@ type CountdownAdminClientProps = {
   /** Server snapshot so SSR and hydration share the same clock tick. */
   initialPreviewNowMs?: number;
 };
-
-function toDatetimeLocalValue(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "";
-  const pad = (value: number) => String(value).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-function parseDatetimeLocalInput(raw: string): string | null {
-  const ms = new Date(raw).getTime();
-  if (Number.isNaN(ms)) return null;
-  return new Date(ms).toISOString();
-}
 
 function formatCurrentTimeDisplay(nowMs: number): string {
   return new Date(nowMs).toLocaleString(undefined, {
@@ -112,6 +108,8 @@ function SectionHeader({
 const inputClassName =
   "w-full min-h-11 rounded-xl border border-brand-border bg-brand-panel/80 px-4 py-3 font-body text-base text-white outline-none transition placeholder:text-brand-muted/45 focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/25 md:min-h-10 md:py-2.5 md:text-sm";
 
+const scheduleInputClassName = `${inputClassName} countdown-admin-datetime [color-scheme:dark]`;
+
 const actionButtonClassName =
   "touch-target inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 font-ui text-[0.58rem] font-bold uppercase tracking-[0.14em] transition disabled:opacity-60";
 
@@ -121,6 +119,12 @@ export default function CountdownAdminClient({
   initialPreviewNowMs,
 }: CountdownAdminClientProps) {
   const [form, setForm] = useState<EventCountdownConfig>(initialConfig);
+  const [startLocal, setStartLocal] = useState(() =>
+    isoToDatetimeLocalValue(initialConfig.start_time),
+  );
+  const [endLocal, setEndLocal] = useState(() =>
+    isoToDatetimeLocalValue(initialConfig.end_time),
+  );
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -146,6 +150,11 @@ export default function CountdownAdminClient({
     const id = setInterval(() => setPreviewNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    setStartLocal(isoToDatetimeLocalValue(form.start_time));
+    setEndLocal(isoToDatetimeLocalValue(form.end_time));
+  }, [form.end_time, form.start_time]);
 
   const previewPhase = useMemo(
     () => computeEventCountdownPhase(form.start_time, form.end_time, previewNow),
@@ -193,22 +202,58 @@ export default function CountdownAdminClient({
   );
 
   const applyCurrentTimeAsStart = useCallback(() => {
-    updateField("start_time", new Date(previewNow).toISOString());
+    const iso = new Date(previewNow).toISOString();
+    setStartLocal(isoToDatetimeLocalValue(iso));
+    updateField("start_time", iso);
   }, [previewNow, updateField]);
 
+  const applyScheduleFromLocalInputs = useCallback((): EventCountdownConfig | null => {
+    const startIso = datetimeLocalValueToIso(startLocal);
+    const endIso = datetimeLocalValueToIso(endLocal);
+
+    if (!startIso || !endIso) {
+      setError("Enter valid start and end date/time values.");
+      return null;
+    }
+
+    const scheduleError = validateCountdownScheduleTimes(startIso, endIso);
+    if (scheduleError) {
+      setError(scheduleError);
+      return null;
+    }
+
+    return {
+      ...form,
+      start_time: startIso,
+      end_time: endIso,
+    };
+  }, [endLocal, form, startLocal]);
+
   const persistConfig = useCallback(async (configToSave: EventCountdownConfig) => {
+    const scheduleError = validateCountdownScheduleTimes(
+      configToSave.start_time,
+      configToSave.end_time,
+    );
+    if (scheduleError) {
+      setError(scheduleError);
+      return null;
+    }
+
     setIsSaving(true);
     setStatus(null);
     setError(null);
 
     try {
-      const response = await fetch("/api/admin/countdown", {
+      const response = await fetch(ADMIN_COUNTDOWN_API_PATH, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(configToSave),
+        cache: "no-store",
       });
 
       const payload = (await response.json()) as EventCountdownConfig & { error?: string };
+
       if (!response.ok) {
         throw new Error(payload.error ?? "Unable to save configuration.");
       }
@@ -226,7 +271,10 @@ export default function CountdownAdminClient({
   }, []);
 
   const handleSave = async () => {
-    const saved = await persistConfig(form);
+    const configToSave = applyScheduleFromLocalInputs();
+    if (!configToSave) return;
+
+    const saved = await persistConfig(configToSave);
     if (saved) setStatus("Configuration saved.");
   };
 
@@ -238,14 +286,18 @@ export default function CountdownAdminClient({
     );
     const schedule = alignedStart
       ? { start_time: alignedStart, end_time: form.end_time }
-      : buildFutureHoldingSchedule(previewNow);
+      : buildHoldingRoomScheduleNow(previewNow);
+
+    setStartLocal(isoToDatetimeLocalValue(schedule.start_time));
+    setEndLocal(isoToDatetimeLocalValue(schedule.end_time));
 
     const saved = await persistConfig({ ...form, ...schedule });
+
     if (saved) {
       setStatus(
         alignedStart
-          ? "Holding room restored — go-live moved before your stream end and saved."
-          : "Holding room restored on /live — start moved 14 days ahead and saved.",
+          ? "Holding room restored — start aligned before end and saved."
+          : "Holding room restored — start set ~90 minutes ahead and saved.",
       );
     }
   };
@@ -253,13 +305,25 @@ export default function CountdownAdminClient({
   const handleRampLivePreview = useCallback(() => {
     const rampStart = new Date(previewNow);
     rampStart.setMinutes(rampStart.getMinutes() - 5);
-    updateField("start_time", rampStart.toISOString());
+    const iso = rampStart.toISOString();
+    setStartLocal(isoToDatetimeLocalValue(iso));
+    updateField("start_time", iso);
     setStatus("Preview ramped to live phase — save to publish.");
   }, [previewNow, updateField]);
 
   const handleReset = () => {
-    setForm(DEFAULT_COUNTDOWN_CONFIG);
-    setStatus("Reset to defaults. Save to publish.");
+    const schedule = buildHoldingRoomScheduleNow(previewNow);
+    const resetConfig: EventCountdownConfig = {
+      ...DEFAULT_COUNTDOWN_CONFIG,
+      ...schedule,
+    };
+
+    setForm(resetConfig);
+    setStartLocal(isoToDatetimeLocalValue(schedule.start_time));
+    setEndLocal(isoToDatetimeLocalValue(schedule.end_time));
+    setStatus(
+      "Reset hero copy to defaults with a fresh holding-room schedule (~90 min ahead). Save to publish.",
+    );
     setError(null);
   };
 
@@ -268,7 +332,7 @@ export default function CountdownAdminClient({
     setLaunchError(null);
 
     try {
-      const response = await fetch(OPS_GO_LIVE_API_PATH, {
+      const response = await fetch(OPS_STREAM_ACTION_API_PATH, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -276,13 +340,22 @@ export default function CountdownAdminClient({
         cache: "no-store",
       });
 
-      const data = (await response.json()) as { ok?: boolean; error?: string };
-      if (!response.ok || !data.ok) {
+      const data = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+        countdownSynced?: boolean;
+      };
+      if (!response.ok || !data.success) {
         throw new Error(data.error ?? "Go Live failed.");
       }
 
       setIsGoLiveOpen(false);
-      setStatus("Broadcast is live.");
+      setStatus(
+        data.countdownSynced
+          ? "Broadcast is live — schedule synced for attendee /live."
+          : "Broadcast is live for all attendees.",
+      );
+      window.dispatchEvent(new Event(COUNTDOWN_CONFIG_UPDATED_EVENT));
     } catch (goLiveError) {
       setLaunchError(
         goLiveError instanceof Error ? goLiveError.message : "Go Live failed.",
@@ -323,7 +396,7 @@ export default function CountdownAdminClient({
           </div>
         </div>
 
-        <div className="mx-auto mt-6 flex w-full max-w-6xl flex-wrap items-center justify-between gap-3">
+        <div className="relative z-40 mx-auto mt-6 flex w-full max-w-6xl flex-wrap items-center justify-between gap-3">
           <Link
             href="/ops"
             prefetch={false}
@@ -333,7 +406,7 @@ export default function CountdownAdminClient({
             Back to Ops
           </Link>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="relative z-40 flex w-full flex-wrap justify-end gap-2 sm:w-auto">
             <button
               type="button"
               onClick={() => void handleRestoreHoldingRoom()}
@@ -366,11 +439,11 @@ export default function CountdownAdminClient({
             <button
               type="button"
               onClick={() => setIsGoLiveOpen(true)}
-              disabled={isLaunching || isStreamLive}
+              disabled={isLaunching}
               className={`${actionButtonClassName} border-brand-pink/50 bg-brand-pink text-white hover:bg-brand-pink/90 disabled:opacity-40`}
             >
               <CloudLightning className="h-3.5 w-3.5" aria-hidden="true" />
-              Go Live
+              {isStreamLive ? "On Air — Re-sync" : "Go Live"}
             </button>
           </div>
         </div>
@@ -574,10 +647,15 @@ export default function CountdownAdminClient({
                     <FieldLabel>Countdown Start</FieldLabel>
                     <input
                       type="datetime-local"
-                      className={inputClassName}
-                      value={toDatetimeLocalValue(form.start_time)}
+                      className={scheduleInputClassName}
+                      value={startLocal}
                       onChange={(e) => {
-                        const iso = parseDatetimeLocalInput(e.target.value);
+                        const raw = e.target.value;
+                        setStartLocal(raw);
+                        setStatus(null);
+                        setError(null);
+
+                        const iso = datetimeLocalValueToIso(raw);
                         if (iso) updateField("start_time", iso);
                       }}
                     />
@@ -631,26 +709,22 @@ export default function CountdownAdminClient({
                     <FieldLabel>Countdown End</FieldLabel>
                     <input
                       type="datetime-local"
-                      className={inputClassName}
-                      value={toDatetimeLocalValue(form.end_time)}
+                      className={scheduleInputClassName}
+                      value={endLocal}
                       onChange={(e) => {
-                        const iso = parseDatetimeLocalInput(e.target.value);
-                        if (!iso) return;
-
-                        setForm((current) => {
-                          const alignedStart = alignStartForHoldingRoom(
-                            current.start_time,
-                            iso,
-                            previewNow,
-                          );
-                          const next = { ...current, end_time: iso };
-                          if (!alignedStart) return next;
-                          return { ...next, start_time: alignedStart };
-                        });
+                        const raw = e.target.value;
+                        setEndLocal(raw);
                         setStatus(null);
                         setError(null);
+
+                        const iso = datetimeLocalValueToIso(raw);
+                        if (iso) updateField("end_time", iso);
                       }}
                     />
+                    <p className="mt-2 font-body text-[0.65rem] leading-relaxed text-brand-muted">
+                      End must be after start. Click <span className="text-white">Save Changes</span>{" "}
+                      to publish schedule updates to /live and /countdown.
+                    </p>
                   </div>
                 </div>
 
@@ -738,7 +812,12 @@ export default function CountdownAdminClient({
         </div>
       </div>
 
-      <div className="hidden lg:block">{chatMonitor}</div>
+      <CountdownAdminChatDock
+        messages={chatMessages}
+        isLoading={chatLoading}
+        isConnected={chatConnected}
+        troubleCount={troubleCount}
+      />
 
       <div className="lg:hidden">
         <MobileActionDock
@@ -746,7 +825,7 @@ export default function CountdownAdminClient({
           onSaveClick={() => void handleSave()}
           onGoLiveClick={() => setIsGoLiveOpen(true)}
           canSave
-          canGoLive={!isStreamLive}
+          canGoLive={!isLaunching}
           isSaving={isSaving}
           isLive={isStreamLive}
           saveLabel={status === "Configuration saved." ? "Saved" : undefined}
@@ -773,6 +852,7 @@ export default function CountdownAdminClient({
       <GoLiveConfirmModal
         isOpen={isGoLiveOpen}
         isLaunching={isLaunching}
+        alreadyLive={isStreamLive}
         onClose={() => setIsGoLiveOpen(false)}
         onConfirm={() => void handleGoLiveConfirm()}
       />

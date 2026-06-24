@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
 import AudioMonitorPanel from "@/components/ops/AudioMonitorPanel";
 import LiveAttendeeSignalPanel from "@/components/ops/LiveAttendeeSignalPanel";
@@ -16,20 +17,34 @@ type ProductionMetricsDashboardClientProps = {
   operatorEmail: string;
 };
 
-function formatTimestamp(iso: string | null, fallback: Date | null): string {
+function formatTimestamp(
+  iso: string | null,
+  fallback: Date | null,
+  isLive: boolean,
+  uptime: string,
+): string {
   const value = iso ? new Date(iso) : fallback;
-  if (!value || Number.isNaN(value.getTime())) return "Unavailable";
-  return value.toLocaleTimeString([], {
+  if (!value || Number.isNaN(value.getTime())) {
+    return isLive ? `Live · ${uptime}` : "Unavailable";
+  }
+  const formatted = value.toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
   });
+  return isLive ? `${formatted} · ${uptime}` : formatted;
 }
 
 export default function ProductionMetricsDashboardClient({
   operatorEmail,
 }: ProductionMetricsDashboardClientProps) {
   const metrics = useProductionDashboardMetrics(operatorEmail);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const systemHealthy =
     metrics.opsState?.apiOk !== false && metrics.opsState?.pullEngineStatus !== "error";
 
@@ -71,15 +86,35 @@ export default function ProductionMetricsDashboardClient({
                   <span className="font-bold text-white">{metrics.roleDisplay}</span>
                 </span>
 
-                <span className="font-mono text-[0.62rem] text-brand-muted">
-                  Updated {formatTimestamp(metrics.lastUpdated, metrics.lastRefreshedAt)}
+                <span
+                  className="font-mono text-[0.62rem] text-brand-muted"
+                  key={metrics.telemetryRevision}
+                >
+                  Updated{" "}
+                  {mounted
+                    ? formatTimestamp(
+                        metrics.lastUpdated,
+                        metrics.lastRefreshedAt,
+                        metrics.isLive,
+                        metrics.opsState?.uptime ?? "00:00:00",
+                      )
+                    : "—"}
                 </span>
 
                 <button
                   type="button"
                   onClick={() => void metrics.refresh()}
                   disabled={metrics.isRefreshing}
-                  aria-label="Refresh metrics"
+                  aria-label={
+                    metrics.isRefreshing
+                      ? "Refreshing metrics"
+                      : "Refresh metrics — realtime stream telemetry is always active"
+                  }
+                  title={
+                    metrics.isRefreshing
+                      ? "Refreshing…"
+                      : "Realtime sync active — click to re-fetch snapshot metrics"
+                  }
                   className="touch-target inline-flex h-9 w-9 items-center justify-center rounded-full border border-brand-border bg-brand-panel text-brand-blue transition hover:border-brand-blue/40 disabled:opacity-60"
                 >
                   {metrics.isRefreshing ? (

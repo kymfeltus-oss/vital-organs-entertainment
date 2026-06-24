@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getClientAppUrl } from "@/lib/client-api";
 import type { FellowshipChatMessage } from "@/lib/experience/fellowship-chat";
+import { scanMessageForTrouble } from "@/lib/ops/chat-scanner";
 import { useOpsChatTroubleAlerts } from "@/hooks/useOpsChatTroubleAlerts";
 import { useOpsStreamStateRealtime } from "@/hooks/useOpsStreamStateRealtime";
 import {
@@ -34,6 +35,7 @@ export type ProductionDashboardMetrics = {
   role: OpsTeamRole;
   roleDisplay: string;
   lastUpdated: string | null;
+  telemetryRevision: string;
   lastRefreshedAt: Date | null;
   isRefreshing: boolean;
   isLive: boolean;
@@ -46,13 +48,26 @@ export type ProductionDashboardMetrics = {
   refresh: () => Promise<void>;
 };
 
-function mapRecentMessages(messages: FellowshipChatMessage[]): AttendeeRecentMessage[] {
-  return messages.slice(-6).reverse().map((message) => ({
-    id: message.id,
-    author: message.author,
-    body: message.body,
-    createdAt: message.createdAt,
-  }));
+function mapRelevantRecentMessages(messages: FellowshipChatMessage[]): AttendeeRecentMessage[] {
+  return messages
+    .filter((message) => scanMessageForTrouble(message.body))
+    .slice(-5)
+    .reverse()
+    .map((message) => ({
+      id: message.id,
+      author: message.author,
+      body: message.body,
+      createdAt: message.createdAt,
+    }));
+}
+
+function ingestTroubleMessages(
+  messages: FellowshipChatMessage[],
+  ingestMessage: (messageId: string, content: string, createdAt?: string) => void,
+): void {
+  for (const message of messages) {
+    ingestMessage(message.id, message.body, message.createdAt);
+  }
 }
 
 function resolveInitials(email: string): string {
@@ -67,25 +82,43 @@ function resolveInitials(email: string): string {
 export function useProductionDashboardMetrics(operatorEmail: string): ProductionDashboardMetrics & {
   profileInitials: string;
 } {
-  const { stream, opsState } = useOpsStreamStateRealtime();
-  const trouble = useOpsChatTroubleAlerts({ enabled: true });
+  const { stream, opsState, refreshStream } = useOpsStreamStateRealtime();
+  const trouble = useOpsChatTroubleAlerts({ enabled: true, realtime: false });
 
   const [snapshot, setSnapshot] = useState<OpsSnapshot | null>(null);
   const [role, setRole] = useState<OpsTeamRole>("admin");
   const [recentMessages, setRecentMessages] = useState<AttendeeRecentMessage[]>([]);
-  const [latencyHistory, setLatencyHistory] = useState<number[]>([]);
-  const [droppedHistory, setDroppedHistory] = useState<number[]>([]);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const pollRef = useRef<number | undefined>(undefined);
+  const latencyHistoryRef = useRef<number[]>([]);
+  const droppedHistoryRef = useRef<number[]>([]);
+  const lastTelemetrySampleRef = useRef<string>("");
 
-  useEffect(() => {
-    if (!opsState?.isLive) return;
-    const latency = opsState.latencySeconds;
-    const dropped = opsState.droppedFramesPercent;
-    setLatencyHistory((current) => [...current, latency].slice(-HISTORY_MAX));
-    setDroppedHistory((current) => [...current, dropped].slice(-HISTORY_MAX));
-  }, [opsState]);
+  const isLive = opsState?.isLive === true;
+  const uptime = opsState?.uptime ?? "";
+  const latencySeconds = opsState?.latencySeconds ?? 0;
+  const droppedFramesPercent = opsState?.droppedFramesPercent ?? 0;
+
+  if (isLive) {
+    const sampleKey = `${uptime}|${latencySeconds}|${droppedFramesPercent}`;
+    if (sampleKey !== lastTelemetrySampleRef.current) {
+      lastTelemetrySampleRef.current = sampleKey;
+      latencyHistoryRef.current = [...latencyHistoryRef.current, latencySeconds].slice(
+        -HISTORY_MAX,
+      );
+      droppedHistoryRef.current = [...droppedHistoryRef.current, droppedFramesPercent].slice(
+        -HISTORY_MAX,
+      );
+    }
+  } else if (lastTelemetrySampleRef.current !== "") {
+    lastTelemetrySampleRef.current = "";
+    latencyHistoryRef.current = [];
+    droppedHistoryRef.current = [];
+  }
+
+  const latencyHistory = latencyHistoryRef.current;
+  const droppedHistory = droppedHistoryRef.current;
 
   const refresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -103,6 +136,7 @@ export function useProductionDashboardMetrics(operatorEmail: string): Production
           credentials: "include",
           cache: "no-store",
         }),
+        refreshStream(),
       ]);
 
       if (metricsResponse.ok) {
@@ -117,7 +151,9 @@ export function useProductionDashboardMetrics(operatorEmail: string): Production
 
       if (chatResponse.ok) {
         const data = (await chatResponse.json()) as { messages?: FellowshipChatMessage[] };
-        setRecentMessages(mapRecentMessages(data.messages ?? []));
+        const messages = data.messages ?? [];
+        ingestTroubleMessages(messages, trouble.ingestMessage);
+        setRecentMessages(mapRelevantRecentMessages(messages));
       }
 
       setLastRefreshedAt(new Date());
@@ -126,7 +162,7 @@ export function useProductionDashboardMetrics(operatorEmail: string): Production
     } finally {
       setIsRefreshing(false);
     }
-  }, []);
+  }, [refreshStream, trouble.ingestMessage]);
 
   useEffect(() => {
     void refresh();
@@ -156,6 +192,9 @@ export function useProductionDashboardMetrics(operatorEmail: string): Production
   );
 
   const lastUpdated = stream?.updatedAt ?? snapshot?.stream.updatedAt ?? null;
+  const telemetryRevision = isLive
+    ? `${uptime}|${latencySeconds}|${droppedFramesPercent}`
+    : "";
 
   return {
     stream,
@@ -169,14 +208,15 @@ export function useProductionDashboardMetrics(operatorEmail: string): Production
     role,
     roleDisplay: roleLabel(role),
     lastUpdated,
+    telemetryRevision,
     lastRefreshedAt,
     isRefreshing,
     isLive: opsState?.isLive === true,
     paidAttendees: snapshot?.metrics.paidAttendees ?? 0,
     recentChatCount10m: snapshot?.realtime.recentChatMessages10m ?? 0,
-    troubleCount: trouble.count,
-    audioIssueCount: trouble.audioCount,
-    videoIssueCount: trouble.videoCount,
+    troubleCount: trouble.windowComplaintCount,
+    audioIssueCount: trouble.windowAudioCount,
+    videoIssueCount: trouble.windowVideoCount,
     recentMessages,
     refresh,
     profileInitials: resolveInitials(operatorEmail),

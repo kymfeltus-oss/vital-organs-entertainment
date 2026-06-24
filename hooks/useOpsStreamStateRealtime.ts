@@ -33,6 +33,7 @@ export type UseOpsStreamStateRealtimeOptions = {
 export type UseOpsStreamStateRealtimeResult = {
   stream: OpsSnapshot["stream"] | null;
   opsState: OpsStreamState | null;
+  refreshStream: () => Promise<void>;
 };
 
 type RealtimeArg =
@@ -152,5 +153,5 @@ export function useOpsStreamStateRealtime(
     [stream, audioChannels, streamTelemetry, liveSinceMs, localWebcamAudioLevel, tick],
   );
 
-  return { stream, opsState };
+  return { stream, opsState, refreshStream: fetchStreamState };
 }

@@ -5,6 +5,7 @@ import { AlertTriangle, Loader2, ShieldAlert, X } from "lucide-react";
 type GoLiveConfirmModalProps = {
   isOpen: boolean;
   isLaunching: boolean;
+  alreadyLive?: boolean;
   onClose: () => void;
   onConfirm: () => void;
 };
@@ -12,6 +13,7 @@ type GoLiveConfirmModalProps = {
 export default function GoLiveConfirmModal({
   isOpen,
   isLaunching,
+  alreadyLive = false,
   onClose,
   onConfirm,
 }: GoLiveConfirmModalProps) {
@@ -47,8 +49,9 @@ export default function GoLiveConfirmModal({
         </div>
 
         <p className="mt-4 font-body text-sm leading-relaxed text-brand-muted">
-          Are you sure you want to drop the runway gate and broadcast live to attendees? This runs
-          the production go-live sequence and opens the public live experience.
+          {alreadyLive
+            ? "The broadcast is already live. Confirming again re-runs the platform go-live action and re-syncs the attendee countdown schedule for /live."
+            : "Are you sure you want to drop the runway gate and broadcast live to attendees? This runs the production go-live sequence and opens the public live experience."}
         </p>
 
         <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">

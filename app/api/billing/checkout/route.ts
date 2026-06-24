@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import {
   getSeedBillingPackage,
   resolveSeedStripePriceId,
+  SEED_PACK_LEGACY_ORDER_PRODUCT_TYPE,
   seedBillingPriceCents,
 } from "@/lib/billing-config";
 import {
@@ -10,7 +11,7 @@ import {
   getStripeSecretKey,
   resolveAuthenticatedBuyer,
 } from "@/lib/checkout/server";
-import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
+import { stagePendingCheckoutOrder } from "@/lib/checkout/stage-pending-order";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 type SeedCheckoutBody = {
@@ -18,9 +19,9 @@ type SeedCheckoutBody = {
 };
 
 /**
- * Vital Seed bundle checkout via pre-configured Stripe Price IDs.
- *
- * Security model matches `/api/checkout/merch`:
+ * Vital Seed bundle checkout — always available (no event phase / live-signal gate).
+ * Uses configured Stripe Price IDs when present; otherwise falls back to server-side price_data
+ * (same pattern as `/api/checkout` giving and `/api/checkout/merch`).
  * - Buyer identity from verified Supabase session cookies only.
  * - Request body accepts `packageId` alone — never email or user_id.
  * - Stripe session metadata stamped server-side for webhook fulfillment.
@@ -63,26 +64,32 @@ export async function POST(request: NextRequest) {
     }
 
     const stripePriceId = resolveSeedStripePriceId(targetPack);
+    const amountCents = seedBillingPriceCents(targetPack);
 
-    if (!stripePriceId) {
-      console.error(
-        `Missing Stripe Price ID for ${targetPack.id} (${targetPack.stripePriceEnv}).`,
-      );
-      return NextResponse.json(
-        { error: "This seed package is not available for checkout yet." },
-        { status: 503 },
-      );
-    }
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = stripePriceId
+      ? [{ price: stripePriceId, quantity: 1 }]
+      : [
+          {
+            quantity: 1,
+            price_data: {
+              currency: "usd",
+              unit_amount: amountCents,
+              product_data: {
+                name: `${targetPack.count.toLocaleString("en-US")} Vital Seeds`,
+                description: `300 Awakening seed bundle — ${targetPack.count.toLocaleString("en-US")} seeds for the live experience.`,
+              },
+            },
+          },
+        ];
 
     const appUrl = getAppUrl(request);
     const stripe = new Stripe(stripeSecretKey);
-    const amountCents = seedBillingPriceCents(targetPack);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       client_reference_id: buyer.userId,
       customer_email: buyer.email,
-      line_items: [{ price: stripePriceId, quantity: 1 }],
+      line_items: lineItems,
       metadata: {
         checkout_type: "seed_pack",
         package_id: targetPack.id,
@@ -92,22 +99,44 @@ export async function POST(request: NextRequest) {
         user_id: buyer.userId,
         email: buyer.email,
       },
-      success_url: `${appUrl}${EXPERIENCE_LIVE_PATH}?payment=success`,
-      cancel_url: `${appUrl}${EXPERIENCE_LIVE_PATH}?payment=cancelled`,
+      success_url: `${appUrl}/buy-seeds?success=true`,
+      cancel_url: `${appUrl}/buy-seeds?canceled=true`,
     });
 
     const supabase = getSupabaseAdmin();
-    const { error: insertError } = await supabase.from("orders").insert({
-      user_id: buyer.userId,
+    const staged = await stagePendingCheckoutOrder(supabase, {
+      userId: buyer.userId,
       email: buyer.email,
-      product_type: targetPack.productType,
-      amount_total: amountCents,
-      status: "pending",
-      stripe_session_id: session.id,
+      productType: targetPack.productType,
+      amountTotalCents: amountCents,
+      stripeSessionId: session.id,
     });
 
-    if (insertError) {
-      console.error("Failed to stage seed order record:", insertError.message);
+    // #region agent log
+    fetch("http://127.0.0.1:7924/ingest/91e1e0f3-2fd3-4620-91fc-790155003627", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "ac75e2" },
+      body: JSON.stringify({
+        sessionId: "ac75e2",
+        runId: "seed-checkout",
+        hypothesisId: "H1-H2",
+        location: "billing/checkout:stagePendingCheckoutOrder",
+        message: "order_stage_result",
+        data: {
+          ok: staged.ok,
+          errorCode: staged.errorCode,
+          errorMessage: staged.errorMessage,
+          productTypeUsed: staged.productTypeUsed,
+          packageId: targetPack.id,
+          legacyFallback: SEED_PACK_LEGACY_ORDER_PRODUCT_TYPE,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+
+    if (!staged.ok) {
+      console.error("Failed to stage seed order record:", staged.errorMessage);
       return NextResponse.json(
         { error: "Unable to initialize order record." },
         { status: 500 },

@@ -6,11 +6,15 @@ import type { FellowshipChatMessage } from "@/lib/experience/fellowship-chat";
 
 export type PublicCountdownChatMonitorLayout = "sidebar" | "ticker";
 
+/** overlay = fixed dock (public countdown). embedded = in-flow panel (ops editor). */
+export type PublicCountdownChatMonitorPlacement = "overlay" | "embedded";
+
 type PublicCountdownChatMonitorProps = {
   messages: FellowshipChatMessage[];
   isLoading: boolean;
   isConnected: boolean;
   layout?: PublicCountdownChatMonitorLayout;
+  placement?: PublicCountdownChatMonitorPlacement;
 };
 
 function ChatTickerRow({
@@ -101,6 +105,7 @@ export default function PublicCountdownChatMonitor({
   isLoading,
   isConnected,
   layout = "sidebar",
+  placement = "overlay",
 }: PublicCountdownChatMonitorProps) {
   const statusLabel = isLoading
     ? "Syncing…"
@@ -113,9 +118,14 @@ export default function PublicCountdownChatMonitor({
       ? "public-countdown-chat-monitor--ticker"
       : "public-countdown-chat-monitor--sidebar";
 
+  const placementClass =
+    placement === "embedded"
+      ? "public-countdown-chat-monitor--embedded"
+      : "public-countdown-chat-monitor--overlay";
+
   return (
     <aside
-      className={`public-countdown-chat-monitor ${layoutClass}`}
+      className={`public-countdown-chat-monitor ${layoutClass} ${placementClass}`}
       aria-label="Live chat monitor"
       data-connected={isConnected ? "true" : "false"}
     >

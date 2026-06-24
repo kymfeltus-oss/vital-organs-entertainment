@@ -51,6 +51,24 @@ export const SEED_PACKAGES: readonly SeedBillingPackage[] = [
 
 export const SEED_BILLING_DEFAULT_PACKAGE_ID: SeedBillingPackageId = "seeds_100";
 
+/**
+ * Legacy slug always allowed by orders_product_type_check on deployed DBs.
+ * New tiers (seed-pack-100, etc.) are stored in Stripe metadata; webhook credits
+ * the full seed_count from metadata.
+ */
+export const SEED_PACK_LEGACY_ORDER_PRODUCT_TYPE = "seed-pack-sower" as const;
+
+/** Seeds auto-credited by fulfill_stripe_checkout_session for the legacy slug. */
+export const SEED_PACK_LEGACY_ORDER_BASE_CREDIT = 100;
+
+export function parseSeedPackCheckoutCount(
+  metadata: Record<string, string | undefined> | null | undefined,
+): number {
+  const raw = metadata?.seed_count?.trim();
+  const parsed = raw ? Number.parseInt(raw, 10) : Number.NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
 export function getSeedBillingPackage(
   packageId: string,
 ): SeedBillingPackage | undefined {

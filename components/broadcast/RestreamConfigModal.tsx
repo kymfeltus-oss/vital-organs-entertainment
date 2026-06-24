@@ -596,7 +596,7 @@ export default function RestreamConfigModal({
     const result = await testHlsPreviewUrlClientOnly(resolvedHlsUrl);
     if (result.ok && !hlsUrl.trim() && isDevBuild) {
       setTestResult(
-        `${result.message} (dev desk-test — using Mux fallback manifest)`,
+        `${result.message} Dev desk preview will use the Mux fallback until you save a Restream HLS URL.`,
       );
     } else {
       setTestResult(result.message);

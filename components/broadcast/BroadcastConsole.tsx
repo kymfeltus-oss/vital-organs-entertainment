@@ -13,7 +13,7 @@ import ProductionSafetyPanel from "@/components/broadcast/ProductionSafetyPanel"
 import ProductionTelemetryTray from "@/components/broadcast/ProductionTelemetryTray";
 import ReadinessGate from "@/components/broadcast/ReadinessGate";
 import StreamStatusPanel from "@/components/broadcast/StreamStatusPanel";
-import { resolveActiveOpsPreviewHlsUrl } from "@/lib/ops/resolve-active-stream-playback";
+import { resolveBroadcastDeskPreviewHlsUrl } from "@/lib/ops/resolve-active-stream-playback";
 import TroubleAlertPopup from "@/components/broadcast/TroubleAlertPopup";
 import { useBroadcastLocalCamera } from "@/hooks/useBroadcastLocalCamera";
 import { useOpsChatTroubleAlerts } from "@/hooks/useOpsChatTroubleAlerts";
@@ -181,7 +181,7 @@ export default function BroadcastConsole() {
   const platformIsLive = opsStream?.isLive === true;
 
   const computedMonitorHlsUrl = useMemo(
-    () => resolveActiveOpsPreviewHlsUrl(opsStream),
+    () => resolveBroadcastDeskPreviewHlsUrl(opsStream),
     [opsStream],
   );
 

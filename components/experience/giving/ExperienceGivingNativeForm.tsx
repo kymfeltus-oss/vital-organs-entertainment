@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Pencil } from "lucide-react";
+import { Check, Loader2, Pencil } from "lucide-react";
 import { givingAmounts } from "@/lib/vital-seed/giving-assets";
 
 type ExperienceGivingNativeFormProps = {
@@ -14,10 +14,11 @@ type ExperienceGivingNativeFormProps = {
   onGiveNow: () => void;
 };
 
-function presetButtonClassName(isSelected: boolean): string {
+function presetButtonClassName(isSelected: boolean, isDimmed: boolean): string {
   return [
     "vital-giving-preset-btn touch-target font-ui",
     isSelected ? "vital-giving-preset-btn--selected" : "",
+    isDimmed ? "vital-giving-preset-btn--dimmed" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -33,6 +34,9 @@ export default function ExperienceGivingNativeForm({
   onCustomAmountFocus,
   onGiveNow,
 }: ExperienceGivingNativeFormProps) {
+  const hasPresetSelection = activePreset != null;
+  const isCustomSelected = !hasPresetSelection && customAmount.trim().length > 0;
+
   return (
     <div className="vital-giving-form flex min-h-0 flex-1 flex-col gap-[clamp(0.35rem,2cqw,0.55rem)]">
       <section aria-label="Choose a gift amount" className="shrink-0">
@@ -46,6 +50,7 @@ export default function ExperienceGivingNativeForm({
         >
           {givingAmounts.map((card) => {
             const isSelected = activePreset === card.amount;
+            const isDimmed = hasPresetSelection && !isSelected;
 
             return (
               <button
@@ -56,8 +61,16 @@ export default function ExperienceGivingNativeForm({
                 aria-label={`Select $${card.amount} ${card.label} gift`}
                 disabled={isLoading}
                 onClick={() => onSelectAmount(card.amount)}
-                className={presetButtonClassName(isSelected)}
+                className={presetButtonClassName(isSelected, isDimmed)}
               >
+                {isSelected ? (
+                  <span
+                    className="vital-giving-preset-btn__check"
+                    aria-hidden="true"
+                  >
+                    <Check className="size-2.5" strokeWidth={3} />
+                  </span>
+                ) : null}
                 <span className="vital-giving-preset-btn__amount font-body">${card.amount}</span>
                 <span className="vital-giving-preset-btn__label font-ui">{card.label}</span>
               </button>
@@ -66,7 +79,14 @@ export default function ExperienceGivingNativeForm({
         </div>
       </section>
 
-      <label className="vital-giving-custom-field shrink-0">
+      <label
+        className={[
+          "vital-giving-custom-field shrink-0",
+          isCustomSelected ? "vital-giving-custom-field--selected" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         <span className="sr-only">Custom amount</span>
         <Pencil className="vital-giving-custom-field__icon" aria-hidden="true" />
         <input

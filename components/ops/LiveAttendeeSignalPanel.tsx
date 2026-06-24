@@ -39,9 +39,13 @@ export default function LiveAttendeeSignalPanel({
         Chat activity (10m): {recentChatCount10m}
       </p>
 
+      <p className="mb-2 font-ui text-[0.48rem] uppercase tracking-[0.12em] text-brand-muted">
+        Latest relevant messages (audio / video complaints)
+      </p>
+
       <div className="max-h-40 space-y-2 overflow-y-auto">
         {recentMessages.length === 0 ? (
-          <p className="font-body text-xs text-brand-muted">No recent messages loaded.</p>
+          <p className="font-body text-xs text-brand-muted">No relevant complaint messages loaded.</p>
         ) : (
           recentMessages.map((message) => (
             <article

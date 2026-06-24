@@ -60,12 +60,12 @@ export default function MobileActionDock({
         <button
           type="button"
           onClick={onGoLiveClick}
-          disabled={!canGoLive || isLive}
-          aria-label={isLive ? "Broadcast is live" : "Go live to attendees"}
+          disabled={!canGoLive}
+          aria-label={isLive ? "Broadcast is live — re-sync schedule" : "Go live to attendees"}
           className="touch-target flex flex-col items-center justify-center gap-1 rounded-xl border border-brand-pink/40 bg-brand-pink px-2 py-2.5 font-ui text-[0.48rem] font-bold uppercase tracking-[0.12em] text-white transition-colors enabled:hover:bg-brand-pink/90 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <CloudLightning className="h-5 w-5" aria-hidden="true" />
-          <span>{isLive ? "On Air" : "Go Live"}</span>
+          <span>{isLive ? "Re-sync" : "Go Live"}</span>
         </button>
       </div>
     </div>

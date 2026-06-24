@@ -1,4 +1,5 @@
 import type { OpsStreamState } from "@/lib/ops/ops-stream-state";
+import { isMasterAudioSilent } from "@/lib/ops/ops-stream-state";
 import type { OpsSnapshot } from "@/lib/ops/types";
 
 export type MetricStatus = "healthy" | "warning" | "critical" | "neutral";
@@ -88,6 +89,16 @@ function outputsStatus(outputsActive: number, outputsTotal: number): MetricStatu
   return "neutral";
 }
 
+function telemetryAvailable(opsState: OpsStreamState | null): boolean {
+  return Boolean(opsState?.isLive && opsState.encoderTelemetryAvailable);
+}
+
+function audioProcessingStatus(opsState: OpsStreamState | null): MetricStatus {
+  if (!opsState?.isLive) return "neutral";
+  if (isMasterAudioSilent(opsState)) return "warning";
+  return "healthy";
+}
+
 function pullEngineMetricStatus(pullEngineStatus: OpsStreamState["pullEngineStatus"]): MetricStatus {
   if (pullEngineStatus === "error") return "critical";
   if (pullEngineStatus === "running") return "healthy";
@@ -100,11 +111,12 @@ export function buildProductionMetricCards(
 ): ProductionMetric[] {
   const streamStatus = streamStatusLabel(opsState);
   const ingest = ingestStatusLabel(stream, opsState);
-  const telemetryAvailable = Boolean(opsState?.isLive);
+  const hasTelemetry = telemetryAvailable(opsState);
   const latency = opsState?.latencySeconds ?? 0;
   const dropped = opsState?.droppedFramesPercent ?? 0;
   const outputsActive = opsState?.outputsActive ?? 0;
   const outputsTotal = opsState?.outputsTotal ?? 0;
+  const bitrateKbps = opsState?.bitrateKbps ?? null;
 
   return [
     {
@@ -126,33 +138,36 @@ export function buildProductionMetricCards(
     {
       id: "latency",
       label: "Latency",
-      value: telemetryAvailable ? `${latency.toFixed(1)}s` : UNAVAILABLE,
-      helper: telemetryAvailable ? "End-to-end encoder delay" : "No live telemetry",
-      status: latencyStatus(latency, telemetryAvailable),
+      value: hasTelemetry ? `${latency.toFixed(1)}s` : UNAVAILABLE,
+      helper: hasTelemetry ? "End-to-end encoder delay" : "No live telemetry",
+      status: latencyStatus(latency, hasTelemetry),
     },
     {
       id: "dropped-frames",
       label: "Dropped Frames",
-      value: telemetryAvailable ? `${dropped.toFixed(1)}%` : UNAVAILABLE,
-      helper: telemetryAvailable ? "Packet / frame loss" : "No live telemetry",
-      status: droppedStatus(dropped, telemetryAvailable),
+      value: hasTelemetry ? `${dropped.toFixed(1)}%` : UNAVAILABLE,
+      helper: hasTelemetry ? "Packet / frame loss" : "No live telemetry",
+      status: droppedStatus(dropped, hasTelemetry),
     },
     {
       id: "bitrate",
       label: "Bitrate",
-      value: UNAVAILABLE,
-      helper: "Connect Broadcast Desk telemetry for bitrate",
-      status: "neutral",
+      value: hasTelemetry && bitrateKbps != null ? `${bitrateKbps} kbps` : UNAVAILABLE,
+      helper:
+        hasTelemetry && bitrateKbps != null
+          ? "Encoder uplink bitrate"
+          : "Connect Broadcast Desk telemetry for bitrate",
+      status: hasTelemetry && bitrateKbps != null ? "healthy" : "neutral",
     },
     {
       id: "resolution",
       label: "Resolution",
       value:
-        opsState?.isLive && opsState.videoResolution !== "—"
+        hasTelemetry && opsState && opsState.videoResolution !== "—"
           ? opsState.videoResolution
           : UNAVAILABLE,
-      helper: opsState?.isLive ? "Program output" : "Stream offline",
-      status: opsState?.isLive ? "healthy" : "neutral",
+      helper: hasTelemetry ? "Program output" : "Stream offline or telemetry unavailable",
+      status: hasTelemetry ? "healthy" : "neutral",
     },
     {
       id: "outputs-active",
@@ -178,7 +193,8 @@ export function buildTelemetryRows(
 ): TelemetryRow[] {
   const ingest = ingestStatusLabel(stream, opsState);
   const pullStatus = pullEngineMetricStatus(opsState?.pullEngineStatus ?? "stopped");
-  const telemetryAvailable = Boolean(opsState?.isLive);
+  const hasTelemetry = telemetryAvailable(opsState);
+  const bitrateKbps = opsState?.bitrateKbps ?? null;
 
   return [
     { label: "Ingest State", value: ingest.label, status: ingest.status },
@@ -190,37 +206,37 @@ export function buildTelemetryRows(
     {
       label: "Resolution",
       value:
-        opsState?.isLive && opsState.videoResolution !== "—"
+        hasTelemetry && opsState && opsState.videoResolution !== "—"
           ? opsState.videoResolution
           : UNAVAILABLE,
-      status: opsState?.isLive ? "healthy" : "neutral",
+      status: hasTelemetry ? "healthy" : "neutral",
     },
     {
       label: "FPS",
-      value: telemetryAvailable && opsState ? `${opsState.fps.toFixed(2)}` : UNAVAILABLE,
-      status: telemetryAvailable ? "healthy" : "neutral",
+      value: hasTelemetry && opsState && opsState.fps > 0 ? `${opsState.fps.toFixed(2)}` : UNAVAILABLE,
+      status: hasTelemetry && opsState && opsState.fps > 0 ? "healthy" : "neutral",
     },
     {
       label: "Bitrate",
-      value: UNAVAILABLE,
-      status: "neutral",
+      value: hasTelemetry && bitrateKbps != null ? `${bitrateKbps} kbps` : UNAVAILABLE,
+      status: hasTelemetry && bitrateKbps != null ? "healthy" : "neutral",
     },
     {
       label: "Latency",
-      value: telemetryAvailable && opsState ? `${opsState.latencySeconds.toFixed(1)}s` : UNAVAILABLE,
-      status: latencyStatus(opsState?.latencySeconds ?? 0, telemetryAvailable),
+      value: hasTelemetry && opsState ? `${opsState.latencySeconds.toFixed(1)}s` : UNAVAILABLE,
+      status: latencyStatus(opsState?.latencySeconds ?? 0, hasTelemetry),
     },
     {
       label: "Dropped Frames",
       value:
-        telemetryAvailable && opsState
+        hasTelemetry && opsState
           ? `${opsState.droppedFramesPercent.toFixed(1)}%`
           : UNAVAILABLE,
-      status: droppedStatus(opsState?.droppedFramesPercent ?? 0, telemetryAvailable),
+      status: droppedStatus(opsState?.droppedFramesPercent ?? 0, hasTelemetry),
     },
     {
       label: "Uptime",
-      value: opsState?.isLive ? opsState.uptime : "00:00:00",
+      value: opsState?.isLive ? opsState.uptime : UNAVAILABLE,
       status: opsState?.isLive ? "healthy" : "neutral",
     },
     {
@@ -244,26 +260,26 @@ export function buildProductionAlerts(
   opsState: OpsStreamState | null,
 ): ProductionAlert[] {
   const alerts: ProductionAlert[] = [];
-  const now = new Date().toISOString();
-  const telemetryAvailable = Boolean(opsState?.isLive);
+  const timestamp = stream?.updatedAt ?? undefined;
+  const hasTelemetry = telemetryAvailable(opsState);
 
-  if (telemetryAvailable && (opsState?.latencySeconds ?? 0) > 4) {
+  if (hasTelemetry && (opsState?.latencySeconds ?? 0) > 4) {
     alerts.push({
       id: "high-latency",
       title: "High Latency",
       detail: `Encoder latency at ${opsState!.latencySeconds.toFixed(1)}s (threshold 4s).`,
       status: "warning",
-      timestamp: now,
+      timestamp,
     });
   }
 
-  if (telemetryAvailable && (opsState?.droppedFramesPercent ?? 0) > 1) {
+  if (hasTelemetry && (opsState?.droppedFramesPercent ?? 0) > 1) {
     alerts.push({
       id: "dropped-frames",
       title: "Dropped Frames High",
       detail: `Frame loss at ${opsState!.droppedFramesPercent.toFixed(1)}% (threshold 1%).`,
       status: "warning",
-      timestamp: now,
+      timestamp,
     });
   }
 
@@ -273,41 +289,41 @@ export function buildProductionAlerts(
       title: "API Disconnected",
       detail: "Ops stream API or Restream lanes are not fully provisioned.",
       status: "critical",
-      timestamp: now,
+      timestamp,
     });
   }
 
   if (
     opsState &&
     opsState.outputsTotal > 0 &&
-    opsState.outputsActive === opsState.outputsTotal
+    opsState.outputsActive < opsState.outputsTotal
   ) {
     alerts.push({
-      id: "all-outputs",
-      title: "All Outputs Active",
-      detail: `${opsState.outputsActive} of ${opsState.outputsTotal} Restream lanes provisioned.`,
-      status: "healthy",
-      timestamp: now,
-    });
-  }
-
-  if (opsState?.isLive && opsState.pullEngineStatus === "running") {
-    alerts.push({
-      id: "stream-stable",
-      title: "Stream Stable",
-      detail: "Pull engine running on live broadcast path.",
-      status: "healthy",
-      timestamp: now,
+      id: "outputs-missing",
+      title: "Outputs Missing",
+      detail: `${opsState.outputsActive} of ${opsState.outputsTotal} Restream lanes active.`,
+      status: "warning",
+      timestamp,
     });
   }
 
   if (opsState?.pullEngineStatus === "error") {
     alerts.push({
-      id: "pull-engine-error",
-      title: "Pull Engine Error",
+      id: "stream-engine-error",
+      title: "Stream Engine",
       detail: "Pull engine reported an error — verify HLS / Restream pull URL.",
       status: "critical",
-      timestamp: now,
+      timestamp,
+    });
+  }
+
+  if (isMasterAudioSilent(opsState)) {
+    alerts.push({
+      id: "audio-silent",
+      title: "Audio Silent",
+      detail: "Master audio meter is below floor while live — verify program audio path.",
+      status: "warning",
+      timestamp,
     });
   }
 
@@ -317,7 +333,7 @@ export function buildProductionAlerts(
       title: "No Active Conditions",
       detail: "Monitoring telemetry — no warning thresholds exceeded.",
       status: "neutral",
-      timestamp: now,
+      timestamp,
     });
   }
 
@@ -331,13 +347,14 @@ export function buildSystemHealthRows(
   const ingest = ingestStatusLabel(stream, opsState);
   const pullStatus = pullEngineMetricStatus(opsState?.pullEngineStatus ?? "stopped");
   const outputs = outputsStatus(opsState?.outputsActive ?? 0, opsState?.outputsTotal ?? 0);
+  const audioStatus = audioProcessingStatus(opsState);
 
   return [
     {
       id: "stream-engine",
       label: "Stream Engine",
-      status: opsState?.studioEngineMode ? "healthy" : "neutral",
-      detail: opsState?.studioEngineMode ?? UNAVAILABLE,
+      status: pullStatus,
+      detail: opsState?.pullEngineStatus ?? UNAVAILABLE,
     },
     {
       id: "ingest-connection",
@@ -375,8 +392,13 @@ export function buildSystemHealthRows(
     {
       id: "audio-processing",
       label: "Audio Processing",
-      status: "neutral",
-      detail: "Meter levels from live telemetry when Broadcast Desk is active",
+      status: audioStatus,
+      detail:
+        audioStatus === "warning"
+          ? "Master audio below floor"
+          : audioStatus === "healthy"
+            ? "Master audio passing"
+            : UNAVAILABLE,
     },
   ];
 }

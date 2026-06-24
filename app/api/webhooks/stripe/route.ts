@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient, type PostgrestError } from "@supabase/supabase-js";
 import { getEventTicketTier, isEventTicketTierId } from "@/lib/merch/catalog";
+import {
+  parseSeedPackCheckoutCount,
+  SEED_PACK_LEGACY_ORDER_BASE_CREDIT,
+  SEED_PACK_LEGACY_ORDER_PRODUCT_TYPE,
+} from "@/lib/billing-config";
 import { getSupabaseServiceRoleKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 function getStripeClient(): Stripe {
@@ -115,6 +120,94 @@ export async function POST(request: Request) {
         console.error("❌ [DATABASE_WEBHOOK_FULFILL_CRASH]:", error);
         return NextResponse.json(
           { error: "Server transactional processing lock failed." },
+          { status: 500 },
+        );
+      }
+
+      return NextResponse.json({ received: true, eventId: event.id }, { status: 200 });
+    }
+
+    if (checkoutType === "seed_pack") {
+      const userId = session.client_reference_id?.trim() ?? null;
+      const metadataUserId = session.metadata?.user_id?.trim() ?? null;
+      const userEmail =
+        normalizeEmail(session.metadata?.email) ??
+        normalizeEmail(session.customer_details?.email);
+      const amountTotal = session.amount_total ?? 0;
+      const seedCount = parseSeedPackCheckoutCount(session.metadata ?? undefined);
+
+      if (!userId || !userEmail || amountTotal <= 0 || seedCount <= 0) {
+        console.error(
+          "❌ [SEED_PACK_WEBHOOK_DATA_MISSING]:",
+          session.id,
+          { userId, userEmail, amountTotal, seedCount },
+        );
+        return NextResponse.json(
+          { error: "Seed pack checkout metadata missing." },
+          { status: 422 },
+        );
+      }
+
+      if (metadataUserId && metadataUserId !== userId) {
+        return NextResponse.json(
+          { error: "Checkout identity mismatch." },
+          { status: 422 },
+        );
+      }
+
+      try {
+        const { data: existingOrder } = await supabaseAdmin
+          .from("orders")
+          .select("status")
+          .eq("stripe_session_id", session.id)
+          .maybeSingle();
+
+        if (existingOrder?.status === "paid") {
+          return NextResponse.json(
+            { received: true, message: "Seed pack already fulfilled." },
+            { status: 200 },
+          );
+        }
+
+        const { error: rpcError } = await supabaseAdmin.rpc(
+          "fulfill_stripe_checkout_session",
+          {
+            p_stripe_session_id: session.id,
+            p_user_id: userId,
+            p_email: userEmail,
+            p_product_id: SEED_PACK_LEGACY_ORDER_PRODUCT_TYPE,
+            p_amount_total: amountTotal,
+            p_selected_size: "N/A",
+          },
+        );
+
+        if (rpcError) throw rpcError;
+
+        const bonusSeeds = seedCount - SEED_PACK_LEGACY_ORDER_BASE_CREDIT;
+        if (bonusSeeds > 0) {
+          const { error: creditError } = await supabaseAdmin.rpc("credit_seed_wallet", {
+            p_user_id: userId,
+            p_amount: bonusSeeds,
+          });
+          if (creditError) throw creditError;
+        }
+
+        console.info(
+          `✅ [SEED_PACK_FULFILLMENT_SUCCESS]: ${seedCount} seeds for ${userEmail}`,
+        );
+      } catch (error) {
+        const pgError = error as PostgrestError;
+
+        if (isIdempotencyConflict(pgError)) {
+          return NextResponse.json(
+            { received: true, message: "Idempotency checkpoint bypassed." },
+            { status: 200 },
+          );
+        }
+
+        console.error("❌ [SEED_PACK_FULFILL_CRASH]:", error);
+        return NextResponse.json(
+          { error: "Seed pack fulfillment failed." },
           { status: 500 },
         );
       }

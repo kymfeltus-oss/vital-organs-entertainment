@@ -114,8 +114,8 @@ export async function POST(request: NextRequest) {
         frequency,
         source,
       },
-      success_url: `${appUrl}/experience/giving?success=true`,
-      cancel_url: `${appUrl}/experience/giving?canceled=true`,
+      success_url: `${appUrl}/giving?success=true`,
+      cancel_url: `${appUrl}/giving?canceled=true`,
     });
 
     const supabase = getSupabaseAdmin();

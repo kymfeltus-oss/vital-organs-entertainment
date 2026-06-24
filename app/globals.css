@@ -2388,6 +2388,10 @@ body::-webkit-scrollbar {
 
 
 /* Vital Seed giving — header PNG + native form overlay (matches Music tab chrome) */
+.vital-giving-page .mobile-artboard-art-fit {
+  pointer-events: none;
+}
+
 .vital-giving-page__bg {
   pointer-events: none;
   user-select: none;
@@ -2469,6 +2473,8 @@ body::-webkit-scrollbar {
   background: var(--gradient-brand);
   content: "";
   pointer-events: none;
+  opacity: 0.55;
+  transition: opacity 160ms ease, padding 160ms ease;
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
@@ -2479,20 +2485,60 @@ body::-webkit-scrollbar {
   mask-composite: exclude;
 }
 
+.vital-giving-preset-btn--dimmed {
+  opacity: 0.72;
+}
+
+.vital-giving-preset-btn--dimmed::before {
+  opacity: 0.35;
+}
+
 .vital-giving-preset-btn--selected {
-  background-color: #090b13;
+  background-color: rgb(0 168 255 / 0.12);
   box-shadow:
-    0 0 22px rgb(0 168 255 / 0.32),
-    0 0 28px rgb(255 47 175 / 0.26);
+    0 0 18px rgb(0 168 255 / 0.45),
+    0 0 32px rgb(255 47 175 / 0.35),
+    inset 0 0 20px rgb(0 168 255 / 0.08);
+  opacity: 1;
+  transform: scale(1.02);
+}
+
+.vital-giving-preset-btn--selected::before {
+  padding: 2px;
+  opacity: 1;
+}
+
+.vital-giving-preset-btn__check {
+  position: absolute;
+  top: clamp(0.25rem, 1.2cqw, 0.35rem);
+  right: clamp(0.25rem, 1.2cqw, 0.35rem);
+  display: flex;
+  width: clamp(0.95rem, 4cqw, 1.15rem);
+  height: clamp(0.95rem, 4cqw, 1.15rem);
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #00a8ff;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgb(0 168 255 / 0.65);
 }
 
 .vital-giving-preset-btn:active:not(:disabled) {
   transform: scale(0.985);
 }
 
+.vital-giving-preset-btn--selected:active:not(:disabled) {
+  transform: scale(1.01);
+}
+
 .vital-giving-preset-btn:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+.vital-giving-preset-btn--selected .vital-giving-preset-btn__amount {
+  color: #ffffff;
+  text-shadow: 0 0 14px rgb(0 168 255 / 0.55);
 }
 
 .vital-giving-preset-btn__amount {
@@ -2534,6 +2580,8 @@ body::-webkit-scrollbar {
   background: var(--gradient-brand);
   content: "";
   pointer-events: none;
+  opacity: 0.55;
+  transition: opacity 160ms ease, padding 160ms ease;
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
@@ -2542,6 +2590,18 @@ body::-webkit-scrollbar {
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
   mask-composite: exclude;
+}
+
+.vital-giving-custom-field--selected {
+  background-color: rgb(0 168 255 / 0.1);
+  box-shadow:
+    0 0 16px rgb(0 168 255 / 0.35),
+    0 0 24px rgb(255 47 175 / 0.2);
+}
+
+.vital-giving-custom-field--selected::before {
+  padding: 2px;
+  opacity: 1;
 }
 
 .vital-giving-custom-field__icon {
@@ -7020,6 +7080,123 @@ body::-webkit-scrollbar {
 .countdown-admin-mobile-chat .public-countdown-chat-monitor__shell {
   height: 100%;
   min-height: 45vh;
+}
+
+/* Ops countdown editor — datetime-local picker visible on dark panels */
+.countdown-admin-datetime {
+  color-scheme: dark;
+}
+
+.countdown-admin-datetime::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.85);
+  opacity: 0.9;
+}
+
+/* Ops countdown editor — collapsible live chat dock (desktop) */
+.countdown-admin-chat-dock {
+  position: fixed;
+  z-index: 28;
+  pointer-events: auto;
+}
+
+.countdown-admin-chat-dock--collapsed {
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+}
+
+.countdown-admin-chat-dock__tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 2.75rem;
+  padding: 0.85rem 0.45rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-right: 0;
+  border-radius: 0.85rem 0 0 0.85rem;
+  background: linear-gradient(180deg, rgb(12 12 16 / 0.96) 0%, rgb(7 7 10 / 0.98) 100%);
+  box-shadow: -8px 0 24px rgb(0 0 0 / 0.35);
+  color: rgb(255 255 255 / 0.88);
+  font-size: 0.48rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.countdown-admin-chat-dock__tab:hover {
+  border-color: rgb(0 168 255 / 0.35);
+  background: linear-gradient(180deg, rgb(0 168 255 / 0.12) 0%, rgb(7 7 10 / 0.98) 100%);
+}
+
+.countdown-admin-chat-dock__tab-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.countdown-admin-chat-dock__tab-badge {
+  display: inline-flex;
+  min-width: 1.1rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgb(255 47 175 / 0.85);
+  padding: 0.1rem 0.3rem;
+  font-size: 0.55rem;
+  line-height: 1;
+  color: #fff;
+}
+
+.countdown-admin-chat-dock--expanded {
+  top: clamp(13rem, 24vh, 16rem);
+  right: clamp(0.65rem, 2vw, 1rem);
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  width: clamp(14rem, 22vw, 18rem);
+}
+
+.countdown-admin-chat-dock__panel {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 1rem;
+  background: rgb(7 7 10 / 0.96);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.45);
+}
+
+.countdown-admin-chat-dock__panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  padding: 0.55rem 0.65rem 0.55rem 0.85rem;
+}
+
+.countdown-admin-chat-dock__panel-body {
+  flex: 1;
+  min-height: 0;
+}
+
+.countdown-admin-chat-dock .public-countdown-chat-monitor--embedded.public-countdown-chat-monitor--sidebar {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  pointer-events: auto;
+}
+
+.countdown-admin-chat-dock .public-countdown-chat-monitor--embedded .public-countdown-chat-monitor__shell {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
 }
 
 .public-countdown--obs.public-countdown--with-chat-monitor {
