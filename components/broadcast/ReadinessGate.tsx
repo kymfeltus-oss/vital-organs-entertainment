@@ -24,7 +24,7 @@ export default function ReadinessGate({
   canGoLive,
   isLive,
   rehearsalMode,
-  criticalCount,
+  criticalCount: _criticalCount,
   supervisorOverride,
   supervisorReason,
   onSupervisorOverrideChange,
@@ -35,6 +35,9 @@ export default function ReadinessGate({
   const [reasonDraft, setReasonDraft] = useState(supervisorReason);
   const hardBlockCount = checks.filter((c) => c.hardBlock && !c.passed).length;
   const failingCount = checks.filter((c) => !c.passed).length;
+  const openBlockCount = checks.filter(
+    (c) => !c.passed && (c.hardBlock || c.blocksGoLive),
+  ).length;
 
   const scoreTone =
     score >= 85
@@ -59,12 +62,20 @@ export default function ReadinessGate({
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-ui text-[0.55rem] font-bold uppercase tracking-[0.05em] text-white">
-            {criticalCount > 0 || hardBlockCount > 0
-              ? `${criticalCount + hardBlockCount} items need fixing`
-              : "Ready to go live"}
+            {failingCount === 0
+              ? "Ready to go live"
+              : hardBlockCount > 0
+                ? `${hardBlockCount} hard block${hardBlockCount === 1 ? "" : "s"} — fix before override`
+                : `${openBlockCount} item${openBlockCount === 1 ? "" : "s"} need fixing`}
           </p>
           <p className={`font-ui text-[0.45rem] ${PARABLE_SHELL.muted}`}>
-            {failingCount} open · supervisor note ≥8 chars
+            {failingCount === 0
+              ? "All production safety checks passing"
+              : canGoLive
+                ? "Override active — failures remain logged"
+                : hardBlockCount > 0
+                  ? `${failingCount} open · hard blocks cannot be overridden`
+                  : `${failingCount} open · use supervisor override (note ≥8 chars) to bypass`}
           </p>
         </div>
       </div>

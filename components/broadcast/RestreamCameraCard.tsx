@@ -13,6 +13,7 @@ export type RestreamCameraCardProps = {
   streamKeyLabel?: string | null;
   isFailoverActive?: boolean;
   engineMode: StudioEngineMode;
+  localCameraActive?: boolean;
   onLocalAudioUpdate?: (db: number) => void;
   onConfigClick: () => void;
 };
@@ -24,6 +25,7 @@ export default function RestreamCameraCard({
   streamKeyLabel = null,
   isFailoverActive = false,
   engineMode,
+  localCameraActive = false,
   onLocalAudioUpdate,
   onConfigClick,
 }: RestreamCameraCardProps) {
@@ -31,7 +33,7 @@ export default function RestreamCameraCard({
   const isInternalStudio = engineMode === "internal_studio";
   const trimmedHls = hlsUrl?.trim() ?? "";
 
-  const localStream = useLocalWebcam(isInternalStudio, onLocalAudioUpdate);
+  const localStream = useLocalWebcam(isInternalStudio && localCameraActive, onLocalAudioUpdate);
   const localPreviewActive = isInternalStudio && localStream != null;
 
   useEffect(() => {
@@ -112,7 +114,9 @@ export default function RestreamCameraCard({
             <div className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center">
               <MonitorSmartphone className="h-8 w-8 text-brand-purple" aria-hidden="true" />
               <p className="font-ui text-[0.52rem] text-brand-muted">
-                Waiting for a local camera or phone feed to connect.
+                {localCameraActive
+                  ? "Waiting for browser camera permission…"
+                  : "Open Setup → Run Inside App → Start Camera Stream."}
               </p>
             </div>
           )

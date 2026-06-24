@@ -201,6 +201,7 @@ export class StreamHealthService {
       encoderOverloaded: false,
       pipelineAvailable: true,
       internetStatus: "online",
+      bitrateStable: true,
       destinations,
     };
 

@@ -210,6 +210,14 @@ export class ProductionBrain {
     }
 
     if (this.adapters.vmix.resolveBaseUrl()) {
+      if (isBroadcastDevMode()) {
+        // vMix is optional in local dev — keep simulated sources and mock audio.
+        if (!this.sources.getActiveRegistry().length) {
+          this.sources.startAutoDiscovery();
+        }
+        return;
+      }
+
       this.sources.clearAdapterSources("vmix");
       this.audio.ingestFromAdapter([]);
       this.production.previewSourceId = null;
@@ -289,6 +297,9 @@ export class ProductionBrain {
         await this.adapters.vmix.startStreaming();
         this.production.isLive = true;
         this.stream.setDevLive(true);
+        if (preflight.meta.devMode) {
+          this.production.isRecording = true;
+        }
         this.log.append({
           phase: "command",
           severity: "green",
@@ -468,6 +479,8 @@ export class ProductionBrain {
       readiness: readinessReport,
       production,
       mediaCore: observation.adapterConnectionStates.vmix,
+      devMode: observation.devMode,
+      simulatedDataMode: this.resolveDataMode(observation) === "simulated",
     });
 
     this.logGuardianRecommendations(actions);

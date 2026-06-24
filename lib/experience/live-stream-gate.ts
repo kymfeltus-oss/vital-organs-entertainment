@@ -1,14 +1,20 @@
-import {
-  isPreLiveLifecycleStage,
-  type EventLifecycleStage,
-} from "@/lib/experience/event-lifecycle";
+import type { EventLifecycleStage } from "@/lib/experience/event-lifecycle";
 
 export const LIVE_PREVIEW_QUERY_PARAM = "preview";
+export const LIVE_HOLDING_OVERRIDE_PARAM = "holding";
 
 export function isLivePreviewOverride(
   searchParams: Pick<URLSearchParams, "get"> | null | undefined,
 ): boolean {
   return searchParams?.get(LIVE_PREVIEW_QUERY_PARAM) === "true";
+}
+
+/** Dev-only — force `/live` holding room artboard + fellowship chat. */
+export function isLiveHoldingOverride(
+  searchParams: Pick<URLSearchParams, "get"> | null | undefined,
+): boolean {
+  if (process.env.NODE_ENV !== "development") return false;
+  return searchParams?.get(LIVE_HOLDING_OVERRIDE_PARAM) === "1";
 }
 
 export type LiveStreamGateInput = {
@@ -36,7 +42,7 @@ export function shouldShowLiveRoomShell(input: LiveStreamGateInput): boolean {
   return lifecycleStage === "live";
 }
 
-/** Skip background live-state polling during pre-live routing windows. */
+/** Skip background live-state polling only before the holding room opens. */
 export function shouldDeferBackgroundLiveSync(
   lifecycleStage: EventLifecycleStage,
   countdownLoading: boolean,
@@ -44,5 +50,6 @@ export function shouldDeferBackgroundLiveSync(
 ): boolean {
   if (previewOverride) return false;
   if (countdownLoading) return true;
-  return isPreLiveLifecycleStage(lifecycleStage);
+  // Holding room must still receive ops go-live — only defer during announcement.
+  return lifecycleStage === "announcement";
 }

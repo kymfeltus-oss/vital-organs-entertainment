@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import {
   ATTENDEE_CHAT_MESSAGE_EVENT,
   isAttendeeChatBroadcastPayload,
@@ -15,6 +15,7 @@ import {
   type FellowshipChatPayload,
 } from "@/lib/experience/fellowship-chat";
 import {
+  buildChannelName,
   createRealtimeChannel,
   teardownRealtimeChannel,
 } from "@/lib/live/realtime-subscribe";
@@ -60,29 +61,13 @@ function mergeHistory(
     .slice(-MONITOR_HISTORY_LIMIT);
 }
 
-function debugLog(hypothesisId: string, message: string, data: Record<string, unknown>) {
-  // #region agent log
-  fetch("http://127.0.0.1:7924/ingest/91e1e0f3-2fd3-4620-91fc-790155003627", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "ac75e2" },
-    body: JSON.stringify({
-      sessionId: "ac75e2",
-      runId: "post-fix",
-      hypothesisId,
-      location: "useAttendeeChatRealtime.ts",
-      message,
-      data,
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
-}
 
 /** Subscribe to native `realtime_attendee_chat` + hydrate from Fellowship Chat API. */
 export function useAttendeeChatRealtime(
   options: UseAttendeeChatRealtimeOptions = {},
 ): UseAttendeeChatRealtimeResult {
   const { enabled = true, onMessage } = options;
+  const instanceId = useId().replace(/:/g, "");
   const channelRef = useRef<Awaited<ReturnType<typeof createRealtimeChannel>> | null>(null);
   const syncAbortRef = useRef<AbortController | null>(null);
   const seenMessageIdsRef = useRef<Set<string>>(new Set());
@@ -95,18 +80,13 @@ export function useAttendeeChatRealtime(
   const [isConnected, setIsConnected] = useState(false);
   const [usePollingFallback, setUsePollingFallback] = useState(false);
 
-  const ingestMessage = useCallback((message: FellowshipChatMessage, source: string) => {
+  const ingestMessage = useCallback((message: FellowshipChatMessage) => {
     if (seenMessageIdsRef.current.has(message.id)) return;
     seenMessageIdsRef.current.add(message.id);
 
     setMessages((current) =>
       mergeFellowshipMessages(current, message).slice(-MONITOR_HISTORY_LIMIT),
     );
-    debugLog("H2-H3", "chat message ingested", {
-      source,
-      messageId: message.id,
-      bodyPreview: message.body.slice(0, 80),
-    });
     onMessageRef.current?.(message);
   }, []);
 
@@ -146,11 +126,6 @@ export function useAttendeeChatRealtime(
         return merged;
       });
 
-      debugLog("H1", "chat history synced", {
-        historyCount: history.length,
-        status: response.status,
-      });
-
       setUsePollingFallback(false);
     } catch (syncError) {
       if (
@@ -161,9 +136,6 @@ export function useAttendeeChatRealtime(
         return;
       }
       console.error("Attendee chat realtime sync failed:", syncError);
-      debugLog("H1", "chat history sync failed", {
-        error: syncError instanceof Error ? syncError.message : "unknown",
-      });
       setUsePollingFallback(true);
     } finally {
       if (!abortController.signal.aborted) {
@@ -207,14 +179,12 @@ export function useAttendeeChatRealtime(
     let cancelled = false;
     let supabase: ReturnType<typeof getSupabase>;
     let setupPromise: Promise<void> = Promise.resolve();
+    const channelName = buildChannelName(REALTIME_ATTENDEE_CHAT_CHANNEL, instanceId);
 
     try {
       supabase = getSupabase();
     } catch (initError) {
       console.error("Attendee chat realtime init failed:", initError);
-      debugLog("H4", "supabase init failed", {
-        error: initError instanceof Error ? initError.message : "unknown",
-      });
       setUsePollingFallback(true);
       setIsConnected(false);
       return;
@@ -224,19 +194,16 @@ export function useAttendeeChatRealtime(
       try {
         const channel = await createRealtimeChannel(
           supabase,
-          REALTIME_ATTENDEE_CHAT_CHANNEL,
+          channelName,
           {
             broadcast: [
               {
                 event: ATTENDEE_CHAT_MESSAGE_EVENT,
                 callback: ({ payload }) => {
                   if (!isAttendeeChatBroadcastPayload(payload)) {
-                    debugLog("H3", "broadcast payload rejected", {
-                      payloadType: typeof payload,
-                    });
                     return;
                   }
-                  ingestMessage(mapBroadcastPayload(payload), "broadcast");
+                  ingestMessage(mapBroadcastPayload(payload));
                 },
               },
             ],
@@ -248,7 +215,7 @@ export function useAttendeeChatRealtime(
                 callback: (payload) => {
                   const row = payload.new as FellowshipChatMessageRow;
                   if (row.deleted_at || row.is_pinned) return;
-                  ingestMessage(mapFellowshipChatRow(row), "postgres");
+                  ingestMessage(mapFellowshipChatRow(row));
                 },
               },
               {
@@ -264,7 +231,6 @@ export function useAttendeeChatRealtime(
           (status) => {
             if (cancelled) return;
             setIsConnected(status === "SUBSCRIBED");
-            debugLog("H4", "realtime channel status", { status });
           },
           { broadcast: { self: false, ack: false } },
         );
@@ -278,9 +244,6 @@ export function useAttendeeChatRealtime(
         setUsePollingFallback(false);
       } catch (subscribeError) {
         console.error("Attendee chat realtime subscribe failed:", subscribeError);
-        debugLog("H4", "realtime subscribe failed", {
-          error: subscribeError instanceof Error ? subscribeError.message : "unknown",
-        });
         if (!cancelled) {
           setUsePollingFallback(true);
           setIsConnected(false);
@@ -298,7 +261,7 @@ export function useAttendeeChatRealtime(
         await teardownRealtimeChannel(supabase, channel);
       })();
     };
-  }, [enabled, ingestMessage, syncFeed]);
+  }, [enabled, ingestMessage, instanceId, syncFeed]);
 
   return {
     messages,

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import BroadcastConsoleShell from "@/components/broadcast/BroadcastConsoleShell";
+import BroadcastConsoleEntry from "@/components/broadcast/BroadcastConsoleEntry";
 import { buildTeamGateUrl } from "@/lib/auth/routing";
 import { getUserFromSession } from "@/lib/auth/session";
 
@@ -16,5 +16,5 @@ export default async function BroadcastDashboardPage() {
     redirect(buildTeamGateUrl("/dashboard/broadcast"));
   }
 
-  return <BroadcastConsoleShell />;
+  return <BroadcastConsoleEntry />;
 }

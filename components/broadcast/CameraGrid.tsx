@@ -17,6 +17,7 @@ type CameraGridProps = {
   platformIsLive: boolean;
   opsStream: OpsSnapshot["stream"] | null;
   monitorHlsUrl?: string | null;
+  localCameraActive?: boolean;
   onSelectPreview: (sourceId: string) => void;
   onOpenRestreamConfig: () => void;
   onLocalAudioUpdate?: (db: number) => void;
@@ -30,6 +31,7 @@ export default function CameraGrid({
   platformIsLive,
   opsStream,
   monitorHlsUrl,
+  localCameraActive = false,
   onSelectPreview,
   onOpenRestreamConfig,
   onLocalAudioUpdate,
@@ -39,8 +41,7 @@ export default function CameraGrid({
   const activeMobileStreamKey = opsStream?.activeMobileStreamKey ?? null;
   const mobileOperatorHlsUrl = resolveMobileOperatorPreviewHlsUrl(activeMobileStreamKey);
   const previewHlsUrl = monitorHlsUrl ?? resolveActiveOpsPreviewHlsUrl(opsStream);
-  const cameraGuyHlsUrl = mobileOperatorHlsUrl ?? previewHlsUrl;
-  const isFailoverActive = opsStream?.activeSource === "backup";
+  const cameraGuyHlsUrl = mobileOperatorHlsUrl ?? previewHlsUrl;const isFailoverActive = opsStream?.activeSource === "backup";
   const isInternalStudio = engineMode === "internal_studio";
   const pullConfigured = opsStream?.primaryRtmpPullConfigured === true;
   const previewConfigured = opsStream?.cameraPreviewConfigured === true;
@@ -95,6 +96,7 @@ export default function CameraGrid({
           streamKeyLabel={activeMobileStreamKey}
           isFailoverActive={isFailoverActive}
           engineMode={engineMode}
+          localCameraActive={localCameraActive}
           onConfigClick={onOpenRestreamConfig}
           onLocalAudioUpdate={onLocalAudioUpdate}
         />

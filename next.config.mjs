@@ -20,6 +20,11 @@ const nextConfig = {
         permanent: false,
       },
       {
+        source: "/dashboard/countdown",
+        destination: "/countdown",
+        permanent: false,
+      },
+      {
         source: "/experience/live",
         destination: "/live",
         permanent: false,

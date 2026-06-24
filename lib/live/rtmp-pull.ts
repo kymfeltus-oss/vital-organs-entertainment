@@ -1,3 +1,34 @@
+import { isValidRtmpUrl } from "@/lib/live/rtmp";
+
+/** push = OBS encoder → Restream; pull = Restream → vMix/OBS monitor */
+export type RtmpStreamLinkKind = "push" | "pull" | "unknown";
+
+/**
+ * Classify a Restream RTMP URL so push links land in ingest columns, not pull columns.
+ */
+export function classifyRtmpStreamLink(value: unknown): RtmpStreamLinkKind {
+  if (!isValidRtmpUrl(value)) return "unknown";
+
+  const trimmed = value.trim();
+  try {
+    const parsed = new URL(trimmed);
+    const host = parsed.hostname.toLowerCase();
+
+    if (host.includes("pull")) return "pull";
+    if (host.includes("live.restream.io")) return "push";
+    if (host.startsWith("live.")) return "push";
+    if (host.includes("vitalorgansent.com")) return "push";
+
+    const path = parsed.pathname.toLowerCase();
+    if (path.includes("/live/")) return "push";
+    if (path.includes("/pull/")) return "pull";
+  } catch {
+    return "unknown";
+  }
+
+  return "unknown";
+}
+
 /**
  * RTMP pull URL validation for operator monitoring ingest (Restream pull links).
  * Browsers cannot play RTMP — pair with camera_preview_hls_url for in-app preview.
@@ -37,11 +68,14 @@ export function resolveRtmpPullUrlStatus(
 ): RtmpPullUrlStatus {
   const trimmed = raw?.trim() ?? "";
   if (!trimmed) return "missing";
-  return isValidRtmpPullUrlLoose(trimmed) ? "valid" : "invalid";
+  return isValidRtmpPullUrl(trimmed) ? "valid" : "invalid";
 }
 
 export const RTMP_PULL_REQUIREMENT =
-  "RTMP pull URL must use rtmp:// or rtmps:// (Restream combined pull link for vMix/OBS monitoring).";
+  "RTMP pull URL must use rtmp://pull.restream.io/pull/... (Restream RTMP Pull link for vMix/OBS monitoring).";
+
+export const RTMP_PUSH_IN_PULL_FIELD =
+  "This is an OBS push link (rtmp://live.restream.io/live/...). It belongs in Host Ingest, not RTMP Pull. Save again — the app will route it automatically.";
 
 export function formatRtmpPullLaneLabel(
   status: RtmpPullUrlStatus,

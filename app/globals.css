@@ -2402,13 +2402,14 @@ body::-webkit-scrollbar {
   bottom: calc(
     var(--bottom-dock-display-h, 76px) + env(safe-area-inset-bottom, 0px) + 0.35rem
   );
-  z-index: 3;
+  z-index: 10;
   display: flex;
   width: var(--mobile-tab-content-width);
   min-height: 0;
   flex-direction: column;
   justify-content: flex-start;
   pointer-events: auto;
+  touch-action: manipulation;
   overflow: visible;
   container-type: inline-size;
 }
@@ -2984,6 +2985,103 @@ body::-webkit-scrollbar {
 }
 
 /* Holding room — mask baked PNG digits; labels remain in artwork. */
+.holding-room-page__art-fit {
+  position: relative;
+}
+
+.holding-room-page__chat-layer {
+  position: absolute;
+  left: 5.5%;
+  right: 5.5%;
+  top: 58%;
+  bottom: calc(3.5% + env(safe-area-inset-bottom, 0px));
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  pointer-events: none;
+}
+
+.holding-room-page__chat-label {
+  margin: 0;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+
+.holding-room-page__chat-feed {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  padding: 0.35rem 0.15rem;
+  mask-image: linear-gradient(to bottom, transparent, black 18%, black 100%);
+  pointer-events: auto;
+}
+
+.holding-room-page__chat-line {
+  margin: 0;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.85);
+}
+
+.holding-room-page__chat-empty {
+  margin: 0;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.85);
+}
+
+.holding-room-page__chat-composer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  pointer-events: auto;
+}
+
+.holding-room-page__chat-input {
+  min-width: 0;
+  flex: 1;
+  min-height: 44px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.55);
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  color: #fff;
+  backdrop-filter: blur(8px);
+}
+
+.holding-room-page__chat-input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.holding-room-page__chat-input:focus {
+  outline: none;
+  border-color: rgba(0, 168, 255, 0.45);
+  box-shadow: 0 0 0 2px rgba(0, 168, 255, 0.2);
+}
+
+.holding-room-page__chat-send {
+  min-height: 44px;
+  border-radius: 9999px;
+  border: 1px solid rgba(0, 168, 255, 0.4);
+  background: rgba(0, 168, 255, 0.12);
+  padding: 0 1rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #00a8ff;
+}
+
+.holding-room-page__chat-send:disabled {
+  opacity: 0.45;
+}
+
 .holding-room-countdown {
   position: absolute;
   inset: 0;
@@ -3624,11 +3722,15 @@ body::-webkit-scrollbar {
 .experience-giving-overlay-form {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 4;
   width: 100%;
   height: 100%;
   pointer-events: none;
   container-type: inline-size;
+}
+
+.experience-giving-overlay-form .pointer-events-auto {
+  z-index: 1;
 }
 
 /* Preset amounts — text only inside empty PNG neon button slots. */
@@ -6897,6 +6999,27 @@ body::-webkit-scrollbar {
   font-size: clamp(0.72rem, 1.7vw, 0.82rem);
   line-height: 1.35;
   word-break: break-word;
+}
+
+.countdown-admin-mobile-chat .public-countdown-chat-monitor__body,
+.countdown-admin-mobile-chat .public-countdown-chat-monitor__sidebar-line {
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+.countdown-admin-mobile-chat .public-countdown-chat-monitor--sidebar {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  min-height: 45vh;
+  pointer-events: auto;
+}
+
+.countdown-admin-mobile-chat .public-countdown-chat-monitor__shell {
+  height: 100%;
+  min-height: 45vh;
 }
 
 .public-countdown--obs.public-countdown--with-chat-monitor {

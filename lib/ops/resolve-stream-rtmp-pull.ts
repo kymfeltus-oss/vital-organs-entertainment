@@ -1,12 +1,12 @@
 import { isValidHlsUrl, resolvePlaybackUrlStatus } from "@/lib/live/hls";
 import {
-  isValidRtmpPullUrlLoose,
+  isValidRtmpPullUrl,
   resolveRtmpPullUrlStatus,
 } from "@/lib/live/rtmp-pull";
 
 function envPullUrl(name: "PRIMARY_RTMP_PULL_URL" | "BACKUP_RTMP_PULL_URL"): string | null {
   const value = process.env[name]?.trim();
-  return isValidRtmpPullUrlLoose(value) ? value : null;
+  return isValidRtmpPullUrl(value) ? value : null;
 }
 
 function envCameraPreviewHls(): string | null {
@@ -19,7 +19,7 @@ export function resolveStoredRtmpPullUrl(
   envFallback: "PRIMARY_RTMP_PULL_URL" | "BACKUP_RTMP_PULL_URL",
 ): string | null {
   const trimmed = stored?.trim() ?? "";
-  if (isValidRtmpPullUrlLoose(trimmed)) return trimmed;
+  if (isValidRtmpPullUrl(trimmed)) return trimmed;
   return envPullUrl(envFallback);
 }
 

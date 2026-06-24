@@ -123,6 +123,12 @@ export class BroadcastSourceService {
   startAutoDiscovery(): void {
     if (this.discoveryInterval) return;
 
+    if (isBroadcastDevMode()) {
+      while (this.devSeedIndex < DEV_SIMULATED_SOURCES.length) {
+        this.seedDevDiscoveryTick();
+      }
+    }
+
     this.discoveryInterval = setInterval(() => {
       this.events.emit({ type: "discoveryTick", timestamp: new Date().toISOString() });
       this.expireStaleHeartbeats();

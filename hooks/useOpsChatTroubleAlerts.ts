@@ -1,22 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   ATTENDEE_CHAT_MESSAGE_EVENT,
   isAttendeeChatBroadcastPayload,
   REALTIME_ATTENDEE_CHAT_CHANNEL,
 } from "@/lib/experience/attendee-chat-realtime";
+import type { ChatTroubleCategory } from "@/lib/ops/chat-scanner";
 import {
-  scanMessageForTrouble,
-  type ChatTroubleCategory,
-} from "@/lib/ops/chat-scanner";
+  evaluateTroubleAlert,
+  nextTroubleAlertCooldownUntil,
+  parseTroubleCreatedAtMs,
+  pruneTroubleComplaints,
+  registerTroubleComplaint,
+  type TroubleComplaint,
+} from "@/lib/ops/trouble-alert-engine";
 import {
+  buildChannelName,
   createRealtimeChannel,
   teardownRealtimeChannel,
 } from "@/lib/live/realtime-subscribe";
 import { getSupabase } from "@/lib/supabase/client";
-
-type TroubleCounts = Record<ChatTroubleCategory, number>;
 
 type UseOpsChatTroubleAlertsOptions = {
   enabled?: boolean;
@@ -30,45 +34,51 @@ type UseOpsChatTroubleAlertsResult = {
   clear: () => void;
 };
 
-const EMPTY_COUNTS: TroubleCounts = { audio: 0, video: 0 };
-
-function resolveDominantIssue(counts: TroubleCounts): ChatTroubleCategory | null {
-  if (counts.audio <= 0 && counts.video <= 0) return null;
-  if (counts.audio >= counts.video) return "audio";
-  return "video";
-}
-
-/** Ops-only listener — scans incoming attendee chat rows for audio/video trouble keywords. */
+/** Ops-only listener — rolling-window trouble alerts from attendee chat. */
 export function useOpsChatTroubleAlerts(
   options: UseOpsChatTroubleAlertsOptions = {},
 ): UseOpsChatTroubleAlertsResult {
   const { enabled = true } = options;
+  const instanceId = useId().replace(/:/g, "");
   const channelRef = useRef<Awaited<ReturnType<typeof createRealtimeChannel>> | null>(null);
-  const seenMessageIdsRef = useRef<Set<string>>(new Set());
+  const scannedMessageIdsRef = useRef<Set<string>>(new Set());
+  const [complaints, setComplaints] = useState<TroubleComplaint[]>([]);
+  const [cooldownUntilMs, setCooldownUntilMs] = useState(0);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
-  const [counts, setCounts] = useState<TroubleCounts>(EMPTY_COUNTS);
-
-  const registerTroubleMessage = useCallback((messageId: string, content: string) => {
-    if (!messageId || seenMessageIdsRef.current.has(messageId)) return;
-
-    const issue = scanMessageForTrouble(content);
-    if (!issue) return;
-
-    seenMessageIdsRef.current.add(messageId);
-    setCounts((current) => ({
-      ...current,
-      [issue]: current[issue] + 1,
-    }));
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNowMs(Date.now()), 1_000);
+    return () => window.clearInterval(intervalId);
   }, []);
 
+  const registerTroubleMessage = useCallback(
+    (messageId: string, content: string, createdAt?: string) => {
+      if (!messageId) return;
+
+      setComplaints((current) => {
+        const createdAtMs = parseTroubleCreatedAtMs(createdAt);
+        const result = registerTroubleComplaint(
+          current,
+          scannedMessageIdsRef.current,
+          messageId,
+          content,
+          createdAtMs,
+        );
+        return result.complaints;
+      });
+    },
+    [],
+  );
+
   const clear = useCallback(() => {
-    setCounts(EMPTY_COUNTS);
-    seenMessageIdsRef.current.clear();
+    setCooldownUntilMs(nextTroubleAlertCooldownUntil());
   }, []);
 
   useEffect(() => {
     if (!enabled) {
-      clear();
+      setComplaints([]);
+      scannedMessageIdsRef.current.clear();
+      setCooldownUntilMs(0);
       return;
     }
 
@@ -83,7 +93,7 @@ export function useOpsChatTroubleAlerts(
       return;
     }
 
-    const channelName = REALTIME_ATTENDEE_CHAT_CHANNEL;
+    const channelName = buildChannelName(REALTIME_ATTENDEE_CHAT_CHANNEL, instanceId);
 
     setupPromise = (async () => {
       try {
@@ -96,7 +106,7 @@ export function useOpsChatTroubleAlerts(
                 event: ATTENDEE_CHAT_MESSAGE_EVENT,
                 callback: ({ payload }) => {
                   if (!isAttendeeChatBroadcastPayload(payload)) return;
-                  registerTroubleMessage(payload.id, payload.content);
+                  registerTroubleMessage(payload.id, payload.content, payload.created_at);
                 },
               },
             ],
@@ -109,11 +119,12 @@ export function useOpsChatTroubleAlerts(
                   const row = payload.new as {
                     id?: string;
                     content?: string;
+                    created_at?: string;
                     deleted_at?: string | null;
                   };
 
                   if (!row.id || row.deleted_at) return;
-                  registerTroubleMessage(row.id, row.content ?? "");
+                  registerTroubleMessage(row.id, row.content ?? "", row.created_at);
                 },
               },
             ],
@@ -142,16 +153,22 @@ export function useOpsChatTroubleAlerts(
         await teardownRealtimeChannel(supabase, channel);
       })();
     };
-  }, [clear, enabled, registerTroubleMessage]);
+  }, [enabled, instanceId, registerTroubleMessage]);
 
-  const issueType = useMemo(() => resolveDominantIssue(counts), [counts]);
-  const count = issueType ? counts[issueType] : 0;
+  useEffect(() => {
+    setComplaints((current) => pruneTroubleComplaints(current, nowMs));
+  }, [nowMs]);
+
+  const evaluation = useMemo(
+    () => evaluateTroubleAlert(complaints, nowMs, cooldownUntilMs),
+    [complaints, cooldownUntilMs, nowMs],
+  );
 
   return {
-    issueType,
-    count,
-    audioCount: counts.audio,
-    videoCount: counts.video,
+    issueType: evaluation.issueType,
+    count: evaluation.count,
+    audioCount: evaluation.audioCount,
+    videoCount: evaluation.videoCount,
     clear,
   };
 }

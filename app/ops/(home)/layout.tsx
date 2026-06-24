@@ -1,10 +1,10 @@
-import { requireCrewModuleAccess } from "@/lib/ops/require-crew-module-access";
+import { requireOpsAdminUser } from "@/lib/ops/assert-ops-admin";
 
 export default async function OpsHomeLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  await requireCrewModuleAccess("ops_home", "/ops");
+  await requireOpsAdminUser("/ops");
   return children;
 }

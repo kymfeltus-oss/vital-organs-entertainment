@@ -179,8 +179,8 @@ export default function CleanOpsCommandCenter({
 
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-brand-border pb-4">
         <div>
-          <h1 className="font-ui text-xl font-bold tracking-tight">Awakening Operations</h1>
-          <p className="font-ui text-xs text-brand-muted">Simplified Command Center</p>
+          <h1 className="font-ui text-xl font-bold tracking-tight">Stream Control</h1>
+          <p className="font-ui text-xs text-brand-muted">Go live · backup · emergency offline</p>
         </div>
         <div className="flex items-center gap-2 rounded-md border border-brand-border bg-brand-panel px-3 py-1 font-ui text-xs text-brand-muted">
           <span className="h-1.5 w-1.5 rounded-full bg-brand-blue" aria-hidden="true" />

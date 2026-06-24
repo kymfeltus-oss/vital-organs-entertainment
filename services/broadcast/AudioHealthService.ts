@@ -36,11 +36,19 @@ export class AudioHealthService {
 
   /** Live adapter path — prevents DEV mock telemetry when vMix has been polled. */
   ingestFromAdapter(channels: AudioChannelTelemetry[]): void {
-    this.adapterIngestActive = true;
     if (channels.length === 0) {
+      if (isBroadcastDevMode()) {
+        // Failed/unavailable vMix poll must not disable dev mixer simulation.
+        this.adapterIngestActive = false;
+        return;
+      }
+
+      this.adapterIngestActive = true;
       this.telemetry = { ...emptyTelemetry(), updatedAt: new Date().toISOString() };
       return;
     }
+
+    this.adapterIngestActive = true;
     this.ingestFrame(channels);
   }
 

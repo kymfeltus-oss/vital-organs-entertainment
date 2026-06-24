@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { requireOpsAdminUser } from "@/lib/ops/assert-ops-admin";
+import { inspectOpsAdminAccess } from "@/lib/ops/admin-auth";
 import {
   isOpsRoleCheckBypassed,
   readOpsCrewRoleCookie,
@@ -21,7 +22,12 @@ export async function requireCrewModuleAccess(
   const cookieRole = await readOpsCrewRoleCookie();
   const role = resolveOpsCrewRole(user, cookieRole);
 
-  if (!isOpsRoleCheckBypassed(user) && !canAccessModule(role, moduleId)) {
+  // Allowlisted ops admins always reach production routes; crew role filters menus/API only.
+  if (inspectOpsAdminAccess(user).allowed || isOpsRoleCheckBypassed(user)) {
+    return { user, role };
+  }
+
+  if (!canAccessModule(role, moduleId)) {
     const params = new URLSearchParams({
       reason: "insufficient_crew_clearance",
       module: moduleId,

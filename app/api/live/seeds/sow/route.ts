@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (insertResult.error || !insertResult.data) {
-      console.error("Sow seed chat insert failed:", insertResult.error?.message);
+      console.error("Sow seed chat insert failed:", insertResult.error);
 
       await admin.rpc("reverse_emote_transaction", {
         p_user_id: buyer.userId,

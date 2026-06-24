@@ -38,6 +38,8 @@ export class ProductionSafetyEngine {
     readiness: ReadinessReport;
     production: ProductionState;
     mediaCore: AdapterConnectionMeta;
+    devMode?: boolean;
+    simulatedDataMode?: boolean;
   }): ProductionSafetyAction[] {
     const guardianRules = evaluateEventGuardianRules(input);
     const actions = guardianRules.map((rule) => this.fromGuardianRule(rule));

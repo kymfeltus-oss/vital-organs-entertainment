@@ -9,7 +9,9 @@ export function isValidHlsUrl(value: unknown): value is string {
   try {
     const parsed = new URL(trimmed);
     if (!["http:", "https:"].includes(parsed.protocol)) return false;
-    return parsed.pathname.toLowerCase().endsWith(".m3u8");
+    const path = parsed.pathname.toLowerCase();
+    const query = parsed.search.toLowerCase();
+    return path.includes(".m3u8") || query.includes(".m3u8");
   } catch {
     return false;
   }

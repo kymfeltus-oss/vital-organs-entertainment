@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { provisionRestreamRtmpIngestUrl } from "@/lib/live-hub/restream/ingest-url";
-import { isValidRtmpUrl, RTMP_INGEST_REQUIREMENT } from "@/lib/live/rtmp";
+import { isValidRtmpUrl, normalizeRtmpUrl, RTMP_INGEST_REQUIREMENT } from "@/lib/live/rtmp";
 import { LIVE_STREAM_STATE_ID } from "@/lib/live/types";
 import { buildRtmpIngestFields } from "@/lib/ops/resolve-stream-rtmp-ingest";
 import {
   requireOpsMetricsApiUser,
   requireOpsStreamMutationApiUser,
 } from "@/lib/ops/require-ops-mutation";
+import {
+  readPostgrestErrorMessage,
+  shouldDeferStreamStateSchemaWrite,
+  STREAM_SCHEMA_MIGRATION_HINT,
+} from "@/lib/ops/stream-state-schema-deferred";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 type StreamIngestPatchBody = {
@@ -19,7 +24,8 @@ function normalizeOptionalRtmp(value: unknown): string | null | undefined {
   if (value === null) return null;
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
+  if (!trimmed) return null;
+  return normalizeRtmpUrl(trimmed);
 }
 
 export async function GET(request: NextRequest) {
@@ -34,7 +40,22 @@ export async function GET(request: NextRequest) {
       .eq("id", LIVE_STREAM_STATE_ID)
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      if (shouldDeferStreamStateSchemaWrite(error)) {
+        const ingest = buildRtmpIngestFields(null, null);
+        return NextResponse.json(
+          {
+            ...ingest,
+            schemaDeferred: true,
+            warning: STREAM_SCHEMA_MIGRATION_HINT,
+            updatedAt: null,
+            updatedBy: null,
+          },
+          { headers: { "Cache-Control": "private, no-store" } },
+        );
+      }
+      throw error;
+    }
 
     const ingest = buildRtmpIngestFields(
       data?.primary_rtmp_ingest_url,
@@ -151,7 +172,25 @@ export async function PATCH(request: NextRequest) {
       .select("primary_rtmp_ingest_url, backup_rtmp_ingest_url, updated_at, updated_by")
       .single();
 
-    if (error || !data) throw error ?? new Error("Stream state row not found.");
+    if (error) {
+      if (shouldDeferStreamStateSchemaWrite(error)) {
+        const ingest = buildRtmpIngestFields(
+          primaryRtmpIngestUrl !== undefined ? primaryRtmpIngestUrl : null,
+          backupRtmpIngestUrl !== undefined ? backupRtmpIngestUrl : null,
+        );
+        return NextResponse.json({
+          success: true,
+          schemaDeferred: true,
+          warning: STREAM_SCHEMA_MIGRATION_HINT,
+          ...ingest,
+          updatedAt: null,
+          updatedBy: null,
+        });
+      }
+      throw error;
+    }
+
+    if (!data) throw new Error("Stream state row not found.");
 
     const ingest = buildRtmpIngestFields(
       data.primary_rtmp_ingest_url,
@@ -167,7 +206,12 @@ export async function PATCH(request: NextRequest) {
   } catch (error) {
     console.error("[OPS_STREAM_INGEST_PATCH_ERR]:", error);
     return NextResponse.json(
-      { error: "Unable to update RTMP ingest configuration." },
+      {
+        error:
+          readPostgrestErrorMessage(error) === "Unknown database error."
+            ? "Unable to update RTMP ingest configuration."
+            : readPostgrestErrorMessage(error),
+      },
       { status: 500 },
     );
   }

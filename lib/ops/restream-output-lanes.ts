@@ -1,6 +1,6 @@
 import { isValidHlsUrl } from "@/lib/live/hls";
 import { isValidRtmpUrl } from "@/lib/live/rtmp";
-import { isValidRtmpPullUrlLoose } from "@/lib/live/rtmp-pull";
+import { isValidRtmpPullUrl } from "@/lib/live/rtmp-pull";
 
 /** DB-stored lane keys on live_stream_state — env fallbacks must NOT affect X/4. */
 export type RestreamStoredOutputLanes = {
@@ -28,7 +28,7 @@ export function buildStoredRestreamOutputLanes(
   row: StoredStreamRow,
 ): RestreamStoredOutputLanes {
   const pushConfigured = isValidRtmpUrl(row?.primary_rtmp_ingest_url?.trim());
-  const pullConfigured = isValidRtmpPullUrlLoose(row?.primary_rtmp_pull_url?.trim());
+  const pullConfigured = isValidRtmpPullUrl(row?.primary_rtmp_pull_url?.trim());
   const previewConfigured = isValidHlsUrl(row?.camera_preview_hls_url?.trim());
   const playbackConfigured = isValidHlsUrl(row?.primary_playback_url?.trim());
 

@@ -1,3 +1,9 @@
+import type { OpsProductionSection } from "@/lib/ops/production-sections";
+import {
+  EXPERIENCE_LIVE_PATH,
+  PUBLIC_COUNTDOWN_PATH,
+} from "@/lib/experience/live-routes";
+
 export const OPS_TEAM_ROLE_STORAGE_KEY = "ops_team_role_mock";
 
 export type OpsTeamRole =
@@ -14,7 +20,12 @@ export type OpsHubModuleId =
   | "prayer_queue"
   | "incident"
   | "ops_home"
-  | "camera_desk";
+  | "camera_desk"
+  | "countdown_editor"
+  | "stream_control"
+  | "public_countdown"
+  | "attendee_live"
+  | "obs_countdown";
 
 export type OpsHubModule = {
   id: OpsHubModuleId;
@@ -22,15 +33,20 @@ export type OpsHubModule = {
   description: string;
   href: string;
   badge?: string;
+  section: OpsProductionSection;
+  /** Opens in a new tab — attendee-facing surfaces. */
+  external?: boolean;
 };
 
 export const OPS_HUB_MODULES: readonly OpsHubModule[] = [
   {
-    id: "crew_console",
-    title: "Crew Console",
-    description: "Centralized production console — preview, readiness, and go-live review.",
-    href: "/ops/live-hub/console",
-    badge: "Live Hub",
+    id: "countdown_editor",
+    title: "Countdown Editor",
+    description:
+      "Hero copy, show schedule, holding-room restore, live chat monitor, and go-live launch.",
+    href: "/ops/countdown",
+    badge: "Pre-Show",
+    section: "setup",
   },
   {
     id: "readiness",
@@ -38,34 +54,31 @@ export const OPS_HUB_MODULES: readonly OpsHubModule[] = [
     description: "Pre-show checklist matrix and interlock status for producers.",
     href: "/ops/live-hub/readiness",
     badge: "Matrix",
+    section: "setup",
   },
   {
     id: "broadcast_console",
     title: "Broadcast Desk",
-    description: "Sacred stream path — PARABLE broadcast console and stream health.",
+    description: "PARABLE broadcast console — sources, preview, Restream ingest, and stream health.",
     href: "/dashboard/broadcast",
     badge: "Stream",
+    section: "setup",
   },
   {
-    id: "prayer_queue",
-    title: "Prayer Queue",
-    description: "Filtered prayer team view for live moderation and response flow.",
-    href: "/ops/live-hub/prayer-queue",
-    badge: "Prayer",
+    id: "stream_control",
+    title: "Stream Control",
+    description: "One-click go live, backup lane, and emergency offline for all attendees.",
+    href: "/ops/control",
+    badge: "Master",
+    section: "live",
   },
   {
-    id: "incident",
-    title: "Incident Log",
-    description: "Live system errors, audits, and PARABLE safety event history.",
-    href: "/ops/live-hub/incident",
-    badge: "Audit",
-  },
-  {
-    id: "ops_home",
-    title: "Ops Command",
-    description: "Show-day metrics snapshot and platform-wide ops overview.",
-    href: "/ops",
-    badge: "Overview",
+    id: "crew_console",
+    title: "Crew Console",
+    description: "Live Hub production console — preview, readiness review, and go-live workflow.",
+    href: "/ops/live-hub/console",
+    badge: "Live Hub",
+    section: "live",
   },
   {
     id: "camera_desk",
@@ -74,11 +87,65 @@ export const OPS_HUB_MODULES: readonly OpsHubModule[] = [
       "Phone-optimized studio controller. Stream from your mobile lens and hot-swap local inputs.",
     href: "/ops/camera-desk",
     badge: "Mobile",
+    section: "live",
+  },
+  {
+    id: "prayer_queue",
+    title: "Prayer Queue",
+    description: "Filtered prayer team view for live moderation and response flow.",
+    href: "/ops/live-hub/prayer-queue",
+    badge: "Prayer",
+    section: "live",
+  },
+  {
+    id: "incident",
+    title: "Incident Log",
+    description: "Live system errors, audits, and PARABLE safety event history.",
+    href: "/ops/live-hub/incident",
+    badge: "Audit",
+    section: "monitoring",
+  },
+  {
+    id: "ops_home",
+    title: "Production Metrics Dashboard",
+    description: "Read-only monitoring — stream health, audio, alerts, and attendee signals.",
+    href: "/ops",
+    badge: "Home",
+    section: "monitoring",
+  },
+  {
+    id: "public_countdown",
+    title: "Public Countdown",
+    description: "Attendee-facing pre-show countdown — rings, schedule copy, and live chat.",
+    href: PUBLIC_COUNTDOWN_PATH,
+    badge: "Attendee",
+    section: "preview",
+    external: true,
+  },
+  {
+    id: "attendee_live",
+    title: "Attendee Live Room",
+    description: "Viewer POV live experience — verify playback, chat, and go-live transition.",
+    href: EXPERIENCE_LIVE_PATH,
+    badge: "Attendee",
+    section: "preview",
+    external: true,
+  },
+  {
+    id: "obs_countdown",
+    title: "OBS Countdown Overlay",
+    description: "Horizontal stream overlay for OBS, Restream, and vMix browser sources.",
+    href: `${PUBLIC_COUNTDOWN_PATH}/obs`,
+    badge: "Stream",
+    section: "preview",
+    external: true,
   },
 ] as const;
 
 export const ROLE_MODULE_ACCESS: Record<OpsTeamRole, readonly OpsHubModuleId[]> = {
   admin: [
+    "countdown_editor",
+    "stream_control",
     "crew_console",
     "readiness",
     "broadcast_console",
@@ -86,11 +153,24 @@ export const ROLE_MODULE_ACCESS: Record<OpsTeamRole, readonly OpsHubModuleId[]> 
     "incident",
     "ops_home",
     "camera_desk",
+    "public_countdown",
+    "attendee_live",
+    "obs_countdown",
   ],
-  producer: ["crew_console", "readiness", "broadcast_console"],
-  broadcast_operator: ["broadcast_console"],
-  prayer_team: ["prayer_queue"],
-  camera_crew: ["camera_desk"],
+  producer: [
+    "countdown_editor",
+    "stream_control",
+    "crew_console",
+    "readiness",
+    "broadcast_console",
+    "ops_home",
+    "public_countdown",
+    "attendee_live",
+    "obs_countdown",
+  ],
+  broadcast_operator: ["stream_control", "broadcast_console", "ops_home"],
+  prayer_team: ["prayer_queue", "ops_home"],
+  camera_crew: ["camera_desk", "ops_home"],
 };
 
 const ROLE_MODULE_ACCESS_LOOKUP = ROLE_MODULE_ACCESS;
@@ -112,9 +192,31 @@ export function isOpsTeamRole(value: string | null | undefined): value is OpsTea
   );
 }
 
-export function modulesForRole(role: OpsTeamRole): OpsHubModule[] {
+export function modulesForRole(
+  role: OpsTeamRole,
+  options?: { excludeModuleIds?: readonly OpsHubModuleId[] },
+): OpsHubModule[] {
   const allowed = new Set(ROLE_MODULE_ACCESS_LOOKUP[role]);
-  return OPS_HUB_MODULES.filter((module) => allowed.has(module.id));
+  const excluded = new Set(options?.excludeModuleIds ?? []);
+  return OPS_HUB_MODULES.filter(
+    (module) => allowed.has(module.id) && !excluded.has(module.id),
+  );
+}
+
+export function modulesForRoleBySection(
+  role: OpsTeamRole,
+  options?: { excludeModuleIds?: readonly OpsHubModuleId[] },
+): Map<OpsProductionSection, OpsHubModule[]> {
+  const modules = modulesForRole(role, options);
+  const grouped = new Map<OpsProductionSection, OpsHubModule[]>();
+
+  for (const module of modules) {
+    const list = grouped.get(module.section) ?? [];
+    list.push(module);
+    grouped.set(module.section, list);
+  }
+
+  return grouped;
 }
 
 export function roleLabel(role: OpsTeamRole): string {

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { OPS_HOME_PATH } from "@/lib/broadcastRoutes";
 import { Loader2, Radio, ShieldAlert, Wifi } from "lucide-react";
 import { formatPlaybackLaneLabel } from "@/lib/live/hls";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
@@ -233,10 +234,10 @@ export default function OpsCommandCenter({
             <Loader2 className="h-4 w-4 animate-spin text-[#1E40AF]" />
           ) : null}
           <Link
-            href="/ops/live-hub"
+            href={OPS_HOME_PATH}
             className="rounded-full border border-[#B0267A]/50 px-4 py-2 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#f5c2e0] transition hover:border-[#B0267A] hover:bg-[#B0267A]/10"
           >
-            Live Hub
+            Production Dashboard
           </Link>
           <button
             type="button"

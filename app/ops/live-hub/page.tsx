@@ -1,19 +1,7 @@
-/**
- * Operator crew terminal — role-based module router (mock client-side roles).
- * Attendee experience: /experience (hub) and /live (no operator controls).
- */
-import LiveHubRoleRouterClient from "@/components/ops/LiveHubRoleRouterClient";
-import { requireOpsAdminUser } from "@/lib/ops/assert-ops-admin";
-import { loadOpsSnapshot } from "@/lib/ops/snapshot";
+import { redirect } from "next/navigation";
+import { OPS_HOME_PATH } from "@/lib/broadcastRoutes";
 
-export default async function LiveHubPage() {
-  const user = await requireOpsAdminUser("/ops/live-hub");
-  const snapshot = await loadOpsSnapshot();
-
-  return (
-    <LiveHubRoleRouterClient
-      adminEmail={user.email ?? "unknown"}
-      initialSnapshot={snapshot}
-    />
-  );
+/** Legacy crew router — unified under the production dashboard. */
+export default function LiveHubIndexPage() {
+  redirect(OPS_HOME_PATH);
 }

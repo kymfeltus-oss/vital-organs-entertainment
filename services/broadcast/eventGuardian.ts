@@ -43,6 +43,9 @@ export type EventGuardianInput = {
   readiness: ReadinessReport;
   production: ProductionState;
   mediaCore: AdapterConnectionMeta;
+  /** Local dev desk — simulated sources without live vMix. */
+  devMode?: boolean;
+  simulatedDataMode?: boolean;
 };
 
 const RULE_HEADLINE: Record<EventGuardianRuleId, string> = {
@@ -222,7 +225,12 @@ export function evaluateEventGuardianRules(input: EventGuardianInput): EventGuar
     mediaCore.connectionState !== "connected" ||
     Boolean(mediaCore.lastError);
 
-  if (mediaCoreDegraded) {
+  const skipMediaCoreGuardian =
+    input.devMode === true &&
+    input.simulatedDataMode === true &&
+    sources.length > 0;
+
+  if (mediaCoreDegraded && !skipMediaCoreGuardian) {
     rules.push(
       rec(
         "media_core_unhealthy",

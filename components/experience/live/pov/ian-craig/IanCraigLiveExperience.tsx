@@ -96,70 +96,23 @@ export default function IanCraigLiveExperience({
   const isMobileLayout = layout === "mobile";
 
   useEffect(() => {
-    // #region agent log
-    fetch("http://127.0.0.1:7924/ingest/91e1e0f3-2fd3-4620-91fc-790155003627", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "ac75e2" },
-      body: JSON.stringify({
-        sessionId: "ac75e2",
-        runId: "post-fix",
-        hypothesisId: "H1-H5",
-        location: "IanCraigLiveExperience.tsx:layout-effect",
-        message: "live mobile shell state",
-        data: {
-          layout,
-          showSidebar,
-          isMobileLayout,
-          chatLineCount: chatLines.length,
-          sessionAuthenticated: session.authenticated,
-          sessionCanSend: session.canSend,
-          viewportWidth: typeof window !== "undefined" ? window.innerWidth : null,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-
     if (!isMobileLayout) return;
 
-    const composerEl = document.querySelector(".ian-craig-live-mobile-composer");
-    const dockEl = document.querySelector(".ian-craig-live-mobile-dock");
-    const chatEl = document.querySelector(".ian-craig-live-mobile-chat");
-    const composerRect = composerEl?.getBoundingClientRect() ?? null;
-    const dockRect = dockEl?.getBoundingClientRect() ?? null;
-    const overlapPx =
-      composerRect && dockRect ? Math.round(composerRect.bottom - dockRect.top) : null;
+    const root = document.querySelector(".ian-craig-live--mobile");
+    const dock = document.querySelector(".ian-craig-live-mobile-dock");
+    if (!(root instanceof HTMLElement) || !(dock instanceof HTMLElement)) return;
 
-    // #region agent log
-    fetch("http://127.0.0.1:7924/ingest/91e1e0f3-2fd3-4620-91fc-790155003627", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "ac75e2" },
-      body: JSON.stringify({
-        sessionId: "ac75e2",
-        runId: "post-fix",
-        hypothesisId: "H3-H5",
-        location: "IanCraigLiveExperience.tsx:dom-probe",
-        message: "mobile overlay DOM visibility",
-        data: {
-          composerPresent: Boolean(composerEl),
-          dockPresent: Boolean(dockEl),
-          chatPresent: Boolean(chatEl),
-          overlapPx,
-          composerRect,
-          dockRect,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-  }, [
-    chatLines.length,
-    isMobileLayout,
-    layout,
-    session.authenticated,
-    session.canSend,
-    showSidebar,
-  ]);
+    const syncDockOffset = () => {
+      const dockHeight = Math.ceil(dock.getBoundingClientRect().height);
+      root.style.setProperty("--ian-craig-dock-h", `${dockHeight}px`);
+    };
+
+    syncDockOffset();
+    const observer = new ResizeObserver(syncDockOffset);
+    observer.observe(dock);
+
+    return () => observer.disconnect();
+  }, [isMobileLayout]);
 
   useEffect(() => {
     if (!showSidebar) return;

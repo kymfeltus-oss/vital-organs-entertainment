@@ -85,13 +85,13 @@ const SEED_PACKAGE_BADGES: Record<SeedBillingPackageId, string> = {
 };
 
 /** Native package rows — text rendered in React over masked PNG slots. */
-export const seedPackages = SEED_PACKAGES.map((pkg) => ({
+export const seedPackages: ReadonlyArray<SeedPackageOverlay> = SEED_PACKAGES.map((pkg) => ({
   packageId: pkg.id,
   productType: pkg.productType,
   seeds: pkg.count,
   badge: SEED_PACKAGE_BADGES[pkg.id],
   price: formatSeedBillingPrice(pkg.price),
-})) as const satisfies ReadonlyArray<SeedPackageOverlay>;
+}));
 
 export type SeedPackageId = SeedBillingPackageId;
 

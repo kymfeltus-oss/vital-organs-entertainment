@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
+import ProductionDashboardBackLink from "@/components/ops/ProductionDashboardBackLink";
 
 type OpsModuleShellProps = {
   eyebrow: string;
@@ -16,14 +16,10 @@ export default function OpsModuleShell({
 }: OpsModuleShellProps) {
   return (
     <main className="min-h-dvh w-full bg-brand-black pt-safe pb-safe text-white">
+      <div className="border-b border-brand-border px-4 py-3 md:px-8">
+        <ProductionDashboardBackLink />
+      </div>
       <div className="w-full px-4 py-6 md:px-8 lg:px-10">
-        <Link
-          href="/ops/live-hub"
-          className="mb-6 inline-flex min-h-11 items-center font-ui text-[0.62rem] font-bold uppercase tracking-[0.16em] text-brand-muted transition hover:text-brand-blue"
-        >
-          ← Crew Terminal
-        </Link>
-
         <header className="mb-8 border-b border-brand-border pb-6">
           <p className="font-ui text-[0.58rem] font-bold uppercase tracking-[0.28em] text-brand-blue">
             {eyebrow}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { OPS_HOME_PATH } from "@/lib/broadcastRoutes";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
@@ -239,7 +240,7 @@ export default function CameraDeskMobileView({
             {isLive ? "Live" : "Idle"}
           </span>
           <Link
-            href="/ops/live-hub"
+            href={OPS_HOME_PATH}
             className="touch-target rounded-lg p-1 text-brand-muted transition hover:bg-brand-panel hover:text-white"
             aria-label="Close operator console"
           >

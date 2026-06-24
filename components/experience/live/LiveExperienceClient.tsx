@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import PublicCountdownExperience from "@/components/countdown/PublicCountdownExperience";
 import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
 import GoingLiveTransition from "@/components/experience/live/GoingLiveTransition";
+import { IgLiveChatProvider } from "@/components/experience/live/ig/IgLiveChatContext";
 import ViewerPovGoLiveShell from "@/components/experience/live/pov/ViewerPovGoLiveShell";
 import PassActivatingShell from "@/components/live/PassActivatingShell";
 import LightweightLiveLoading from "@/components/live/LightweightLiveLoading";
@@ -17,6 +18,7 @@ import {
 } from "@/lib/experience/event-lifecycle";
 import { useLiveAnnouncementRedirect } from "@/lib/experience/useLiveAnnouncementRedirect";
 import {
+  isLiveHoldingOverride,
   isLivePreviewOverride,
   shouldDeferBackgroundLiveSync,
   shouldInitializeLiveStream,
@@ -30,6 +32,7 @@ import {
 } from "@/lib/live/countdown-config";
 import type { CountdownParts } from "@/lib/live/event-lobby";
 import { computeCountdown } from "@/lib/live/event-lobby";
+import { COUNTDOWN_CONFIG_UPDATED_EVENT } from "@/lib/live/countdown-config-sync";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
@@ -84,6 +87,7 @@ function LiveExperienceClientInner({
 }: LiveExperienceClientProps) {
   const searchParams = useSearchParams();
   const previewOverride = isLivePreviewOverride(searchParams);
+  const holdingOverride = isLiveHoldingOverride(searchParams);
   const { phase, verificationAttempt } = useLiveAccessVerification();
   const accessGateReady =
     phase !== "checking" && phase !== "activating_pass" && phase !== "locked";
@@ -132,22 +136,31 @@ function LiveExperienceClientInner({
   const routingPhase = resolveAttendeeEventPhase(eventPhase, serverPhase);
 
   const lifecycleStage = useMemo(() => {
+    if (holdingOverride) {
+      return "holding";
+    }
+
     if (countdownLoading && !previewOverride) {
       return scheduleStage;
     }
 
     return resolveAttendeeLifecycleStage(scheduleStage, {
-      broadcastIsLive: deferBackgroundLiveSync ? false : broadcastIsLive,
+      broadcastIsLive,
       countdownPhase: routingPhase,
     });
   }, [
     broadcastIsLive,
     countdownLoading,
-    deferBackgroundLiveSync,
+    holdingOverride,
     previewOverride,
     routingPhase,
     scheduleStage,
   ]);
+
+  useEffect(() => {
+    if (!broadcastIsLive) return;
+    window.dispatchEvent(new Event(COUNTDOWN_CONFIG_UPDATED_EVENT));
+  }, [broadcastIsLive]);
 
   const [openingLiveRoom, setOpeningLiveRoom] = useState(false);
   const wasPreConcertRef = useRef<boolean | null>(null);
@@ -256,11 +269,13 @@ function LiveExperienceClientInner({
 
     return (
       <main className="live-holding-shell">
-        <ExperienceHoldingRoomPageClient
-          initialCountdownConfig={initialCountdownConfig}
-          initialCountdown={initialCountdown}
-          initialProfile={initialProfile}
-        />
+        <IgLiveChatProvider>
+          <ExperienceHoldingRoomPageClient
+            initialCountdownConfig={initialCountdownConfig}
+            initialCountdown={initialCountdown}
+            initialProfile={initialProfile}
+          />
+        </IgLiveChatProvider>
       </main>
     );
   }

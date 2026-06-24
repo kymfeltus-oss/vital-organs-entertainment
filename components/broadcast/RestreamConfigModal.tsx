@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Check,
   Copy,
@@ -16,13 +16,21 @@ import {
 import StudioEngineSelector from "@/components/broadcast/StudioEngineSelector";
 import SimulationTestingStrip from "@/components/broadcast/SimulationTestingStrip";
 import { copyToClipboard } from "@/lib/clipboard";
+import {
+  setBroadcastCameraEngineStatus,
+  setBroadcastLocalCameraActive,
+  readBroadcastCameraEngineStatus,
+} from "@/lib/broadcast/local-camera-session";
+import { DEV_MANIFEST_FALLBACK_HLS } from "@/lib/live/manifest-dev-fallback";
+import { normalizeRtmpUrl } from "@/lib/live/rtmp";
+import { classifyRtmpStreamLink } from "@/lib/live/rtmp-pull";
 import type { PullEngineStatus } from "@/lib/ops/ops-stream-state";
 import { testHlsPreviewUrlClientOnly } from "@/lib/ops/test-hls-preview-client";
 import {
   DEFAULT_STUDIO_ENGINE_MODE,
   type StudioEngineMode,
 } from "@/lib/ops/studio-engine-mode";
-import { splitRtmpIngestUrl } from "@/lib/stream-keys";
+import { splitRtmpIngestUrl, buildPrimaryRtmpIngestUrl, DEFAULT_RTMP_INGEST_SERVER_BASE } from "@/lib/stream-keys";
 
 export type RestreamStreamConfig = {
   primaryRtmpIngestUrl: string | null;
@@ -54,6 +62,7 @@ type StreamKeyGeneratorCardProps = {
   initialCredentials?: StreamKeyCredentials | null;
   onGenerated?: (payload: StreamKeyCredentials & { primaryRtmpIngestUrl?: string | null }) => void;
   onError?: (message: string) => void;
+  onSaveIngest?: (primaryRtmpIngestUrl: string) => Promise<void>;
 };
 
 export function StreamKeyGeneratorCard({
@@ -61,16 +70,24 @@ export function StreamKeyGeneratorCard({
   initialCredentials = null,
   onGenerated,
   onError,
+  onSaveIngest,
 }: StreamKeyGeneratorCardProps) {
   const [loading, setLoading] = useState(false);
+  const [savingManual, setSavingManual] = useState(false);
   const [copiedKey, setCopiedKey] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [credentials, setCredentials] = useState<StreamKeyCredentials | null>(
     initialCredentials,
   );
+  const [manualServerUrl, setManualServerUrl] = useState(DEFAULT_RTMP_INGEST_SERVER_BASE);
+  const [manualStreamKey, setManualStreamKey] = useState("");
 
   useEffect(() => {
     setCredentials(initialCredentials);
+    if (initialCredentials) {
+      setManualServerUrl(initialCredentials.serverUrl);
+      setManualStreamKey(initialCredentials.streamKey);
+    }
   }, [initialCredentials]);
 
   const handleGenerateKey = useCallback(async () => {
@@ -127,6 +144,41 @@ export function StreamKeyGeneratorCard({
       window.setTimeout(() => setCopiedKey(false), 2000);
     }
   }, []);
+
+  const handleSaveManualIngest = useCallback(async () => {
+    if (!canEdit || !onSaveIngest) return;
+
+    const trimmedKey = manualStreamKey.trim();
+    if (!trimmedKey) {
+      onError?.("Enter your stream key before saving Host Ingest.");
+      return;
+    }
+
+    const serverNormalized = normalizeRtmpUrl(manualServerUrl.trim());
+    if (!serverNormalized) {
+      onError?.(
+        "RTMP server must be a single rtmp:// URL (example: rtmp://vitalorgansent.com/live).",
+      );
+      return;
+    }
+
+    const fullUrl = buildPrimaryRtmpIngestUrl(trimmedKey, serverNormalized);
+    setSavingManual(true);
+    try {
+      await onSaveIngest(fullUrl);
+      const nextCredentials = {
+        serverUrl: serverNormalized,
+        streamKey: trimmedKey,
+      };
+      setCredentials(nextCredentials);
+    } catch (saveError) {
+      onError?.(
+        saveError instanceof Error ? saveError.message : "Unable to save Host Ingest.",
+      );
+    } finally {
+      setSavingManual(false);
+    }
+  }, [canEdit, manualServerUrl, manualStreamKey, onError, onSaveIngest]);
 
   return (
     <div className="w-full rounded-xl border border-brand-border bg-brand-black p-4 text-white">
@@ -207,8 +259,8 @@ export function StreamKeyGeneratorCard({
           </div>
 
           <p className="mt-2 font-body text-[0.58rem] italic leading-normal text-brand-muted">
-            Safe Launch Mode: copy and send both generated parameters directly to your external
-            camera operator.
+            Safe Launch Mode: copy server + key to OBS. Port 1935 is used automatically when omitted
+            from the server URL.
           </p>
         </div>
       ) : (
@@ -217,11 +269,56 @@ export function StreamKeyGeneratorCard({
           <p className="font-ui text-xs">No active ingest target generated.</p>
           <p className="mt-0.5 font-body text-[0.58rem] text-brand-muted/80">
             {canEdit
-              ? "Click the button above to provision credentials for an external provider."
+              ? "Generate credentials or paste your Restream server + stream key below."
               : "An admin or producer must generate ingest credentials for you."}
           </p>
         </div>
       )}
+
+      {canEdit && onSaveIngest ? (
+        <div className="mt-4 space-y-3 border-t border-brand-border pt-4">
+          <p className="font-ui text-[0.52rem] font-bold uppercase tracking-[0.12em] text-brand-muted">
+            Paste Restream / brand RTMP credentials
+          </p>
+          <label className="block min-w-0">
+            <span className="mb-1 block font-ui text-[0.48rem] uppercase text-brand-muted">
+              Server (single rtmp:// header)
+            </span>
+            <input
+              type="text"
+              value={manualServerUrl}
+              onChange={(event) => setManualServerUrl(event.target.value)}
+              placeholder="rtmp://vitalorgansent.com/live"
+              className="min-w-0 w-full truncate rounded-lg border border-brand-border bg-brand-black px-3 py-2 font-mono text-xs text-white outline-none focus:border-brand-purple"
+            />
+          </label>
+          <label className="block min-w-0">
+            <span className="mb-1 block font-ui text-[0.48rem] uppercase text-brand-muted">
+              Stream key
+            </span>
+            <input
+              type="text"
+              value={manualStreamKey}
+              onChange={(event) => setManualStreamKey(event.target.value)}
+              placeholder="re_11801878_event..."
+              className="min-w-0 w-full truncate rounded-lg border border-brand-border bg-brand-black px-3 py-2 font-mono text-xs text-white outline-none focus:border-brand-purple"
+            />
+          </label>
+          <button
+            type="button"
+            disabled={savingManual}
+            onClick={() => void handleSaveManualIngest()}
+            className="touch-target inline-flex items-center gap-1.5 rounded-lg border border-brand-blue/40 bg-brand-blue/10 px-3 py-2 font-ui text-[0.52rem] font-bold uppercase tracking-[0.1em] text-brand-blue transition hover:bg-brand-blue/20 disabled:opacity-60"
+          >
+            {savingManual ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+            ) : (
+              <Save className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
+            Save Host Ingest
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -251,7 +348,9 @@ export default function RestreamConfigModal({
   const loadConfig = useCallback(async () => {
     setError(null);
     setTestResult(null);
-    setEngineOverride(null);
+    setEngineOverride(
+      readBroadcastCameraEngineStatus() === "running" ? "running" : null,
+    );
 
     try {
       const [pullRes, ingestRes, engineRes] = await Promise.all([
@@ -294,7 +393,17 @@ export default function RestreamConfigModal({
 
       setConfig(merged);
       setStudioEngineMode(mode);
-      setPullUrl(merged.primaryRtmpPullUrl ?? "");
+
+      const pullStored = merged.primaryRtmpPullUrl?.trim() ?? "";
+      const ingestStored = merged.primaryRtmpIngestUrl?.trim() ?? "";
+      if (pullStored) {
+        setPullUrl(pullStored);
+      } else if (ingestStored) {
+        setPullUrl(ingestStored);
+      } else {
+        setPullUrl("");
+      }
+
       setHlsUrl(merged.cameraPreviewHlsUrl ?? "");
     } catch {
       setError("Unable to load broadcast engine configuration.");
@@ -372,40 +481,126 @@ export default function RestreamConfigModal({
     setTestResult(null);
 
     try {
-      const response = await fetch("/api/ops/stream-pull", {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          primaryRtmpPullUrl: pullUrl.trim() || null,
-          cameraPreviewHlsUrl: hlsUrl.trim() || null,
-        }),
-        cache: "no-store",
-      });
+      const trimmedStreamLink = pullUrl.trim();
+      const trimmedHls = hlsUrl.trim();
+      const normalizedStreamLink = trimmedStreamLink
+        ? normalizeRtmpUrl(trimmedStreamLink)
+        : null;
 
-      const data = (await response.json()) as { success?: boolean; error?: string };
+      if (trimmedStreamLink && !normalizedStreamLink) {
+        throw new Error(
+          "Stream link must be a valid RTMP URL with a single rtmp:// header (example: rtmp://vitalorgansent.com/live/your-key).",
+        );
+      }
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.error ?? "Unable to save Restream configuration.");
+      const streamKind = normalizedStreamLink
+        ? classifyRtmpStreamLink(normalizedStreamLink)
+        : null;
+
+      if (normalizedStreamLink && streamKind === "unknown") {
+        throw new Error(
+          "Stream link must be RTMP — brand push (rtmp://vitalorgansent.com/live/...), OBS push (rtmp://live.restream.io/live/...), or Restream pull (rtmp://pull.restream.io/pull/...).",
+        );
+      }
+
+      let schemaDeferredWarning: string | null = null;
+
+      if (streamKind === "push") {
+        const ingestResponse = await fetch("/api/ops/stream-ingest", {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ primaryRtmpIngestUrl: normalizedStreamLink }),
+          cache: "no-store",
+        });
+
+        const ingestData = (await ingestResponse.json()) as {
+          success?: boolean;
+          error?: string;
+          schemaDeferred?: boolean;
+          warning?: string;
+        };
+
+        if (!ingestResponse.ok || !ingestData.success) {
+          throw new Error(ingestData.error ?? "Unable to save OBS push link to Host Ingest.");
+        }
+
+        if (ingestData.schemaDeferred && ingestData.warning) {
+          schemaDeferredWarning = ingestData.warning;
+        }
+      }
+
+      const pullPatchBody =
+        streamKind === "pull"
+          ? { primaryRtmpPullUrl: normalizedStreamLink }
+          : streamKind === "push"
+            ? { primaryRtmpPullUrl: null }
+            : {};
+
+      const streamPullPayload = {
+        ...pullPatchBody,
+        ...(trimmedHls ? { cameraPreviewHlsUrl: trimmedHls } : {}),
+      };
+
+      if (Object.keys(streamPullPayload).length > 0) {
+        const response = await fetch("/api/ops/stream-pull", {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(streamPullPayload),
+          cache: "no-store",
+        });
+
+        const data = (await response.json()) as {
+          success?: boolean;
+          error?: string;
+          schemaDeferred?: boolean;
+          warning?: string;
+        };
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error ?? "Unable to save Restream configuration.");
+        }
+
+        if (data.schemaDeferred && data.warning) {
+          schemaDeferredWarning = data.warning;
+        }
       }
 
       await loadConfig();
       onSaved?.();
+      if (schemaDeferredWarning) {
+        onShowToast?.(schemaDeferredWarning);
+      } else if (streamKind === "push") {
+        onShowToast?.(
+          "OBS push link saved to Host Ingest. GO LIVE uses the dev HLS fallback when preview is empty.",
+        );
+      }
       onClose();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Unable to save.");
     } finally {
       setIsSaving(false);
     }
-  }, [canEdit, hlsUrl, loadConfig, onClose, onSaved, pullUrl]);
+  }, [canEdit, hlsUrl, loadConfig, onClose, onSaved, onShowToast, pullUrl]);
 
   const testConnection = useCallback(async () => {
     setIsTesting(true);
     setTestResult(null);
     setError(null);
 
-    const result = await testHlsPreviewUrlClientOnly(hlsUrl);
-    setTestResult(result.message);
+    const isDevBuild = process.env.NODE_ENV === "development";
+    const resolvedHlsUrl =
+      hlsUrl.trim() || (isDevBuild ? DEV_MANIFEST_FALLBACK_HLS : "");
+
+    const result = await testHlsPreviewUrlClientOnly(resolvedHlsUrl);
+    if (result.ok && !hlsUrl.trim() && isDevBuild) {
+      setTestResult(
+        `${result.message} (dev desk-test — using Mux fallback manifest)`,
+      );
+    } else {
+      setTestResult(result.message);
+    }
     setIsTesting(false);
   }, [hlsUrl]);
 
@@ -429,6 +624,52 @@ export default function RestreamConfigModal({
     [onSaved, onShowToast],
   );
 
+  const saveHostIngest = useCallback(
+    async (primaryRtmpIngestUrl: string) => {
+      const normalized = normalizeRtmpUrl(primaryRtmpIngestUrl);
+      if (!normalized) {
+        throw new Error("Invalid RTMP ingest URL.");
+      }
+
+      const response = await fetch("/api/ops/stream-ingest", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ primaryRtmpIngestUrl: normalized }),
+        cache: "no-store",
+      });
+
+      const data = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+        schemaDeferred?: boolean;
+        warning?: string;
+      };
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error ?? "Unable to save Host Ingest.");
+      }
+
+      if (data.schemaDeferred && data.warning) {
+        onShowToast?.(data.warning);
+      }
+
+      setConfig((current) =>
+        current
+          ? {
+              ...current,
+              primaryRtmpIngestUrl: normalized,
+              primaryRtmpConfigured: true,
+            }
+          : current,
+      );
+      await loadConfig();
+      onSaved?.();
+      onShowToast?.("Host Ingest saved — use Start Camera Stream or push from OBS.");
+    },
+    [loadConfig, onSaved, onShowToast],
+  );
+
   const handleGenerateInvite = useCallback(async () => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const inviteUrl = `${origin}/dashboard/broadcast?webrtc=1&t=${Date.now()}`;
@@ -438,21 +679,43 @@ export default function RestreamConfigModal({
     );
   }, [onShowToast]);
 
-  // TODO: wire Start/Stop Engine to ops pull-engine service when backend lands.
   const handleStartEngine = useCallback(() => {
+    if (!canEdit) return;
+    setError(null);
+
+    if (studioEngineMode === "internal_studio") {
+      setBroadcastLocalCameraActive(true);
+      setEngineOverride("running");
+      onShowToast?.("Local camera started — allow browser access when prompted.");
+      onClose();
+      return;
+    }
+
+    setBroadcastCameraEngineStatus("running");
     setEngineOverride("running");
-    onShowToast?.("Camera stream started (practice mode).");
-  }, [onShowToast]);
+    onShowToast?.(
+      "Camera stream marked active — push from OBS to your RTMP server + stream key.",
+    );
+    onSaved?.();
+  }, [canEdit, onClose, onSaved, onShowToast, studioEngineMode]);
 
   const handleStopEngine = useCallback(() => {
+    setBroadcastLocalCameraActive(false);
+    setBroadcastCameraEngineStatus("stopped");
     setEngineOverride("stopped");
     onShowToast?.("Camera stream stopped.");
   }, [onShowToast]);
+
+  const streamLinkKind = useMemo(
+    () => (pullUrl.trim() ? classifyRtmpStreamLink(pullUrl) : null),
+    [pullUrl],
+  );
 
   if (!isOpen) return null;
 
   const ingestCredentials = splitRtmpIngestUrl(config?.primaryRtmpIngestUrl);
   const isRestreamMode = studioEngineMode === "restream_api";
+  const isDevBuild = process.env.NODE_ENV === "development";
   const engineStatus = engineOverride ?? pullEngineStatus;
   const engineStatusLabel =
     engineStatus === "running"
@@ -518,17 +781,25 @@ export default function RestreamConfigModal({
                 }
                 onGenerated={handleStreamKeyGenerated}
                 onError={setError}
+                onSaveIngest={saveHostIngest}
               />
 
               <div>
                 <p className="mb-2 font-ui text-[0.55rem] font-bold uppercase tracking-[0.14em] text-brand-muted">
-                  Private Camera Stream Links
+                  Stream Monitoring Links
                 </p>
+
+                {isDevBuild ? (
+                  <p className="mb-3 rounded-lg border border-brand-blue/25 bg-brand-blue/10 px-3 py-2 text-[0.52rem] leading-relaxed text-brand-muted">
+                    Desk test mode: leave Field 2 empty if needed — GO LIVE falls back to{" "}
+                    <span className="font-mono text-brand-blue">{DEV_MANIFEST_FALLBACK_HLS}</span>
+                  </p>
+                ) : null}
 
                 <div className="space-y-4">
                   <label className="block min-w-0">
                     <span className="mb-1.5 flex items-center gap-1.5 font-ui text-[0.55rem] font-bold uppercase tracking-[0.12em] text-brand-muted">
-                      1. Paste Your Private Stream Link Here
+                      1. RTMP Pull Link (optional — vMix/OBS monitor)
                       <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
                     </span>
                     <input
@@ -537,17 +808,24 @@ export default function RestreamConfigModal({
                       onChange={(event) => setPullUrl(event.target.value)}
                       disabled={!canEdit}
                       readOnly={!canEdit}
-                      placeholder="Paste the long link from your streaming dashboard"
+                      placeholder="rtmp://pull.restream.io/pull/your-pull-id"
                       className="min-w-0 w-full truncate overflow-hidden rounded-lg border border-brand-border bg-brand-black px-3 py-2 font-mono text-xs text-white outline-none transition focus:border-brand-purple focus:ring-1 focus:ring-brand-purple/40 disabled:cursor-not-allowed disabled:opacity-60"
                     />
                     <p className="mt-1 text-[0.5rem] text-brand-muted">
-                      Paste the unified, single-line private link from your streaming dashboard.
+                      Restream dashboard → RTMP Pull Links → Merge fields → copy here. OBS push
+                      links (<span className="font-mono">live.restream.io/live</span>) save to Host
+                      Ingest automatically.
                     </p>
+                    {streamLinkKind === "push" ? (
+                      <p className="mt-1.5 rounded border border-brand-purple/30 bg-brand-purple/10 px-2 py-1.5 text-[0.5rem] text-brand-purple">
+                        Detected OBS push link — Save will store it under Host Ingest, not RTMP Pull.
+                      </p>
+                    ) : null}
                   </label>
 
                   <label className="block min-w-0">
                     <span className="mb-1.5 flex items-center gap-1.5 font-ui text-[0.55rem] font-bold uppercase tracking-[0.12em] text-brand-muted">
-                      2. Paste Your Web Preview Link Here
+                      2. HLS Web Preview (optional in dev)
                       <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
                     </span>
                     <input
@@ -556,11 +834,12 @@ export default function RestreamConfigModal({
                       onChange={(event) => setHlsUrl(event.target.value)}
                       disabled={!canEdit}
                       readOnly={!canEdit}
-                      placeholder="Paste the web preview link ending in .m3u8"
+                      placeholder="https://stream.mux.com/PLAYBACK_ID.m3u8"
                       className="min-w-0 w-full truncate overflow-hidden rounded-lg border border-brand-border bg-brand-black px-3 py-2 font-mono text-xs text-white outline-none transition focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/40 disabled:cursor-not-allowed disabled:opacity-60"
                     />
                     <p className="mt-1 text-[0.5rem] text-brand-muted">
-                      Required so this dashboard can show the camera picture in the browser.
+                      Browser-safe .m3u8 for in-dashboard preview. Restream does not expose this —
+                      use Mux or your CDN manifest.
                     </p>
                   </label>
                 </div>
@@ -686,6 +965,14 @@ export default function RestreamConfigModal({
                   <Save className="h-3.5 w-3.5" aria-hidden="true" />
                 )}
                 Save Settings
+              </button>
+            ) : canEdit && !isRestreamMode ? (
+              <button
+                type="button"
+                onClick={onClose}
+                className="touch-target inline-flex items-center gap-1.5 rounded-lg border border-brand-purple/50 bg-brand-purple/20 px-4 py-2 font-ui text-[0.55rem] font-bold uppercase tracking-[0.1em] text-white transition hover:bg-brand-purple/30"
+              >
+                Done
               </button>
             ) : null}
           </div>

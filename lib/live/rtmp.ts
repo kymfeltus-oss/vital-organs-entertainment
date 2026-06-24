@@ -4,14 +4,33 @@
  */
 export function isValidRtmpUrl(value: unknown): value is string {
   if (typeof value !== "string") return false;
-  const trimmed = value.trim();
-  if (!trimmed) return false;
+  const normalized = normalizeRtmpUrl(value);
+  return normalized !== null;
+}
+
+/**
+ * Repair common paste mistakes (rtmp://://host, duplicate slashes) before validation/save.
+ */
+export function normalizeRtmpUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  let trimmed = value.trim();
+  if (!trimmed) return null;
+
+  trimmed = trimmed.replace(/^rtmps?:\/\/\/+/i, (match) =>
+    match.toLowerCase().startsWith("rtmps") ? "rtmps://" : "rtmp://",
+  );
+  trimmed = trimmed.replace(/^(rtmp):\/+/i, "$1://");
+  trimmed = trimmed.replace(/^(rtmps):\/+/i, "$1://");
 
   try {
     const parsed = new URL(trimmed);
-    return parsed.protocol === "rtmp:" || parsed.protocol === "rtmps:";
+    if (parsed.protocol !== "rtmp:" && parsed.protocol !== "rtmps:") return null;
+
+    const path = parsed.pathname.replace(/\/{2,}/g, "/");
+    const normalized = `${parsed.protocol}//${parsed.host}${path}${parsed.search}${parsed.hash}`;
+    return normalized;
   } catch {
-    return false;
+    return null;
   }
 }
 

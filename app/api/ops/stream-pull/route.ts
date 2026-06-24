@@ -1,15 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isValidHlsUrl, HLS_PLAYBACK_REQUIREMENT } from "@/lib/live/hls";
 import {
-  isValidRtmpPullUrlLoose,
+  classifyRtmpStreamLink,
+  isValidRtmpPullUrl,
   RTMP_PULL_REQUIREMENT,
+  RTMP_PUSH_IN_PULL_FIELD,
 } from "@/lib/live/rtmp-pull";
 import { LIVE_STREAM_STATE_ID } from "@/lib/live/types";
+import { isLiveStreamRtmpSchemaError } from "@/lib/ops/fetch-live-stream-state-row";
 import { buildRtmpPullFields } from "@/lib/ops/resolve-stream-rtmp-pull";
 import {
   requireOpsMetricsApiUser,
   requireOpsStreamMutationApiUser,
 } from "@/lib/ops/require-ops-mutation";
+import {
+  readPostgrestErrorMessage,
+  shouldDeferStreamStateSchemaWrite,
+  STREAM_SCHEMA_MIGRATION_HINT,
+} from "@/lib/ops/stream-state-schema-deferred";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 type StreamPullPatchBody = {
@@ -26,6 +34,28 @@ function normalizeOptionalString(value: unknown): string | null | undefined {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function buildDeferredPullResponse(
+  primaryRtmpPullUrl: string | null | undefined,
+  backupRtmpPullUrl: string | null | undefined,
+  cameraPreviewHlsUrl: string | null | undefined,
+) {
+  const pull = buildRtmpPullFields(
+    primaryRtmpPullUrl !== undefined ? primaryRtmpPullUrl : null,
+    backupRtmpPullUrl !== undefined ? backupRtmpPullUrl : null,
+    cameraPreviewHlsUrl !== undefined ? cameraPreviewHlsUrl : null,
+    null,
+  );
+
+  return NextResponse.json({
+    success: true,
+    schemaDeferred: true,
+    warning: STREAM_SCHEMA_MIGRATION_HINT,
+    ...pull,
+    updatedAt: null,
+    updatedBy: null,
+  });
+}
+
 export async function GET(request: NextRequest) {
   const gate = await requireOpsMetricsApiUser(request);
   if (gate.response) return gate.response;
@@ -40,7 +70,22 @@ export async function GET(request: NextRequest) {
       .eq("id", LIVE_STREAM_STATE_ID)
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      if (shouldDeferStreamStateSchemaWrite(error)) {
+        const pull = buildRtmpPullFields(null, null, null, null);
+        return NextResponse.json(
+          {
+            ...pull,
+            schemaDeferred: true,
+            warning: STREAM_SCHEMA_MIGRATION_HINT,
+            updatedAt: null,
+            updatedBy: null,
+          },
+          { headers: { "Cache-Control": "private, no-store" } },
+        );
+      }
+      throw error;
+    }
 
     const pull = buildRtmpPullFields(
       data?.primary_rtmp_pull_url,
@@ -77,13 +122,25 @@ export async function PATCH(request: NextRequest) {
     const cameraPreviewHlsUrl = normalizeOptionalString(body.cameraPreviewHlsUrl);
 
     if (primaryRtmpPullUrl !== undefined && primaryRtmpPullUrl !== null) {
-      if (!isValidRtmpPullUrlLoose(primaryRtmpPullUrl)) {
+      if (classifyRtmpStreamLink(primaryRtmpPullUrl) === "push") {
+        return NextResponse.json(
+          { error: RTMP_PUSH_IN_PULL_FIELD, code: "RTMP_PUSH_IN_PULL_FIELD" },
+          { status: 400 },
+        );
+      }
+      if (!isValidRtmpPullUrl(primaryRtmpPullUrl)) {
         return NextResponse.json({ error: RTMP_PULL_REQUIREMENT }, { status: 400 });
       }
     }
 
     if (backupRtmpPullUrl !== undefined && backupRtmpPullUrl !== null) {
-      if (!isValidRtmpPullUrlLoose(backupRtmpPullUrl)) {
+      if (classifyRtmpStreamLink(backupRtmpPullUrl) === "push") {
+        return NextResponse.json(
+          { error: RTMP_PUSH_IN_PULL_FIELD, code: "RTMP_PUSH_IN_PULL_FIELD" },
+          { status: 400 },
+        );
+      }
+      if (!isValidRtmpPullUrl(backupRtmpPullUrl)) {
         return NextResponse.json({ error: RTMP_PULL_REQUIREMENT }, { status: 400 });
       }
     }
@@ -127,7 +184,18 @@ export async function PATCH(request: NextRequest) {
       )
       .single();
 
-    if (error || !data) throw error ?? new Error("Stream state row not found.");
+    if (error) {
+      if (shouldDeferStreamStateSchemaWrite(error)) {
+        return buildDeferredPullResponse(
+          primaryRtmpPullUrl,
+          backupRtmpPullUrl,
+          cameraPreviewHlsUrl,
+        );
+      }
+      throw error;
+    }
+
+    if (!data) throw new Error("Stream state row not found.");
 
     const pull = buildRtmpPullFields(
       data.primary_rtmp_pull_url,
@@ -144,9 +212,15 @@ export async function PATCH(request: NextRequest) {
     });
   } catch (error) {
     console.error("[OPS_STREAM_PULL_PATCH_ERR]:", error);
+    const message = readPostgrestErrorMessage(error);
+    const schemaError = isLiveStreamRtmpSchemaError(message);
+
     return NextResponse.json(
-      { error: "Unable to update RTMP pull configuration." },
-      { status: 500 },
+      {
+        error: schemaError ? STREAM_SCHEMA_MIGRATION_HINT : message,
+        code: schemaError ? "STREAM_PULL_SCHEMA_MISSING" : undefined,
+      },
+      { status: schemaError ? 503 : 500 },
     );
   }
 }

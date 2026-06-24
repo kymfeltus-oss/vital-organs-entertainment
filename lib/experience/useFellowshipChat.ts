@@ -16,7 +16,6 @@ import {
   teardownRealtimeChannel,
 } from "@/lib/live/realtime-subscribe";
 import { getClientAppUrl } from "@/lib/client-api";
-import { parableFetch } from "@/lib/parable/resilient-fetch";
 import { useParableSubsystem } from "@/lib/parable/useParableSubsystem";
 import { getSupabase } from "@/lib/supabase/client";
 
@@ -51,6 +50,11 @@ export function useFellowshipChat(): UseFellowshipChatResult {
   const instanceId = useId().replace(/:/g, "");
   const channelRef = useRef<Awaited<ReturnType<typeof createRealtimeChannel>> | null>(null);
   const syncAbortRef = useRef<AbortController | null>(null);
+  const shouldFetchRef = useRef(fellowship.shouldFetch);
+  const shouldAllowRealtimeRef = useRef(fellowship.shouldAllowRealtime);
+
+  shouldFetchRef.current = fellowship.shouldFetch;
+  shouldAllowRealtimeRef.current = fellowship.shouldAllowRealtime;
 
   const [messages, setMessages] = useState<FellowshipChatMessage[]>([]);
   const [pinned, setPinned] = useState<FellowshipChatMessage | null>(null);
@@ -61,7 +65,7 @@ export function useFellowshipChat(): UseFellowshipChatResult {
   const [usePollingFallback, setUsePollingFallback] = useState(false);
 
   const syncFeed = useCallback(async () => {
-    if (!fellowship.shouldFetch()) {
+    if (!shouldFetchRef.current()) {
       setIsLoading(false);
       setError("Fellowship Chat paused to protect live stream.");
       return;
@@ -72,20 +76,16 @@ export function useFellowshipChat(): UseFellowshipChatResult {
     syncAbortRef.current = abortController;
 
     try {
-      const { response } = await parableFetch(
-        `${getClientAppUrl()}/api/experience/fellowship-chat`,
-        {
-          cache: "no-store",
-          credentials: "include",
-          signal: abortController.signal,
-        },
-        { subsystem: "fellowship_chat" },
-      );
+      const response = await fetch(`${getClientAppUrl()}/api/experience/fellowship-chat`, {
+        cache: "no-store",
+        credentials: "include",
+        signal: abortController.signal,
+      });
 
       if (abortController.signal.aborted) return;
 
       if (!response.ok) {
-        throw new Error("feed unavailable");
+        throw new Error(`feed unavailable (${response.status})`);
       }
 
       const payload = (await response.json()) as FellowshipChatPayload;
@@ -104,15 +104,16 @@ export function useFellowshipChat(): UseFellowshipChatResult {
       ) {
         return;
       }
-      console.error("Fellowship chat sync failed:", syncError);
-      setUsePollingFallback(false);
+
+      console.error("🎛️ Live Chat Sync suspended temporarily:", syncError);
+      setUsePollingFallback(true);
       setError("Fellowship Chat is temporarily unavailable.");
     } finally {
       if (!abortController.signal.aborted) {
         setIsLoading(false);
       }
     }
-  }, [fellowship]);
+  }, [fellowship.isIsolated, fellowship.safeMode]);
 
   useEffect(() => {
     return () => {
@@ -133,7 +134,7 @@ export function useFellowshipChat(): UseFellowshipChatResult {
   }, [fellowship.isIsolated, fellowship.safeMode, syncFeed, usePollingFallback]);
 
   useEffect(() => {
-    if (!fellowship.shouldAllowRealtime()) {
+    if (!shouldAllowRealtimeRef.current()) {
       setUsePollingFallback(true);
       return;
     }
@@ -205,7 +206,7 @@ export function useFellowshipChat(): UseFellowshipChatResult {
         await teardownRealtimeChannel(supabase, channel);
       })();
     };
-  }, [fellowship, instanceId, syncFeed]);
+  }, [fellowship.isIsolated, fellowship.safeMode, instanceId, syncFeed]);
 
   const sendMessage = useCallback(
     async (rawContent: string): Promise<boolean> => {

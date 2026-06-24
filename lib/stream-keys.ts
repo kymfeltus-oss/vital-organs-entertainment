@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { isValidRtmpUrl } from "@/lib/live/rtmp";
 
 const DEFAULT_STREAM_KEY_PREFIX = "300awakening_live";
-const DEFAULT_RTMP_INGEST_SERVER_BASE = "rtmp://vitalorgansent.com/live";
+export const DEFAULT_RTMP_INGEST_SERVER_BASE = "rtmp://vitalorgansent.com/live";
 
 /**
  * Generates a cryptographically secure, random alphanumeric stream key string.

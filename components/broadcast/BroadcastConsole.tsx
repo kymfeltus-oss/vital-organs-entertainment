@@ -15,6 +15,7 @@ import ReadinessGate from "@/components/broadcast/ReadinessGate";
 import StreamStatusPanel from "@/components/broadcast/StreamStatusPanel";
 import { resolveActiveOpsPreviewHlsUrl } from "@/lib/ops/resolve-active-stream-playback";
 import TroubleAlertPopup from "@/components/broadcast/TroubleAlertPopup";
+import { useBroadcastLocalCamera } from "@/hooks/useBroadcastLocalCamera";
 import { useOpsChatTroubleAlerts } from "@/hooks/useOpsChatTroubleAlerts";
 import { useOpsStreamStateRealtime } from "@/hooks/useOpsStreamStateRealtime";
 import { useStreamFailoverPoller } from "@/hooks/useStreamFailoverPoller";
@@ -51,6 +52,8 @@ export default function BroadcastConsole() {
     refresh,
   } = useProductionStore();
   const health = useBroadcastHealth();
+  const { localCameraActive, engineStatus: sessionEngineStatus } =
+    useBroadcastLocalCamera();
 
   const uiViews = useMemo(() => (store ? mapStoreToUiViews(store) : null), [store]);
 
@@ -389,6 +392,7 @@ export default function BroadcastConsole() {
             platformIsLive={platformIsLive}
             opsStream={opsStream}
             monitorHlsUrl={computedMonitorHlsUrl}
+            localCameraActive={localCameraActive}
             onSelectPreview={handleSelectPreview}
             onOpenRestreamConfig={openRestreamConfig}
             onLocalAudioUpdate={setLocalAudioLevel}
@@ -456,7 +460,11 @@ export default function BroadcastConsole() {
         isOpen={restreamConfigOpen}
         canEdit={canEditPull}
         initialStudioEngineMode={opsStream?.studioEngineMode}
-        pullEngineStatus={opsState?.pullEngineStatus}
+        pullEngineStatus={
+          sessionEngineStatus === "running"
+            ? "running"
+            : opsState?.pullEngineStatus
+        }
         onClose={() => setRestreamConfigOpen(false)}
         onSaved={handleRestreamConfigSaved}
         onShowToast={showToast}

@@ -34,7 +34,12 @@ const SELECT_LEGACY =
   "is_live, active_source, primary_playback_url, backup_playback_url, updated_at, updated_by";
 
 function isMissingColumnError(message: string): boolean {
-  return /column .+ does not exist/i.test(message) || message.includes("42703");
+  return (
+    /column .+ does not exist/i.test(message) ||
+    message.includes("42703") ||
+    /Could not find the '[^']+' column/i.test(message) ||
+    message.includes("PGRST204")
+  );
 }
 
 function normalizeRow(

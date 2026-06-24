@@ -8,6 +8,7 @@ import {
   CalendarClock,
   Check,
   Clock,
+  CloudLightning,
   ImageIcon,
   Loader2,
   RotateCcw,
@@ -15,7 +16,17 @@ import {
   Sparkles,
   Type,
 } from "lucide-react";
+import CountdownMobileTelemetryStrip from "@/components/broadcast/CountdownMobileTelemetryStrip";
+import GoLiveConfirmModal from "@/components/broadcast/GoLiveConfirmModal";
+import MobileActionDock from "@/components/broadcast/MobileActionDock";
+import MobileEditorTabs, {
+  type MobileEditorTab,
+} from "@/components/broadcast/MobileEditorTabs";
+import TroubleAlertPopup from "@/components/broadcast/TroubleAlertPopup";
+import PublicCountdownChatMonitor from "@/components/countdown/PublicCountdownChatMonitor";
 import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
+import { useCountdownChatTroubleAlerts } from "@/hooks/useCountdownChatTroubleAlerts";
+import { useOpsStreamStateRealtime } from "@/hooks/useOpsStreamStateRealtime";
 import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
 import { shouldShowCountdownTimer } from "@/lib/experience/countdown-display";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
@@ -29,6 +40,7 @@ import {
   alignStartForHoldingRoom,
   buildFutureHoldingSchedule,
 } from "@/lib/live/countdown-schedule-helpers";
+import { OPS_GO_LIVE_API_PATH } from "@/lib/broadcastRoutes";
 import { saveLastKnownCountdown } from "@/lib/parable/last-known-good";
 import { computeCountdown } from "@/lib/live/event-lobby";
 
@@ -36,7 +48,7 @@ type CountdownAdminClientProps = {
   adminEmail: string;
   initialConfig: EventCountdownConfig;
   /** Server snapshot so SSR and hydration share the same clock tick. */
-  initialPreviewNowMs: number;
+  initialPreviewNowMs?: number;
 };
 
 function toDatetimeLocalValue(iso: string): string {
@@ -112,7 +124,23 @@ export default function CountdownAdminClient({
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [previewNow, setPreviewNow] = useState(initialPreviewNowMs);
+  const [isLaunching, setIsLaunching] = useState(false);
+  const [launchError, setLaunchError] = useState<string | null>(null);
+  const [isGoLiveOpen, setIsGoLiveOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState<MobileEditorTab>("editor");
+  const [previewNow, setPreviewNow] = useState(initialPreviewNowMs ?? Date.now());
+
+  const { opsState } = useOpsStreamStateRealtime();
+  const {
+    messages: chatMessages,
+    isLoading: chatLoading,
+    isConnected: chatConnected,
+    issueType,
+    count: troubleCount,
+    clear: clearChatAlert,
+  } = useCountdownChatTroubleAlerts();
+
+  const isStreamLive = opsState?.isLive === true;
 
   useEffect(() => {
     const id = setInterval(() => setPreviewNow(Date.now()), 1000);
@@ -235,8 +263,46 @@ export default function CountdownAdminClient({
     setError(null);
   };
 
+  const handleGoLiveConfirm = async () => {
+    setIsLaunching(true);
+    setLaunchError(null);
+
+    try {
+      const response = await fetch(OPS_GO_LIVE_API_PATH, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "go_live" }),
+        cache: "no-store",
+      });
+
+      const data = (await response.json()) as { ok?: boolean; error?: string };
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error ?? "Go Live failed.");
+      }
+
+      setIsGoLiveOpen(false);
+      setStatus("Broadcast is live.");
+    } catch (goLiveError) {
+      setLaunchError(
+        goLiveError instanceof Error ? goLiveError.message : "Go Live failed.",
+      );
+    } finally {
+      setIsLaunching(false);
+    }
+  };
+
+  const chatMonitor = (
+    <PublicCountdownChatMonitor
+      messages={chatMessages}
+      isLoading={chatLoading}
+      isConnected={chatConnected}
+      layout="sidebar"
+    />
+  );
+
   return (
-    <main className="min-h-dvh w-full bg-brand-black pt-safe pb-safe text-white">
+    <main className="min-h-dvh w-full bg-brand-black pt-safe pb-24 text-white lg:pb-safe">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[min(40vh,22rem)] bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(0,168,255,0.12),transparent)]" />
 
       <section className="relative border-b border-brand-border px-4 pb-8 pt-4 md:px-8 lg:px-10">
@@ -297,6 +363,15 @@ export default function CountdownAdminClient({
               )}
               Save Changes
             </button>
+            <button
+              type="button"
+              onClick={() => setIsGoLiveOpen(true)}
+              disabled={isLaunching || isStreamLive}
+              className={`${actionButtonClassName} border-brand-pink/50 bg-brand-pink text-white hover:bg-brand-pink/90 disabled:opacity-40`}
+            >
+              <CloudLightning className="h-3.5 w-3.5" aria-hidden="true" />
+              Go Live
+            </button>
           </div>
         </div>
 
@@ -314,21 +389,29 @@ export default function CountdownAdminClient({
           </p>
         </div>
 
-        {(status || error) && (
+        {(status || error || launchError) && (
           <div
             className={`mx-auto mt-6 max-w-2xl rounded-xl border px-4 py-3 text-center font-body text-sm ${
-              error
+              error || launchError
                 ? "border-red-500/40 bg-red-500/10 text-red-200"
                 : "border-brand-blue/40 bg-brand-blue/10 text-brand-blue"
             }`}
             role="status"
           >
-            {error ?? status}
+            {error ?? launchError ?? status}
           </div>
         )}
       </section>
 
       <div className="relative w-full px-[clamp(0.75rem,3vw,2.5rem)] py-6 md:px-8 lg:px-10">
+        <div className="lg:hidden">
+          <CountdownMobileTelemetryStrip opsState={opsState} />
+        </div>
+
+        <div className="lg:hidden">
+          <MobileEditorTabs activeTab={mobileTab} onTabChange={setMobileTab} />
+        </div>
+
         <div className="mx-auto grid w-full max-w-[90rem] grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:gap-8">
           {/* Live Preview — first on mobile/tablet, sticky right column on desktop (~60%) */}
           <aside className="order-1 lg:order-2 lg:col-span-7 xl:col-span-7">
@@ -431,7 +514,11 @@ export default function CountdownAdminClient({
           </aside>
 
           {/* Editor controls — below preview on mobile/tablet, left column on desktop (~40%) */}
-          <div className="order-2 space-y-6 lg:order-1 lg:col-span-5 xl:col-span-5">
+          <div
+            className={`order-2 space-y-6 lg:order-1 lg:col-span-5 xl:col-span-5 ${
+              mobileTab === "chat" ? "hidden lg:block" : ""
+            }`}
+          >
               <section className="glass-panel rounded-2xl border border-brand-border p-5 sm:p-6">
                 <SectionHeader icon={<Type className="h-4 w-4" />} title="Hero Copy" />
 
@@ -642,8 +729,53 @@ export default function CountdownAdminClient({
                 </label>
               </section>
           </div>
+
+          {mobileTab === "chat" ? (
+            <div className="countdown-admin-mobile-chat order-3 min-h-[45vh] px-1 pb-4 lg:hidden">
+              {chatMonitor}
+            </div>
+          ) : null}
         </div>
       </div>
+
+      <div className="hidden lg:block">{chatMonitor}</div>
+
+      <div className="lg:hidden">
+        <MobileActionDock
+          onSettingsClick={() => setMobileTab("editor")}
+          onSaveClick={() => void handleSave()}
+          onGoLiveClick={() => setIsGoLiveOpen(true)}
+          canSave
+          canGoLive={!isStreamLive}
+          isSaving={isSaving}
+          isLive={isStreamLive}
+          saveLabel={status === "Configuration saved." ? "Saved" : undefined}
+        />
+      </div>
+
+      <div className="hidden lg:block">
+        <TroubleAlertPopup
+          issueType={issueType}
+          count={troubleCount}
+          onClear={clearChatAlert}
+          variant="desktop"
+        />
+      </div>
+      <div className="lg:hidden">
+        <TroubleAlertPopup
+          issueType={issueType}
+          count={troubleCount}
+          onClear={clearChatAlert}
+          variant="mobile"
+        />
+      </div>
+
+      <GoLiveConfirmModal
+        isOpen={isGoLiveOpen}
+        isLaunching={isLaunching}
+        onClose={() => setIsGoLiveOpen(false)}
+        onConfirm={() => void handleGoLiveConfirm()}
+      />
     </main>
   );
 }
