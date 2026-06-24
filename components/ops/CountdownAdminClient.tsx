@@ -5,9 +5,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
-  CalendarClock,
-  Check,
-  Clock,
   CloudLightning,
   ImageIcon,
   Loader2,
@@ -42,13 +39,24 @@ import {
   ADMIN_COUNTDOWN_API_PATH,
 } from "@/lib/broadcastRoutes";
 import {
-  datetimeLocalValueToIso,
-  isoToDatetimeLocalValue,
   validateCountdownScheduleTimes,
 } from "@/lib/live/datetime-local";
 import {
+  formatNowInScheduleTimezone,
+  inferScheduleTimezoneFromIso,
+  isoToScheduleDatetimeLocal,
+  resolveScheduleTimezone,
+  scheduleDatetimeLocalToIso,
+  type ScheduleTimezone,
+} from "@/lib/live/schedule-timezone";
+import CountdownAdminScheduleFields, {
+  CountdownAdminOutroFields,
+} from "@/components/ops/CountdownAdminScheduleFields";
+import {
   alignStartForHoldingRoom,
+  buildGoLiveAtOffsetMinutes,
   buildHoldingRoomScheduleNow,
+  formatCountdownUntilGoLive,
 } from "@/lib/live/countdown-schedule-helpers";
 import { saveLastKnownCountdown } from "@/lib/parable/last-known-good";
 import { computeCountdown } from "@/lib/live/event-lobby";
@@ -60,21 +68,19 @@ type CountdownAdminClientProps = {
   initialPreviewNowMs?: number;
 };
 
-function formatCurrentTimeDisplay(nowMs: number): string {
-  return new Date(nowMs).toLocaleString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-  });
+function resolveInitialScheduleTimezone(config: EventCountdownConfig): ScheduleTimezone {
+  if (config.schedule_timezone) {
+    return resolveScheduleTimezone(config.schedule_timezone);
+  }
+  return inferScheduleTimezoneFromIso(config.start_time);
 }
 
-function isStartTimeNearNow(startIso: string, nowMs: number): boolean {
-  const startMs = new Date(startIso).getTime();
-  if (Number.isNaN(startMs)) return false;
-  return Math.abs(startMs - nowMs) < 60_000;
+function toScheduleLocal(iso: string, timeZone: ScheduleTimezone): string {
+  return isoToScheduleDatetimeLocal(iso, timeZone);
+}
+
+function fromScheduleLocal(raw: string, timeZone: ScheduleTimezone): string | null {
+  return scheduleDatetimeLocalToIso(raw, timeZone);
 }
 
 function FieldLabel({ children }: { children: string }) {
@@ -108,8 +114,6 @@ function SectionHeader({
 const inputClassName =
   "w-full min-h-11 rounded-xl border border-brand-border bg-brand-panel/80 px-4 py-3 font-body text-base text-white outline-none transition placeholder:text-brand-muted/45 focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/25 md:min-h-10 md:py-2.5 md:text-sm";
 
-const scheduleInputClassName = `${inputClassName} countdown-admin-datetime [color-scheme:dark]`;
-
 const actionButtonClassName =
   "touch-target inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 font-ui text-[0.58rem] font-bold uppercase tracking-[0.14em] transition disabled:opacity-60";
 
@@ -118,12 +122,15 @@ export default function CountdownAdminClient({
   initialConfig,
   initialPreviewNowMs,
 }: CountdownAdminClientProps) {
-  const [form, setForm] = useState<EventCountdownConfig>(initialConfig);
+  const [form, setForm] = useState<EventCountdownConfig>(() => ({
+    ...initialConfig,
+    schedule_timezone: resolveInitialScheduleTimezone(initialConfig),
+  }));
   const [startLocal, setStartLocal] = useState(() =>
-    isoToDatetimeLocalValue(initialConfig.start_time),
+    toScheduleLocal(initialConfig.start_time, resolveInitialScheduleTimezone(initialConfig)),
   );
   const [endLocal, setEndLocal] = useState(() =>
-    isoToDatetimeLocalValue(initialConfig.end_time),
+    toScheduleLocal(initialConfig.end_time, resolveInitialScheduleTimezone(initialConfig)),
   );
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -152,9 +159,10 @@ export default function CountdownAdminClient({
   }, []);
 
   useEffect(() => {
-    setStartLocal(isoToDatetimeLocalValue(form.start_time));
-    setEndLocal(isoToDatetimeLocalValue(form.end_time));
-  }, [form.end_time, form.start_time]);
+    const timeZone = resolveScheduleTimezone(form.schedule_timezone);
+    setStartLocal(toScheduleLocal(form.start_time, timeZone));
+    setEndLocal(toScheduleLocal(form.end_time, timeZone));
+  }, [form.end_time, form.schedule_timezone, form.start_time]);
 
   const previewPhase = useMemo(
     () => computeEventCountdownPhase(form.start_time, form.end_time, previewNow),
@@ -162,9 +170,9 @@ export default function CountdownAdminClient({
   );
 
   const attendeeLiveSurface = useMemo(() => {
-    if (previewPhase === "waiting") return "Holding room + countdown on /live";
-    if (previewPhase === "live") return "Live stream POV on /live (holding hidden)";
-    return "Holding room on /live (event ended)";
+    if (previewPhase === "waiting") return "Holding room — countdown to go-live";
+    if (previewPhase === "live") return "Live stream POV on /live";
+    return "Outro screen on /live";
   }, [previewPhase]);
 
   const previewCountdown =
@@ -174,7 +182,7 @@ export default function CountdownAdminClient({
 
   const previewCta = useMemo(() => {
     if (previewPhase === "ended") {
-      return { label: "EXPERIENCE ENDED", disabled: true, href: undefined };
+      return { label: form.outro_status_label, disabled: true, href: undefined };
     }
     if (previewPhase === "waiting") {
       return { label: form.cta_label_waiting, disabled: true, href: undefined };
@@ -182,8 +190,13 @@ export default function CountdownAdminClient({
     return { label: form.cta_label_live, disabled: false, href: EXPERIENCE_LIVE_PATH };
   }, [form.cta_label_live, form.cta_label_waiting, previewPhase]);
 
-  const currentTimeDisplay = formatCurrentTimeDisplay(previewNow);
-  const startMatchesCurrentTime = isStartTimeNearNow(form.start_time, previewNow);
+  const scheduleTimezone = resolveScheduleTimezone(form.schedule_timezone);
+
+  const currentTimeDisplay = formatNowInScheduleTimezone(previewNow, scheduleTimezone);
+  const countdownRemainingLabel = formatCountdownUntilGoLive(
+    form.start_time,
+    previewNow,
+  );
 
   const phaseBadgeClass =
     previewPhase === "live"
@@ -201,18 +214,57 @@ export default function CountdownAdminClient({
     [],
   );
 
-  const applyCurrentTimeAsStart = useCallback(() => {
-    const iso = new Date(previewNow).toISOString();
-    setStartLocal(isoToDatetimeLocalValue(iso));
-    updateField("start_time", iso);
-  }, [previewNow, updateField]);
+  const applyGoLivePreset = useCallback(
+    (minutesFromNow: number) => {
+      const iso = buildGoLiveAtOffsetMinutes(minutesFromNow, previewNow);
+      const timeZone = resolveScheduleTimezone(form.schedule_timezone);
+      setStartLocal(toScheduleLocal(iso, timeZone));
+      updateField("start_time", iso);
+    },
+    [form.schedule_timezone, previewNow, updateField],
+  );
+
+  const handleScheduleTimezoneChange = useCallback(
+    (timeZone: ScheduleTimezone) => {
+      const resolved = resolveScheduleTimezone(timeZone);
+      updateField("schedule_timezone", resolved);
+      setStartLocal(toScheduleLocal(form.start_time, resolved));
+      setEndLocal(toScheduleLocal(form.end_time, resolved));
+    },
+    [form.end_time, form.start_time, updateField],
+  );
+
+  const handleGoLiveLocalChange = useCallback(
+    (raw: string, isoOverride: string | null) => {
+      setStartLocal(raw);
+      setStatus(null);
+      setError(null);
+      const timeZone = resolveScheduleTimezone(form.schedule_timezone);
+      const iso = isoOverride ?? fromScheduleLocal(raw, timeZone);
+      if (iso) updateField("start_time", iso);
+    },
+    [form.schedule_timezone, updateField],
+  );
+
+  const handleShowEndLocalChange = useCallback(
+    (raw: string, isoOverride: string | null) => {
+      setEndLocal(raw);
+      setStatus(null);
+      setError(null);
+      const timeZone = resolveScheduleTimezone(form.schedule_timezone);
+      const iso = isoOverride ?? fromScheduleLocal(raw, timeZone);
+      if (iso) updateField("end_time", iso);
+    },
+    [form.schedule_timezone, updateField],
+  );
 
   const applyScheduleFromLocalInputs = useCallback((): EventCountdownConfig | null => {
-    const startIso = datetimeLocalValueToIso(startLocal);
-    const endIso = datetimeLocalValueToIso(endLocal);
+    const timeZone = resolveScheduleTimezone(form.schedule_timezone);
+    const startIso = fromScheduleLocal(startLocal, timeZone);
+    const endIso = fromScheduleLocal(endLocal, timeZone);
 
     if (!startIso || !endIso) {
-      setError("Enter valid start and end date/time values.");
+      setError("Enter valid go-live and show-end times.");
       return null;
     }
 
@@ -288,8 +340,9 @@ export default function CountdownAdminClient({
       ? { start_time: alignedStart, end_time: form.end_time }
       : buildHoldingRoomScheduleNow(previewNow);
 
-    setStartLocal(isoToDatetimeLocalValue(schedule.start_time));
-    setEndLocal(isoToDatetimeLocalValue(schedule.end_time));
+    const timeZone = resolveScheduleTimezone(form.schedule_timezone);
+    setStartLocal(toScheduleLocal(schedule.start_time, timeZone));
+    setEndLocal(toScheduleLocal(schedule.end_time, timeZone));
 
     const saved = await persistConfig({ ...form, ...schedule });
 
@@ -306,10 +359,11 @@ export default function CountdownAdminClient({
     const rampStart = new Date(previewNow);
     rampStart.setMinutes(rampStart.getMinutes() - 5);
     const iso = rampStart.toISOString();
-    setStartLocal(isoToDatetimeLocalValue(iso));
+    const timeZone = resolveScheduleTimezone(form.schedule_timezone);
+    setStartLocal(toScheduleLocal(iso, timeZone));
     updateField("start_time", iso);
     setStatus("Preview ramped to live phase — save to publish.");
-  }, [previewNow, updateField]);
+  }, [form.schedule_timezone, previewNow, updateField]);
 
   const handleReset = () => {
     const schedule = buildHoldingRoomScheduleNow(previewNow);
@@ -319,8 +373,9 @@ export default function CountdownAdminClient({
     };
 
     setForm(resetConfig);
-    setStartLocal(isoToDatetimeLocalValue(schedule.start_time));
-    setEndLocal(isoToDatetimeLocalValue(schedule.end_time));
+    const timeZone = resolveScheduleTimezone(resetConfig.schedule_timezone);
+    setStartLocal(toScheduleLocal(schedule.start_time, timeZone));
+    setEndLocal(toScheduleLocal(schedule.end_time, timeZone));
     setStatus(
       "Reset hero copy to defaults with a fresh holding-room schedule (~90 min ahead). Save to publish.",
     );
@@ -639,114 +694,22 @@ export default function CountdownAdminClient({
                 </div>
               </section>
 
-              <section className="glass-panel rounded-2xl border border-brand-border p-5 sm:p-6">
-                <SectionHeader icon={<CalendarClock className="h-4 w-4" />} title="Schedule" />
+              <CountdownAdminScheduleFields
+                form={form}
+                previewPhase={previewPhase}
+                currentTimeDisplay={currentTimeDisplay}
+                countdownRemainingLabel={countdownRemainingLabel}
+                goLiveLocal={startLocal}
+                showEndLocal={endLocal}
+                scheduleTimezone={scheduleTimezone}
+                onGoLiveLocalChange={handleGoLiveLocalChange}
+                onShowEndLocalChange={handleShowEndLocalChange}
+                onApplyGoLivePreset={applyGoLivePreset}
+                onScheduleTimezoneChange={handleScheduleTimezoneChange}
+                updateField={updateField}
+              />
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="sm:col-span-2 lg:col-span-1">
-                    <FieldLabel>Countdown Start</FieldLabel>
-                    <input
-                      type="datetime-local"
-                      className={scheduleInputClassName}
-                      value={startLocal}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        setStartLocal(raw);
-                        setStatus(null);
-                        setError(null);
-
-                        const iso = datetimeLocalValueToIso(raw);
-                        if (iso) updateField("start_time", iso);
-                      }}
-                    />
-                    <div className="mt-3 flex items-stretch gap-2">
-                      <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-brand-border bg-brand-panel/60 px-3 py-2.5">
-                        <Clock className="h-4 w-4 shrink-0 text-brand-blue" aria-hidden="true" />
-                        <div className="min-w-0">
-                          <p className="font-ui text-[0.52rem] font-bold uppercase tracking-[0.16em] text-brand-muted">
-                            Current time
-                          </p>
-                          <p className="truncate font-mono text-xs tabular-nums text-white">
-                            {currentTimeDisplay}
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={applyCurrentTimeAsStart}
-                        title="Set countdown start to current time"
-                        aria-label="Set countdown start to current time"
-                        className={`touch-target inline-flex min-h-11 min-w-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border px-2 transition ${
-                          startMatchesCurrentTime
-                            ? "border-brand-blue/50 bg-brand-blue/15 text-brand-blue"
-                            : "border-brand-border bg-brand-panel text-brand-muted hover:border-brand-blue/30 hover:text-white"
-                        }`}
-                      >
-                        <Check
-                          className={`h-4 w-4 ${startMatchesCurrentTime ? "opacity-100" : "opacity-70"}`}
-                          aria-hidden="true"
-                        />
-                        <span className="font-ui text-[0.48rem] font-bold uppercase tracking-[0.1em]">
-                          Set
-                        </span>
-                      </button>
-                    </div>
-                    {startMatchesCurrentTime ? (
-                      <p className="mt-2 font-ui text-[0.52rem] font-bold uppercase tracking-[0.14em] text-brand-blue">
-                        Start matches current time
-                      </p>
-                    ) : null}
-                    {previewPhase === "live" ? (
-                      <p className="mt-3 rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2.5 font-ui text-[0.52rem] font-bold uppercase leading-relaxed tracking-[0.12em] text-amber-200">
-                        Start time has passed — attendees on /live see the live stream, not the
-                        holding room. Move Countdown Start to a future date to restore the holding
-                        page.
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <div>
-                    <FieldLabel>Countdown End</FieldLabel>
-                    <input
-                      type="datetime-local"
-                      className={scheduleInputClassName}
-                      value={endLocal}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        setEndLocal(raw);
-                        setStatus(null);
-                        setError(null);
-
-                        const iso = datetimeLocalValueToIso(raw);
-                        if (iso) updateField("end_time", iso);
-                      }}
-                    />
-                    <p className="mt-2 font-body text-[0.65rem] leading-relaxed text-brand-muted">
-                      End must be after start. Click <span className="text-white">Save Changes</span>{" "}
-                      to publish schedule updates to /live and /countdown.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <label className="block">
-                    <FieldLabel>Waiting CTA Label</FieldLabel>
-                    <input
-                      className={inputClassName}
-                      value={form.cta_label_waiting}
-                      onChange={(e) => updateField("cta_label_waiting", e.target.value)}
-                    />
-                  </label>
-                  <label className="block">
-                    <FieldLabel>Live CTA Label</FieldLabel>
-                    <input
-                      className={inputClassName}
-                      value={form.cta_label_live}
-                      onChange={(e) => updateField("cta_label_live", e.target.value)}
-                    />
-                  </label>
-                </div>
-              </section>
+              <CountdownAdminOutroFields form={form} updateField={updateField} />
 
               <section className="glass-panel rounded-2xl border border-brand-border p-5 sm:p-6">
                 <SectionHeader

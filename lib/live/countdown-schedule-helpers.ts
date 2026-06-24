@@ -1,7 +1,38 @@
-const HOLDING_STREAM_HOURS = 4;
+/** Minutes from now for a go-live preset button in ops schedule UI. */
+export const GO_LIVE_PRESET_MINUTES = [30, 60, 90] as const;
+
+export function buildGoLiveAtOffsetMinutes(
+  minutesFromNow: number,
+  nowMs = Date.now(),
+): string {
+  return new Date(nowMs + minutesFromNow * 60_000).toISOString();
+}
+
+/** Human-readable countdown remaining until go-live (`start_time`). */
+export function formatCountdownUntilGoLive(
+  goLiveIso: string,
+  nowMs = Date.now(),
+): string {
+  const diffMs = new Date(goLiveIso).getTime() - nowMs;
+  if (Number.isNaN(diffMs)) return "Set go-live time";
+  if (diffMs <= 0) return "Go-live time has passed";
+
+  const totalSeconds = Math.floor(diffMs / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
+  parts.push(`${hours}h`, `${minutes}m`, `${String(seconds).padStart(2, "0")}s`);
+  return parts.join(" ");
+}
 
 /** Minutes until go-live — inside the 2-hour holding-room window on /live. */
 const HOLDING_ROOM_START_OFFSET_MS = 90 * 60 * 1000;
+
+const HOLDING_STREAM_HOURS = 4;
 
 /** Build a near-term pre-show window so /live opens the holding room immediately. */
 export function buildHoldingRoomScheduleNow(nowMs = Date.now()): {

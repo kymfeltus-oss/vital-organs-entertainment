@@ -1,4 +1,9 @@
 import { EVENT_LOBBY } from "@/lib/live/event-lobby";
+import {
+  DEFAULT_SCHEDULE_TIMEZONE,
+  resolveScheduleTimezone,
+  type ScheduleTimezone,
+} from "@/lib/live/schedule-timezone";
 
 export const DEFAULT_EVENT_ID = "300-awakening";
 
@@ -12,10 +17,14 @@ export type EventCountdownConfig = {
   subtitle: string;
   start_time: string;
   end_time: string;
+  schedule_timezone: ScheduleTimezone;
   status_label: string;
   cta_label_waiting: string;
   cta_label_live: string;
   helper_text: string;
+  outro_headline: string;
+  outro_subtitle: string;
+  outro_status_label: string;
   hero_background_url: string;
   countdown_frame_url: string;
   waiting_pill_url: string;
@@ -32,10 +41,14 @@ export const DEFAULT_COUNTDOWN_CONFIG: EventCountdownConfig = {
   subtitle: "THE AWAKENING BEGINS SOON",
   start_time: EVENT_LOBBY.targetIso,
   end_time: DEFAULT_END_ISO,
+  schedule_timezone: DEFAULT_SCHEDULE_TIMEZONE,
   status_label: "WAITING FOR LIVE SIGNAL",
   cta_label_waiting: "WAITING FOR LIVE",
   cta_label_live: "ENTER LIVE EXPERIENCE",
   helper_text: "STAY CLOSE. THE EXPERIENCE WILL OPEN AUTOMATICALLY.",
+  outro_headline: "THANK YOU FOR JOINING",
+  outro_subtitle: "STAY CONNECTED FOR THE NEXT GATHERING.",
+  outro_status_label: "EVENT COMPLETE",
   hero_background_url: "/effects/hero-audience-banner.png",
   countdown_frame_url: "/ui/countdown-frame.png",
   waiting_pill_url: "/ui/waiting-live-signal-pill.png",
@@ -51,6 +64,9 @@ const TEXT_FIELD_LIMITS: Record<string, number> = {
   cta_label_waiting: 80,
   cta_label_live: 80,
   helper_text: 200,
+  outro_headline: 120,
+  outro_subtitle: 160,
+  outro_status_label: 80,
 };
 
 const ASSET_FIELDS = [
@@ -72,10 +88,14 @@ function stripUnsafeText(value: unknown): string {
     .trim();
 }
 
-function sanitizeTextField(key: keyof typeof TEXT_FIELD_LIMITS, value: unknown): string {
+function sanitizeTextField(
+  key: keyof typeof TEXT_FIELD_LIMITS,
+  value: unknown,
+): string {
   const cleaned = stripUnsafeText(value).toUpperCase();
   const limit = TEXT_FIELD_LIMITS[key];
-  return cleaned.slice(0, limit) || DEFAULT_COUNTDOWN_CONFIG[key];
+  const fallback = DEFAULT_COUNTDOWN_CONFIG[key as keyof EventCountdownConfig];
+  return cleaned.slice(0, limit) || (typeof fallback === "string" ? fallback : "");
 }
 
 function sanitizeAssetPath(value: unknown, fallback: string): string {
@@ -116,7 +136,7 @@ export function validateCountdownConfigInput(
   const end_time = parseIsoTime(input.end_time, DEFAULT_COUNTDOWN_CONFIG.end_time);
 
   if (new Date(end_time).getTime() <= new Date(start_time).getTime()) {
-    return { ok: false, error: "End time must be after start time." };
+    return { ok: false, error: "Show end must be after go-live time." };
   }
 
   const config: EventCountdownConfig = {
@@ -126,10 +146,14 @@ export function validateCountdownConfigInput(
     subtitle: sanitizeTextField("subtitle", input.subtitle),
     start_time,
     end_time,
+    schedule_timezone: resolveScheduleTimezone(input.schedule_timezone),
     status_label: sanitizeTextField("status_label", input.status_label),
     cta_label_waiting: sanitizeTextField("cta_label_waiting", input.cta_label_waiting),
     cta_label_live: sanitizeTextField("cta_label_live", input.cta_label_live),
     helper_text: sanitizeTextField("helper_text", input.helper_text),
+    outro_headline: sanitizeTextField("outro_headline", input.outro_headline),
+    outro_subtitle: sanitizeTextField("outro_subtitle", input.outro_subtitle),
+    outro_status_label: sanitizeTextField("outro_status_label", input.outro_status_label),
     hero_background_url: sanitizeAssetPath(
       input.hero_background_url,
       DEFAULT_COUNTDOWN_CONFIG.hero_background_url,
@@ -166,10 +190,14 @@ type CountdownConfigRow = {
   subtitle: string;
   start_time: string;
   end_time: string;
+  schedule_timezone?: string | null;
   status_label: string;
   cta_label_waiting: string;
   cta_label_live: string;
   helper_text: string;
+  outro_headline?: string | null;
+  outro_subtitle?: string | null;
+  outro_status_label?: string | null;
   hero_background_url: string;
   countdown_frame_url: string;
   waiting_pill_url: string;
@@ -186,10 +214,25 @@ export function mapCountdownConfigRow(row: CountdownConfigRow): EventCountdownCo
     subtitle: row.subtitle,
     start_time: new Date(row.start_time).toISOString(),
     end_time: new Date(row.end_time).toISOString(),
+    schedule_timezone: resolveScheduleTimezone(
+      row.schedule_timezone ?? DEFAULT_COUNTDOWN_CONFIG.schedule_timezone,
+    ),
     status_label: row.status_label,
     cta_label_waiting: row.cta_label_waiting,
     cta_label_live: row.cta_label_live,
     helper_text: row.helper_text,
+    outro_headline: sanitizeTextField(
+      "outro_headline",
+      row.outro_headline ?? DEFAULT_COUNTDOWN_CONFIG.outro_headline,
+    ),
+    outro_subtitle: sanitizeTextField(
+      "outro_subtitle",
+      row.outro_subtitle ?? DEFAULT_COUNTDOWN_CONFIG.outro_subtitle,
+    ),
+    outro_status_label: sanitizeTextField(
+      "outro_status_label",
+      row.outro_status_label ?? DEFAULT_COUNTDOWN_CONFIG.outro_status_label,
+    ),
     hero_background_url: row.hero_background_url,
     countdown_frame_url: row.countdown_frame_url,
     waiting_pill_url: row.waiting_pill_url,
@@ -206,10 +249,14 @@ export function toPublicCountdownConfig(config: EventCountdownConfig): EventCoun
     subtitle: config.subtitle,
     start_time: config.start_time,
     end_time: config.end_time,
+    schedule_timezone: config.schedule_timezone,
     status_label: config.status_label,
     cta_label_waiting: config.cta_label_waiting,
     cta_label_live: config.cta_label_live,
     helper_text: config.helper_text,
+    outro_headline: config.outro_headline,
+    outro_subtitle: config.outro_subtitle,
+    outro_status_label: config.outro_status_label,
     hero_background_url: config.hero_background_url,
     countdown_frame_url: config.countdown_frame_url,
     waiting_pill_url: config.waiting_pill_url,

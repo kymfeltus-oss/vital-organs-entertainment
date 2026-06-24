@@ -66,7 +66,7 @@ export function validateCountdownScheduleTimes(
   }
 
   if (endMs <= startMs) {
-    return "End time must be after start time.";
+    return "Show end must be after go-live time.";
   }
 
   return null;

@@ -69,7 +69,7 @@ export default function PublicCountdownExperience({
     eventPhase === "live"
       ? config.cta_label_live || "WE ARE LIVE"
       : eventPhase === "ended"
-        ? "EVENT COMPLETE"
+        ? config.outro_status_label || "EVENT COMPLETE"
         : startingShortly
           ? COUNTDOWN_STARTING_SHORTLY_LABEL
           : config.status_label || "WAITING FOR LIVE SIGNAL";
@@ -78,14 +78,14 @@ export default function PublicCountdownExperience({
     eventPhase === "live"
       ? "THE AWAKENING IS LIVE"
       : eventPhase === "ended"
-        ? "THANK YOU FOR JOINING"
+        ? config.outro_headline || "THANK YOU FOR JOINING"
         : config.headline || "YOU'RE ALMOST LIVE";
 
   const subtitle =
     eventPhase === "live"
       ? config.subtitle || "THE EXPERIENCE IS OPEN NOW"
       : eventPhase === "ended"
-        ? "Stay connected for the next gathering."
+        ? config.outro_subtitle || "Stay connected for the next gathering."
         : config.subtitle || "THE AWAKENING BEGINS SOON";
 
   return (

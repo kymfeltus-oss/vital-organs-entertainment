@@ -1,11 +1,15 @@
 "use client";
 
-import { CalendarClock, Check, Clock, ImageIcon, Sparkles, Type } from "lucide-react";
+import { ImageIcon, Sparkles, Type } from "lucide-react";
 import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
+import CountdownAdminScheduleFields, {
+  CountdownAdminOutroFields,
+} from "@/components/ops/CountdownAdminScheduleFields";
 import { shouldShowCountdownTimer } from "@/lib/experience/countdown-display";
 import type { EventCountdownConfig, EventCountdownPhase } from "@/lib/live/countdown-config";
 import type { CountdownParts } from "@/lib/live/event-lobby";
 import { alignStartForHoldingRoom } from "@/lib/live/countdown-schedule-helpers";
+import type { ScheduleTimezone } from "@/lib/live/schedule-timezone";
 
 export const countdownAdminInputClassName =
   "w-full min-h-11 rounded-xl border border-brand-border bg-brand-panel/80 px-4 py-3 font-body text-base text-white outline-none transition placeholder:text-brand-muted/45 focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/25 md:min-h-10 md:py-2.5 md:text-sm";
@@ -173,15 +177,20 @@ type CountdownAdminHeroScheduleFieldsProps = {
   form: EventCountdownConfig;
   previewPhase: EventCountdownPhase;
   currentTimeDisplay: string;
-  startMatchesCurrentTime: boolean;
+  countdownRemainingLabel: string;
+  goLiveLocal: string;
+  showEndLocal: string;
+  scheduleTimezone: ScheduleTimezone;
   readOnly: boolean;
   variant?: "mobile" | "desktop";
   updateField: <K extends keyof EventCountdownConfig>(
     key: K,
     value: EventCountdownConfig[K],
   ) => void;
-  onApplyCurrentTimeAsStart: () => void;
-  onEndTimeChange: (iso: string) => void;
+  onGoLiveLocalChange: (raw: string, iso: string | null) => void;
+  onShowEndLocalChange: (raw: string, iso: string | null) => void;
+  onApplyGoLivePreset: (minutesFromNow: number) => void;
+  onScheduleTimezoneChange: (timeZone: ScheduleTimezone) => void;
   toDatetimeLocalValue: (iso: string) => string;
   parseDatetimeLocalInput: (raw: string) => string | null;
 };
@@ -190,24 +199,23 @@ export function CountdownAdminHeroScheduleFields({
   form,
   previewPhase,
   currentTimeDisplay,
-  startMatchesCurrentTime,
+  countdownRemainingLabel,
+  goLiveLocal,
+  showEndLocal,
+  scheduleTimezone,
   readOnly,
   variant = "mobile",
   updateField,
-  onApplyCurrentTimeAsStart,
-  onEndTimeChange,
-  toDatetimeLocalValue,
-  parseDatetimeLocalInput,
+  onGoLiveLocalChange,
+  onShowEndLocalChange,
+  onApplyGoLivePreset,
+  onScheduleTimezoneChange,
 }: CountdownAdminHeroScheduleFieldsProps) {
   const outerClass = variant === "mobile" ? "space-y-6 px-4 py-4" : "space-y-6";
-  const sectionClass =
-    variant === "mobile"
-      ? "glass-panel rounded-2xl border border-brand-border p-4"
-      : "glass-panel rounded-2xl border border-brand-border p-5 sm:p-6";
 
   return (
     <div className={outerClass}>
-      <section className={sectionClass}>
+      <section className={variant === "mobile" ? "glass-panel rounded-2xl border border-brand-border p-4" : ""}>
         <CountdownAdminSectionHeader icon={<Type className="h-4 w-4" />} title="Hero Copy" />
         <div className="space-y-4">
           {(
@@ -232,100 +240,29 @@ export function CountdownAdminHeroScheduleFields({
         </div>
       </section>
 
-      <section className={sectionClass}>
-        <CountdownAdminSectionHeader
-          icon={<CalendarClock className="h-4 w-4" />}
-          title="Schedule"
-        />
-        <div className="grid grid-cols-1 gap-4">
-          <div>
-            <CountdownAdminFieldLabel>Countdown Start</CountdownAdminFieldLabel>
-            <input
-              type="datetime-local"
-              className={countdownAdminInputClassName}
-              value={toDatetimeLocalValue(form.start_time)}
-              disabled={readOnly}
-              onChange={(e) => {
-                const iso = parseDatetimeLocalInput(e.target.value);
-                if (iso) updateField("start_time", iso);
-              }}
-            />
-            <div className="mt-3 flex items-stretch gap-2">
-              <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-brand-border bg-brand-panel/60 px-3 py-2.5">
-                <Clock className="h-4 w-4 shrink-0 text-brand-blue" aria-hidden="true" />
-                <div className="min-w-0">
-                  <p className="font-ui text-[0.52rem] font-bold uppercase tracking-[0.16em] text-brand-muted">
-                    Current time
-                  </p>
-                  <p className="truncate font-mono text-xs tabular-nums text-white">
-                    {currentTimeDisplay}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={onApplyCurrentTimeAsStart}
-                disabled={readOnly}
-                title="Set countdown start to current time"
-                aria-label="Set countdown start to current time"
-                className={`touch-target inline-flex min-h-11 min-w-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border px-2 transition disabled:opacity-40 ${
-                  startMatchesCurrentTime
-                    ? "border-brand-blue/50 bg-brand-blue/15 text-brand-blue"
-                    : "border-brand-border bg-brand-panel text-brand-muted hover:border-brand-blue/30 hover:text-white"
-                }`}
-              >
-                <Check
-                  className={`h-4 w-4 ${startMatchesCurrentTime ? "opacity-100" : "opacity-70"}`}
-                  aria-hidden="true"
-                />
-                <span className="font-ui text-[0.48rem] font-bold uppercase tracking-[0.1em]">
-                  Set
-                </span>
-              </button>
-            </div>
-            {previewPhase === "live" ? (
-              <p className="mt-3 rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2.5 font-ui text-[0.52rem] font-bold uppercase leading-relaxed tracking-[0.12em] text-amber-200">
-                Start time has passed — attendees on /live see the live stream.
-              </p>
-            ) : null}
-          </div>
+      <CountdownAdminScheduleFields
+        form={form}
+        previewPhase={previewPhase}
+        currentTimeDisplay={currentTimeDisplay}
+        countdownRemainingLabel={countdownRemainingLabel}
+        goLiveLocal={goLiveLocal}
+        showEndLocal={showEndLocal}
+        scheduleTimezone={scheduleTimezone}
+        readOnly={readOnly}
+        variant={variant}
+        onGoLiveLocalChange={onGoLiveLocalChange}
+        onShowEndLocalChange={onShowEndLocalChange}
+        onApplyGoLivePreset={onApplyGoLivePreset}
+        onScheduleTimezoneChange={onScheduleTimezoneChange}
+        updateField={updateField}
+      />
 
-          <div>
-            <CountdownAdminFieldLabel>Countdown End</CountdownAdminFieldLabel>
-            <input
-              type="datetime-local"
-              className={countdownAdminInputClassName}
-              value={toDatetimeLocalValue(form.end_time)}
-              disabled={readOnly}
-              onChange={(e) => {
-                const iso = parseDatetimeLocalInput(e.target.value);
-                if (iso) onEndTimeChange(iso);
-              }}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label className="block">
-              <CountdownAdminFieldLabel>Waiting CTA Label</CountdownAdminFieldLabel>
-              <input
-                className={countdownAdminInputClassName}
-                value={form.cta_label_waiting}
-                disabled={readOnly}
-                onChange={(e) => updateField("cta_label_waiting", e.target.value)}
-              />
-            </label>
-            <label className="block">
-              <CountdownAdminFieldLabel>Live CTA Label</CountdownAdminFieldLabel>
-              <input
-                className={countdownAdminInputClassName}
-                value={form.cta_label_live}
-                disabled={readOnly}
-                onChange={(e) => updateField("cta_label_live", e.target.value)}
-              />
-            </label>
-          </div>
-        </div>
-      </section>
+      <CountdownAdminOutroFields
+        form={form}
+        readOnly={readOnly}
+        variant={variant}
+        updateField={updateField}
+      />
     </div>
   );
 }

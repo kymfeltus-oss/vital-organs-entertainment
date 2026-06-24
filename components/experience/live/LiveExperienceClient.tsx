@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import PublicCountdownExperience from "@/components/countdown/PublicCountdownExperience";
+import ExperienceLiveOutroShell from "@/components/experience/live/ExperienceLiveOutroShell";
 import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
 import GoingLiveTransition from "@/components/experience/live/GoingLiveTransition";
 import { IgLiveChatProvider } from "@/components/experience/live/ig/IgLiveChatContext";
@@ -243,8 +243,6 @@ function LiveExperienceClientInner({
   }
 
   const announcementConfig = initialCountdownConfig ?? countdownConfig;
-  const announcementCountdown =
-    initialCountdown ?? computeCountdown(announcementConfig.start_time);
 
   if (!showLiveRoom) {
     if (openingLiveRoom) {
@@ -257,13 +255,9 @@ function LiveExperienceClientInner({
 
     if (lifecycleStage === "ended") {
       return (
-        <main className="live-announcement-shell">
-          <PublicCountdownExperience
-            initialConfig={announcementConfig}
-            initialCountdown={announcementCountdown}
-            mode="full"
-          />
-        </main>
+        <ExperienceLiveOutroShell
+          config={announcementConfig}
+        />
       );
     }
 
