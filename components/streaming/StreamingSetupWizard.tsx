@@ -9,6 +9,7 @@ import CustomRtmpForm from "@/components/streaming/CustomRtmpForm";
 import { platformLabel } from "@/components/streaming/PlatformLogo";
 import TestConnectionResult from "@/components/streaming/TestConnectionResult";
 import WizardStepPlaceholder from "@/components/streaming/wizard/WizardStepPlaceholder";
+import WizardErrorBoundary from "@/components/streaming/WizardErrorBoundary";
 import { TS } from "@/components/todays-service/ServiceUi";
 import { useAccessibleModal } from "@/components/todays-service/useAccessibleModal";
 import {
@@ -26,7 +27,7 @@ import {
   updateStreamingDestinationApi,
 } from "@/lib/streaming/api";
 import { normalizeChurchWebsiteSettings, createDefaultChurchWebsiteSettings, withChurchWebsiteDefaults } from "@/lib/streaming/church-website-shared";
-import { STREAMING_PLATFORMS } from "@/lib/streaming/platforms";
+import { STREAMING_PLATFORMS, normalizePlatform } from "@/lib/streaming/platforms";
 import { buildBroadcastDestinationCards } from "@/lib/streaming/broadcast-catalog";
 import {
   DEFAULT_AUDIO_PROFILE,
@@ -118,6 +119,8 @@ export default function StreamingSetupWizard({
   const previewStreamRef = useRef<MediaStream | null>(null);
   const wizardHydratedResumeIdRef = useRef<string | null>(null);
   const audioMonitorStop = useRef<(() => void) | null>(null);
+  const destinationIdRef = useRef<string | null>(null);
+  const footerRef = useRef<HTMLDivElement | null>(null);
 
   const [churchWebsite, setChurchWebsite] = useState<ChurchWebsiteSettings>(() =>
     createDefaultChurchWebsiteSettings(),
@@ -139,12 +142,24 @@ export default function StreamingSetupWizard({
 
   const { titleId, panelRef, dialogProps } = useAccessibleModal(open, onClose);
 
+  useEffect(() => {
+    destinationIdRef.current = destinationId;
+  }, [destinationId]);
+
+  const normalizedPlatform = useMemo(
+    () => (platform ? normalizePlatform(platform) : ""),
+    [platform],
+  );
+
   const activeDestination = useMemo(
     () => destinations.find((d) => d.id === destinationId) ?? null,
     [destinations, destinationId],
   );
 
-  const isOAuthPlatform = platform && platform !== "church_website" && platform !== "custom_rtmp";
+  const isOAuthPlatform =
+    Boolean(normalizedPlatform) &&
+    normalizedPlatform !== "church_website" &&
+    normalizedPlatform !== "custom_rtmp";
   const isConnected =
     activeDestination?.connectionStatus === "connected" || activeDestination?.connectionStatus === "ready";
 
@@ -153,6 +168,7 @@ export default function StreamingSetupWizard({
     setPlatform("");
     setSelectedPlatforms([]);
     setDestinationId(null);
+    destinationIdRef.current = null;
     setDevMessage(null);
     setNetworkTest(null);
     setTestResult(null);
@@ -167,7 +183,8 @@ export default function StreamingSetupWizard({
 
   const hydrateFromDestination = useCallback((dest: StreamingDestination) => {
     setDestinationId(dest.id);
-    setPlatform(dest.platform as StreamingPlatform);
+    destinationIdRef.current = dest.id;
+    setPlatform(normalizePlatform(dest.platform) as StreamingPlatform);
     setStreamTitle(dest.streamTitle);
     setStreamDescription(dest.streamDescription);
     setStreamCategory(dest.streamCategory ?? "Religion & Spirituality");
@@ -251,13 +268,17 @@ export default function StreamingSetupWizard({
       const result = await saveStreamingBroadcastDestinationsApi(platforms);
       setSelectedPlatforms(platforms);
       const first = platforms[0];
-      setPlatform(first);
-      const card = result.cards.find((c) => c.platform === first);
+      const platformKey = normalizePlatform(first) as StreamingPlatform;
+      setPlatform(platformKey);
+      const card = result.cards.find((c) => normalizePlatform(c.platform) === platformKey);
       const cardDestId = card?.destinationId ?? null;
-      if (cardDestId) setDestinationId(cardDestId);
+      if (cardDestId) {
+        setDestinationId(cardDestId);
+        destinationIdRef.current = cardDestId;
+      }
       const dest =
         destinations.find((d) => d.id === cardDestId) ??
-        destinations.find((d) => d.platform === first) ??
+        destinations.find((d) => normalizePlatform(d.platform) === platformKey) ??
         null;
       if (dest) hydrateFromDestination(dest);
       void onSaved();
@@ -270,33 +291,36 @@ export default function StreamingSetupWizard({
   };
 
   const ensureDestination = useCallback(async (): Promise<string> => {
-    if (destinationId) return destinationId;
+    if (destinationIdRef.current) return destinationIdRef.current;
     if (!platform) throw new Error("Choose a streaming destination first.");
 
-    const existing = destinations.find((d) => d.platform === platform);
+    const platformKey = normalizePlatform(platform);
+    const existing = destinations.find((d) => normalizePlatform(d.platform) === platformKey);
     if (existing) {
+      destinationIdRef.current = existing.id;
       setDestinationId(existing.id);
       return existing.id;
     }
 
-    const meta = STREAMING_PLATFORMS.find((p) => p.id === platform);
+    const meta = STREAMING_PLATFORMS.find((p) => p.id === platformKey);
     const normalizedChurch = normalizeChurchWebsiteSettings(withChurchWebsiteDefaults(churchWebsite));
     const item = await createStreamingDestinationApi({
-      platform,
-      displayName: platform === "church_website" ? normalizedChurch.websiteName : meta?.label,
+      platform: platformKey as StreamingPlatform,
+      displayName: platformKey === "church_website" ? normalizedChurch.websiteName : meta?.label,
       settings:
-        platform === "church_website"
+        platformKey === "church_website"
           ? normalizedChurch
-          : platform === "custom_rtmp"
+          : platformKey === "custom_rtmp"
             ? { serverName: customRtmp.serverName }
             : {},
-      streamUrl: platform === "custom_rtmp" ? customRtmp.streamUrl : normalizedChurch.streamPageUrl,
-      streamKey: platform === "custom_rtmp" ? customRtmp.streamKey : undefined,
+      streamUrl: platformKey === "custom_rtmp" ? customRtmp.streamUrl : normalizedChurch.streamPageUrl,
+      streamKey: platformKey === "custom_rtmp" ? customRtmp.streamKey : undefined,
       backupStreamUrl: customRtmp.backupStreamUrl,
     });
+    destinationIdRef.current = item.id;
     setDestinationId(item.id);
     return item.id;
-  }, [churchWebsite, customRtmp, destinationId, destinations, platform]);
+  }, [churchWebsite, customRtmp, destinations, platform]);
 
   const runEncoderDetect = useCallback(async () => {
     const result = await detectStreamingEncodersApi();
@@ -344,8 +368,8 @@ export default function StreamingSetupWizard({
     if (nextStep) setStep(nextStep);
   };
 
-  const persistConnectionSettings = async (destId: string) => {
-    if (platform === "church_website") {
+  const persistConnectionSettings = async (destId: string, platformKey = normalizedPlatform) => {
+    if (platformKey === "church_website") {
       const normalized = normalizeChurchWebsiteSettings(withChurchWebsiteDefaults(churchWebsite));
       await updateStreamingDestinationApi(destId, {
         destinationName: normalized.websiteName || "Church Website",
@@ -367,7 +391,7 @@ export default function StreamingSetupWizard({
       });
       return;
     }
-    if (platform === "custom_rtmp") {
+    if (platformKey === "custom_rtmp") {
       await updateStreamingDestinationApi(destId, {
         destinationName: customRtmp.serverName || "Custom RTMP",
         settingsJson: { serverName: customRtmp.serverName },
@@ -383,33 +407,50 @@ export default function StreamingSetupWizard({
     const idx = wizardStepIndex(step);
     const next = STREAMING_WIZARD_STEPS[idx + 1];
     if (!next) return;
+
+    if (step === "authenticate" && isOAuthPlatform && !isConnected) {
+      onToast("error", "Connect your account before continuing.");
+      return;
+    }
+    if (step === "network" && !networkTest) {
+      onToast("error", "Run the connection test before continuing.");
+      return;
+    }
+    if (step === "destination-test" && !testResult?.success) {
+      onToast("error", "Destination must pass validation before preview.");
+      return;
+    }
+
+    const persistOnAuthenticate =
+      step === "authenticate" &&
+      (normalizedPlatform === "church_website" || normalizedPlatform === "custom_rtmp");
+
+    if (persistOnAuthenticate) {
+      setStep(next);
+      setBusy(true);
+      try {
+        const id = await ensureDestination();
+        await persistConnectionSettings(id, normalizedPlatform);
+        void onSaved?.();
+      } catch (err) {
+        setStep("authenticate");
+        onToast("error", err instanceof Error ? err.message : "Could not save connection settings.");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
     setBusy(true);
     try {
       if (step === "choose") {
         await ensureDestination();
-      } else if (step === "authenticate") {
-        if (isOAuthPlatform && !isConnected) {
-          onToast("error", "Connect your account before continuing.");
-          return;
-        }
-        if (platform === "church_website" || platform === "custom_rtmp") {
-          const id = await ensureDestination();
-          await persistConnectionSettings(id);
-        }
-      } else if (["stream-info", "video", "audio"].includes(step)) {
-        await saveDraft();
-      } else if (step === "network" && !networkTest) {
-        onToast("error", "Run the connection test before continuing.");
-        return;
-      } else if (step === "destination-test" && !testResult?.success) {
-        onToast("error", "Destination must pass validation before preview.");
-        return;
-      } else if (step === "preview") {
+      } else if (["stream-info", "video", "audio", "preview"].includes(step)) {
         await saveDraft();
       }
       setStep(next);
       if (step === "authenticate" || step === "choose") {
-        void onSaved();
+        void onSaved?.();
       }
     } catch (err) {
       onToast("error", err instanceof Error ? err.message : "Could not continue.");
@@ -540,6 +581,58 @@ export default function StreamingSetupWizard({
     [step],
   );
 
+  const continueDisabled = useMemo(() => {
+    if (!platform) return true;
+    if (step === "authenticate") {
+      if (isOAuthPlatform && !isConnected) return true;
+      if (normalizedPlatform === "church_website") {
+        const normalized = normalizeChurchWebsiteSettings(withChurchWebsiteDefaults(churchWebsite));
+        return !normalized.websiteName.trim() || !normalized.streamPageUrl.trim();
+      }
+      if (normalizedPlatform === "custom_rtmp") {
+        return !customRtmp.streamUrl.trim() || !customRtmp.streamKey.trim();
+      }
+    }
+    if (step === "save" && !testResult?.success) return true;
+    return false;
+  }, [
+    churchWebsite,
+    customRtmp,
+    isConnected,
+    isOAuthPlatform,
+    normalizedPlatform,
+    platform,
+    step,
+    testResult?.success,
+  ]);
+
+  const handleContinueClick = () => {
+    if (busy) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("[StreamingSetupWizard] Continue clicked while busy", { step });
+      }
+      return;
+    }
+    if (continueDisabled) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("[StreamingSetupWizard] Continue disabled dead click", {
+          step,
+          platform: normalizedPlatform,
+        });
+      }
+      return;
+    }
+    void goNext();
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const frame = requestAnimationFrame(() => {
+      footerRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [open, step]);
+
   const startAudioMeters = useCallback(async () => {
     audioMonitorStop.current?.();
     const item = soundItems.find((s) => s.id === selectedSoundItemId);
@@ -585,6 +678,7 @@ export default function StreamingSetupWizard({
         </div>
 
         <div className={`flex-1 overflow-y-auto px-5 py-4 ${WIZARD_BODY_MIN_HEIGHT}`}>
+          <WizardErrorBoundary stepLabel={wizardStepLabel(step)}>
           {step === "choose" ? (
             <BroadcastDestinationChooser
               cards={chooserCards}
@@ -665,10 +759,12 @@ export default function StreamingSetupWizard({
                   )}
                 </>
               ) : null}
-              {platform === "church_website" ? (
+              {normalizedPlatform === "church_website" ? (
                 <ChurchWebsiteForm value={churchWebsite} onChange={setChurchWebsite} disabled={busy} />
               ) : null}
-              {platform === "custom_rtmp" ? <CustomRtmpForm value={customRtmp} onChange={setCustomRtmp} disabled={busy} /> : null}
+              {normalizedPlatform === "custom_rtmp" ? (
+                <CustomRtmpForm value={customRtmp} onChange={setCustomRtmp} disabled={busy} />
+              ) : null}
             </div>
           ) : null}
 
@@ -889,9 +985,13 @@ export default function StreamingSetupWizard({
               </ul>
             </div>
           ) : null}
+          </WizardErrorBoundary>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 px-5 py-4">
+        <div
+          ref={footerRef}
+          className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-white/10 bg-[#0C0C10]/95 px-5 py-4 backdrop-blur-sm"
+        >
           <div className="flex gap-2">
             {wizardStepIndex(step) > 0 ? (
               <button type="button" disabled={busy} onClick={goBack} className={TS.btnOutline}>Back</button>
@@ -904,8 +1004,21 @@ export default function StreamingSetupWizard({
                 {busy ? "Saving…" : "Save & Mark Ready"}
               </button>
             ) : step !== "choose" ? (
-              <button type="button" disabled={busy || !platform} onClick={() => void goNext()} className={TS.btnPrimary}>
-                Continue
+              <button
+                type="button"
+                disabled={busy || continueDisabled}
+                onClick={handleContinueClick}
+                aria-busy={busy}
+                className={`${TS.btnPrimary} touch-target ${busy || continueDisabled ? "cursor-not-allowed opacity-50" : ""}`}
+              >
+                {busy ? (
+                  <>
+                    <Loader2 className="mr-2 inline h-4 w-4 animate-spin" aria-hidden="true" />
+                    Continuing…
+                  </>
+                ) : (
+                  "Continue"
+                )}
               </button>
             ) : null}
           </div>
