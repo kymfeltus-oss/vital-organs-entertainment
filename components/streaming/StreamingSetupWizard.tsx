@@ -18,6 +18,7 @@ import {
   disconnectStreamingApi,
   fetchStreamingPreviewStatsApi,
   fetchStreamingWizardDefaultsApi,
+  fetchStreamingWizardReadinessApi,
   prepareStreamingEncoderApi,
   runStreamingNetworkTestApi,
   saveStreamingBroadcastDestinationsApi,
@@ -50,7 +51,7 @@ import { openBrowserAudioMonitor } from "@/lib/sound/browser";
 import { extractBrowserDeviceId } from "@/lib/sound/device-utils";
 import { toIsoFromLocalDateTimeInput, toLocalDateTimeInput } from "@/lib/streaming/datetime-local";
 import { WIZARD_BODY_MIN_HEIGHT } from "@/lib/streaming/streaming-layout";
-import type { ChurchWebsiteSettings, CustomRtmpSettings, StreamingPlatform, StreamingTestResult } from "@/lib/streaming/types";
+import type { ChurchWebsiteSettings, CustomRtmpSettings, StreamingPlatform, StreamingTestResult, StreamingWizardReadiness } from "@/lib/streaming/types";
 import type { SoundItem, StreamingDestination, BroadcastDestinationCard } from "@/lib/todays-service/types";
 
 const BroadcastDestinationChooser = dynamic(
@@ -90,6 +91,7 @@ export default function StreamingSetupWizard({
   const [destinationId, setDestinationId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [devMessage, setDevMessage] = useState<string | null>(null);
+  const [wizardReadiness, setWizardReadiness] = useState<StreamingWizardReadiness | null>(null);
 
   const [streamTitle, setStreamTitle] = useState("");
   const [streamDescription, setStreamDescription] = useState("");
@@ -167,6 +169,12 @@ export default function StreamingSetupWizard({
     normalizedPlatform !== "custom_rtmp";
   const isConnected =
     activeDestination?.connectionStatus === "connected" || activeDestination?.connectionStatus === "ready";
+
+  const authenticateSavesSecrets =
+    step === "authenticate" &&
+    (normalizedPlatform === "church_website" || normalizedPlatform === "custom_rtmp");
+  const encryptionBlocked = Boolean(wizardReadiness && !wizardReadiness.ready && authenticateSavesSecrets);
+  const encryptionWarning = wizardReadiness && !wizardReadiness.ready ? wizardReadiness.checks.tokenEncryption.message : null;
 
   const resetWizard = useCallback(() => {
     setStep("choose");
@@ -290,6 +298,16 @@ export default function StreamingSetupWizard({
     hydrateFromDestination(dest);
     advanceWizardStep(resumeStep ?? "stream-info");
   }, [open, busy, resumeStep, destinations, hydrateFromDestination, advanceWizardStep]);
+
+  useEffect(() => {
+    if (!open) {
+      setWizardReadiness(null);
+      return;
+    }
+    void fetchStreamingWizardReadinessApi()
+      .then(setWizardReadiness)
+      .catch(() => setWizardReadiness(null));
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -660,10 +678,12 @@ export default function StreamingSetupWizard({
       }
     }
     if (step === "save" && !testResult?.success) return true;
+    if (encryptionBlocked) return true;
     return false;
   }, [
     churchWebsite,
     customRtmp,
+    encryptionBlocked,
     isConnected,
     isOAuthPlatform,
     normalizedPlatform,
@@ -741,6 +761,17 @@ export default function StreamingSetupWizard({
           <p className="mt-2 font-ui text-[0.55rem] uppercase tracking-[0.14em] text-white/45">
             Step {wizardStepIndex(step) + 1} of {STREAMING_WIZARD_STEPS.length}
           </p>
+          {encryptionWarning ? (
+            <div
+              className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2.5"
+              role="alert"
+            >
+              <p className="font-ui text-[0.55rem] font-semibold uppercase tracking-[0.1em] text-amber-200">
+                Server setup required
+              </p>
+              <p className="mt-1 font-body text-sm leading-relaxed text-amber-100/90">{encryptionWarning}</p>
+            </div>
+          ) : null}
         </div>
 
         <div className={`flex-1 overflow-y-auto px-5 py-4 ${WIZARD_BODY_MIN_HEIGHT}`}>

@@ -119,6 +119,14 @@ export async function fetchStreamingWizardDefaultsApi(): Promise<import("@/lib/s
   ).then((r) => r.defaults);
 }
 
+export async function fetchStreamingWizardReadinessApi(): Promise<
+  import("@/lib/streaming/types").StreamingWizardReadiness
+> {
+  return streamingFetch<import("@/lib/streaming/types").StreamingWizardReadiness>(
+    "/api/v1/streaming/wizard/readiness",
+  );
+}
+
 export async function saveStreamingWizardApi(
   input: import("@/lib/streaming/types").StreamingWizardSaveInput,
 ): Promise<StreamingDestinationPublic> {

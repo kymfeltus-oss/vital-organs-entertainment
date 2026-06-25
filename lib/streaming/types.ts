@@ -102,6 +102,18 @@ export type StreamingWizardDefaults = {
   churchWebsite: ChurchWebsiteSettings;
 };
 
+export type StreamingWizardReadinessCheck = {
+  ok: boolean;
+  message: string;
+};
+
+export type StreamingWizardReadiness = {
+  ready: boolean;
+  checks: {
+    tokenEncryption: StreamingWizardReadinessCheck;
+  };
+};
+
 export type StreamingWizardSaveInput = {
   destinationId: string;
   streamTitle?: string;
