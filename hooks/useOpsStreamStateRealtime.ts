@@ -80,13 +80,14 @@ export function useOpsStreamStateRealtime(
 
       if (!response.ok) return;
 
-      const data = (await response.json()) as { stream: OpsSnapshot["stream"] };
-      setStream(data.stream);
+      const data = (await response.json()) as { stream?: OpsSnapshot["stream"] | null };
+      const nextStream = data.stream ?? null;
+      setStream(nextStream);
       setLiveSinceMs((previous) => {
-        if (data.stream.isLive) return previous ?? Date.now();
+        if (nextStream?.isLive) return previous ?? Date.now();
         return null;
       });
-      onStreamUpdateRef.current?.(data.stream);
+      onStreamUpdateRef.current?.(nextStream);
     } catch (error) {
       console.error("[OPS_STREAM_STATE_REALTIME_ERR]:", error);
     }

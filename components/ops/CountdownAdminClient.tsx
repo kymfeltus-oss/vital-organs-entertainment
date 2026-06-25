@@ -9,18 +9,29 @@ import {
   resolvePreviewPlaybackUrl,
   toOpsStreamTelemetryView,
 } from "@/lib/broadcast/ops-stream-telemetry-view";
-import { useCountdownChatTroubleAlerts } from "@/hooks/useCountdownChatTroubleAlerts";
 import { useCountdownHeroEditor } from "@/hooks/useCountdownHeroEditor";
-import { useOpsStreamStateRealtime } from "@/hooks/useOpsStreamStateRealtime";
 import { useRoleGate } from "@/hooks/useRoleGate";
 import type { FellowshipChatMessage } from "@/lib/experience/fellowship-chat";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
+import type { OpsStreamState } from "@/lib/ops/ops-stream-state";
+import type { OpsSnapshot } from "@/lib/ops/types";
+import type { ChatTroubleCategory } from "@/lib/ops/chat-scanner";
+
+export type LiftedCountdownRealtime = {
+  stream: OpsSnapshot["stream"] | null;
+  opsState: OpsStreamState | null;
+  messages: FellowshipChatMessage[];
+  chatLoading: boolean;
+  chatConnected: boolean;
+  issueType: ChatTroubleCategory | null;
+  troubleCount: number;
+  clearChatAlert: () => void;
+};
 
 type CountdownAdminClientProps = {
   adminEmail: string;
   initialConfig: EventCountdownConfig;
-  /** Server snapshot — retained for SSR parity with page loader. */
-  initialPreviewNowMs?: number;
+  liftedRealtime: LiftedCountdownRealtime;
 };
 
 function mapAttendeeChatRows(
@@ -38,9 +49,20 @@ function mapAttendeeChatRows(
 export default function CountdownAdminClient({
   adminEmail,
   initialConfig,
+  liftedRealtime,
 }: CountdownAdminClientProps) {
   const roleGate = useRoleGate();
-  const { stream, opsState } = useOpsStreamStateRealtime();
+  const {
+    stream,
+    opsState,
+    messages,
+    chatLoading,
+    chatConnected,
+    issueType,
+    troubleCount,
+    clearChatAlert,
+  } = liftedRealtime;
+
   const opsStream = useMemo(
     () => toOpsStreamTelemetryView(opsState, stream),
     [opsState, stream],
@@ -59,15 +81,6 @@ export default function CountdownAdminClient({
     isLaunching,
     launchError,
   } = useCountdownHeroEditor({ initialConfig });
-
-  const {
-    messages,
-    isLoading: chatLoading,
-    isConnected: chatConnected,
-    issueType,
-    count: troubleCount,
-    clear: clearChatAlert,
-  } = useCountdownChatTroubleAlerts();
 
   const chatMessages = useMemo(() => mapAttendeeChatRows(messages), [messages]);
 
@@ -116,7 +129,7 @@ export default function CountdownAdminClient({
   };
 
   return (
-    <main className="min-h-dvh w-full bg-brand-black pt-safe text-white">
+    <main className="min-h-0 w-full bg-brand-black text-white">
       <MobileCountdownConsole
         {...sharedProps}
         mobileTab={mobileTab}

@@ -3,6 +3,10 @@ import {
   EXPERIENCE_LIVE_PATH,
   PUBLIC_COUNTDOWN_PATH,
 } from "@/lib/experience/live-routes";
+import {
+  buildOpsModuleHref,
+  OPS_MODULE_ROUTES,
+} from "@/lib/ops/ops-module-nav";
 
 export const OPS_TEAM_ROLE_STORAGE_KEY = "ops_team_role_mock";
 
@@ -20,6 +24,7 @@ export type OpsHubModuleId =
   | "prayer_queue"
   | "incident"
   | "ops_home"
+  | "ops_sound"
   | "camera_desk"
   | "countdown_editor"
   | "stream_control"
@@ -40,13 +45,61 @@ export type OpsHubModule = {
 
 export const OPS_HUB_MODULES: readonly OpsHubModule[] = [
   {
+    id: "ops_home",
+    title: "Production Dashboard",
+    description: "Read-only monitoring — stream health, audio, alerts, and attendee signals.",
+    href: buildOpsModuleHref(OPS_MODULE_ROUTES.productionDashboard, "summary"),
+    badge: "Home",
+    section: "monitoring",
+  },
+  {
+    id: "ops_sound",
+    title: "Sound",
+    description: "Audio mixer meters and output routing for the live show.",
+    href: buildOpsModuleHref(OPS_MODULE_ROUTES.sound, "mixer"),
+    badge: "Audio",
+    section: "live",
+  },
+  {
+    id: "camera_desk",
+    title: "Camera",
+    description: "Host ingest credentials, camera matrix, and mobile operator desk.",
+    href: buildOpsModuleHref(OPS_MODULE_ROUTES.camera, "ingest"),
+    badge: "Video",
+    section: "live",
+  },
+  {
     id: "countdown_editor",
-    title: "Countdown Editor",
+    title: "Countdown & Control",
     description:
-      "Hero copy, show schedule, holding-room restore, live chat monitor, and go-live launch.",
-    href: "/ops/countdown",
+      "Hero copy, show schedule, stream master control, chat monitor, and go-live launch.",
+    href: buildOpsModuleHref(OPS_MODULE_ROUTES.countdown, "console"),
     badge: "Pre-Show",
     section: "setup",
+  },
+  {
+    id: "stream_control",
+    title: "Stream Control",
+    description: "Go live, backup lane, and emergency offline — inside Countdown console.",
+    href: buildOpsModuleHref(OPS_MODULE_ROUTES.countdown, "console"),
+    badge: "Master",
+    section: "live",
+  },
+  {
+    id: "incident",
+    title: "Incident Log",
+    description: "Live system errors, audits, and PARABLE safety event history.",
+    href: buildOpsModuleHref(OPS_MODULE_ROUTES.countdown, "incident"),
+    badge: "Audit",
+    section: "monitoring",
+  },
+  {
+    id: "prayer_queue",
+    title: "Prayer Queue",
+    description: "Filtered prayer team view for live moderation and response flow.",
+    href: buildOpsModuleHref(OPS_MODULE_ROUTES.countdown, "prayer"),
+    badge: "Prayer",
+    section: "live",
   },
   {
     id: "readiness",
@@ -65,53 +118,12 @@ export const OPS_HUB_MODULES: readonly OpsHubModule[] = [
     section: "setup",
   },
   {
-    id: "stream_control",
-    title: "Stream Control",
-    description: "One-click go live, backup lane, and emergency offline for all attendees.",
-    href: "/ops/control",
-    badge: "Master",
-    section: "live",
-  },
-  {
     id: "crew_console",
     title: "Crew Console",
     description: "Live Hub production console — preview, readiness review, and go-live workflow.",
     href: "/ops/live-hub/console",
     badge: "Live Hub",
     section: "live",
-  },
-  {
-    id: "camera_desk",
-    title: "Camera Mobile Desk",
-    description:
-      "Phone-optimized studio controller. Stream from your mobile lens and hot-swap local inputs.",
-    href: "/ops/camera-desk",
-    badge: "Mobile",
-    section: "live",
-  },
-  {
-    id: "prayer_queue",
-    title: "Prayer Queue",
-    description: "Filtered prayer team view for live moderation and response flow.",
-    href: "/ops/live-hub/prayer-queue",
-    badge: "Prayer",
-    section: "live",
-  },
-  {
-    id: "incident",
-    title: "Incident Log",
-    description: "Live system errors, audits, and PARABLE safety event history.",
-    href: "/ops/live-hub/incident",
-    badge: "Audit",
-    section: "monitoring",
-  },
-  {
-    id: "ops_home",
-    title: "Production Metrics Dashboard",
-    description: "Read-only monitoring — stream health, audio, alerts, and attendee signals.",
-    href: "/ops",
-    badge: "Home",
-    section: "monitoring",
   },
   {
     id: "public_countdown",
@@ -152,6 +164,7 @@ export const ROLE_MODULE_ACCESS: Record<OpsTeamRole, readonly OpsHubModuleId[]> 
     "prayer_queue",
     "incident",
     "ops_home",
+    "ops_sound",
     "camera_desk",
     "public_countdown",
     "attendee_live",
@@ -164,11 +177,13 @@ export const ROLE_MODULE_ACCESS: Record<OpsTeamRole, readonly OpsHubModuleId[]> 
     "readiness",
     "broadcast_console",
     "ops_home",
+    "ops_sound",
+    "camera_desk",
     "public_countdown",
     "attendee_live",
     "obs_countdown",
   ],
-  broadcast_operator: ["stream_control", "broadcast_console", "ops_home"],
+  broadcast_operator: ["stream_control", "broadcast_console", "ops_home", "ops_sound"],
   prayer_team: ["prayer_queue", "ops_home"],
   camera_crew: ["camera_desk", "ops_home"],
 };

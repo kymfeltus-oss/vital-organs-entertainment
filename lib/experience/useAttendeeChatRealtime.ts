@@ -213,8 +213,8 @@ export function useAttendeeChatRealtime(
                 schema: "public",
                 table: "chat_messages",
                 callback: (payload) => {
-                  const row = payload.new as FellowshipChatMessageRow;
-                  if (row.deleted_at || row.is_pinned) return;
+                  const row = payload.new as FellowshipChatMessageRow | null;
+                  if (!row || row.deleted_at || row.is_pinned) return;
                   ingestMessage(mapFellowshipChatRow(row));
                 },
               },

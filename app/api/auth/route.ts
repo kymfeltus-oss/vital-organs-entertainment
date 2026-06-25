@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { generateGuestEmail, generateGuestPassword } from "@/lib/access";
 import {
   CREATE_ACCOUNT_MIN_PASSWORD_LENGTH,
@@ -11,10 +11,10 @@ import { buildAuthCallbackUrl } from "@/lib/auth/server";
 import { isValidUsStateCode } from "@/lib/auth/us-states";
 import { syncUserProfileIdentity } from "@/lib/auth/sync-attendee-profile";
 import { normalizePhoneDigits, isValidPhone } from "@/lib/auth/validation";
-import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
+import { createRouteHandlerSupabaseClient } from "@/lib/supabase/route-handler-client";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
-type AuthAction = "signup" | "login" | "guest";
+type AuthAction = "login" | "signup" | "guest";
 
 type AuthRequestBody = {
   action?: AuthAction;
@@ -37,25 +37,32 @@ function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
-export async function POST(request: Request) {
+function jsonResponse(payload: Record<string, unknown>, status = 200): NextResponse {
+  return NextResponse.json(payload, { status });
+}
+
+export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as AuthRequestBody;
     const action = body.action;
 
     if (!action || !["signup", "login", "guest"].includes(action)) {
-      return NextResponse.json({ error: "Invalid auth action." }, { status: 400 });
+      return jsonResponse({ error: "Invalid auth action." }, 400);
     }
 
-    const supabase = await createServerSupabaseClient();
+    const { supabase, getResponse } = createRouteHandlerSupabaseClient(
+      request,
+      () => jsonResponse({ success: true }),
+    );
 
     if (action === "login") {
       const email = body.email?.trim().toLowerCase();
       const password = body.password;
 
       if (!email || !password || !isValidEmail(email)) {
-        return NextResponse.json(
+        return jsonResponse(
           { error: "Valid email and password are required." },
-          { status: 400 },
+          400,
         );
       }
 
@@ -65,19 +72,15 @@ export async function POST(request: Request) {
       });
 
       if (error || !data.user) {
-        return NextResponse.json(
+        return jsonResponse(
           { error: error?.message ?? "Unable to sign in." },
-          { status: 401 },
+          401,
         );
       }
 
       await syncUserProfileIdentity(data.user);
 
-      return NextResponse.json({
-        success: true,
-        email: data.user.email,
-        isGuest: data.user.user_metadata?.is_guest === true,
-      });
+      return getResponse();
     }
 
     if (action === "signup") {
@@ -90,37 +93,44 @@ export async function POST(request: Request) {
       const city = body.city?.trim() ?? "";
       const state = body.state?.trim().toUpperCase() ?? "";
 
-      if (!email || !password || password.length < CREATE_ACCOUNT_MIN_PASSWORD_LENGTH || !isValidEmail(email)) {
-        return NextResponse.json(
-          { error: `Valid email and a ${CREATE_ACCOUNT_MIN_PASSWORD_LENGTH}+ character password are required.` },
-          { status: 400 },
+      if (
+        !email ||
+        !password ||
+        password.length < CREATE_ACCOUNT_MIN_PASSWORD_LENGTH ||
+        !isValidEmail(email)
+      ) {
+        return jsonResponse(
+          {
+            error: `Valid email and a ${CREATE_ACCOUNT_MIN_PASSWORD_LENGTH}+ character password are required.`,
+          },
+          400,
         );
       }
 
       if (confirmPassword !== undefined && confirmPassword !== password) {
-        return NextResponse.json({ error: "Passwords do not match." }, { status: 400 });
+        return jsonResponse({ error: "Passwords do not match." }, 400);
       }
 
       if (!firstName || !lastName) {
-        return NextResponse.json(
+        return jsonResponse(
           { error: "First and last name are required to create an account." },
-          { status: 400 },
+          400,
         );
       }
 
       if (phone && !isValidPhone(phone)) {
-        return NextResponse.json(
+        return jsonResponse(
           { error: "Enter a valid 10-digit US phone number." },
-          { status: 400 },
+          400,
         );
       }
 
       if (!city) {
-        return NextResponse.json({ error: "City is required." }, { status: 400 });
+        return jsonResponse({ error: "City is required." }, 400);
       }
 
       if (!state || !isValidUsStateCode(state)) {
-        return NextResponse.json({ error: "A valid US state is required." }, { status: 400 });
+        return jsonResponse({ error: "A valid US state is required." }, 400);
       }
 
       const signupNext = resolveAttendeeDestination(
@@ -143,9 +153,9 @@ export async function POST(request: Request) {
       });
 
       if (error || !data.user) {
-        return NextResponse.json(
+        return jsonResponse(
           { error: error?.message ?? "Unable to create account." },
-          { status: 400 },
+          400,
         );
       }
 
@@ -159,12 +169,12 @@ export async function POST(request: Request) {
           });
 
         if (signInError) {
-          return NextResponse.json(
+          return jsonResponse(
             {
               error:
                 "Account created. Confirm your email or retry sign-in if confirmation is disabled.",
             },
-            { status: 202 },
+            202,
           );
         }
 
@@ -175,11 +185,7 @@ export async function POST(request: Request) {
         await syncUserProfileIdentity(activeUser);
       }
 
-      return NextResponse.json({
-        success: true,
-        email,
-        isGuest: false,
-      });
+      return getResponse();
     }
 
     const guestEmail = generateGuestEmail();
@@ -205,9 +211,9 @@ export async function POST(request: Request) {
       });
 
     if (createError || !createdUser.user) {
-      return NextResponse.json(
+      return jsonResponse(
         { error: createError?.message ?? "Unable to create guest session." },
-        { status: 500 },
+        500,
       );
     }
 
@@ -218,21 +224,17 @@ export async function POST(request: Request) {
       });
 
     if (guestSignInError || !guestSession.user) {
-      return NextResponse.json(
+      return jsonResponse(
         { error: guestSignInError?.message ?? "Unable to start guest session." },
-        { status: 500 },
+        500,
       );
     }
 
-      return NextResponse.json({
-        success: true,
-        email: contactEmail && isValidEmail(contactEmail) ? contactEmail : guestEmail,
-        isGuest: true,
-      });
+    return getResponse();
   } catch (error) {
     console.error("Auth route error:", error);
     const message =
       error instanceof Error ? error.message : "Authentication failed.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return jsonResponse({ error: message }, 500);
   }
 }

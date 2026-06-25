@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import ExperienceDashboardMobileView from "@/components/experience/dashboard/ExperienceDashboardMobileView";
+import ProfileEditorModal from "@/components/profile/ProfileEditorModal";
+import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 import { AWAKENING_PRELOAD_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import type { CountdownParts } from "@/lib/live/event-lobby";
@@ -13,16 +16,27 @@ type ExperienceAttendeeDashboardProps = {
   initialCountdown?: CountdownParts;
 };
 
-export default function ExperienceAttendeeDashboard({
+function ExperienceAttendeeDashboardInner({
   initialProfile,
   initialCountdownConfig,
   initialCountdown,
 }: ExperienceAttendeeDashboardProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [profile, setProfile] = useState(initialProfile);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   useEffect(() => {
     setProfile(initialProfile);
   }, [initialProfile]);
+
+  useEffect(() => {
+    const view = searchParams.get("view");
+    if (view !== "profile" && view !== "settings") return;
+
+    setProfileModalOpen(true);
+    router.replace(ATTENDEE_DASHBOARD_PATH, { scroll: false });
+  }, [router, searchParams]);
 
   useEffect(() => {
     for (const asset of AWAKENING_PRELOAD_ASSETS) {
@@ -42,11 +56,33 @@ export default function ExperienceAttendeeDashboard({
   }, []);
 
   return (
-    <ExperienceDashboardMobileView
-      profile={profile}
-      onProfileChange={setProfile}
-      initialCountdownConfig={initialCountdownConfig}
-      initialCountdown={initialCountdown}
-    />
+    <>
+      <ExperienceDashboardMobileView
+        profile={profile}
+        onProfileChange={setProfile}
+        initialCountdownConfig={initialCountdownConfig}
+        initialCountdown={initialCountdown}
+      />
+
+      {profile.userId ? (
+        <ProfileEditorModal
+          isOpen={profileModalOpen}
+          profile={profile}
+          onClose={() => setProfileModalOpen(false)}
+          onSaved={(nextProfile) => {
+            setProfile(nextProfile);
+            setProfileModalOpen(false);
+          }}
+        />
+      ) : null}
+    </>
+  );
+}
+
+export default function ExperienceAttendeeDashboard(props: ExperienceAttendeeDashboardProps) {
+  return (
+    <Suspense fallback={null}>
+      <ExperienceAttendeeDashboardInner {...props} />
+    </Suspense>
   );
 }

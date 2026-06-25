@@ -40,7 +40,7 @@ import { useAttendeeLiveState } from "@/lib/experience/useAttendeeLiveState";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
 import { BroadcastHealthProvider } from "@/lib/parable/BroadcastHealthContext";
 import { useLiveAccessVerification } from "@/lib/useLiveAccessVerification";
-import { useLiveSeedWallet } from "@/lib/useLiveSeedWallet";
+import { requestLiveSeedWalletRefresh } from "@/lib/live/seed-wallet-events";
 
 const GOING_LIVE_MS = GOING_LIVE_TRANSITION_MS;
 
@@ -91,7 +91,6 @@ function LiveExperienceClientInner({
   const { phase, verificationAttempt } = useLiveAccessVerification();
   const accessGateReady =
     phase !== "checking" && phase !== "activating_pass" && phase !== "locked";
-  const { refresh: refreshSeedBalance } = useLiveSeedWallet();
   const {
     config: countdownConfig,
     eventPhase,
@@ -192,14 +191,14 @@ function LiveExperienceClientInner({
     const params = new URLSearchParams(window.location.search);
     if (params.get("seeds") !== "success") return;
 
-    void refreshSeedBalance();
+    requestLiveSeedWalletRefresh();
 
     const url = new URL(window.location.href);
     url.pathname = EXPERIENCE_LIVE_PATH;
     url.searchParams.delete("seeds");
     const query = url.searchParams.toString();
     window.history.replaceState({}, "", query ? `${url.pathname}?${query}` : url.pathname);
-  }, [refreshSeedBalance]);
+  }, []);
 
   const streamGateInput = {
     lifecycleStage,

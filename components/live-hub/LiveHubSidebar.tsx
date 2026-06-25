@@ -40,20 +40,29 @@ function NavButton({
   active,
   onClick,
   icon: Icon,
+  disabled = false,
+  disabledLabel,
 }: {
   label: string;
   active?: boolean;
   onClick?: () => void;
   icon?: typeof Wrench;
+  disabled?: boolean;
+  disabledLabel?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
+      title={disabled ? (disabledLabel ?? "Coming soon") : undefined}
+      aria-disabled={disabled || undefined}
       className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[0.62rem] font-bold uppercase tracking-[0.12em] transition ${
-        active
-          ? "border border-[#1E40AF]/45 bg-[#1E40AF]/12 text-[#93c5fd]"
-          : "border border-transparent text-zinc-500 hover:border-white/8 hover:bg-[#111111] hover:text-zinc-300"
+        disabled
+          ? "cursor-not-allowed border border-transparent text-zinc-600 opacity-60"
+          : active
+            ? "border border-[#1E40AF]/45 bg-[#1E40AF]/12 text-[#93c5fd]"
+            : "border border-transparent text-zinc-500 hover:border-white/8 hover:bg-[#111111] hover:text-zinc-300"
       }`}
     >
       {Icon ? <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> : null}
@@ -118,6 +127,8 @@ export default function LiveHubSidebar({
               <NavButton
                 key={label}
                 label={label}
+                disabled
+                disabledLabel="Live tool coming soon"
                 icon={
                   label === "Teleprompter"
                     ? FileText
@@ -141,6 +152,8 @@ export default function LiveHubSidebar({
               <NavButton
                 key={label}
                 label={label}
+                disabled
+                disabledLabel="Resource link coming soon"
                 icon={
                   label === "Help Center"
                     ? HelpCircle
@@ -173,9 +186,12 @@ export default function LiveHubSidebar({
           </div>
           <button
             type="button"
-            className="mt-3 w-full rounded-lg border border-white/10 bg-[#0B090A]/80 py-2 text-[0.55rem] font-bold uppercase tracking-[0.14em] text-zinc-300 transition hover:border-[#1E40AF]/40 hover:text-white"
+            disabled
+            title="Billing management coming soon"
+            aria-disabled="true"
+            className="mt-3 w-full cursor-not-allowed rounded-lg border border-white/10 bg-[#0B090A]/80 py-2 text-[0.55rem] font-bold uppercase tracking-[0.14em] text-zinc-500 opacity-70"
           >
-            Manage Plan
+            Manage Plan (Soon)
           </button>
         </div>
         <Link

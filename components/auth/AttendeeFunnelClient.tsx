@@ -13,6 +13,7 @@ import {
   AUTH_NEXT_COOKIE,
   buildAttendeeGateUrl,
   buildCreateAccountUrl,
+  buildForgotPasswordUrl,
   buildPersonaHubUrl,
   resolveAttendeeDestination,
 } from "@/lib/auth/routing";
@@ -30,12 +31,14 @@ type AttendeeTab = "login" | "guest";
 type AttendeeFunnelClientProps = {
   nextPath: string;
   authError?: string | null;
+  authErrorDescription?: string | null;
   emailConfirmed?: boolean;
 };
 
 export default function AttendeeFunnelClient({
   nextPath,
   authError = null,
+  authErrorDescription = null,
   emailConfirmed = false,
 }: AttendeeFunnelClientProps) {
   const destination = resolveAttendeeDestination(nextPath);
@@ -56,7 +59,8 @@ export default function AttendeeFunnelClient({
   const [error, setError] = useState<string | null>(null);
   const callbackFailureMessage =
     authError === "auth_callback_failed"
-      ? "Email confirmation failed or expired. Sign in again or request a new confirmation email."
+      ? authErrorDescription ??
+        "Email confirmation failed or expired. Sign in again or request a new confirmation email."
       : null;
   const confirmedMessage = emailConfirmed
     ? "Your email is confirmed. Sign in with your password to continue."
@@ -239,6 +243,7 @@ export default function AttendeeFunnelClient({
   return (
     <AttendeeAuthLoginPlate
       createAccountHref={buildCreateAccountUrl(destination)}
+      forgotPasswordHref={buildForgotPasswordUrl(destination)}
       email={email}
       password={password}
       showPassword={showPassword}

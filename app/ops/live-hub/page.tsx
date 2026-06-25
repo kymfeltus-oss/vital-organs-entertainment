@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
-import { OPS_HOME_PATH } from "@/lib/broadcastRoutes";
 
-/** Legacy crew router — unified under the production dashboard. */
+/** Legacy crew router — land on the active console. */
 export default function LiveHubIndexPage() {
-  redirect(OPS_HOME_PATH);
+  redirect("/ops/live-hub/console");
 }

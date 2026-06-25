@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Check, Copy, Loader2, Radio } from "lucide-react";
 import { RTMP_INGEST_REQUIREMENT, formatRtmpIngestLaneLabel } from "@/lib/live/rtmp";
 import type { OpsSnapshot } from "@/lib/ops/types";
+import { buildPrimaryRtmpIngestUrl } from "@/lib/stream-keys";
 
 type LiveHubRtmpIngestPanelProps = {
   snapshot: OpsSnapshot;
@@ -135,20 +136,32 @@ export default function LiveHubRtmpIngestPanel({
       const data = (await response.json()) as {
         error?: string;
         success?: boolean;
-        primaryRtmpIngestUrl?: string | null;
+        warning?: string | null;
+        serverUrl?: string;
         streamKey?: string;
+        primaryRtmpIngestUrl?: string | null;
       };
 
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? "Unable to generate camera stream key.");
       }
 
-      if (data.primaryRtmpIngestUrl) {
-        setPrimaryDraft(data.primaryRtmpIngestUrl);
+      const resolvedIngestUrl =
+        data.primaryRtmpIngestUrl ??
+        (data.serverUrl && data.streamKey
+          ? buildPrimaryRtmpIngestUrl(data.streamKey, data.serverUrl)
+          : null);
+
+      if (resolvedIngestUrl) {
+        setPrimaryDraft(resolvedIngestUrl);
       }
 
       const keyLabel = data.streamKey ? ` (${data.streamKey})` : "";
-      setMessage(`New camera stream key generated${keyLabel}.`);
+      setMessage(
+        data.warning
+          ? `${data.warning}${keyLabel}`
+          : `New camera stream key generated${keyLabel}.`,
+      );
       await onSaved?.();
     } catch (generateError) {
       setError(

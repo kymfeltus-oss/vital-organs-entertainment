@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { Check, Loader2, X } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import type { OAuthProviderId } from "@/lib/auth/oauth-sign-in";
 import {
   AWAKENING_AUTH_LOGIN_COMPONENTS,
   AWAKENING_AUTH_LOGIN_FORM,
@@ -12,6 +13,7 @@ import {
 
 type AttendeeAuthLoginMobileFormProps = {
   createAccountHref: string;
+  forgotPasswordHref: string;
   email: string;
   password: string;
   showPassword: boolean;
@@ -24,6 +26,7 @@ type AttendeeAuthLoginMobileFormProps = {
   onToggleShowPassword: () => void;
   onRememberMeChange: (checked: boolean) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onOAuthSignIn: (provider: OAuthProviderId) => void;
 };
 
 type LoginPlateProps = {
@@ -31,8 +34,6 @@ type LoginPlateProps = {
   className?: string;
   children: ReactNode;
 };
-
-const COMING_SOON_NOTICE_MS = 3200;
 
 function LoginPlate({ component, className = "", children }: LoginPlateProps) {
   return (
@@ -55,6 +56,7 @@ function LoginPlate({ component, className = "", children }: LoginPlateProps) {
 
 export default function AttendeeAuthLoginMobileForm({
   createAccountHref,
+  forgotPasswordHref,
   email,
   password,
   showPassword,
@@ -67,13 +69,12 @@ export default function AttendeeAuthLoginMobileForm({
   onToggleShowPassword,
   onRememberMeChange,
   onSubmit,
+  onOAuthSignIn,
 }: AttendeeAuthLoginMobileFormProps) {
   const formAnchor = AWAKENING_AUTH_LOGIN_FORM;
   const components = AWAKENING_AUTH_LOGIN_COMPONENTS;
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-  const noticeTimerRef = useRef<number | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     const syncAutofill = () => {
@@ -107,27 +108,6 @@ export default function AttendeeAuthLoginMobileForm({
       window.clearTimeout(longTimer);
     };
   }, [email, onEmailChange, onPasswordChange, password]);
-
-  useEffect(() => {
-    return () => {
-      if (noticeTimerRef.current != null) {
-        window.clearTimeout(noticeTimerRef.current);
-      }
-    };
-  }, []);
-
-  const showComingSoon = (label: string) => {
-    if (noticeTimerRef.current != null) {
-      window.clearTimeout(noticeTimerRef.current);
-    }
-    setNotice(`${label} is coming soon.`);
-    noticeTimerRef.current = window.setTimeout(() => {
-      setNotice(null);
-      noticeTimerRef.current = null;
-    }, COMING_SOON_NOTICE_MS);
-  };
-
-  const displayMessage = formError ?? notice;
 
   return (
     <form
@@ -217,12 +197,10 @@ export default function AttendeeAuthLoginMobileForm({
           />
           <span className="sr-only">Remember me</span>
         </label>
-        <button
-          type="button"
-          disabled={isSubmitting}
-          aria-label="Forgot password — coming soon"
+        <Link
+          href={forgotPasswordHref}
+          aria-label="Forgot password"
           className="auth-attendee-login-form__forgot-hit auth-attendee-interactive touch-target"
-          onClick={() => showComingSoon("Password reset")}
         />
       </LoginPlate>
 
@@ -252,27 +230,27 @@ export default function AttendeeAuthLoginMobileForm({
           <button
             type="button"
             disabled={isSubmitting}
-            aria-label="Continue with Apple — coming soon"
+            aria-label="Continue with Apple"
             className="auth-attendee-login-form__asset-btn auth-attendee-interactive touch-target"
-            onClick={() => showComingSoon("Apple sign-in")}
+            onClick={() => onOAuthSignIn("apple")}
           />
         </LoginPlate>
         <LoginPlate component={components.googleButton} className="auth-attendee-login-form__plate--social">
           <button
             type="button"
             disabled={isSubmitting}
-            aria-label="Continue with Google — coming soon"
+            aria-label="Continue with Google"
             className="auth-attendee-login-form__asset-btn auth-attendee-interactive touch-target"
-            onClick={() => showComingSoon("Google sign-in")}
+            onClick={() => onOAuthSignIn("google")}
           />
         </LoginPlate>
         <LoginPlate component={components.facebookButton} className="auth-attendee-login-form__plate--social">
           <button
             type="button"
             disabled={isSubmitting}
-            aria-label="Continue with Facebook — coming soon"
+            aria-label="Continue with Facebook"
             className="auth-attendee-login-form__asset-btn auth-attendee-interactive touch-target"
-            onClick={() => showComingSoon("Facebook sign-in")}
+            onClick={() => onOAuthSignIn("facebook")}
           />
         </LoginPlate>
       </div>
@@ -285,12 +263,12 @@ export default function AttendeeAuthLoginMobileForm({
         />
       </LoginPlate>
 
-      {displayMessage ? (
+      {formError ? (
         <p
-          role={formError ? "alert" : "status"}
+          role="alert"
           className="auth-attendee-login-form__message auth-attendee-interactive font-body"
         >
-          {displayMessage}
+          {formError}
         </p>
       ) : null}
     </form>

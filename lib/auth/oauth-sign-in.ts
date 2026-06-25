@@ -12,6 +12,29 @@ const PROVIDER_LABELS: Record<OAuthProviderId, string> = {
   facebook: "Facebook",
 };
 
+function mapOAuthStartError(message: string, provider: OAuthProviderId): string {
+  const lower = message.toLowerCase();
+
+  if (
+    lower.includes("provider") &&
+    (lower.includes("not enabled") ||
+      lower.includes("disabled") ||
+      lower.includes("unsupported"))
+  ) {
+    return `${PROVIDER_LABELS[provider]} sign-in is not enabled in Supabase yet. Ask ops to enable the provider and add OAuth credentials.`;
+  }
+
+  if (lower.includes("redirect") && lower.includes("url")) {
+    return `${PROVIDER_LABELS[provider]} sign-in failed: add ${window.location.origin}/auth/callback to Supabase Auth redirect URLs.`;
+  }
+
+  if (lower.includes("invalid") && lower.includes("client")) {
+    return `${PROVIDER_LABELS[provider]} sign-in failed: check the OAuth client ID and secret in Supabase Auth providers.`;
+  }
+
+  return message;
+}
+
 export function buildClientAuthCallbackUrl(nextPath: string): string {
   const url = new URL("/auth/callback", window.location.origin);
   url.searchParams.set("next", nextPath);
@@ -30,16 +53,22 @@ export async function startOAuthSignIn(
     provider,
     options: {
       redirectTo,
-      ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {}),
+      ...(provider === "google"
+        ? { queryParams: { prompt: "select_account" } }
+        : {}),
+      ...(provider === "facebook" ? { scopes: "email public_profile" } : {}),
+      ...(provider === "apple" ? { scopes: "email name" } : {}),
     },
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: mapOAuthStartError(error.message, provider) };
   }
 
   if (!data.url) {
-    return { error: `Unable to start ${PROVIDER_LABELS[provider]} sign-in.` };
+    return {
+      error: `Unable to start ${PROVIDER_LABELS[provider]} sign-in. Confirm the provider is enabled in Supabase.`,
+    };
   }
 
   window.location.assign(data.url);

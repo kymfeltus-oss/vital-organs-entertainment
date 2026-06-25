@@ -1,10 +1,9 @@
-import { requireOpsAdminUser } from "@/lib/ops/assert-ops-admin";
+import { redirect } from "next/navigation";
 
-export default async function OpsHomeLayout({
+export default function OpsHomeLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  await requireOpsAdminUser("/ops");
   return children;
 }

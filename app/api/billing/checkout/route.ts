@@ -3,10 +3,10 @@ import Stripe from "stripe";
 import {
   getSeedBillingPackage,
   resolveSeedStripePriceId,
-  SEED_PACK_LEGACY_ORDER_PRODUCT_TYPE,
   seedBillingPriceCents,
 } from "@/lib/billing-config";
 import {
+  formatStripeCheckoutError,
   getAppUrl,
   getStripeSecretKey,
   resolveAuthenticatedBuyer,
@@ -20,11 +20,7 @@ type SeedCheckoutBody = {
 
 /**
  * Vital Seed bundle checkout — always available (no event phase / live-signal gate).
- * Uses configured Stripe Price IDs when present; otherwise falls back to server-side price_data
- * (same pattern as `/api/checkout` giving and `/api/checkout/merch`).
- * - Buyer identity from verified Supabase session cookies only.
- * - Request body accepts `packageId` alone — never email or user_id.
- * - Stripe session metadata stamped server-side for webhook fulfillment.
+ * Uses configured Stripe Price IDs when present; otherwise falls back to server-side price_data.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -87,6 +83,7 @@ export async function POST(request: NextRequest) {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      payment_method_types: ["card", "link"],
       client_reference_id: buyer.userId,
       customer_email: buyer.email,
       line_items: lineItems,
@@ -103,6 +100,13 @@ export async function POST(request: NextRequest) {
       cancel_url: `${appUrl}/buy-seeds?canceled=true`,
     });
 
+    if (!session.url) {
+      return NextResponse.json(
+        { error: "Unable to create checkout session." },
+        { status: 500 },
+      );
+    }
+
     const supabase = getSupabaseAdmin();
     const staged = await stagePendingCheckoutOrder(supabase, {
       userId: buyer.userId,
@@ -112,40 +116,13 @@ export async function POST(request: NextRequest) {
       stripeSessionId: session.id,
     });
 
-    // #region agent log
-    fetch("http://127.0.0.1:7924/ingest/91e1e0f3-2fd3-4620-91fc-790155003627", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "ac75e2" },
-      body: JSON.stringify({
-        sessionId: "ac75e2",
-        runId: "seed-checkout",
-        hypothesisId: "H1-H2",
-        location: "billing/checkout:stagePendingCheckoutOrder",
-        message: "order_stage_result",
-        data: {
-          ok: staged.ok,
-          errorCode: staged.errorCode,
-          errorMessage: staged.errorMessage,
-          productTypeUsed: staged.productTypeUsed,
-          packageId: targetPack.id,
-          legacyFallback: SEED_PACK_LEGACY_ORDER_PRODUCT_TYPE,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-
     if (!staged.ok) {
       console.error("Failed to stage seed order record:", staged.errorMessage);
       return NextResponse.json(
-        { error: "Unable to initialize order record." },
-        { status: 500 },
-      );
-    }
-
-    if (!session.url) {
-      return NextResponse.json(
-        { error: "Unable to create checkout session." },
+        {
+          error:
+            "Unable to initialize order record. If this persists, contact support — your card was not charged.",
+        },
         { status: 500 },
       );
     }
@@ -154,7 +131,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Seed billing checkout session error:", error);
     return NextResponse.json(
-      { error: "Unable to start checkout. Please try again." },
+      { error: formatStripeCheckoutError(error) },
       { status: 500 },
     );
   }

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
-import { useState } from "react";
 import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
 import type { OAuthProviderId } from "@/lib/auth/oauth-sign-in";
 import {
@@ -13,6 +12,7 @@ import {
 
 type AttendeeAuthLoginPlateProps = {
   createAccountHref: string;
+  forgotPasswordHref: string;
   email: string;
   password: string;
   showPassword: boolean;
@@ -29,8 +29,6 @@ type AttendeeAuthLoginPlateProps = {
   onGuest: () => void;
   onOAuthSignIn: (provider: OAuthProviderId) => void;
 };
-
-const COMING_SOON_MS = 3200;
 
 const SOCIAL_BUTTONS: ReadonlyArray<{
   provider: OAuthProviderId;
@@ -59,6 +57,7 @@ const inputClassName =
 
 export default function AttendeeAuthLoginPlate({
   createAccountHref,
+  forgotPasswordHref,
   email,
   password,
   showPassword,
@@ -75,14 +74,7 @@ export default function AttendeeAuthLoginPlate({
   onGuest,
   onOAuthSignIn,
 }: AttendeeAuthLoginPlateProps) {
-  const [notice, setNotice] = useState<string | null>(null);
-
-  const showComingSoon = (label: string) => {
-    setNotice(`${label} is coming soon.`);
-    window.setTimeout(() => setNotice(null), COMING_SOON_MS);
-  };
-
-  const displayMessage = formError ?? formNotice ?? notice;
+  const displayMessage = formError ?? formNotice;
   const messageIsError = Boolean(formError);
 
   return (
@@ -186,14 +178,12 @@ export default function AttendeeAuthLoginPlate({
                 />
                 Remember me
               </label>
-              <button
-                type="button"
+              <Link
+                href={forgotPasswordHref}
                 className="font-ui text-xs font-semibold text-brand-pink transition hover:opacity-80"
-                disabled={isSubmitting}
-                onClick={() => showComingSoon("Password reset")}
               >
                 Forgot password?
-              </button>
+              </Link>
             </div>
 
             {displayMessage ? (

@@ -4,6 +4,8 @@ import { OPS_HOME_PATH } from "@/lib/broadcastRoutes";
 export const PERSONA_HUB_PATH = "/email-gate";
 export const ATTENDEE_GATE_PATH = "/login";
 export const CREATE_ACCOUNT_PATH = "/create-account";
+export const FORGOT_PASSWORD_PATH = "/forgot-password";
+export const RESET_PASSWORD_PATH = "/reset-password";
 export const TEAM_GATE_PATH = "/email-gate/team";
 export const AUTH_NEXT_COOKIE = "auth_next";
 
@@ -66,6 +68,20 @@ export function buildAttendeeGateUrl(nextPath?: string | null): string {
 
 export function buildCreateAccountUrl(_nextPath?: string | null): string {
   return CREATE_ACCOUNT_PATH;
+}
+
+export function buildForgotPasswordUrl(nextPath?: string | null): string {
+  return buildGateUrl(
+    FORGOT_PASSWORD_PATH,
+    sanitizeNextPath(nextPath, DEFAULT_ATTENDEE_NEXT),
+  );
+}
+
+export function buildResetPasswordUrl(nextPath?: string | null): string {
+  return buildGateUrl(
+    RESET_PASSWORD_PATH,
+    sanitizeNextPath(nextPath, DEFAULT_ATTENDEE_NEXT),
+  );
 }
 
 /** Client-only — stash return path before navigating to `/login` without query params. */

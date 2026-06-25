@@ -132,7 +132,7 @@ export default function OpsDeveloperDrawer({ snapshot }: OpsDeveloperDrawerProps
                 </div>
 
                 <div className="overflow-x-auto rounded-lg border border-brand-border bg-brand-black p-4 font-ui text-[10px] text-brand-muted">
-                  <p className="text-brand-purple">// AUTHORITATIVE SYSTEM TELEMETRY ACCESSED</p>
+                  <p className="text-brand-purple">{"// AUTHORITATIVE SYSTEM TELEMETRY ACCESSED"}</p>
                   <p className="mt-2">
                     stream.activeSource={snapshot.stream.activeSource} · isLive=
                     {String(snapshot.stream.isLive)} · engine=

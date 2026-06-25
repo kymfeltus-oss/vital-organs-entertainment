@@ -45,6 +45,7 @@ export type ProductionDashboardMetrics = {
   audioIssueCount: number;
   videoIssueCount: number;
   recentMessages: AttendeeRecentMessage[];
+  snapshot: OpsSnapshot | null;
   refresh: () => Promise<void>;
 };
 
@@ -218,6 +219,7 @@ export function useProductionDashboardMetrics(operatorEmail: string): Production
     audioIssueCount: trouble.windowAudioCount,
     videoIssueCount: trouble.windowVideoCount,
     recentMessages,
+    snapshot,
     refresh,
     profileInitials: resolveInitials(operatorEmail),
   };

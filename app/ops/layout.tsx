@@ -1,3 +1,4 @@
+import OpsShell from "@/components/ops/shell/OpsShell";
 import { requireOpsAdminUser } from "@/lib/ops/assert-ops-admin";
 
 export default async function OpsRootLayout({
@@ -6,5 +7,6 @@ export default async function OpsRootLayout({
   children: React.ReactNode;
 }) {
   await requireOpsAdminUser("/ops");
-  return children;
+
+  return <OpsShell>{children}</OpsShell>;
 }

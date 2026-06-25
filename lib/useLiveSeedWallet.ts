@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { getClientAppUrl } from "@/lib/client-api";
+import { LIVE_SEED_WALLET_REFRESH_EVENT } from "@/lib/live/seed-wallet-events";
 import { parableFetch } from "@/lib/parable/resilient-fetch";
 import { useParableSubsystem } from "@/lib/parable/useParableSubsystem";
 import {
@@ -13,7 +14,7 @@ import {
 } from "@/lib/live/platform-channel";
 import { getSupabase } from "@/lib/supabase/client";
 
-const SEED_WALLET_LISTENER_ID = "live-seed-wallet";
+const SEED_WALLET_LISTENER_PREFIX = "live-seed-wallet";
 
 type UseLiveSeedWalletResult = {
   balance: number;
@@ -42,13 +43,19 @@ function reportSeedWalletFailure(
 
 export function useLiveSeedWallet(): UseLiveSeedWalletResult {
   const seeds = useParableSubsystem("seeds");
+  const instanceId = useId();
+  const listenerId = `${SEED_WALLET_LISTENER_PREFIX}${instanceId}`;
   const [balance, setBalance] = useState(0);
   const [usedFreeTaps, setUsedFreeTaps] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const localUserIdRef = useRef<string | null>(null);
   const shouldFetchRef = useRef(seeds.shouldFetch);
-  shouldFetchRef.current = seeds.shouldFetch;
+
+  useEffect(() => {
+    shouldFetchRef.current = seeds.shouldFetch;
+  }, [seeds.shouldFetch]);
+
   const allowRealtime = seeds.shouldAllowRealtime();
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
@@ -131,12 +138,15 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
         setError,
         "Seed wallet is unavailable.",
       );
-      return;
+      return () => {
+        cancelled = true;
+        abortController.abort();
+      };
     }
 
     acquirePlatformChannel(supabase);
 
-    registerPlatformListener(SEED_WALLET_LISTENER_ID, (channel) =>
+    registerPlatformListener(listenerId, (channel) =>
       channel.on(
         "postgres_changes",
         {
@@ -186,10 +196,21 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
     return () => {
       cancelled = true;
       abortController.abort();
-      unregisterPlatformListener(SEED_WALLET_LISTENER_ID);
+      unregisterPlatformListener(listenerId);
       releasePlatformChannel(supabase);
     };
-  }, [allowRealtime, refresh]);
+  }, [allowRealtime, listenerId, refresh]);
+
+  useEffect(() => {
+    const onRefreshRequest = () => {
+      void refresh();
+    };
+
+    window.addEventListener(LIVE_SEED_WALLET_REFRESH_EVENT, onRefreshRequest);
+    return () => {
+      window.removeEventListener(LIVE_SEED_WALLET_REFRESH_EVENT, onRefreshRequest);
+    };
+  }, [refresh]);
 
   return {
     balance,

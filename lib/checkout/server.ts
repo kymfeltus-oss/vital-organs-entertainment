@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 export type AuthenticatedBuyer = {
@@ -96,4 +97,28 @@ export async function resolveAuthenticatedBuyer(
     },
     withSessionCookies,
   };
+}
+
+/** Map Stripe SDK failures to attendee-safe checkout messages. */
+export function formatStripeCheckoutError(error: unknown): string {
+  if (error instanceof Stripe.errors.StripeInvalidRequestError) {
+    if (
+      error.param === "line_items" ||
+      /no such price/i.test(error.message)
+    ) {
+      return "Seed checkout prices are misconfigured. Remove placeholder STRIPE_PRICE_SEEDS_* values from your environment, or add real Stripe Price IDs.";
+    }
+
+    if (/invalid email/i.test(error.message)) {
+      return "Your account email could not be used for checkout. Update your email in account settings and try again.";
+    }
+
+    return error.message;
+  }
+
+  if (error instanceof Stripe.errors.StripeError) {
+    return error.message;
+  }
+
+  return "Unable to start checkout. Please try again.";
 }

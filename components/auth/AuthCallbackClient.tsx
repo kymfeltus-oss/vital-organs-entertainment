@@ -7,18 +7,31 @@ import { Loader2 } from "lucide-react";
 import {
   buildAttendeeGateUrl,
   DEFAULT_ATTENDEE_NEXT,
+  RESET_PASSWORD_PATH,
   sanitizeNextPath,
 } from "@/lib/auth/routing";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
-function redirectToLoginWithError(nextPath: string, confirmedOnly = false) {
+function redirectToLoginWithError(
+  nextPath: string,
+  options?: { confirmedOnly?: boolean; oauthMessage?: string | null },
+) {
   const url = new URL(buildAttendeeGateUrl(nextPath), window.location.origin);
-  if (confirmedOnly) {
+  if (options?.confirmedOnly) {
     url.searchParams.set("confirmed", "1");
   } else {
     url.searchParams.set("error", "auth_callback_failed");
+    if (options?.oauthMessage) {
+      url.searchParams.set("error_description", options.oauthMessage);
+    }
   }
   window.location.assign(url.toString());
+}
+
+function isRecoveryDestination(nextPath: string): boolean {
+  return (
+    nextPath === RESET_PASSWORD_PATH || nextPath.startsWith(`${RESET_PASSWORD_PATH}?`)
+  );
 }
 
 async function syncProfileIdentity(): Promise<void> {
@@ -51,16 +64,32 @@ export default function AuthCallbackClient() {
         searchParams.get("token_hash") ?? searchParams.get("token");
       const type = searchParams.get("type") as EmailOtpType | null;
       const oauthError = searchParams.get("error");
+      const oauthErrorDescription = searchParams.get("error_description");
       const hashParams = new URLSearchParams(
         typeof window !== "undefined" ? window.location.hash.slice(1) : "",
       );
       const accessToken = hashParams.get("access_token");
       const refreshToken = hashParams.get("refresh_token");
+      const hashType = hashParams.get("type") as EmailOtpType | null;
+      const effectiveType = type ?? hashType;
+      const isRecovery =
+        effectiveType === "recovery" || isRecoveryDestination(nextPath);
 
       if (oauthError) {
-        redirectToLoginWithError(nextPath);
+        redirectToLoginWithError(nextPath, { oauthMessage: oauthErrorDescription });
         return;
       }
+
+      if (isRecovery) {
+        setStatusMessage("Verifying your reset link…");
+      }
+
+      const finishAuth = async (skipProfileSync = false) => {
+        if (!skipProfileSync && !isRecovery) {
+          await syncProfileIdentity();
+        }
+        window.location.assign(nextPath);
+      };
 
       if (accessToken && refreshToken) {
         const { error } = await supabase.auth.setSession({
@@ -68,20 +97,25 @@ export default function AuthCallbackClient() {
           refresh_token: refreshToken,
         });
         if (!error) {
-          await syncProfileIdentity();
-          window.location.assign(nextPath);
+          if (typeof window !== "undefined" && window.location.hash) {
+            window.history.replaceState(
+              null,
+              "",
+              `${window.location.pathname}${window.location.search}`,
+            );
+          }
+          await finishAuth(isRecovery);
           return;
         }
       }
 
-      if (tokenHash && type) {
+      if (tokenHash && effectiveType) {
         const { data, error } = await supabase.auth.verifyOtp({
           token_hash: tokenHash,
-          type,
+          type: effectiveType,
         });
         if (!error && data.user) {
-          await syncProfileIdentity();
-          window.location.assign(nextPath);
+          await finishAuth(isRecovery);
           return;
         }
       }
@@ -92,13 +126,12 @@ export default function AuthCallbackClient() {
           error?.message ?? "",
         );
         if (!error && data.user) {
-          await syncProfileIdentity();
-          window.location.assign(nextPath);
+          await finishAuth(isRecovery);
           return;
         }
         if (verifierMissing) {
           setStatusMessage("Email confirmed. Redirecting to sign in…");
-          redirectToLoginWithError(nextPath, true);
+          redirectToLoginWithError(nextPath, { confirmedOnly: true });
           return;
         }
       }
@@ -107,12 +140,15 @@ export default function AuthCallbackClient() {
         data: { session },
       } = await supabase.auth.getSession();
       if (session?.user) {
-        await syncProfileIdentity();
-        window.location.assign(nextPath);
+        await finishAuth(isRecovery);
         return;
       }
 
-      setStatusMessage("Confirmation link expired. Redirecting to sign in…");
+      setStatusMessage(
+        isRecovery
+          ? "Reset link expired. Redirecting…"
+          : "Confirmation link expired. Redirecting to sign in…",
+      );
       redirectToLoginWithError(nextPath);
     }
 

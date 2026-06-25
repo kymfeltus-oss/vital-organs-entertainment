@@ -51,7 +51,7 @@ export function useCountdownChatTroubleAlerts(
         current,
         scannedMessageIdsRef.current,
         message.id,
-        message.body,
+        message.body ?? "",
         createdAtMs,
       );
       return result.complaints;
@@ -75,11 +75,15 @@ export function useCountdownChatTroubleAlerts(
   });
 
   useEffect(() => {
-    if (!enabled || isLoading || historyScannedRef.current) return;
+    if (!enabled || isLoading) return;
 
-    historyScannedRef.current = true;
     for (const message of messages) {
+      if (scannedMessageIdsRef.current.has(message.id)) continue;
       ingestMessage(message);
+    }
+
+    if (messages.length > 0) {
+      historyScannedRef.current = true;
     }
   }, [enabled, ingestMessage, isLoading, messages]);
 

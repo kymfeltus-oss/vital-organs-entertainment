@@ -1,19 +1,7 @@
-import crypto from "crypto";
 import { isValidRtmpUrl } from "@/lib/live/rtmp";
 
 const DEFAULT_STREAM_KEY_PREFIX = "300awakening_live";
 export const DEFAULT_RTMP_INGEST_SERVER_BASE = "rtmp://vitalorgansent.com/live";
-
-/**
- * Generates a cryptographically secure, random alphanumeric stream key string.
- * Example output: 300awakening_live_a7f3b89c2d
- */
-export function generateSecureStreamKey(
-  prefix: string = DEFAULT_STREAM_KEY_PREFIX,
-): string {
-  const randomHex = crypto.randomBytes(5).toString("hex");
-  return `${prefix}_${randomHex}`;
-}
 
 /** RTMP server base for encoder "Server URL" field (no trailing stream key). */
 export function resolveRtmpIngestServerBase(): string {

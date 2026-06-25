@@ -74,6 +74,11 @@ const nextConfig = {
         destination: "/login",
         permanent: true,
       },
+      {
+        source: "/ops/simplified",
+        destination: "/ops/countdown?view=console",
+        permanent: true,
+      },
     ];
   },
   experimental: {

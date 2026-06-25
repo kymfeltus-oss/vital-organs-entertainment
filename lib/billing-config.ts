@@ -75,10 +75,21 @@ export function getSeedBillingPackage(
   return SEED_PACKAGES.find((entry) => entry.id === packageId);
 }
 
+/** True when env holds a real Stripe Price ID (not .env.example placeholders). */
+export function isUsableStripePriceId(value: string | null | undefined): value is string {
+  if (!value) return false;
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("price_")) return false;
+  if (/your_|placeholder|example|price_id/i.test(trimmed)) return false;
+  // Stripe price IDs are much longer than placeholder strings like price_your_100_seeds_price_id
+  if (trimmed.length < 24) return false;
+  return true;
+}
+
 /** Resolve configured Stripe Price ID for a package (server-only). */
 export function resolveSeedStripePriceId(pkg: SeedBillingPackage): string | null {
   const value = process.env[pkg.stripePriceEnv]?.trim();
-  return value && value.startsWith("price_") ? value : null;
+  return isUsableStripePriceId(value) ? value : null;
 }
 
 export function seedBillingPriceCents(pkg: SeedBillingPackage): number {
