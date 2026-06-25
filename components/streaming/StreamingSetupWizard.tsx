@@ -118,6 +118,9 @@ export default function StreamingSetupWizard({
   const previewVideoRef = useRef<HTMLVideoElement | null>(null);
   const previewStreamRef = useRef<MediaStream | null>(null);
   const wizardHydratedResumeIdRef = useRef<string | null>(null);
+  const resumeAppliedRef = useRef(false);
+  const maxStepIndexReachedRef = useRef(0);
+  const stepTransitionRef = useRef(0);
   const audioMonitorStop = useRef<(() => void) | null>(null);
   const destinationIdRef = useRef<string | null>(null);
   const footerRef = useRef<HTMLDivElement | null>(null);
@@ -224,9 +227,19 @@ export default function StreamingSetupWizard({
     if (!open) {
       resetWizard();
       wizardHydratedResumeIdRef.current = null;
+      resumeAppliedRef.current = false;
+      maxStepIndexReachedRef.current = 0;
       return;
     }
   }, [open, resetWizard]);
+
+  useEffect(() => {
+    if (!open) return;
+    const idx = wizardStepIndex(step);
+    if (idx > maxStepIndexReachedRef.current) {
+      maxStepIndexReachedRef.current = idx;
+    }
+  }, [open, step]);
 
   useEffect(() => {
     if (!open) return;
@@ -251,12 +264,19 @@ export default function StreamingSetupWizard({
   }, [open]);
 
   useEffect(() => {
-    if (!open || !resumeDestinationId) return;
-    if (wizardHydratedResumeIdRef.current === resumeDestinationId) return;
+    if (!open || !resumeDestinationId || resumeAppliedRef.current) return;
 
     const dest = destinations.find((d) => d.id === resumeDestinationId);
     if (!dest) return;
 
+    const resumeIndex = wizardStepIndex(resumeStep ?? "stream-info");
+    if (maxStepIndexReachedRef.current > resumeIndex) {
+      resumeAppliedRef.current = true;
+      wizardHydratedResumeIdRef.current = resumeDestinationId;
+      return;
+    }
+
+    resumeAppliedRef.current = true;
     wizardHydratedResumeIdRef.current = resumeDestinationId;
     hydrateFromDestination(dest);
     setStep(resumeStep ?? "stream-info");
@@ -426,17 +446,21 @@ export default function StreamingSetupWizard({
       (normalizedPlatform === "church_website" || normalizedPlatform === "custom_rtmp");
 
     if (persistOnAuthenticate) {
-      setStep(next);
+      const transition = ++stepTransitionRef.current;
       setBusy(true);
       try {
         const id = await ensureDestination();
         await persistConnectionSettings(id, normalizedPlatform);
+        if (stepTransitionRef.current !== transition) return;
+        setStep(next);
         void onSaved?.();
       } catch (err) {
-        setStep("authenticate");
+        if (stepTransitionRef.current !== transition) return;
         onToast("error", err instanceof Error ? err.message : "Could not save connection settings.");
       } finally {
-        setBusy(false);
+        if (stepTransitionRef.current === transition) {
+          setBusy(false);
+        }
       }
       return;
     }
@@ -460,6 +484,7 @@ export default function StreamingSetupWizard({
   };
 
   const goBack = () => {
+    stepTransitionRef.current += 1;
     const idx = wizardStepIndex(step);
     if (idx > 0) setStep(STREAMING_WIZARD_STEPS[idx - 1]);
   };
@@ -631,7 +656,7 @@ export default function StreamingSetupWizard({
       footerRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     });
     return () => cancelAnimationFrame(frame);
-  }, [open, step]);
+  }, [open]);
 
   const startAudioMeters = useCallback(async () => {
     audioMonitorStop.current?.();

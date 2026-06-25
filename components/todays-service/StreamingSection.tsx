@@ -111,6 +111,15 @@ function StreamingSection({
     return () => window.removeEventListener("streaming:open-wizard", handler as EventListener);
   }, []);
 
+  useEffect(() => {
+    if (!wizardOpen) return;
+    const timer = window.setTimeout(() => {
+      setResumeDestinationId(null);
+      setResumeStep(null);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [wizardOpen]);
+
   return (
     <ServiceCard
       title={STREAMING_SECTION_TITLE}
