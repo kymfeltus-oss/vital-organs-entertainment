@@ -13,6 +13,7 @@ import {
   STREAMING_SECTION_TITLE,
 } from "@/lib/streaming/streaming-layout";
 import type { StreamingWizardStep } from "@/lib/streaming/setup";
+import { warmBrowserAudioContext } from "@/lib/sound/browser";
 import type { SoundItem, StreamingDestination } from "@/lib/todays-service/types";
 
 const StreamingSetupWizard = dynamic(() => import("@/components/streaming/StreamingSetupWizard"), {
@@ -78,6 +79,7 @@ function StreamingSection({
   );
 
   const openWizard = useCallback(() => {
+    warmBrowserAudioContext();
     setResumeDestinationId(null);
     setResumeStep(null);
     setWizardOpen(true);

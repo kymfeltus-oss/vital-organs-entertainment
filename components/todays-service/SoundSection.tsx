@@ -82,6 +82,11 @@ export default function SoundSection({
   const primaryMixer = mixers[0];
   const micItems = items.filter((i) => i.category !== "mixer");
   const productionDevices = micItems.filter((i) => i.deviceId || i.mixerIp);
+  const connectedMeterKey = items
+    .filter((i) => i.category !== "mixer" && (i.deviceId || i.mixerIp) && i.liveStatus === "connected")
+    .map((d) => `${d.id}:${extractBrowserDeviceId(d.deviceId) ?? d.mixerIp ?? ""}`)
+    .sort()
+    .join("|");
   const legacyItems = micItems.filter((i) => !i.deviceId && !i.mixerIp);
   const hasAnySound = micItems.length > 0 || mixers.length > 0;
 
@@ -125,7 +130,7 @@ export default function SoundSection({
   useEffect(() => {
     const connected = productionDevices.filter((d) => d.liveStatus === "connected");
     // #region agent log
-    fetch('http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'675ed0'},body:JSON.stringify({sessionId:'675ed0',hypothesisId:'C',location:'SoundSection.tsx:meterEffect',message:'sound meter effect run',data:{connectedCount:connected.length,deviceIds:connected.map((d)=>d.id),itemCount:items.length},timestamp:Date.now()})}).catch(()=>{});
+    fetch('http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'675ed0'},body:JSON.stringify({sessionId:'675ed0',hypothesisId:'C',location:'SoundSection.tsx:meterEffect',message:'sound meter effect run',data:{connectedCount:connected.length,connectedMeterKey,deviceIds:connected.map((d)=>d.id),itemCount:items.length},timestamp:Date.now(),runId:'post-fix'})}).catch(()=>{});
     // #endregion
     for (const item of connected) {
       pollLevels(item);
@@ -136,7 +141,9 @@ export default function SoundSection({
       Object.values(browserMonitors.current).forEach((monitor) => monitor.stop());
       browserMonitors.current = {};
     };
-  }, [productionDevices, pollLevels]);
+    // Re-run only when the connected meter device set changes — not on every dashboard reload.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectedMeterKey, pollLevels]);
 
   useEffect(() => {
     if (!previewOpen || !previewDeviceId) return;

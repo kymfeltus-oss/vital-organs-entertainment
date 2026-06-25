@@ -62,6 +62,37 @@ export type BrowserAudioMonitorHandle = {
   channelCount: number | null;
 };
 
+let sharedAudioContext: AudioContext | null = null;
+
+function getSharedAudioContext(): { ctx: AudioContext; created: boolean } {
+  if (typeof window === "undefined") {
+    throw new Error("AudioContext is only available in the browser.");
+  }
+  const Ctor =
+    window.AudioContext ||
+    (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!Ctor) throw new Error("Web Audio API is not supported in this browser.");
+
+  let created = false;
+  if (!sharedAudioContext || sharedAudioContext.state === "closed") {
+    sharedAudioContext = new Ctor();
+    created = true;
+  }
+  if (sharedAudioContext.state === "suspended") {
+    void sharedAudioContext.resume();
+  }
+  return { ctx: sharedAudioContext, created };
+}
+
+/** Optional warm-up on first user gesture — avoids ctor cost during wizard transitions. */
+export function warmBrowserAudioContext(): void {
+  try {
+    getSharedAudioContext();
+  } catch {
+    /* unsupported */
+  }
+}
+
 export async function requestMicrophonePermission(): Promise<{
   granted: boolean;
   denied: boolean;
@@ -148,9 +179,9 @@ export async function openBrowserAudioMonitor(deviceId: string): Promise<Browser
   });
   const track = stream.getAudioTracks()[0];
   const settings = track?.getSettings();
-  const ctx = new AudioContext();
+  const { ctx, created } = getSharedAudioContext();
   // #region agent log
-  fetch('http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'675ed0'},body:JSON.stringify({sessionId:'675ed0',hypothesisId:'C',location:'browser.ts:openBrowserAudioMonitor',message:'AudioContext created',data:{deviceIdPrefix:deviceId.slice(0,8),elapsedMs:typeof performance!=='undefined'?Math.round(performance.now()-t0):0},timestamp:Date.now()})}).catch(()=>{});
+  fetch('http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'675ed0'},body:JSON.stringify({sessionId:'675ed0',hypothesisId:'C',location:'browser.ts:openBrowserAudioMonitor',message:created?'AudioContext created':'AudioContext reused',data:{deviceIdPrefix:deviceId.slice(0,8),created,reused:!created,elapsedMs:typeof performance!=='undefined'?Math.round(performance.now()-t0):0},timestamp:Date.now(),runId:'post-fix'})}).catch(()=>{});
   // #endregion
   const source = ctx.createMediaStreamSource(stream);
   const analyser = ctx.createAnalyser();
@@ -166,8 +197,9 @@ export async function openBrowserAudioMonitor(deviceId: string): Promise<Browser
       return levelsFromAnalyser(data);
     },
     stop: () => {
+      source.disconnect();
+      analyser.disconnect();
       stream.getTracks().forEach((t) => t.stop());
-      void ctx.close();
     },
   };
 }

@@ -345,8 +345,9 @@ export default function StreamingSetupWizard({
         null;
       if (dest) hydrateFromDestination(dest);
       advanceWizardStep("authenticate");
-      await Promise.resolve();
-      void onSaved?.();
+      requestAnimationFrame(() => {
+        void onSaved?.();
+      });
     } catch (err) {
       onToast("error", err instanceof Error ? err.message : "Could not save destination selections.");
     } finally {
@@ -503,10 +504,11 @@ export default function StreamingSetupWizard({
         if (stepTransitionRef.current !== transition) return;
         advanceWizardStep(next);
         // #region agent log
-        fetch('http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'675ed0'},body:JSON.stringify({sessionId:'675ed0',hypothesisId:'B-E',location:'StreamingSetupWizard.tsx:goNext',message:'authenticate persist advanced',data:{next,transition,destinationId:id},timestamp:Date.now()})}).catch(()=>{});
+        fetch('http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'675ed0'},body:JSON.stringify({sessionId:'675ed0',hypothesisId:'B-E',location:'StreamingSetupWizard.tsx:goNext',message:'authenticate persist advanced',data:{next,transition,destinationId:id},timestamp:Date.now(),runId:'post-fix'})}).catch(()=>{});
         // #endregion
-        await Promise.resolve();
-        void onSaved?.();
+        requestAnimationFrame(() => {
+          void onSaved?.();
+        });
       } catch (err) {
         if (stepTransitionRef.current !== transition) return;
         onToast("error", err instanceof Error ? err.message : "Could not save connection settings.");
@@ -528,8 +530,9 @@ export default function StreamingSetupWizard({
       }
       advanceWizardStep(next);
       if (step === "authenticate" || step === "choose") {
-        await Promise.resolve();
-        void onSaved?.();
+        requestAnimationFrame(() => {
+          void onSaved?.();
+        });
       }
     } catch (err) {
       onToast("error", err instanceof Error ? err.message : "Could not continue.");
