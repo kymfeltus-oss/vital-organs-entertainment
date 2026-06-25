@@ -111,6 +111,12 @@ function StreamingSection({
     return () => window.removeEventListener("streaming:open-wizard", handler as EventListener);
   }, []);
 
+  const closeWizard = useCallback(() => {
+    setResumeDestinationId(null);
+    setResumeStep(null);
+    setWizardOpen(false);
+  }, []);
+
   useEffect(() => {
     if (!wizardOpen) return;
     const timer = window.setTimeout(() => {
@@ -159,7 +165,7 @@ function StreamingSection({
 
       <StreamingSetupWizard
         open={wizardOpen}
-        onClose={() => setWizardOpen(false)}
+        onClose={closeWizard}
         onSaved={onReload}
         onToast={onToast}
         destinations={destinations}

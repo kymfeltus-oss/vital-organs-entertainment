@@ -121,6 +121,8 @@ export default function StreamingSetupWizard({
   const resumeAppliedRef = useRef(false);
   const maxStepIndexReachedRef = useRef(0);
   const stepTransitionRef = useRef(0);
+  const navigationLockRef = useRef(false);
+  const pendingResumeDestIdRef = useRef<string | null>(null);
   const audioMonitorStop = useRef<(() => void) | null>(null);
   const destinationIdRef = useRef<string | null>(null);
   const footerRef = useRef<HTMLDivElement | null>(null);
@@ -168,6 +170,7 @@ export default function StreamingSetupWizard({
 
   const resetWizard = useCallback(() => {
     setStep("choose");
+    maxStepIndexReachedRef.current = 0;
     setPlatform("");
     setSelectedPlatforms([]);
     setDestinationId(null);
@@ -223,23 +226,70 @@ export default function StreamingSetupWizard({
     if (net) setNetworkTest(net);
   }, []);
 
+  const recordStepReach = useCallback((target: StreamingWizardStep) => {
+    const idx = wizardStepIndex(target);
+    if (idx > maxStepIndexReachedRef.current) {
+      maxStepIndexReachedRef.current = idx;
+    }
+  }, []);
+
+  const advanceWizardStep = useCallback(
+    (target: StreamingWizardStep) => {
+      recordStepReach(target);
+      setStep(target);
+    },
+    [recordStepReach],
+  );
+
+  const releaseNavigationLock = useCallback(() => {
+    requestAnimationFrame(() => {
+      navigationLockRef.current = false;
+    });
+  }, []);
+
   useEffect(() => {
     if (!open) {
       resetWizard();
       wizardHydratedResumeIdRef.current = null;
       resumeAppliedRef.current = false;
       maxStepIndexReachedRef.current = 0;
+      navigationLockRef.current = false;
+      pendingResumeDestIdRef.current = null;
       return;
     }
-  }, [open, resetWizard]);
+    if (resumeDestinationId && !resumeAppliedRef.current) {
+      pendingResumeDestIdRef.current = resumeDestinationId;
+    }
+  }, [open, resetWizard, resumeDestinationId]);
 
   useEffect(() => {
     if (!open) return;
-    const idx = wizardStepIndex(step);
-    if (idx > maxStepIndexReachedRef.current) {
-      maxStepIndexReachedRef.current = idx;
+    recordStepReach(step);
+  }, [open, step, recordStepReach]);
+
+  useEffect(() => {
+    if (!open || navigationLockRef.current || busy || resumeAppliedRef.current) return;
+
+    const targetId = pendingResumeDestIdRef.current;
+    if (!targetId) return;
+
+    const resumeIndex = wizardStepIndex(resumeStep ?? "stream-info");
+    if (maxStepIndexReachedRef.current > resumeIndex) {
+      resumeAppliedRef.current = true;
+      pendingResumeDestIdRef.current = null;
+      wizardHydratedResumeIdRef.current = targetId;
+      return;
     }
-  }, [open, step]);
+
+    const dest = destinations.find((d) => d.id === targetId);
+    if (!dest) return;
+
+    resumeAppliedRef.current = true;
+    pendingResumeDestIdRef.current = null;
+    wizardHydratedResumeIdRef.current = targetId;
+    hydrateFromDestination(dest);
+    advanceWizardStep(resumeStep ?? "stream-info");
+  }, [open, busy, resumeStep, destinations, hydrateFromDestination, advanceWizardStep]);
 
   useEffect(() => {
     if (!open) return;
@@ -263,26 +313,8 @@ export default function StreamingSetupWizard({
       .catch(() => undefined);
   }, [open]);
 
-  useEffect(() => {
-    if (!open || !resumeDestinationId || resumeAppliedRef.current) return;
-
-    const dest = destinations.find((d) => d.id === resumeDestinationId);
-    if (!dest) return;
-
-    const resumeIndex = wizardStepIndex(resumeStep ?? "stream-info");
-    if (maxStepIndexReachedRef.current > resumeIndex) {
-      resumeAppliedRef.current = true;
-      wizardHydratedResumeIdRef.current = resumeDestinationId;
-      return;
-    }
-
-    resumeAppliedRef.current = true;
-    wizardHydratedResumeIdRef.current = resumeDestinationId;
-    hydrateFromDestination(dest);
-    setStep(resumeStep ?? "stream-info");
-  }, [open, resumeDestinationId, resumeStep, destinations, hydrateFromDestination]);
-
   const handleChooserContinue = async (platforms: StreamingPlatform[]) => {
+    navigationLockRef.current = true;
     setBusy(true);
     try {
       const result = await saveStreamingBroadcastDestinationsApi(platforms);
@@ -301,12 +333,14 @@ export default function StreamingSetupWizard({
         destinations.find((d) => normalizePlatform(d.platform) === platformKey) ??
         null;
       if (dest) hydrateFromDestination(dest);
-      void onSaved();
-      setStep("authenticate");
+      advanceWizardStep("authenticate");
+      await Promise.resolve();
+      void onSaved?.();
     } catch (err) {
       onToast("error", err instanceof Error ? err.message : "Could not save destination selections.");
     } finally {
       setBusy(false);
+      releaseNavigationLock();
     }
   };
 
@@ -385,7 +419,7 @@ export default function StreamingSetupWizard({
       latencyMode: platform ? STREAMING_PLATFORM_SPECS[platform as StreamingPlatform]?.latencyMode : undefined,
     });
     await onSaved();
-    if (nextStep) setStep(nextStep);
+    if (nextStep) advanceWizardStep(nextStep);
   };
 
   const persistConnectionSettings = async (destId: string, platformKey = normalizedPlatform) => {
@@ -447,12 +481,14 @@ export default function StreamingSetupWizard({
 
     if (persistOnAuthenticate) {
       const transition = ++stepTransitionRef.current;
+      navigationLockRef.current = true;
       setBusy(true);
       try {
         const id = await ensureDestination();
         await persistConnectionSettings(id, normalizedPlatform);
         if (stepTransitionRef.current !== transition) return;
-        setStep(next);
+        advanceWizardStep(next);
+        await Promise.resolve();
         void onSaved?.();
       } catch (err) {
         if (stepTransitionRef.current !== transition) return;
@@ -460,6 +496,7 @@ export default function StreamingSetupWizard({
       } finally {
         if (stepTransitionRef.current === transition) {
           setBusy(false);
+          releaseNavigationLock();
         }
       }
       return;
@@ -472,8 +509,9 @@ export default function StreamingSetupWizard({
       } else if (["stream-info", "video", "audio", "preview"].includes(step)) {
         await saveDraft();
       }
-      setStep(next);
+      advanceWizardStep(next);
       if (step === "authenticate" || step === "choose") {
+        await Promise.resolve();
         void onSaved?.();
       }
     } catch (err) {
