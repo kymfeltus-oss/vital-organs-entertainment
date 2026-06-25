@@ -11,6 +11,8 @@
     "lint": "eslint .",
     "test:broadcast": "npx tsx --test services/broadcast/__tests__/**/*.test.ts",
     "test:streaming": "npx tsx --test lib/streaming/__tests__/**/*.test.ts",
+    "perf:production": "node scripts/perf-production-check.mjs",
+    "measure:todays-service": "node scripts/measure-todays-service-load.mjs",
     "db:migration:new": "node scripts/db-migration-new.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:schema:reload": "node scripts/db-schema-reload.mjs",

@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import SectionPlaceholder from "@/components/todays-service/SectionPlaceholder";
+import StreamingSectionFallback from "@/components/todays-service/StreamingSectionFallback";
 import ServiceHeaderActionsPortal from "@/components/todays-service/ServiceHeaderActionsPortal";
 import TodaysServiceLiveStatus from "@/components/todays-service/TodaysServiceLiveStatus";
 import { TS } from "@/components/todays-service/ServiceUi";
@@ -34,7 +35,7 @@ const InternetSection = dynamic(() => import("@/components/todays-service/Intern
   loading: () => <SectionPlaceholder minHeight="220px" />,
 });
 const StreamingSection = dynamic(() => import("@/components/todays-service/StreamingSection"), {
-  loading: () => <SectionPlaceholder minHeight="220px" />,
+  loading: () => <StreamingSectionFallback />,
 });
 const RecordingSection = dynamic(() => import("@/components/todays-service/RecordingSection"), {
   loading: () => <SectionPlaceholder minHeight="200px" />,
@@ -355,7 +356,7 @@ export default function TodaysServiceClient({
             />
           </div>
           <div id="streaming" className="scroll-mt-4">
-            <Suspense fallback={<SectionPlaceholder minHeight="220px" />}>
+            <Suspense fallback={<StreamingSectionFallback />}>
               <StreamingSection
                 destinations={data.streamingDestinations}
                 broadcastDestinationCards={data.broadcastDestinationCards ?? []}

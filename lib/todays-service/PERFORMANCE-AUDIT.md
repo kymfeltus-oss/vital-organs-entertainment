@@ -86,13 +86,18 @@ page.tsx (RSC)
 
 **Files:** `app/layout.tsx`, `components/parable/ParableProductionRoot.tsx`
 
-### 5. Code splitting & CLS
+### 5. Code splitting, streaming CLS & LCP
 
-- All dashboard sections: `next/dynamic` + `SectionPlaceholder` min-heights.
+- All dashboard sections: `next/dynamic` + stable min-height placeholders.
+- **Streaming section:** `StreamingSectionFallback` (title + reserved card grid) while chunk loads — LCP `<h1>` is server-rendered in `ServiceHeaderTitle` above this section.
+- **StreamingSetupWizard:** lazy `BroadcastDestinationChooser`, `SoundDeviceMeter`; `WIZARD_BODY_MIN_HEIGHT` + `StreamingSetupWarningSlot` reserve space for warnings/errors.
+- **Destination cards:** `React.memo`, fixed min-heights for test result / error / action rows (`lib/streaming/streaming-layout.ts`).
 - Wizards/modals: `dynamic(..., { ssr: false })` — mount only when opened.
 - `QuickActions`: `ssr: false` — not on critical path.
+- **No fetch/subscribe during render** — OAuth resume + Supabase/SSE deferred to `useEffect` / `scheduleAfterFirstPaint`.
+- **Lighthouse:** test in Chrome Incognito with extensions disabled (Adobe Acrobat `sidePanelUtil.js` inflates main-thread cost).
 
-**File:** `components/todays-service/TodaysServiceClient.tsx`
+**Files:** `components/todays-service/TodaysServiceClient.tsx`, `components/todays-service/StreamingSection.tsx`, `components/streaming/StreamingSetupWizard.tsx`, `lib/streaming/streaming-layout.ts`, `scripts/perf-production-check.mjs` (`npm run perf:production`)
 
 ### 6. Proxy / middleware & TTFB (~750 ms)
 

@@ -1,16 +1,16 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, Loader2 } from "lucide-react";
-import BroadcastDestinationChooser from "@/components/streaming/BroadcastDestinationChooser";
 import ChurchWebsiteForm from "@/components/streaming/ChurchWebsiteForm";
 import CustomRtmpForm from "@/components/streaming/CustomRtmpForm";
 import { platformLabel } from "@/components/streaming/PlatformLogo";
 import TestConnectionResult from "@/components/streaming/TestConnectionResult";
+import WizardStepPlaceholder from "@/components/streaming/wizard/WizardStepPlaceholder";
 import { TS } from "@/components/todays-service/ServiceUi";
 import { useAccessibleModal } from "@/components/todays-service/useAccessibleModal";
-import SoundDeviceMeter from "@/components/todays-service/sound/SoundDeviceMeter";
 import {
   createStreamingDestinationApi,
   detectStreamingEncodersApi,
@@ -48,8 +48,17 @@ import {
 import { openBrowserAudioMonitor } from "@/lib/sound/browser";
 import { extractBrowserDeviceId } from "@/lib/sound/device-utils";
 import { toIsoFromLocalDateTimeInput, toLocalDateTimeInput } from "@/lib/streaming/datetime-local";
+import { WIZARD_BODY_MIN_HEIGHT } from "@/lib/streaming/streaming-layout";
 import type { ChurchWebsiteSettings, CustomRtmpSettings, StreamingPlatform, StreamingTestResult } from "@/lib/streaming/types";
 import type { SoundItem, StreamingDestination, BroadcastDestinationCard } from "@/lib/todays-service/types";
+
+const BroadcastDestinationChooser = dynamic(
+  () => import("@/components/streaming/BroadcastDestinationChooser"),
+  { loading: () => <WizardStepPlaceholder /> },
+);
+const SoundDeviceMeter = dynamic(() => import("@/components/todays-service/sound/SoundDeviceMeter"), {
+  loading: () => <div className="h-16 animate-pulse rounded-lg bg-white/5" aria-hidden="true" />,
+});
 
 type StreamingSetupWizardProps = {
   open: boolean;
@@ -225,25 +234,6 @@ export default function StreamingSetupWizard({
     wizardHydratedResumeIdRef.current = resumeDestinationId;
     hydrateFromDestination(dest);
     setStep(resumeStep ?? "stream-info");
-    // #region agent log
-    fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "675ed0" },
-      body: JSON.stringify({
-        sessionId: "675ed0",
-        runId: "scheduled-start",
-        hypothesisId: "B",
-        location: "StreamingSetupWizard.tsx:resume-hydrate",
-        message: "hydrated destination once per resume id",
-        data: {
-          resumeDestinationId,
-          scheduledFromDb: dest.scheduledStartAt,
-          localInput: toLocalDateTimeInput(dest.scheduledStartAt),
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
   }, [open, resumeDestinationId, resumeStep, destinations, hydrateFromDestination]);
 
   const handleChooserContinue = async (platforms: StreamingPlatform[]) => {
@@ -317,21 +307,6 @@ export default function StreamingSetupWizard({
   const saveDraft = async (nextStep?: StreamingWizardStep) => {
     const id = destinationId ?? (await ensureDestination());
     const scheduledIso = toIsoFromLocalDateTimeInput(scheduledStartAt);
-    // #region agent log
-    fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "675ed0" },
-      body: JSON.stringify({
-        sessionId: "675ed0",
-        runId: "scheduled-start",
-        hypothesisId: "C",
-        location: "StreamingSetupWizard.tsx:saveDraft",
-        message: "saving scheduled start",
-        data: { scheduledStartAtLocal: scheduledStartAt, scheduledIso, step },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
     await saveStreamingWizardApi({
       destinationId: id,
       streamTitle,
@@ -535,8 +510,12 @@ export default function StreamingSetupWizard({
     }
   };
 
-  const mixerOptions = soundItems.filter((s) => s.category === "mixer");
-  const micOptions = soundItems.filter((s) => s.category !== "mixer");
+  const mixerOptions = useMemo(() => soundItems.filter((s) => s.category === "mixer"), [soundItems]);
+  const micOptions = useMemo(() => soundItems.filter((s) => s.category !== "mixer"), [soundItems]);
+  const stepProgress = useMemo(
+    () => ((wizardStepIndex(step) + 1) / STREAMING_WIZARD_STEPS.length) * 100,
+    [step],
+  );
 
   const startAudioMeters = useCallback(async () => {
     audioMonitorStop.current?.();
@@ -563,8 +542,6 @@ export default function StreamingSetupWizard({
 
   if (!open) return null;
 
-  const stepProgress = ((wizardStepIndex(step) + 1) / STREAMING_WIZARD_STEPS.length) * 100;
-
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-4 pt-safe pb-safe">
       <div
@@ -584,7 +561,7 @@ export default function StreamingSetupWizard({
           </p>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className={`flex-1 overflow-y-auto px-5 py-4 ${WIZARD_BODY_MIN_HEIGHT}`}>
           {step === "choose" ? (
             <BroadcastDestinationChooser
               cards={chooserCards}
@@ -703,25 +680,7 @@ export default function StreamingSetupWizard({
                 <input
                   type="datetime-local"
                   value={scheduledStartAt}
-                  onChange={(e) => {
-                    const next = e.target.value;
-                    setScheduledStartAt(next);
-                    // #region agent log
-                    fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "675ed0" },
-                      body: JSON.stringify({
-                        sessionId: "675ed0",
-                        runId: "scheduled-start",
-                        hypothesisId: "A",
-                        location: "StreamingSetupWizard.tsx:scheduled-onChange",
-                        message: "user changed scheduled start",
-                        data: { next, iso: toIsoFromLocalDateTimeInput(next) },
-                        timestamp: Date.now(),
-                      }),
-                    }).catch(() => {});
-                    // #endregion
-                  }}
+                  onChange={(e) => setScheduledStartAt(e.target.value)}
                   className={`${TS.input} mt-1`}
                 />
               </label>
