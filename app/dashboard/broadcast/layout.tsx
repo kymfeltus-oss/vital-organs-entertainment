@@ -1,3 +1,4 @@
+import ParableProductionRoot from "@/components/parable/ParableProductionRoot";
 import { redirect } from "next/navigation";
 import { buildTeamGateUrl } from "@/lib/auth/routing";
 import { isOpsAdminUser } from "@/lib/ops/admin-auth";
@@ -37,5 +38,5 @@ export default async function ParableSandboxLayout({
     redirect("/ops/unauthorized?reason=sandbox_restricted_to_broadcast_operators&module=broadcast_console");
   }
 
-  return children;
+  return <ParableProductionRoot>{children}</ParableProductionRoot>;
 }

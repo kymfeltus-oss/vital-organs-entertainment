@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft, CloudLightning, Loader2 } from "lucide-react";
+import { CloudLightning, Loader2 } from "lucide-react";
 import CountdownPreviewPlayer from "@/components/broadcast/CountdownPreviewPlayer";
 import GoLiveConfirmModal from "@/components/broadcast/GoLiveConfirmModal";
 import HeroCopyEditorPanel from "@/components/broadcast/HeroCopyEditorPanel";
@@ -18,7 +17,6 @@ import type {
 } from "@/lib/broadcast/countdown-console-types";
 import type { RealtimeAttendeeChatRow } from "@/lib/broadcast/countdown-console-types";
 import type { ChatTroubleCategory } from "@/lib/ops/chat-scanner";
-import { OPS_HOME_PATH } from "@/lib/broadcastRoutes";
 
 type DesktopCountdownConsoleProps = {
   adminEmail: string;
@@ -77,19 +75,12 @@ export default function DesktopCountdownConsole({
   const isLive = opsStream?.isLive === true;
 
   return (
-    <div className="hidden h-screen overflow-hidden bg-brand-black text-white lg:grid lg:grid-cols-[30%_1fr]">
+    <div className="hidden min-h-0 flex-1 flex-col overflow-hidden bg-brand-black text-white lg:flex">
+      <ResponsiveStatusBanner isLive={isLive} />
+
+      <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[minmax(280px,32%)_1fr]">
       <div className="h-full space-y-4 overflow-y-auto border-r border-brand-border p-4">
-        <div className="flex items-center justify-between gap-2">
-          <Link
-            href={OPS_HOME_PATH}
-            prefetch={false}
-            className="inline-flex min-h-10 items-center gap-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.14em] text-brand-muted hover:text-brand-blue"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-            Ops
-          </Link>
-          <p className="truncate font-body text-xs text-brand-muted">{adminEmail}</p>
-        </div>
+        <p className="truncate font-body text-xs text-brand-muted">{adminEmail}</p>
 
         <HeroCopyEditorPanel
           formState={formState}
@@ -139,10 +130,8 @@ export default function DesktopCountdownConsole({
         ) : null}
       </div>
 
-      <div className="flex h-full flex-col gap-4 overflow-hidden p-4">
-        <ResponsiveStatusBanner isLive={isLive} />
-
-        <CountdownPreviewPlayer playbackUrl={playbackUrl} className="rounded-xl" />
+      <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden p-4">
+        <CountdownPreviewPlayer playbackUrl={playbackUrl} className="shrink-0 rounded-xl" />
 
         <ResponsiveStatusStrip opsStream={opsStream} variant="desktop" />
 
@@ -152,6 +141,7 @@ export default function DesktopCountdownConsole({
           isConnected={chatConnected}
           variant="desktop"
         />
+      </div>
       </div>
 
       <TroubleAlertPopup

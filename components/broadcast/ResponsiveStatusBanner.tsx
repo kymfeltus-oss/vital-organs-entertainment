@@ -8,17 +8,17 @@ export default function ResponsiveStatusBanner({ isLive }: ResponsiveStatusBanne
   if (isLive) {
     return (
       <div
-        className="border-b border-brand-pink/20 bg-brand-pink/10 py-1.5 text-center font-ui text-xs font-semibold uppercase tracking-[0.14em] text-brand-pink motion-safe:animate-pulse"
+        className="border-2 border-brand-pink bg-brand-pink/15 py-2.5 text-center font-ui text-xs font-bold uppercase tracking-[0.22em] text-brand-pink motion-safe:animate-pulse"
         role="status"
       >
-        🔴 Broadcasting Live
+        🔴 Stream: Live
       </div>
     );
   }
 
   return (
     <div
-      className="border-b border-brand-purple/20 bg-brand-purple/10 py-1.5 text-center font-ui text-xs font-semibold uppercase tracking-[0.14em] text-brand-purple"
+      className="border-2 border-brand-pink bg-brand-purple/25 py-2.5 text-center font-ui text-xs font-bold uppercase tracking-[0.22em] text-purple-200"
       role="status"
     >
       ⏳ Rehearsal Standby

@@ -9,7 +9,13 @@
     "sync:profile-initials": "node scripts/sync-user-profile-initials.mjs",
     "start": "next start",
     "lint": "eslint .",
-    "test:broadcast": "npx tsx --test services/broadcast/__tests__/**/*.test.ts"
+    "test:broadcast": "npx tsx --test services/broadcast/__tests__/**/*.test.ts",
+    "test:streaming": "npx tsx --test lib/streaming/__tests__/**/*.test.ts",
+    "db:migration:new": "node scripts/db-migration-new.mjs",
+    "db:migrate": "node scripts/db-migrate.mjs",
+    "db:schema:reload": "node scripts/db-schema-reload.mjs",
+    "db:verify:mixers": "node scripts/db-verify-mixer-schema.mjs",
+    "db:verify:streaming": "node scripts/db-verify-streaming-schema.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.0",
@@ -21,12 +27,14 @@
     "@tailwindcss/postcss": "^4.3.0",
     "framer-motion": "^12.40.0",
     "hls.js": "^1.6.16",
+    "ioredis": "^5.11.1",
     "lucide-react": "^1.17.0",
     "next": "^16.2.7",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "stripe": "^22.2.0",
-    "tailwindcss": "^4.3.0"
+    "tailwindcss": "^4.3.0",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@types/react": "19.2.17",

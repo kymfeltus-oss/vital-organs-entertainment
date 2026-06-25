@@ -10,6 +10,9 @@ const NAV_HIDDEN_EXACT = [
   /** Production aliases — canonical routes live under /ops */
   "/countdown-editor",
   "/live-hub",
+  "/production-dashboard",
+  "/dashboard/incidents",
+  "/dashboard/todays-service",
 ] as const;
 
 const NAV_HIDDEN_PREFIXES = [
@@ -22,7 +25,10 @@ const NAV_HIDDEN_PREFIXES = [
   "/studio",
   /** Ops / production consoles — attendee bottom dock must not appear here */
   "/ops",
+  "/production",
   "/dashboard/broadcast",
+  "/dashboard/incidents",
+  "/dashboard/todays-service",
   "/email-gate",
   "/experience/live",
   "/dashboard/live",
@@ -49,7 +55,7 @@ export function isMobileArtboardTabRoute(pathname: string): boolean {
   return (MOBILE_ARTBOARD_TAB_EXACT as readonly string[]).includes(pathname);
 }
 
-/** Full-viewport PNG artboard routes — login, create-account, email-gate. */
+/** Full-viewport PNG artboard routes — login, create-account, email-gate hub. */
 export function isFullHeightArtboardRoute(pathname: string): boolean {
   if (pathname === "/login" || pathname.startsWith("/login/")) {
     return true;
@@ -57,6 +63,11 @@ export function isFullHeightArtboardRoute(pathname: string): boolean {
 
   if (pathname.includes("create-account")) {
     return true;
+  }
+
+  /** Fluid EmailGateShell form — must not use the locked h-dvh artboard shell. */
+  if (pathname === "/email-gate/team") {
+    return false;
   }
 
   return pathname === "/email-gate" || pathname.startsWith("/email-gate/");

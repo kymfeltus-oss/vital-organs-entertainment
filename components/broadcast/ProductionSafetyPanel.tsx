@@ -82,7 +82,7 @@ export default function ProductionSafetyPanel({
                     <button
                       type="button"
                       onClick={() => onMitigation(check.id)}
-                      className={`touch-target shrink-0 rounded border px-1.5 py-0.5 font-ui text-[0.42rem] font-bold uppercase tracking-[0.06em] text-white ${PARABLE_SHELL.borderBlue} bg-[#0B090A]/80 hover:bg-[#1E40AF]/20`}
+                      className={`touch-target shrink-0 rounded border px-1.5 py-0.5 font-ui text-[0.42rem] font-bold uppercase tracking-[0.06em] text-white ${PARABLE_SHELL.borderBlue} bg-black/80 hover:bg-[#00f2ff]/20`}
                     >
                       Log
                     </button>

@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import CountdownPreviewPlayer from "@/components/broadcast/CountdownPreviewPlayer";
 import GoLiveConfirmModal from "@/components/broadcast/GoLiveConfirmModal";
 import HeroCopyEditorPanel from "@/components/broadcast/HeroCopyEditorPanel";
@@ -20,7 +18,6 @@ import type {
 } from "@/lib/broadcast/countdown-console-types";
 import type { RealtimeAttendeeChatRow } from "@/lib/broadcast/countdown-console-types";
 import type { ChatTroubleCategory } from "@/lib/ops/chat-scanner";
-import { OPS_HOME_PATH } from "@/lib/broadcastRoutes";
 
 type MobileCountdownConsoleProps = {
   adminEmail: string;
@@ -83,22 +80,9 @@ export default function MobileCountdownConsole({
   const isLive = opsStream?.isLive === true;
 
   return (
-    <div className="flex min-h-screen flex-col overflow-y-auto bg-brand-black pb-24 text-white lg:hidden">
-      <div className="sticky top-0 z-30 w-full border-b border-brand-border bg-black">
-        <div className="flex items-center justify-between gap-2 border-b border-brand-border px-3 py-2">
-          <Link
-            href={OPS_HOME_PATH}
-            prefetch={false}
-            className="touch-target inline-flex min-h-11 items-center gap-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.14em] text-brand-muted"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-            Ops
-          </Link>
-          <p className="truncate font-body text-[0.65rem] text-brand-muted">{adminEmail}</p>
-        </div>
-
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-brand-black pb-24 text-white lg:hidden">
+      <div className="sticky top-0 z-30 w-full shrink-0 border-b border-brand-border bg-brand-black">
         <ResponsiveStatusBanner isLive={isLive} />
-
         <CountdownPreviewPlayer playbackUrl={playbackUrl} className="rounded-none border-0" />
       </div>
 

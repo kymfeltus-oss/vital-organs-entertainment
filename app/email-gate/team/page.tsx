@@ -29,7 +29,13 @@ export default async function TeamGatePage({ searchParams }: TeamGatePageProps) 
         </main>
       }
     >
-      <TeamGateContent nextPath={nextPath} authError={params.error} />
+      <main
+        id="main-content"
+        className="min-h-dvh w-full bg-brand-black"
+        aria-label="Team login"
+      >
+        <TeamGateContent nextPath={nextPath} authError={params.error} />
+      </main>
     </Suspense>
   );
 }

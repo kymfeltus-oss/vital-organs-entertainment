@@ -1,9 +1,10 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
+import { cn } from "@/lib/utils";
 
 type EmailGateShellProps = {
   eyebrow?: string;
@@ -11,6 +12,10 @@ type EmailGateShellProps = {
   description?: string;
   backHref?: string;
   backLabel?: string;
+  onBackNavigate?: () => void;
+  shellRef?: Ref<HTMLDivElement>;
+  /** Fluid pages scroll naturally; artboard pages scroll inside the mobile track shell. */
+  layout?: "artboard" | "fluid";
   children: ReactNode;
 };
 
@@ -21,16 +26,28 @@ export default function EmailGateShell({
   description,
   backHref,
   backLabel = "Back",
+  onBackNavigate,
+  shellRef,
+  layout = "artboard",
   children,
 }: EmailGateShellProps) {
   return (
-    <main className="relative flex min-h-dvh w-full flex-col bg-brand-black pt-safe pb-safe text-white">
+    <div
+      ref={shellRef}
+      className={cn(
+        "relative flex w-full flex-col overflow-y-auto bg-brand-black pt-safe pb-safe text-white",
+        layout === "fluid"
+          ? "min-h-dvh"
+          : "min-h-0 flex-1",
+      )}
+    >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(0,168,255,0.1),transparent)]" />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-4 md:px-6">
+      <div className="relative z-10 mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col px-4 py-4 md:px-6">
         {backHref ? (
           <Link
             href={backHref}
+            onClick={onBackNavigate}
             className="mb-4 inline-flex min-h-11 items-center font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-brand-muted transition hover:text-brand-blue"
           >
             ← {backLabel}
@@ -70,7 +87,7 @@ export default function EmailGateShell({
           {children}
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 
