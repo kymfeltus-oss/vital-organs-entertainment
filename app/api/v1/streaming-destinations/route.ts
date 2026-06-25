@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { parseJsonBody, withServiceAuth } from "@/lib/todays-service/route-handlers";
 import { createStreamingDestinationAccount, listPublicStreamingDestinations } from "@/lib/streaming/service";
-import { loadTodaysService } from "@/lib/todays-service/service";
 import type { CreateStreamingDestinationInput } from "@/lib/streaming/types";
 
 export async function GET(request: NextRequest) {
@@ -21,7 +20,6 @@ export async function POST(request: NextRequest) {
         ctx.user.email ?? null,
         body,
       );
-      await loadTodaysService(ctx.tenantId);
       return { item };
     },
     { requireEdit: true },

@@ -99,6 +99,7 @@ export type StreamingWizardDefaults = {
   category: string;
   privacy: string;
   tags: string[];
+  churchWebsite: ChurchWebsiteSettings;
 };
 
 export type StreamingWizardSaveInput = {

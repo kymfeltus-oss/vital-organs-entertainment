@@ -1,6 +1,10 @@
 "use client";
 
 import { TS } from "@/components/todays-service/ServiceUi";
+import {
+  DEFAULT_CHURCH_STREAM_PAGE_URL,
+  DEFAULT_CHURCH_WEBSITE_NAME,
+} from "@/lib/streaming/church-website-shared";
 import type { ChurchWebsiteSettings } from "@/lib/streaming/types";
 
 type ChurchWebsiteFormProps = {
@@ -19,6 +23,7 @@ export default function ChurchWebsiteForm({ value, onChange, disabled }: ChurchW
           onChange={(e) => onChange({ ...value, websiteName: e.target.value })}
           className={TS.input}
           disabled={disabled}
+          placeholder={DEFAULT_CHURCH_WEBSITE_NAME}
         />
       </label>
       <label className="block">
@@ -28,7 +33,7 @@ export default function ChurchWebsiteForm({ value, onChange, disabled }: ChurchW
           onChange={(e) => onChange({ ...value, streamPageUrl: e.target.value })}
           className={TS.input}
           disabled={disabled}
-          placeholder="https://yourchurch.org/live"
+          placeholder={DEFAULT_CHURCH_STREAM_PAGE_URL}
         />
       </label>
       <label className="block">

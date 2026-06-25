@@ -8,7 +8,7 @@ import CustomRtmpForm from "@/components/streaming/CustomRtmpForm";
 import OAuthConnectButton from "@/components/streaming/OAuthConnectButton";
 import { TS } from "@/components/todays-service/ServiceUi";
 import { createStreamingDestinationApi, startStreamingOAuthApi } from "@/lib/streaming/api";
-import { normalizeChurchWebsiteSettings } from "@/lib/streaming/church-website-shared";
+import { normalizeChurchWebsiteSettings, createDefaultChurchWebsiteSettings } from "@/lib/streaming/church-website-shared";
 import { STREAMING_PLATFORMS } from "@/lib/streaming/platforms";
 import type { ChurchWebsiteSettings, CustomRtmpSettings, StreamingPlatform } from "@/lib/streaming/types";
 
@@ -24,11 +24,9 @@ export default function AddDestinationModal({ open, onClose, onCreated, onToast 
   const [platform, setPlatform] = useState<StreamingPlatform | "">("");
   const [busy, setBusy] = useState(false);
   const [devMessage, setDevMessage] = useState<string | null>(null);
-  const [churchWebsite, setChurchWebsite] = useState<ChurchWebsiteSettings>({
-    websiteName: "",
-    streamPageUrl: "",
-    embedMethod: "iframe",
-  });
+  const [churchWebsite, setChurchWebsite] = useState<ChurchWebsiteSettings>(() =>
+    createDefaultChurchWebsiteSettings(),
+  );
   const [customRtmp, setCustomRtmp] = useState<CustomRtmpSettings>({
     serverName: "",
     streamUrl: "",
@@ -45,6 +43,7 @@ export default function AddDestinationModal({ open, onClose, onCreated, onToast 
     setStep("choose");
     setPlatform("");
     setDevMessage(null);
+    setChurchWebsite(createDefaultChurchWebsiteSettings());
   };
 
   const handleCreateAndConnect = async () => {

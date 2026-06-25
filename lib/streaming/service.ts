@@ -305,21 +305,6 @@ export async function updateStreamingDestinationAccount(
     normalizedPatch.validationStatus = "not_validated";
     normalizedPatch.validationReason = null;
     normalizedPatch.lastValidationError = null;
-    // #region agent log
-    fetch("http://127.0.0.1:7242/ingest/90113a7b-b2ce-449d-9c16-dbf632e3c139", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "675ed0" },
-      body: JSON.stringify({
-        sessionId: "675ed0",
-        runId: "church-website-save",
-        hypothesisId: "H-church-website-persistence",
-        location: "lib/streaming/service.ts:updateStreamingDestinationAccount",
-        message: "normalized church website settings",
-        data: normalized,
-        timestamp: Date.now(),
-      }),
-    }).catch(() => undefined);
-    // #endregion
   }
 
   const updated = await updateStreamingDestination(id, normalizedPatch);
@@ -941,6 +926,7 @@ export async function stopAllStreamingDestinations(
 }
 
 export async function getStreamingWizardDefaults(tenantId: string): Promise<import("@/lib/streaming/types").StreamingWizardDefaults> {
+  const { createDefaultChurchWebsiteSettings } = await import("@/lib/streaming/church-website-shared");
   const service = await getOrCreateTodayService(tenantId);
   const title = service.serviceName?.trim() || "Sunday Service Live";
   const scheduled = service.serviceDate ? `${service.serviceDate}T10:00:00` : null;
@@ -951,6 +937,7 @@ export async function getStreamingWizardDefaults(tenantId: string): Promise<impo
     category: "Religion & Spirituality",
     privacy: "public",
     tags: ["church", "live", "worship"],
+    churchWebsite: createDefaultChurchWebsiteSettings(),
   };
 }
 

@@ -6,7 +6,7 @@ import ChurchWebsiteForm from "@/components/streaming/ChurchWebsiteForm";
 import CustomRtmpForm from "@/components/streaming/CustomRtmpForm";
 import { TS } from "@/components/todays-service/ServiceUi";
 import { updateStreamingDestinationApi } from "@/lib/streaming/api";
-import { normalizeChurchWebsiteSettings } from "@/lib/streaming/church-website-shared";
+import { normalizeChurchWebsiteSettings, withChurchWebsiteDefaults } from "@/lib/streaming/church-website-shared";
 import { normalizePlatform } from "@/lib/streaming/platforms";
 import type { ChurchWebsiteSettings, CustomRtmpSettings } from "@/lib/streaming/types";
 import type { StreamingDestination } from "@/lib/todays-service/types";
@@ -28,11 +28,13 @@ export default function DestinationSettingsModal({
 }: DestinationSettingsModalProps) {
   const [busy, setBusy] = useState(false);
   const platform = destination ? normalizePlatform(destination.platform) : "";
-  const [churchWebsite, setChurchWebsite] = useState<ChurchWebsiteSettings>({
-    websiteName: String(destination?.settingsJson?.websiteName ?? destination?.destinationName ?? ""),
-    streamPageUrl: String(destination?.settingsJson?.streamPageUrl ?? ""),
-    embedMethod: String(destination?.settingsJson?.embedMethod ?? "iframe"),
-  });
+  const [churchWebsite, setChurchWebsite] = useState<ChurchWebsiteSettings>(() =>
+    withChurchWebsiteDefaults({
+      websiteName: String(destination?.settingsJson?.websiteName ?? destination?.destinationName ?? ""),
+      streamPageUrl: String(destination?.settingsJson?.streamPageUrl ?? destination?.streamPageUrl ?? ""),
+      embedMethod: String(destination?.settingsJson?.embedMethod ?? destination?.embedMethod ?? "iframe"),
+    }),
+  );
   const [customRtmp, setCustomRtmp] = useState<CustomRtmpSettings>({
     serverName: String(destination?.settingsJson?.serverName ?? destination?.destinationName ?? ""),
     streamUrl: "",

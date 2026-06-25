@@ -25,7 +25,7 @@ import {
   testStreamingDestinationApi,
   updateStreamingDestinationApi,
 } from "@/lib/streaming/api";
-import { normalizeChurchWebsiteSettings } from "@/lib/streaming/church-website-shared";
+import { normalizeChurchWebsiteSettings, createDefaultChurchWebsiteSettings, withChurchWebsiteDefaults } from "@/lib/streaming/church-website-shared";
 import { STREAMING_PLATFORMS } from "@/lib/streaming/platforms";
 import { buildBroadcastDestinationCards } from "@/lib/streaming/broadcast-catalog";
 import {
@@ -119,11 +119,9 @@ export default function StreamingSetupWizard({
   const wizardHydratedResumeIdRef = useRef<string | null>(null);
   const audioMonitorStop = useRef<(() => void) | null>(null);
 
-  const [churchWebsite, setChurchWebsite] = useState<ChurchWebsiteSettings>({
-    websiteName: "",
-    streamPageUrl: "",
-    embedMethod: "iframe",
-  });
+  const [churchWebsite, setChurchWebsite] = useState<ChurchWebsiteSettings>(() =>
+    createDefaultChurchWebsiteSettings(),
+  );
   const [customRtmp, setCustomRtmp] = useState<CustomRtmpSettings>({
     serverName: "",
     streamUrl: "",
@@ -164,6 +162,7 @@ export default function StreamingSetupWizard({
     audioMonitorStop.current = null;
     previewStreamRef.current?.getTracks().forEach((t) => t.stop());
     previewStreamRef.current = null;
+    setChurchWebsite(createDefaultChurchWebsiteSettings());
   }, []);
 
   const hydrateFromDestination = useCallback((dest: StreamingDestination) => {
@@ -180,11 +179,13 @@ export default function StreamingSetupWizard({
     setAudioProfile(parseAudioProfile(dest.audioProfileJson));
     const settings = dest.settingsJson as Record<string, unknown>;
     if (dest.platform === "church_website") {
-      setChurchWebsite({
-        websiteName: String(settings.websiteName ?? dest.websiteName ?? dest.destinationName ?? ""),
-        streamPageUrl: String(settings.streamPageUrl ?? dest.streamPageUrl ?? ""),
-        embedMethod: String(settings.embedMethod ?? dest.embedMethod ?? "iframe"),
-      });
+      setChurchWebsite(
+        withChurchWebsiteDefaults({
+          websiteName: String(settings.websiteName ?? dest.websiteName ?? dest.destinationName ?? ""),
+          streamPageUrl: String(settings.streamPageUrl ?? dest.streamPageUrl ?? ""),
+          embedMethod: String(settings.embedMethod ?? dest.embedMethod ?? "iframe"),
+        }),
+      );
     }
     if (dest.platform === "custom_rtmp") {
       setCustomRtmp({
@@ -220,6 +221,14 @@ export default function StreamingSetupWizard({
         setStreamCategory((prev) => prev || defaults.category);
         setPrivacy((prev) => prev || defaults.privacy);
         setTags((prev) => prev || defaults.tags.join(", "));
+        setChurchWebsite((prev) =>
+          withChurchWebsiteDefaults({
+            ...prev,
+            websiteName: prev.websiteName || defaults.churchWebsite.websiteName,
+            streamPageUrl: prev.streamPageUrl || defaults.churchWebsite.streamPageUrl,
+            embedMethod: prev.embedMethod || defaults.churchWebsite.embedMethod,
+          }),
+        );
       })
       .catch(() => undefined);
   }, [open]);
@@ -243,15 +252,15 @@ export default function StreamingSetupWizard({
       setSelectedPlatforms(platforms);
       const first = platforms[0];
       setPlatform(first);
-      const dest = destinations.find((d) => d.platform === first) ?? null;
       const card = result.cards.find((c) => c.platform === first);
+      const cardDestId = card?.destinationId ?? null;
+      if (cardDestId) setDestinationId(cardDestId);
+      const dest =
+        destinations.find((d) => d.id === cardDestId) ??
+        destinations.find((d) => d.platform === first) ??
+        null;
       if (dest) hydrateFromDestination(dest);
-      else if (card?.destinationId) {
-        const refreshed = destinations.find((d) => d.id === card.destinationId);
-        if (refreshed) hydrateFromDestination(refreshed);
-        else setDestinationId(card.destinationId);
-      }
-      await onSaved();
+      void onSaved();
       setStep("authenticate");
     } catch (err) {
       onToast("error", err instanceof Error ? err.message : "Could not save destination selections.");
@@ -263,23 +272,31 @@ export default function StreamingSetupWizard({
   const ensureDestination = useCallback(async (): Promise<string> => {
     if (destinationId) return destinationId;
     if (!platform) throw new Error("Choose a streaming destination first.");
+
+    const existing = destinations.find((d) => d.platform === platform);
+    if (existing) {
+      setDestinationId(existing.id);
+      return existing.id;
+    }
+
     const meta = STREAMING_PLATFORMS.find((p) => p.id === platform);
+    const normalizedChurch = normalizeChurchWebsiteSettings(withChurchWebsiteDefaults(churchWebsite));
     const item = await createStreamingDestinationApi({
       platform,
-      displayName: meta?.label,
+      displayName: platform === "church_website" ? normalizedChurch.websiteName : meta?.label,
       settings:
         platform === "church_website"
-          ? churchWebsite
+          ? normalizedChurch
           : platform === "custom_rtmp"
             ? { serverName: customRtmp.serverName }
             : {},
-      streamUrl: platform === "custom_rtmp" ? customRtmp.streamUrl : churchWebsite.streamPageUrl,
+      streamUrl: platform === "custom_rtmp" ? customRtmp.streamUrl : normalizedChurch.streamPageUrl,
       streamKey: platform === "custom_rtmp" ? customRtmp.streamKey : undefined,
       backupStreamUrl: customRtmp.backupStreamUrl,
     });
     setDestinationId(item.id);
     return item.id;
-  }, [churchWebsite, customRtmp, destinationId, platform]);
+  }, [churchWebsite, customRtmp, destinationId, destinations, platform]);
 
   const runEncoderDetect = useCallback(async () => {
     const result = await detectStreamingEncodersApi();
@@ -327,11 +344,10 @@ export default function StreamingSetupWizard({
     if (nextStep) setStep(nextStep);
   };
 
-  const persistConnectionSettings = async () => {
-    if (!destinationId) return;
+  const persistConnectionSettings = async (destId: string) => {
     if (platform === "church_website") {
-      const normalized = normalizeChurchWebsiteSettings(churchWebsite);
-      await updateStreamingDestinationApi(destinationId, {
+      const normalized = normalizeChurchWebsiteSettings(withChurchWebsiteDefaults(churchWebsite));
+      await updateStreamingDestinationApi(destId, {
         destinationName: normalized.websiteName || "Church Website",
         settingsJson: normalized,
         streamUrl: normalized.streamPageUrl,
@@ -344,10 +360,15 @@ export default function StreamingSetupWizard({
         validationReason: null,
         lastValidationError: null,
       });
+      setChurchWebsite({
+        websiteName: normalized.websiteName,
+        streamPageUrl: normalized.streamPageUrl,
+        embedMethod: normalized.embedMethod,
+      });
       return;
     }
     if (platform === "custom_rtmp") {
-      await updateStreamingDestinationApi(destinationId, {
+      await updateStreamingDestinationApi(destId, {
         destinationName: customRtmp.serverName || "Custom RTMP",
         settingsJson: { serverName: customRtmp.serverName },
         streamUrl: customRtmp.streamUrl,
@@ -372,9 +393,8 @@ export default function StreamingSetupWizard({
           return;
         }
         if (platform === "church_website" || platform === "custom_rtmp") {
-          await ensureDestination();
-          await persistConnectionSettings();
-          await onSaved();
+          const id = await ensureDestination();
+          await persistConnectionSettings(id);
         }
       } else if (["stream-info", "video", "audio"].includes(step)) {
         await saveDraft();
@@ -388,6 +408,9 @@ export default function StreamingSetupWizard({
         await saveDraft();
       }
       setStep(next);
+      if (step === "authenticate" || step === "choose") {
+        void onSaved();
+      }
     } catch (err) {
       onToast("error", err instanceof Error ? err.message : "Could not continue.");
     } finally {

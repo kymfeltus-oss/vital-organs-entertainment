@@ -6,7 +6,6 @@ import {
   getStreamingDestinationForTenant,
   updateStreamingDestinationAccount,
 } from "@/lib/streaming/service";
-import { loadTodaysService } from "@/lib/todays-service/service";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -35,7 +34,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         ctx.tenantId,
         body as Parameters<typeof updateStreamingDestinationAccount>[2],
       );
-      await loadTodaysService(ctx.tenantId);
       return { item };
     },
     { requireEdit: true },
@@ -53,7 +51,6 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         ctx.user.id,
         ctx.user.email ?? null,
       );
-      await loadTodaysService(ctx.tenantId);
       return result;
     },
     { requireEdit: true },
