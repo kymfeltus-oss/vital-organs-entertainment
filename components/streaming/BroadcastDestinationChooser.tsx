@@ -33,27 +33,6 @@ export default function BroadcastDestinationChooser({
 }: BroadcastDestinationChooserProps) {
   const cards = cardsProp ?? [];
 
-  // #region agent log
-  useEffect(() => {
-    fetch("http://127.0.0.1:7242/ingest/90113a7b-b2ce-449d-9c16-dbf632e3c139", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "675ed0" },
-      body: JSON.stringify({
-        sessionId: "675ed0",
-        runId: "streaming-fix",
-        hypothesisId: "H1-cards-undefined",
-        location: "BroadcastDestinationChooser.tsx:render",
-        message: "chooser cards",
-        data: {
-          propType: cardsProp == null ? "nullish" : "array",
-          safeLength: cards.length,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => undefined);
-  }, [cards.length, cardsProp]);
-  // #endregion
-
   const visibleCards = useMemo(() => cards.filter((c) => c.platform !== "custom_rtmp" || true), [cards]);
   const defaultSelected = useMemo(
     () => initialSelected ?? cards.filter((c) => c.selected).map((c) => c.platform),

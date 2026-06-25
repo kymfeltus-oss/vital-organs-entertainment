@@ -57,6 +57,7 @@ export default function TeamSection({ members, onReload, onToast }: TeamSectionP
 
   return (
     <ServiceCard title="Today's Team" action={<button type="button" onClick={() => { setEditItem(null); setDraft({ name: "", roleKey: "volunteer", email: "", phone: "" }); setModalOpen(true); }} className={TS.link}>Add Team Member</button>}>
+      <p className="font-ui text-[0.48rem] uppercase tracking-[0.1em] text-white/40">Optional — not required to go live</p>
       {members.length > 0 ? (
         <ul className="flex flex-col gap-1">
           {members.map((member) => (

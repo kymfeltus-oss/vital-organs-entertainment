@@ -49,6 +49,7 @@ export default function ServiceTimeline({ items, onReload, onToast }: ServiceTim
 
   return (
     <ServiceCard title="Service Timeline" action={<button type="button" onClick={() => { setEditItem(null); setDraft({ label: "", durationMinutes: "" }); setModalOpen(true); }} className={TS.addBtn}>+ Add Part</button>}>
+      <p className="font-ui text-[0.48rem] uppercase tracking-[0.1em] text-white/40">Optional — not required to go live</p>
       {items.length > 0 ? (
         <ol className="flex flex-col gap-1">
           {items.map((item, index) => (

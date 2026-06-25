@@ -17,11 +17,9 @@ import type { SoundItem, StreamingDestination } from "@/lib/todays-service/types
 
 const StreamingSetupWizard = dynamic(() => import("@/components/streaming/StreamingSetupWizard"), {
   ssr: false,
-  loading: () => null,
 });
 const DestinationSettingsModal = dynamic(() => import("@/components/streaming/DestinationSettingsModal"), {
   ssr: false,
-  loading: () => null,
 });
 
 type StreamingSectionProps = {
@@ -150,29 +148,25 @@ function StreamingSection({
         </>
       )}
 
-      {wizardOpen ? (
-        <StreamingSetupWizard
-          open={wizardOpen}
-          onClose={() => setWizardOpen(false)}
-          onSaved={onReload}
-          onToast={onToast}
-          destinations={destinations}
-          broadcastDestinationCards={broadcastDestinationCards}
-          soundItems={soundItems}
-          resumeDestinationId={resumeDestinationId}
-          resumeStep={resumeStep}
-        />
-      ) : null}
+      <StreamingSetupWizard
+        open={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        onSaved={onReload}
+        onToast={onToast}
+        destinations={destinations}
+        broadcastDestinationCards={broadcastDestinationCards}
+        soundItems={soundItems}
+        resumeDestinationId={resumeDestinationId}
+        resumeStep={resumeStep}
+      />
 
-      {settingsDest ? (
-        <DestinationSettingsModal
-          open
-          destination={settingsDest}
-          onClose={() => setSettingsDest(null)}
-          onSaved={onReload}
-          onToast={onToast}
-        />
-      ) : null}
+      <DestinationSettingsModal
+        open={Boolean(settingsDest)}
+        destination={settingsDest}
+        onClose={() => setSettingsDest(null)}
+        onSaved={onReload}
+        onToast={onToast}
+      />
     </ServiceCard>
   );
 }

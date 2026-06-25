@@ -13,6 +13,8 @@ export type SetupStep = {
   label: string;
   sectionId: string;
   isComplete: boolean;
+  /** Optional steps are shown in setup UI but do not block Begin Service / go live. */
+  optional?: boolean;
 };
 
 export type ChecklistItem = {
@@ -103,15 +105,22 @@ export const BROADCAST_PROFILE_FEATURES = [
   "Livestream",
 ] as const;
 
-export const SETUP_WORKFLOW_SECTIONS = [
+/** Required before Begin Service / go live. */
+export const SETUP_REQUIRED_WORKFLOW_SECTIONS = [
   "sound",
   "cameras",
   "internet",
   "streaming",
   "recording",
   "presentation",
-  "team",
-  "timeline",
+] as const;
+
+/** Optional — available on the dashboard but not required to go live. */
+export const SETUP_OPTIONAL_WORKFLOW_SECTIONS = ["team", "timeline"] as const;
+
+export const SETUP_WORKFLOW_SECTIONS = [
+  ...SETUP_REQUIRED_WORKFLOW_SECTIONS,
+  ...SETUP_OPTIONAL_WORKFLOW_SECTIONS,
 ] as const;
 
 export type SetupWorkflowSection = (typeof SETUP_WORKFLOW_SECTIONS)[number];
@@ -182,11 +191,11 @@ const SETUP_COMPLETE_CHECKS: Record<SetupWorkflowSection, (data: TodaysServicePa
 };
 
 export function isVolunteerSetupComplete(data: TodaysServicePayload): boolean {
-  return SETUP_WORKFLOW_SECTIONS.every((section) => SETUP_COMPLETE_CHECKS[section](data));
+  return SETUP_REQUIRED_WORKFLOW_SECTIONS.every((section) => SETUP_COMPLETE_CHECKS[section](data));
 }
 
 export function nextIncompleteSetupAction(data: TodaysServicePayload): SetupWorkflowAction | null {
-  for (const sectionId of SETUP_WORKFLOW_SECTIONS) {
+  for (const sectionId of SETUP_REQUIRED_WORKFLOW_SECTIONS) {
     if (SETUP_COMPLETE_CHECKS[sectionId](data)) continue;
     return {
       sectionId,
@@ -244,12 +253,14 @@ export function buildSetupSteps(data: TodaysServicePayload): SetupStep[] {
       label: "Add Team Members",
       sectionId: "team",
       isComplete: isTeamSetupComplete(data),
+      optional: true,
     },
     {
       id: "timeline",
       label: "Review Timeline",
       sectionId: "timeline",
       isComplete: isTimelineSetupComplete(data),
+      optional: true,
     },
   ];
 }
@@ -259,14 +270,18 @@ export function computeSetupProgress(data: TodaysServicePayload): {
   total: number;
   remaining: number;
   steps: SetupStep[];
+  optionalSteps: SetupStep[];
 } {
   const steps = buildSetupSteps(data);
-  const completed = steps.filter((s) => s.isComplete).length;
+  const requiredSteps = steps.filter((step) => !step.optional);
+  const optionalSteps = steps.filter((step) => step.optional);
+  const completed = requiredSteps.filter((step) => step.isComplete).length;
   return {
     completed,
-    total: steps.length,
-    remaining: steps.length - completed,
-    steps,
+    total: requiredSteps.length,
+    remaining: requiredSteps.length - completed,
+    steps: requiredSteps,
+    optionalSteps,
   };
 }
 
