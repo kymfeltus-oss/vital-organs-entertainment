@@ -235,23 +235,17 @@ export default function StreamingSetupWizard({
 
   const advanceWizardStep = useCallback(
     (target: StreamingWizardStep) => {
-      // #region agent log
-      fetch('http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'675ed0'},body:JSON.stringify({sessionId:'675ed0',hypothesisId:'A-E',location:'StreamingSetupWizard.tsx:advanceWizardStep',message:'wizard step advance',data:{from:step,to:target,maxStepIndex:maxStepIndexReachedRef.current,navLock:navigationLockRef.current,busy,resumeApplied:resumeAppliedRef.current,pendingResume:pendingResumeDestIdRef.current},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       recordStepReach(target);
       setStep(target);
     },
-    [recordStepReach, step, busy],
+    [recordStepReach],
   );
 
   const releaseNavigationLock = useCallback(() => {
     requestAnimationFrame(() => {
       navigationLockRef.current = false;
-      // #region agent log
-      fetch('http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'675ed0'},body:JSON.stringify({sessionId:'675ed0',hypothesisId:'B',location:'StreamingSetupWizard.tsx:releaseNavigationLock',message:'navigation lock released',data:{step,maxStepIndex:maxStepIndexReachedRef.current},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
     });
-  }, [step]);
+  }, []);
 
   useEffect(() => {
     if (!open) {
@@ -280,12 +274,7 @@ export default function StreamingSetupWizard({
     if (!targetId) return;
 
     const resumeIndex = wizardStepIndex(resumeStep ?? "stream-info");
-    const destFound = Boolean(destinations.find((d) => d.id === targetId));
-    const skipPastUser = maxStepIndexReachedRef.current > resumeIndex;
-    // #region agent log
-    fetch('http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'675ed0'},body:JSON.stringify({sessionId:'675ed0',hypothesisId:'A-B',location:'StreamingSetupWizard.tsx:resumeEffect',message:'resume effect evaluated',data:{step,targetId,resumeStep:resumeStep??'stream-info',resumeIndex,maxStepIndex:maxStepIndexReachedRef.current,skipPastUser,destFound,navLock:navigationLockRef.current,busy,destCount:destinations.length},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-    if (skipPastUser) {
+    if (maxStepIndexReachedRef.current > resumeIndex) {
       resumeAppliedRef.current = true;
       pendingResumeDestIdRef.current = null;
       wizardHydratedResumeIdRef.current = targetId;
@@ -494,18 +483,12 @@ export default function StreamingSetupWizard({
     if (persistOnAuthenticate) {
       const transition = ++stepTransitionRef.current;
       navigationLockRef.current = true;
-      // #region agent log
-      fetch('http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'675ed0'},body:JSON.stringify({sessionId:'675ed0',hypothesisId:'B-E',location:'StreamingSetupWizard.tsx:goNext',message:'authenticate persist start',data:{step,next,transition,platform:normalizedPlatform},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       setBusy(true);
       try {
         const id = await ensureDestination();
         await persistConnectionSettings(id, normalizedPlatform);
         if (stepTransitionRef.current !== transition) return;
         advanceWizardStep(next);
-        // #region agent log
-        fetch('http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'675ed0'},body:JSON.stringify({sessionId:'675ed0',hypothesisId:'B-E',location:'StreamingSetupWizard.tsx:goNext',message:'authenticate persist advanced',data:{next,transition,destinationId:id},timestamp:Date.now(),runId:'post-fix'})}).catch(()=>{});
-        // #endregion
         requestAnimationFrame(() => {
           void onSaved?.();
         });
@@ -711,9 +694,6 @@ export default function StreamingSetupWizard({
   useEffect(() => {
     if (!open) return;
     const frame = requestAnimationFrame(() => {
-      // #region agent log
-      fetch('http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'675ed0'},body:JSON.stringify({sessionId:'675ed0',hypothesisId:'D',location:'StreamingSetupWizard.tsx:footerScroll',message:'footer scrollIntoView on wizard open',data:{step},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       footerRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     });
     return () => cancelAnimationFrame(frame);

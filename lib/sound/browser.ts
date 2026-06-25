@@ -173,16 +173,12 @@ export async function discoverBrowserAudioInputs(defaultDeviceId?: string | null
 }
 
 export async function openBrowserAudioMonitor(deviceId: string): Promise<BrowserAudioMonitorHandle> {
-  const t0 = typeof performance !== "undefined" ? performance.now() : 0;
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: { deviceId: { exact: deviceId } },
   });
   const track = stream.getAudioTracks()[0];
   const settings = track?.getSettings();
-  const { ctx, created } = getSharedAudioContext();
-  // #region agent log
-  fetch('http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'675ed0'},body:JSON.stringify({sessionId:'675ed0',hypothesisId:'C',location:'browser.ts:openBrowserAudioMonitor',message:created?'AudioContext created':'AudioContext reused',data:{deviceIdPrefix:deviceId.slice(0,8),created,reused:!created,elapsedMs:typeof performance!=='undefined'?Math.round(performance.now()-t0):0},timestamp:Date.now(),runId:'post-fix'})}).catch(()=>{});
-  // #endregion
+  const { ctx } = getSharedAudioContext();
   const source = ctx.createMediaStreamSource(stream);
   const analyser = ctx.createAnalyser();
   analyser.fftSize = 2048;
