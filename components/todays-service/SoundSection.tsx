@@ -123,7 +123,11 @@ export default function SoundSection({
   );
 
   useEffect(() => {
-    for (const item of productionDevices.filter((d) => d.liveStatus === "connected")) {
+    const connected = productionDevices.filter((d) => d.liveStatus === "connected");
+    // #region agent log
+    fetch('http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'675ed0'},body:JSON.stringify({sessionId:'675ed0',hypothesisId:'C',location:'SoundSection.tsx:meterEffect',message:'sound meter effect run',data:{connectedCount:connected.length,deviceIds:connected.map((d)=>d.id),itemCount:items.length},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    for (const item of connected) {
       pollLevels(item);
     }
     return () => {
