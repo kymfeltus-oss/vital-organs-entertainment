@@ -1,5 +1,4 @@
 import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
-import { OPS_HOME_PATH } from "@/lib/broadcastRoutes";
 
 export const PERSONA_HUB_PATH = "/email-gate";
 export const ATTENDEE_GATE_PATH = "/login";
@@ -10,13 +9,12 @@ export const TEAM_GATE_PATH = "/email-gate/team";
 export const AUTH_NEXT_COOKIE = "auth_next";
 
 export const DEFAULT_ATTENDEE_NEXT = ATTENDEE_DASHBOARD_PATH;
-export const DEFAULT_OPS_NEXT = OPS_HOME_PATH;
-export const DEFAULT_TEAM_NEXT = DEFAULT_OPS_NEXT;
+export const DEFAULT_TEAM_NEXT = "/owner/control";
 
 const ATTENDEE_PROTECTED_EXACT = new Set(["/dashboard"]);
 const ATTENDEE_PROTECTED_PREFIXES = ["/experience", ATTENDEE_DASHBOARD_PATH];
 
-const TEAM_PROTECTED_PREFIXES = ["/ops", "/dashboard/broadcast"];
+const TEAM_PROTECTED_PREFIXES: string[] = ["/owner"];
 
 export function sanitizeNextPath(raw: string | null | undefined, fallback: string): string {
   if (!raw) return fallback;

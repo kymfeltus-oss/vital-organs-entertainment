@@ -12,7 +12,7 @@ type AttendeeLiveNavLinkProps = Omit<ComponentProps<typeof Link>, "href"> & {
   initialCountdownConfig?: EventCountdownConfig;
 };
 
-/** Live tab / menu link — routes to `/countdown` or `/live` from event lifecycle. */
+/** Live tab / menu link — routes to `/live`. */
 export default function AttendeeLiveNavLink({
   initialCountdownConfig,
   children,

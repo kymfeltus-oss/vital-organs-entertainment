@@ -1,6 +1,9 @@
-import type { ProductionStore } from "@/lib/broadcast/types";
-
 export type HealthSeverity = "GREEN" | "YELLOW" | "ORANGE" | "RED" | "BLACK";
+export type ProductionStore = {
+  production: {
+    isLive: boolean;
+  };
+} & Record<string, unknown>;
 
 /** Alias used by telemetry layer and operator dashboards. */
 export type SeverityLevel = HealthSeverity;

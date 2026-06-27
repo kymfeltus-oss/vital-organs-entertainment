@@ -96,8 +96,8 @@ function useLiveStreamReactionsState(enabled: boolean): LiveStreamReactionsConte
 
   useEffect(() => {
     if (!enabled) {
-      setFloatingReactions([]);
       seenIdsRef.current.clear();
+      queueMicrotask(() => setFloatingReactions([]));
       return;
     }
 
@@ -113,6 +113,7 @@ function useLiveStreamReactionsState(enabled: boolean): LiveStreamReactionsConte
     }
 
     const channelName = buildChannelName(LIVE_REACTIONS_CHANNEL, instanceId);
+    const dismissTimers = dismissTimersRef.current;
 
     setupPromise = (async () => {
       try {
@@ -151,10 +152,10 @@ function useLiveStreamReactionsState(enabled: boolean): LiveStreamReactionsConte
         await teardownRealtimeChannel(supabase, channel);
       })();
 
-      for (const timer of dismissTimersRef.current.values()) {
+      for (const timer of dismissTimers.values()) {
         clearTimeout(timer);
       }
-      dismissTimersRef.current.clear();
+      dismissTimers.clear();
     };
   }, [enabled, instanceId, pushFloatingReaction]);
 

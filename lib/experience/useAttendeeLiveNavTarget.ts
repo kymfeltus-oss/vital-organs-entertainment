@@ -1,12 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
-import { resolveAttendeeLiveNavTarget } from "@/lib/experience/resolve-live-nav-target";
+import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import type { AttendeeLiveNavTarget } from "@/lib/experience/resolve-live-nav-target";
-import { PUBLIC_COUNTDOWN_PATH } from "@/lib/experience/live-routes";
-import { useAttendeeLiveState } from "@/lib/experience/useAttendeeLiveState";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
-import { useCountdownConfig } from "@/lib/useCountdownConfig";
 
 type UseAttendeeLiveNavTargetOptions = {
   initialConfig?: EventCountdownConfig;
@@ -17,28 +13,15 @@ type UseAttendeeLiveNavTargetResult = {
   isLoading: boolean;
 };
 
-/** Dynamic `/countdown` vs `/live` target from synced schedule + broadcast override. */
+/** Attendee Live nav always opens the full-page live room at `/live`. */
 export function useAttendeeLiveNavTarget(
-  options: UseAttendeeLiveNavTargetOptions = {},
+  _options: UseAttendeeLiveNavTargetOptions = {},
 ): UseAttendeeLiveNavTargetResult {
-  const { config, isLoading: countdownLoading } = useCountdownConfig({
-    initialConfig: options.initialConfig,
-  });
-  const { isLive: broadcastIsLive, isLoading: broadcastLoading } = useAttendeeLiveState();
-
-  const href = useMemo(
-    () =>
-      resolveAttendeeLiveNavTarget(config.start_time, config.end_time, {
-        broadcastIsLive,
-      }),
-    [broadcastIsLive, config.end_time, config.start_time],
-  );
-
   return {
-    href,
-    isLoading: countdownLoading || broadcastLoading,
+    href: EXPERIENCE_LIVE_PATH,
+    isLoading: false,
   };
 }
 
-/** Conservative default while schedule sync is in flight. */
-export const ATTENDEE_LIVE_NAV_FALLBACK = PUBLIC_COUNTDOWN_PATH;
+/** @deprecated Use EXPERIENCE_LIVE_PATH — kept for import compatibility. */
+export const ATTENDEE_LIVE_NAV_FALLBACK = EXPERIENCE_LIVE_PATH;

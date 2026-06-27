@@ -53,9 +53,6 @@ export function useFellowshipChat(): UseFellowshipChatResult {
   const shouldFetchRef = useRef(fellowship.shouldFetch);
   const shouldAllowRealtimeRef = useRef(fellowship.shouldAllowRealtime);
 
-  shouldFetchRef.current = fellowship.shouldFetch;
-  shouldAllowRealtimeRef.current = fellowship.shouldAllowRealtime;
-
   const [messages, setMessages] = useState<FellowshipChatMessage[]>([]);
   const [pinned, setPinned] = useState<FellowshipChatMessage | null>(null);
   const [session, setSession] = useState<FellowshipChatSession>(DEFAULT_SESSION);
@@ -113,7 +110,12 @@ export function useFellowshipChat(): UseFellowshipChatResult {
         setIsLoading(false);
       }
     }
-  }, [fellowship.isIsolated, fellowship.safeMode]);
+  }, []);
+
+  useEffect(() => {
+    shouldFetchRef.current = fellowship.shouldFetch;
+    shouldAllowRealtimeRef.current = fellowship.shouldAllowRealtime;
+  }, [fellowship.shouldAllowRealtime, fellowship.shouldFetch]);
 
   useEffect(() => {
     return () => {
@@ -122,7 +124,7 @@ export function useFellowshipChat(): UseFellowshipChatResult {
   }, []);
 
   useEffect(() => {
-    void syncFeed();
+    queueMicrotask(() => void syncFeed());
   }, [syncFeed]);
 
   useEffect(() => {
@@ -135,7 +137,7 @@ export function useFellowshipChat(): UseFellowshipChatResult {
 
   useEffect(() => {
     if (!shouldAllowRealtimeRef.current()) {
-      setUsePollingFallback(true);
+      queueMicrotask(() => setUsePollingFallback(true));
       return;
     }
 
@@ -147,7 +149,7 @@ export function useFellowshipChat(): UseFellowshipChatResult {
       supabase = getSupabase();
     } catch (initError) {
       console.error("Fellowship chat realtime init failed:", initError);
-      setUsePollingFallback(true);
+      queueMicrotask(() => setUsePollingFallback(true));
       return;
     }
 

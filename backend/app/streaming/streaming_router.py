@@ -82,6 +82,8 @@ class EncoderBody(BaseModel):
     destination_id: str
     stream_url: str | None = None
     stream_key: str | None = None
+    video_device_label: str | None = None
+    audio_device_label: str | None = None
 
 
 @router.get("/providers/{provider_id}/configured")
@@ -292,19 +294,37 @@ def encoder_heartbeat(x_internal_token: str | None = Header(default=None)):
 @router.post("/encoder/prepare")
 def encoder_prepare(body: EncoderBody, x_internal_token: str | None = Header(default=None)):
     _verify_token(x_internal_token)
-    return encoder_service.prepare(body.destination_id, body.stream_url, body.stream_key)
+    return encoder_service.prepare(
+        body.destination_id,
+        body.stream_url,
+        body.stream_key,
+        body.video_device_label,
+        body.audio_device_label,
+    )
 
 
 @router.post("/encoder/start")
 def encoder_start(body: EncoderBody, x_internal_token: str | None = Header(default=None)):
     _verify_token(x_internal_token)
-    return encoder_service.start(body.destination_id, body.stream_url, body.stream_key)
+    return encoder_service.start(
+        body.destination_id,
+        body.stream_url,
+        body.stream_key,
+        body.video_device_label,
+        body.audio_device_label,
+    )
 
 
 @router.post("/encoder/stop")
 def encoder_stop(x_internal_token: str | None = Header(default=None)):
     _verify_token(x_internal_token)
     return encoder_service.stop()
+
+
+@router.get("/encoder/devices")
+def encoder_devices(x_internal_token: str | None = Header(default=None)):
+    _verify_token(x_internal_token)
+    return encoder_service.list_devices()
 
 
 @router.get("/encoder/detect")

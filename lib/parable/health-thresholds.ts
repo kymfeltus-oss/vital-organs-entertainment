@@ -1,5 +1,3 @@
-import { BROADCAST_SNAPSHOT_POLL_MS } from "@/lib/broadcast/config";
-
 /** Snapshot latency crosses YELLOW when above this threshold. */
 export const SNAPSHOT_LATENCY_YELLOW_MS = 500;
 
@@ -12,7 +10,7 @@ export const SNAPSHOT_CONSECUTIVE_FAILURE_RED = 3;
 /** Block duplicate operator commands within this window. */
 export const COMMAND_DEBOUNCE_MS = 2_000;
 
-export const SNAPSHOT_POLL_NORMAL_MS = BROADCAST_SNAPSHOT_POLL_MS;
+export const SNAPSHOT_POLL_NORMAL_MS = 2_500;
 export const SNAPSHOT_POLL_SLOW_MS = 5_000;
 export const SNAPSHOT_POLL_CRITICAL_MS = 10_000;
 

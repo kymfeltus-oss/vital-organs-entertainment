@@ -11,6 +11,8 @@ export type AccessContext = {
   isGuest: boolean;
 };
 
+export type LivePublishMode = "none" | "external_hls" | "rtmp_encoder" | "browser_camera";
+
 export type LiveAccessEvaluation = {
   authenticated: boolean;
   userId: string | null;
@@ -22,6 +24,8 @@ export type LiveAccessEvaluation = {
   showFullLockdown: boolean;
   streamIsLive: boolean;
   playbackUrl: string;
+  publishMode: LivePublishMode;
+  publisherChannel: string | null;
 };
 
 export function generateGuestEmail(): string {
@@ -95,6 +99,8 @@ export function evaluateLiveAccessFromFlags(
     showFullLockdown,
     streamIsLive: false,
     playbackUrl: "",
+    publishMode: "none",
+    publisherChannel: null,
   };
 }
 

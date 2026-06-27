@@ -1,39 +1,15 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import LiveExperienceClient from "@/components/experience/live/LiveExperienceClient";
-import LightweightLiveLoading from "@/components/live/LightweightLiveLoading";
-import { computeEventLifecycleStage } from "@/lib/experience/event-lifecycle";
-import { loadTabPageProfile } from "@/lib/experience/load-tab-page-profile";
-import { computeCountdown } from "@/lib/live/event-lobby";
-import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
+import LiveDataLoader from "@/components/experience/live/LiveDataLoader";
 
-export const dynamic = "force-dynamic";
+/** Dynamic — manifest + env playback resolved per request; no static asset preloads. */
+export const dynamic = "force-static";
 
 export const metadata: Metadata = {
   title: "300 Awakening Live | Vital Organs Entertainment",
   description: "Join the 300 Awakening live experience.",
 };
 
-/** Attendee live entry — holding room, then Viewer POV when concert begins. Nav hidden on /live. */
-export default async function LivePage() {
-  const [initialCountdownConfig, initialProfile] = await Promise.all([
-    loadActiveCountdownConfig(),
-    loadTabPageProfile(),
-  ]);
-  const initialCountdown = computeCountdown(initialCountdownConfig.start_time);
-  const initialLifecycleStage = computeEventLifecycleStage(
-    initialCountdownConfig.start_time,
-    initialCountdownConfig.end_time,
-  );
-
-  return (
-    <Suspense fallback={<LightweightLiveLoading />}>
-      <LiveExperienceClient
-        initialCountdownConfig={initialCountdownConfig}
-        initialCountdown={initialCountdown}
-        initialLifecycleStage={initialLifecycleStage}
-        initialProfile={initialProfile}
-      />
-    </Suspense>
-  );
+/** Attendee live entry — publishing is owner-only at /owner/publish/camera. */
+export default function LivePage() {
+  return <LiveDataLoader />;
 }

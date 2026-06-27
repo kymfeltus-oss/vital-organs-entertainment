@@ -76,8 +76,38 @@ const nextConfig = {
       },
       {
         source: "/ops/simplified",
-        destination: "/ops/countdown?view=console",
+        destination: "/owner/control",
         permanent: true,
+      },
+      {
+        source: "/ops/production-dashboard",
+        destination: "/owner/control",
+        permanent: false,
+      },
+      {
+        source: "/ops/production-dashboard/:path*",
+        destination: "/owner/control",
+        permanent: false,
+      },
+      {
+        source: "/ops/live-hub",
+        destination: "/owner/control",
+        permanent: false,
+      },
+      {
+        source: "/ops/live-hub/:path*",
+        destination: "/owner/control",
+        permanent: false,
+      },
+      {
+        source: "/ops",
+        destination: "/owner/control",
+        permanent: false,
+      },
+      {
+        source: "/ops/:path*",
+        destination: "/owner/control",
+        permanent: false,
       },
     ];
   },

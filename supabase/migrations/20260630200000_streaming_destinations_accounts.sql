@@ -30,6 +30,8 @@ WHERE connection_status = 'not_connected';
 
 ALTER TABLE public.streaming_destinations DROP CONSTRAINT IF EXISTS streaming_destinations_status_check;
 ALTER TABLE public.streaming_destinations
+  DROP CONSTRAINT IF EXISTS streaming_destinations_connection_status_check;
+ALTER TABLE public.streaming_destinations
   ADD CONSTRAINT streaming_destinations_connection_status_check CHECK (
     connection_status IN ('not_connected', 'connected', 'needs_attention', 'ready', 'error')
   );

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import TroubleAlertPopup from "@/components/broadcast/TroubleAlertPopup";
 import PublicCountdownChatMonitor from "@/components/countdown/PublicCountdownChatMonitor";
 import PublicCountdownRings from "@/components/countdown/PublicCountdownRings";
 import { usePublicCountdownSchedule } from "@/components/countdown/usePublicCountdownSchedule";
@@ -54,9 +53,6 @@ export default function PublicCountdownExperience({
     messages: chatMessages,
     isLoading: chatLoading,
     isConnected: chatConnected,
-    issueType: chatIssueType,
-    count: chatTroubleCount,
-    clear: clearChatTrouble,
   } = useCountdownChatTroubleAlerts({ enabled: showChatMonitor });
   const startingShortly = isCountdownStartingShortly(countdown, eventPhase);
   const eventDateLabel = formatEventDate(config.start_time);
@@ -232,11 +228,6 @@ export default function PublicCountdownExperience({
         />
       ) : null}
 
-      <TroubleAlertPopup
-        issueType={chatIssueType}
-        count={chatTroubleCount}
-        onClear={clearChatTrouble}
-      />
     </main>
   );
 }

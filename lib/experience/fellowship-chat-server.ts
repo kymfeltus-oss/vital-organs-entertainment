@@ -1,4 +1,3 @@
-import { inspectOpsAdminAccess } from "@/lib/ops/admin-auth";
 import {
   FELLOWSHIP_CHAT_HISTORY_LIMIT,
   FELLOWSHIP_SLOW_MODE_SECONDS,
@@ -58,12 +57,11 @@ export async function buildFellowshipSession(
   }
 
   const mutedUntil = await loadActiveMuteUntil(admin, user.id);
-  const isModerator = inspectOpsAdminAccess(user).allowed;
 
   return {
     authenticated: true,
     canSend: !mutedUntil,
-    isModerator,
+    isModerator: false,
     mutedUntil,
     slowModeSeconds: FELLOWSHIP_SLOW_MODE_SECONDS,
   };

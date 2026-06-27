@@ -1,5 +1,5 @@
-import type { ProductionStore } from "@/lib/broadcast/types";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
+import type { ProductionStore } from "@/lib/parable/health-types";
 
 const SNAPSHOT_KEY = "parable.lkg.snapshot";
 const COUNTDOWN_KEY = "parable.lkg.countdown";

@@ -36,3 +36,12 @@ Thumbs.db
 # ios/App/Pods/
 
 .vercel
+
+# python (local backend dev)
+backend/.venv/
+__pycache__/
+*.py[cod]
+dshow-devices.txt
+supabase/.temp/
+
+certificates

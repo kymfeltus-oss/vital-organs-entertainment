@@ -49,6 +49,8 @@ export function shouldDeferBackgroundLiveSync(
   previewOverride: boolean,
 ): boolean {
   if (previewOverride) return false;
+  // Local dev: always poll /api/access/live and realtime — SSR schedule flags are often stale.
+  if (process.env.NODE_ENV === "development") return false;
   if (countdownLoading) return true;
   // Holding room must still receive ops go-live — only defer during announcement.
   return lifecycleStage === "announcement";

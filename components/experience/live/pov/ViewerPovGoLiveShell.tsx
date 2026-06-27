@@ -8,13 +8,11 @@ import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
 type ViewerPovGoLiveShellProps = {
   initialProfile: AttendeeProfileSnapshot;
-  streamEnabled?: boolean;
 };
 
 /** Attendee go-live shell — Ian Craig LIVE with wallet, chat, and reactions wired. */
 export default function ViewerPovGoLiveShell({
   initialProfile,
-  streamEnabled = true,
 }: ViewerPovGoLiveShellProps) {
   const [profile, setProfile] = useState(initialProfile);
 
@@ -25,7 +23,6 @@ export default function ViewerPovGoLiveShell({
           <IanCraigLiveExperience
             profile={profile}
             onProfileChange={setProfile}
-            streamEnabled={streamEnabled}
           />
         </main>
       </LiveStreamReactionsProvider>

@@ -8,9 +8,7 @@ import IanCraigLiveChatFeed, {
   IanCraigLiveChatFeedSidebar,
 } from "@/components/experience/live/pov/ian-craig/IanCraigLiveChatFeed";
 import IanCraigLiveComposer from "@/components/experience/live/pov/ian-craig/IanCraigLiveComposer";
-import IanCraigLiveDashboard, {
-  IanCraigLiveDashboardSidebar,
-} from "@/components/experience/live/pov/ian-craig/IanCraigLiveDashboard";
+import { IanCraigLiveDashboardSidebar } from "@/components/experience/live/pov/ian-craig/IanCraigLiveDashboard";
 import IanCraigLiveReactionsRail from "@/components/experience/live/pov/ian-craig/IanCraigLiveReactionsRail";
 import IanCraigLiveVideoStage from "@/components/experience/live/pov/ian-craig/IanCraigLiveVideoStage";
 import {
@@ -23,7 +21,6 @@ import IgLiveSheet from "@/components/experience/live/ig/IgLiveSheet";
 import LiveActionSheet from "@/components/live/LiveActionSheet";
 import { useIgLiveChat } from "@/components/experience/live/ig/IgLiveChatContext";
 import type { IgLiveSheetAction } from "@/lib/experience/ig-live-config";
-import { useLiveAnnouncementRedirect } from "@/lib/experience/useLiveAnnouncementRedirect";
 import { useIanCraigLiveLayout } from "@/lib/experience/useIanCraigLiveLayout";
 import { useIanCraigLiveSeedActions } from "@/lib/experience/useIanCraigLiveSeedActions";
 import { useLiveElapsedTimer } from "@/lib/experience/useLiveElapsedTimer";
@@ -41,16 +38,12 @@ const REACTION_BASE_COUNT = 1_200;
 type IanCraigLiveExperienceProps = {
   profile: AttendeeProfileSnapshot;
   onProfileChange: (profile: AttendeeProfileSnapshot) => void;
-  streamEnabled?: boolean;
 };
 
 export default function IanCraigLiveExperience({
   profile,
   onProfileChange,
-  streamEnabled = true,
 }: IanCraigLiveExperienceProps) {
-  useLiveAnnouncementRedirect(false);
-
   const router = useRouter();
   const layout = useIanCraigLiveLayout();
   const { config } = useCountdownConfig();
@@ -219,7 +212,7 @@ export default function IanCraigLiveExperience({
         }`}
       >
         <div className="relative min-h-0 min-w-0">
-          <IanCraigLiveVideoStage enabled={streamEnabled} />
+          <IanCraigLiveVideoStage />
 
           <IanCraigLiveHeader
             viewerLabel={displayLabel}

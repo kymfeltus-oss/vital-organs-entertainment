@@ -7,12 +7,6 @@ const NAV_HIDDEN_EXACT = [
   "/create-account",
   "/test-suite",
   "/countdown",
-  /** Production aliases — canonical routes live under /ops */
-  "/countdown-editor",
-  "/live-hub",
-  "/production-dashboard",
-  "/dashboard/incidents",
-  "/dashboard/todays-service",
 ] as const;
 
 const NAV_HIDDEN_PREFIXES = [
@@ -23,12 +17,6 @@ const NAV_HIDDEN_PREFIXES = [
   "/watch",
   "/stream",
   "/studio",
-  /** Ops / production consoles — attendee bottom dock must not appear here */
-  "/ops",
-  "/production",
-  "/dashboard/broadcast",
-  "/dashboard/incidents",
-  "/dashboard/todays-service",
   "/email-gate",
   "/experience/live",
   "/dashboard/live",

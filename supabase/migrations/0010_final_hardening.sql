@@ -237,64 +237,168 @@ $$;
 -- ---------------------------------------------------------------------------
 -- 7. Fulfillment gate — revoke public/anon/authenticated EXECUTE
 -- ---------------------------------------------------------------------------
-REVOKE EXECUTE ON FUNCTION public.fulfill_event_ticket_tier(text, uuid, text, text, integer, integer)
-  FROM PUBLIC, anon, authenticated;
+DO $$
+BEGIN
+  IF to_regprocedure(
+    'public.fulfill_event_ticket_tier(text, uuid, text, text, integer, integer)'
+  ) IS NOT NULL THEN
+    REVOKE EXECUTE ON FUNCTION public.fulfill_event_ticket_tier(text, uuid, text, text, integer, integer)
+      FROM PUBLIC, anon, authenticated;
+    GRANT EXECUTE ON FUNCTION public.fulfill_event_ticket_tier(text, uuid, text, text, integer, integer)
+      TO service_role;
+  END IF;
+END $$;
 
-REVOKE EXECUTE ON FUNCTION public.fulfill_stripe_checkout_session(uuid, text, text, integer)
-  FROM PUBLIC, anon, authenticated;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname = 'fulfill_stripe_checkout_session'
+      AND pg_get_function_identity_arguments(p.oid) = 'uuid, text, text, integer'
+  ) THEN
+    REVOKE EXECUTE ON FUNCTION public.fulfill_stripe_checkout_session(uuid, text, text, integer)
+      FROM PUBLIC, anon, authenticated;
+  END IF;
+END $$;
 
-REVOKE EXECUTE ON FUNCTION public.fulfill_stripe_checkout_session(text, uuid, text, text, integer)
-  FROM PUBLIC, anon, authenticated;
+DO $$
+BEGIN
+  IF to_regprocedure(
+    'public.fulfill_stripe_checkout_session(text, uuid, text, text, integer)'
+  ) IS NOT NULL THEN
+    REVOKE EXECUTE ON FUNCTION public.fulfill_stripe_checkout_session(text, uuid, text, text, integer)
+      FROM PUBLIC, anon, authenticated;
+    GRANT EXECUTE ON FUNCTION public.fulfill_stripe_checkout_session(text, uuid, text, text, integer)
+      TO service_role;
+  END IF;
+END $$;
 
-REVOKE EXECUTE ON FUNCTION public.credit_seed_wallet(uuid, integer)
-  FROM PUBLIC, anon, authenticated;
+DO $$
+BEGIN
+  IF to_regprocedure('public.credit_seed_wallet(uuid, integer)') IS NOT NULL THEN
+    REVOKE EXECUTE ON FUNCTION public.credit_seed_wallet(uuid, integer)
+      FROM PUBLIC, anon, authenticated;
+    GRANT EXECUTE ON FUNCTION public.credit_seed_wallet(uuid, integer)
+      TO service_role;
+  END IF;
+END $$;
 
-REVOKE EXECUTE ON FUNCTION public.credit_user_seeds(uuid, integer)
-  FROM PUBLIC, anon, authenticated;
+DO $$
+BEGIN
+  IF to_regprocedure('public.credit_user_seeds(uuid, integer)') IS NOT NULL THEN
+    REVOKE EXECUTE ON FUNCTION public.credit_user_seeds(uuid, integer)
+      FROM PUBLIC, anon, authenticated;
+    GRANT EXECUTE ON FUNCTION public.credit_user_seeds(uuid, integer)
+      TO service_role;
+  END IF;
+END $$;
 
-REVOKE EXECUTE ON FUNCTION public.process_emote_transaction(uuid, integer, integer)
-  FROM PUBLIC, anon, authenticated;
+DO $$
+BEGIN
+  IF to_regprocedure('public.process_emote_transaction(uuid, integer, integer)') IS NOT NULL THEN
+    REVOKE EXECUTE ON FUNCTION public.process_emote_transaction(uuid, integer, integer)
+      FROM PUBLIC, anon, authenticated;
+    GRANT EXECUTE ON FUNCTION public.process_emote_transaction(uuid, integer, integer)
+      TO service_role;
+  END IF;
+END $$;
 
-REVOKE EXECUTE ON FUNCTION public.reverse_emote_transaction(uuid, integer, integer)
-  FROM PUBLIC, anon, authenticated;
-
-GRANT EXECUTE ON FUNCTION public.fulfill_event_ticket_tier(text, uuid, text, text, integer, integer)
-  TO service_role;
-
-GRANT EXECUTE ON FUNCTION public.fulfill_stripe_checkout_session(uuid, text, text, integer)
-  TO service_role;
-
-GRANT EXECUTE ON FUNCTION public.fulfill_stripe_checkout_session(text, uuid, text, text, integer)
-  TO service_role;
-
-GRANT EXECUTE ON FUNCTION public.credit_seed_wallet(uuid, integer)
-  TO service_role;
-
-GRANT EXECUTE ON FUNCTION public.credit_user_seeds(uuid, integer)
-  TO service_role;
-
-GRANT EXECUTE ON FUNCTION public.process_emote_transaction(uuid, integer, integer)
-  TO service_role;
-
-GRANT EXECUTE ON FUNCTION public.reverse_emote_transaction(uuid, integer, integer)
-  TO service_role;
+DO $$
+BEGIN
+  IF to_regprocedure('public.reverse_emote_transaction(uuid, integer, integer)') IS NOT NULL THEN
+    REVOKE EXECUTE ON FUNCTION public.reverse_emote_transaction(uuid, integer, integer)
+      FROM PUBLIC, anon, authenticated;
+    GRANT EXECUTE ON FUNCTION public.reverse_emote_transaction(uuid, integer, integer)
+      TO service_role;
+  END IF;
+END $$;
 
 -- ---------------------------------------------------------------------------
 -- 8. search_path + EXECUTE hardening on trigger/support functions
 --    (bodies unchanged — only re-applied where search_path was missing)
 -- ---------------------------------------------------------------------------
-REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.refresh_harvest_progress() FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.refresh_harvest_progress() TO service_role;
+DO $$
+BEGIN
+  IF to_regprocedure('public.handle_new_user()') IS NOT NULL THEN
+    REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
+    ALTER FUNCTION public.handle_new_user() SET search_path = public;
+  END IF;
+END $$;
 
--- search_path hardening on legacy functions (Supabase advisor)
-ALTER FUNCTION public.handle_new_user() SET search_path = public;
-ALTER FUNCTION public.credit_seed_wallet(uuid, integer) SET search_path = public;
-ALTER FUNCTION public.credit_user_seeds(uuid, integer) SET search_path = public;
-ALTER FUNCTION public.fulfill_event_ticket_tier(text, uuid, text, text, integer, integer)
-  SET search_path = public;
-ALTER FUNCTION public.fulfill_stripe_checkout_session(uuid, text, text, integer)
-  SET search_path = public;
-ALTER FUNCTION public.fulfill_stripe_checkout_session(text, uuid, text, text, integer)
-  SET search_path = public;
-ALTER FUNCTION public.refresh_harvest_progress() SET search_path = public;
+DO $$
+BEGIN
+  IF to_regprocedure('public.refresh_harvest_progress()') IS NOT NULL THEN
+    REVOKE EXECUTE ON FUNCTION public.refresh_harvest_progress() FROM PUBLIC, anon, authenticated;
+    GRANT EXECUTE ON FUNCTION public.refresh_harvest_progress() TO service_role;
+    ALTER FUNCTION public.refresh_harvest_progress() SET search_path = public;
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF to_regprocedure('public.credit_seed_wallet(uuid, integer)') IS NOT NULL THEN
+    ALTER FUNCTION public.credit_seed_wallet(uuid, integer) SET search_path = public;
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF to_regprocedure('public.credit_user_seeds(uuid, integer)') IS NOT NULL THEN
+    ALTER FUNCTION public.credit_user_seeds(uuid, integer) SET search_path = public;
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF to_regprocedure(
+    'public.fulfill_event_ticket_tier(text, uuid, text, text, integer, integer)'
+  ) IS NOT NULL THEN
+    ALTER FUNCTION public.fulfill_event_ticket_tier(text, uuid, text, text, integer, integer)
+      SET search_path = public;
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname = 'fulfill_stripe_checkout_session'
+      AND pg_get_function_identity_arguments(p.oid) = 'uuid, text, text, integer'
+  ) THEN
+    ALTER FUNCTION public.fulfill_stripe_checkout_session(uuid, text, text, integer)
+      SET search_path = public;
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF to_regprocedure(
+    'public.fulfill_stripe_checkout_session(text, uuid, text, text, integer)'
+  ) IS NOT NULL THEN
+    ALTER FUNCTION public.fulfill_stripe_checkout_session(text, uuid, text, text, integer)
+      SET search_path = public;
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF to_regprocedure('public.process_emote_transaction(uuid, integer, integer)') IS NOT NULL THEN
+    ALTER FUNCTION public.process_emote_transaction(uuid, integer, integer) SET search_path = public;
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF to_regprocedure('public.reverse_emote_transaction(uuid, integer, integer)') IS NOT NULL THEN
+    ALTER FUNCTION public.reverse_emote_transaction(uuid, integer, integer) SET search_path = public;
+  END IF;
+END $$;
+
+
+

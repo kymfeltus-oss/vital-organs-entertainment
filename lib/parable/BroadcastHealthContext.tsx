@@ -10,7 +10,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { ProductionStore } from "@/lib/broadcast/types";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import { ParableCommandGuard } from "@/lib/parable/command-guard";
 import {
@@ -45,6 +44,7 @@ import type {
   HealthAlert,
   HealthSeverity,
   ParableSurface,
+  ProductionStore,
   SubsystemHealth,
   SubsystemId,
 } from "@/lib/parable/health-types";

@@ -1,11 +1,11 @@
 "use client";
 
-import Hls from "hls.js";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   DEFAULT_ATTENDEE_EXPERIENCE,
   type AttendeeExperienceKey,
 } from "@/lib/experience/stream-experiences";
+import { attachHlsPlayback } from "@/lib/live/attach-hls-playback";
 
 const RECONNECT_DELAY_MS = 3_500;
 
@@ -30,19 +30,24 @@ export default function AttendeeStreamPlayer({
   embedded = false,
 }: AttendeeStreamPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<Hls | null>(null);
+  const hlsCleanupRef = useRef<(() => void) | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const manifestAbortRef = useRef<AbortController | null>(null);
+  const manifestInFlightRef = useRef(false);
   const isMountedRef = useRef(true);
   const playbackUrlRef = useRef("");
   const experienceRef = useRef(experience);
   const onUnavailableRef = useRef(onExperienceUnavailable);
 
+  const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [playbackStatus, setPlaybackStatus] = useState("Connecting to live broadcast...");
 
   const shouldPlay = enabled && !showPaywall;
+  const shouldPlayRef = useRef(shouldPlay);
+  shouldPlayRef.current = shouldPlay;
 
   useEffect(() => {
     experienceRef.current = experience;
@@ -60,15 +65,13 @@ export default function AttendeeStreamPlayer({
   }, []);
 
   const abortManifestFetch = useCallback(() => {
-    manifestAbortRef.current?.abort();
-    manifestAbortRef.current = null;
+    manifestInFlightRef.current = false;
   }, []);
 
   const destroyPlayer = useCallback(() => {
-    if (hlsRef.current) {
-      hlsRef.current.destroy();
-      hlsRef.current = null;
-    }
+    hlsCleanupRef.current?.();
+    hlsCleanupRef.current = null;
+    setStreamUrl(null);
     const video = videoRef.current;
     if (video) {
       video.removeAttribute("src");
@@ -78,7 +81,6 @@ export default function AttendeeStreamPlayer({
 
   const scheduleReconnectRef = useRef<() => void>(() => undefined);
   const loadStreamRef = useRef<() => Promise<string | null>>(async () => null);
-  const bindSourceRef = useRef<(url: string) => void>(() => undefined);
 
   const notifyExperienceUnavailable = useCallback(() => {
     const requested = experienceRef.current;
@@ -92,12 +94,14 @@ export default function AttendeeStreamPlayer({
     setIsReconnecting(true);
     setIsPlaying(false);
     setIsBuffering(true);
+    setPlaybackStatus("Reconnecting to live broadcast...");
 
     reconnectTimerRef.current = setTimeout(() => {
       void loadStreamRef.current().then((url) => {
         if (!isMountedRef.current) return;
         if (url) {
-          bindSourceRef.current(url);
+          playbackUrlRef.current = url;
+          setStreamUrl(url);
           return;
         }
         scheduleReconnectRef.current();
@@ -105,107 +109,73 @@ export default function AttendeeStreamPlayer({
     }, RECONNECT_DELAY_MS);
   }, [clearReconnectTimer, shouldPlay]);
 
-  const bindSource = useCallback(
-    (sourceUrl: string) => {
-      const video = videoRef.current;
-      if (!video || !sourceUrl || !shouldPlay) return;
+  const loadStream = useCallback(async (): Promise<string | null> => {
+    if (!shouldPlayRef.current) return null;
+    if (manifestInFlightRef.current) return playbackUrlRef.current || null;
 
-      destroyPlayer();
+    manifestInFlightRef.current = true;
+    const requestedExperience = experienceRef.current;
 
-      if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        video.src = sourceUrl;
-        void video.play().catch(() => scheduleReconnectRef.current());
-        return;
-      }
+    try {
+      const response = await fetch(
+        `/api/stream/manifest?experience=${encodeURIComponent(requestedExperience)}`,
+        {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        },
+      );
 
-      if (!Hls.isSupported()) {
-        scheduleReconnectRef.current();
-        return;
-      }
+      if (!shouldPlayRef.current || !isMountedRef.current) return null;
 
-      const hls = new Hls({ enableWorker: true });
-      hlsRef.current = hls;
-      hls.loadSource(sourceUrl);
-      hls.attachMedia(video);
-
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        setIsReconnecting(false);
-        setIsBuffering(false);
-        void video.play().catch(() => scheduleReconnectRef.current());
-      });
-
-      hls.on(Hls.Events.ERROR, (_, data) => {
-        if (!data.fatal) return;
-        scheduleReconnectRef.current();
-      });
-    },
-    [destroyPlayer, shouldPlay],
-  );
-
-  const loadStream = useCallback(
-    async (signal?: AbortSignal): Promise<string | null> => {
-      if (!shouldPlay) return null;
-
-      const requestedExperience = experienceRef.current;
-
-      try {
-        const response = await fetch(
-          `/api/stream/manifest?experience=${encodeURIComponent(requestedExperience)}`,
-          {
-            method: "GET",
-            credentials: "include",
-            cache: "no-store",
-            signal,
-          },
-        );
-
-        if (signal?.aborted) return null;
-
-        if (!response.ok) {
-          if (
-            requestedExperience !== DEFAULT_ATTENDEE_EXPERIENCE &&
-            (response.status === 503 || response.status === 400)
-          ) {
-            notifyExperienceUnavailable();
-            return null;
-          }
-          scheduleReconnectRef.current();
+      if (!response.ok) {
+        setPlaybackStatus(`Live manifest unavailable (${response.status}). Retrying...`);
+        if (
+          requestedExperience !== DEFAULT_ATTENDEE_EXPERIENCE &&
+          (response.status === 503 || response.status === 400)
+        ) {
+          notifyExperienceUnavailable();
           return null;
         }
-
-        const data = (await response.json()) as {
-          success?: boolean;
-          playbackUrl?: string;
-        };
-
-        if (signal?.aborted) return null;
-
-        const playbackUrl = data.playbackUrl?.trim() ?? "";
-        if (!data.success || !playbackUrl) {
-          if (requestedExperience !== DEFAULT_ATTENDEE_EXPERIENCE) {
-            notifyExperienceUnavailable();
-            return null;
-          }
-          scheduleReconnectRef.current();
-          return null;
-        }
-
-        playbackUrlRef.current = playbackUrl;
-        return playbackUrl;
-      } catch (error) {
-        if (signal?.aborted) return null;
         scheduleReconnectRef.current();
         return null;
       }
-    },
-    [notifyExperienceUnavailable, shouldPlay],
-  );
+
+      const data = (await response.json()) as {
+        success?: boolean;
+        playbackUrl?: string;
+      };
+
+      if (!shouldPlayRef.current || !isMountedRef.current) return null;
+
+      const playbackUrl = data.playbackUrl?.trim() ?? "";
+      if (!data.success || !playbackUrl) {
+        setPlaybackStatus("Live manifest did not include a playback URL. Retrying...");
+        if (requestedExperience !== DEFAULT_ATTENDEE_EXPERIENCE) {
+          notifyExperienceUnavailable();
+          return null;
+        }
+        scheduleReconnectRef.current();
+        return null;
+      }
+
+      playbackUrlRef.current = playbackUrl;
+      return playbackUrl;
+    } catch (error) {
+      if (!shouldPlayRef.current || !isMountedRef.current) return null;
+      console.error("[Telemetry Error]", error);
+      setPlaybackStatus("Could not load the live manifest. Retrying...");
+      scheduleReconnectRef.current();
+      return null;
+    } finally {
+      manifestInFlightRef.current = false;
+    }
+  }, [notifyExperienceUnavailable]);
 
   useEffect(() => {
     scheduleReconnectRef.current = scheduleReconnect;
     loadStreamRef.current = loadStream;
-    bindSourceRef.current = bindSource;
-  }, [bindSource, loadStream, scheduleReconnect]);
+  }, [loadStream, scheduleReconnect]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -216,45 +186,39 @@ export default function AttendeeStreamPlayer({
 
   useEffect(() => {
     if (!shouldPlay) {
-      abortManifestFetch();
       clearReconnectTimer();
       destroyPlayer();
-      setIsReconnecting(false);
-      setIsBuffering(false);
-      setIsPlaying(false);
+      queueMicrotask(() => {
+        if (!isMountedRef.current) return;
+        setIsReconnecting(false);
+        setIsBuffering(false);
+        setIsPlaying(false);
+        setPlaybackStatus("Live stream paused.");
+      });
       playbackUrlRef.current = "";
       return;
     }
 
-    const controller = new AbortController();
-    manifestAbortRef.current = controller;
     let cancelled = false;
 
-    setIsReconnecting(false);
-    setIsBuffering(true);
-    setIsPlaying(false);
+    queueMicrotask(() => {
+      if (cancelled || !isMountedRef.current) return;
+      setIsReconnecting(false);
+      setIsBuffering(true);
+      setIsPlaying(false);
+      setPlaybackStatus("Connecting to live broadcast...");
+    });
 
-    void loadStream(controller.signal).then((url) => {
-      if (cancelled || !url) return;
-      bindSource(url);
+    void loadStreamRef.current().then((url) => {
+      if (cancelled || !isMountedRef.current || !url) return;
+      playbackUrlRef.current = url;
+      setStreamUrl(url);
     });
 
     return () => {
       cancelled = true;
-      controller.abort();
-      if (manifestAbortRef.current === controller) {
-        manifestAbortRef.current = null;
-      }
     };
-  }, [
-    abortManifestFetch,
-    bindSource,
-    clearReconnectTimer,
-    destroyPlayer,
-    experience,
-    loadStream,
-    shouldPlay,
-  ]);
+  }, [clearReconnectTimer, destroyPlayer, experience, shouldPlay]);
 
   useEffect(() => {
     return () => {
@@ -268,19 +232,60 @@ export default function AttendeeStreamPlayer({
     if (!shouldPlay) return;
 
     const intervalId = window.setInterval(() => {
-      const controller = new AbortController();
-      void loadStream(controller.signal).then((url) => {
-        if (controller.signal.aborted || !url || !isMountedRef.current) return;
+      void loadStreamRef.current().then((url) => {
+        if (!url || !isMountedRef.current || !shouldPlayRef.current) return;
         if (url === playbackUrlRef.current) return;
         playbackUrlRef.current = url;
-        bindSource(url);
+        setStreamUrl(url);
       });
     }, MANIFEST_HOT_SWAP_MS);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [bindSource, loadStream, shouldPlay]);
+  }, [shouldPlay]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !shouldPlay || !streamUrl) {
+      hlsCleanupRef.current?.();
+      hlsCleanupRef.current = null;
+      return;
+    }
+
+    video.muted = !audioUnlocked;
+    let cancelled = false;
+
+    setPlaybackStatus("Loading live stream...");
+
+    void attachHlsPlayback(video, streamUrl, {
+      onManifestParsed: () => {
+        if (cancelled) return;
+        setIsReconnecting(false);
+        setIsBuffering(false);
+        setPlaybackStatus("Starting live video...");
+      },
+      onFatalError: () => {
+        if (cancelled) return;
+        console.error("[Telemetry Error] HLS fatal error");
+        setPlaybackStatus("Live stream playback error. Retrying...");
+        scheduleReconnectRef.current();
+      },
+    }).then((cleanup) => {
+      if (cancelled) {
+        cleanup();
+        return;
+      }
+      hlsCleanupRef.current?.();
+      hlsCleanupRef.current = cleanup;
+    });
+
+    return () => {
+      cancelled = true;
+      hlsCleanupRef.current?.();
+      hlsCleanupRef.current = null;
+    };
+  }, [audioUnlocked, shouldPlay, streamUrl]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -290,9 +295,17 @@ export default function AttendeeStreamPlayer({
       setIsPlaying(true);
       setIsReconnecting(false);
       setIsBuffering(false);
+      setPlaybackStatus("Live video playing.");
     };
-    const onWaiting = () => setIsBuffering(true);
-    const onError = () => scheduleReconnectRef.current();
+    const onWaiting = () => {
+      setIsBuffering(true);
+      setPlaybackStatus("Live video is buffering...");
+    };
+    const onError = () => {
+      const code = video.error?.code;
+      setPlaybackStatus(`Video element error${code ? ` ${code}` : ""}. Retrying...`);
+      scheduleReconnectRef.current();
+    };
 
     video.addEventListener("playing", onPlaying);
     video.addEventListener("waiting", onWaiting);
@@ -304,6 +317,15 @@ export default function AttendeeStreamPlayer({
       video.removeEventListener("error", onError);
     };
   }, [shouldPlay]);
+
+  const enableAudio = useCallback(() => {
+    const video = videoRef.current;
+    setAudioUnlocked(true);
+    if (!video) return;
+    video.muted = false;
+    video.volume = 1;
+    void video.play().catch(() => undefined);
+  }, []);
 
   if (!enabled && !showPaywall) return null;
 
@@ -340,8 +362,10 @@ export default function AttendeeStreamPlayer({
         controlsList="nodownload noremoteplayback"
         disablePictureInPicture
         playsInline
+        preload="none"
         autoPlay
-        muted
+        muted={!audioUnlocked}
+        crossOrigin="anonymous"
       />
 
       {showRecovery && (
@@ -352,10 +376,20 @@ export default function AttendeeStreamPlayer({
             <span className="live-waveform-bar w-1 rounded-full bg-[#1E40AF]/70" style={{ animationDelay: "300ms" }} />
           </div>
           <p className="mt-4 max-w-sm font-ui text-[0.62rem] font-bold uppercase tracking-[0.16em] text-zinc-300">
-            Reconnecting to live broadcast…
+            {playbackStatus}
           </p>
         </div>
       )}
+
+      {isPlaying && !audioUnlocked ? (
+        <button
+          type="button"
+          onClick={enableAudio}
+          className="absolute bottom-5 left-1/2 z-10 min-h-11 -translate-x-1/2 rounded-full border border-brand-blue/50 bg-black/75 px-5 font-ui text-[0.68rem] font-bold uppercase tracking-[0.14em] text-brand-blue backdrop-blur"
+        >
+          Tap for audio
+        </button>
+      ) : null}
 
       {paywallOverlay}
     </div>

@@ -1,6 +1,6 @@
 -- Admin-controlled hero / countdown configuration for the attendee dashboard.
 
-CREATE TABLE public.event_countdown_config (
+CREATE TABLE IF NOT EXISTS public.event_countdown_config (
   id                  uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id            text        NOT NULL UNIQUE,
   headline            text        NOT NULL,

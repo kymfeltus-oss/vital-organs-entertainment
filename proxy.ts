@@ -8,7 +8,6 @@ import {
   isAttendeeProtectedPath,
   isTeamProtectedPath,
 } from "@/lib/auth/routing";
-import { inspectOpsAdminAccess } from "@/lib/ops/admin-auth";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 /** Fail fast when Supabase is slow/unreachable — avoids 10s hangs on client navigation. */
@@ -136,18 +135,7 @@ export async function proxy(request: NextRequest) {
     });
   }
 
-  if (user) {
-    if (
-      (pathname === "/ops" || pathname.startsWith("/ops/")) &&
-      !inspectOpsAdminAccess(user).allowed
-    ) {
-      const nextPath = `${pathname}${request.nextUrl.search}`;
-      const redirectUrl = new URL(buildTeamGateUrl(nextPath), request.url);
-      return NextResponse.redirect(redirectUrl);
-    }
-
-    return response;
-  }
+  if (user) return response;
 
   const nextPath = `${pathname}${request.nextUrl.search}`;
 
@@ -177,7 +165,7 @@ export const config = {
     "/attendee-dashboard",
     "/experience",
     "/experience/:path*",
-    "/ops",
-    "/ops/:path*",
+    "/owner",
+    "/owner/:path*",
   ],
 };

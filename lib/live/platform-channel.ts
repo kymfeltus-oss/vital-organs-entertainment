@@ -1,8 +1,32 @@
 "use client";
 
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
-import { removeChannelsByName } from "@/lib/live/realtime-subscribe";
+import {
+  logRealtimeSubscribeStatus,
+  removeChannelsByName,
+} from "@/lib/live/realtime-subscribe";
 import { LIVE_ROOM_PLATFORM_CHANNEL } from "@/lib/live/types";
+
+export type PlatformChannelStatusListener = (status: string, err?: Error) => void;
+
+const platformStatusListeners = new Set<PlatformChannelStatusListener>();
+
+/** Subscribe to shared platform channel subscribe() status updates (for polling fallback). */
+export function subscribePlatformChannelStatus(
+  listener: PlatformChannelStatusListener,
+): () => void {
+  platformStatusListeners.add(listener);
+  return () => {
+    platformStatusListeners.delete(listener);
+  };
+}
+
+function emitPlatformChannelStatus(status: string, err?: Error): void {
+  logRealtimeSubscribeStatus(LIVE_ROOM_PLATFORM_CHANNEL, status, err);
+  for (const listener of platformStatusListeners) {
+    listener(status, err);
+  }
+}
 
 export type PlatformListenerApply = (channel: RealtimeChannel) => RealtimeChannel;
 
@@ -47,9 +71,15 @@ async function syncPlatformChannel(): Promise<void> {
 
   let channel = platformSupabase.channel(LIVE_ROOM_PLATFORM_CHANNEL);
   channel = applyAllListeners(channel);
-  channel.subscribe();
+  channel.subscribe((status, err) => {
+    emitPlatformChannelStatus(status, err);
+    if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+      isSubscribed = false;
+    } else if (status === "SUBSCRIBED") {
+      isSubscribed = true;
+    }
+  });
   platformChannel = channel;
-  isSubscribed = true;
 }
 
 function schedulePlatformChannelSync(): void {

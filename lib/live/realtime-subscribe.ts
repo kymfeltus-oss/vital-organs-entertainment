@@ -34,6 +34,27 @@ export type RealtimeChannelOptions = {
   };
 };
 
+export type RealtimeSubscribeHandler = (
+  status: string,
+  err?: Error,
+) => void;
+
+const REALTIME_LOG_PREFIX = "[Supabase Realtime]";
+
+/** Dev-visible subscription status — surfaces CHANNEL_ERROR / TIMED_OUT instead of failing silently. */
+export function logRealtimeSubscribeStatus(
+  channelLabel: string,
+  status: string,
+  err?: Error,
+): void {
+  if (process.env.NODE_ENV === "development") {
+    console.log(`${REALTIME_LOG_PREFIX} ${channelLabel} status: ${status}`);
+    if (err) {
+      console.error(`${REALTIME_LOG_PREFIX} ${channelLabel} error:`, err);
+    }
+  }
+}
+
 function channelTopic(channelName: string): string {
   return `realtime:${channelName}`;
 }
@@ -72,7 +93,7 @@ export async function createRealtimeChannel(
   supabase: SupabaseClient,
   channelName: string,
   bindings: RealtimeBindings,
-  onSubscribe?: (status: string) => void,
+  onSubscribe?: RealtimeSubscribeHandler,
   channelOptions?: RealtimeChannelOptions,
 ): Promise<RealtimeChannel> {
   await removeChannelsByName(supabase, channelName);
@@ -98,8 +119,9 @@ export async function createRealtimeChannel(
     channel = channel.on("broadcast", { event: binding.event }, binding.callback);
   }
 
-  channel.subscribe((status) => {
-    onSubscribe?.(status);
+  channel.subscribe((status, err) => {
+    logRealtimeSubscribeStatus(channelName, status, err);
+    onSubscribe?.(status, err);
   });
 
   return channel;

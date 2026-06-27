@@ -12,30 +12,17 @@ export async function broadcastAttendeeChatMessage(
   const supabaseAdmin = getSupabaseAdmin();
   const channel = supabaseAdmin.channel(REALTIME_ATTENDEE_CHAT_CHANNEL);
 
-  await new Promise<void>((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      void supabaseAdmin.removeChannel(channel);
-      reject(new Error("Attendee chat broadcast timed out."));
-    }, 5000);
+  try {
+    const result = await channel.httpSend(
+      ATTENDEE_CHAT_MESSAGE_EVENT,
+      payload,
+      { timeout: 5000 },
+    );
 
-    channel.subscribe(async (status) => {
-      if (status !== "SUBSCRIBED") return;
-
-      const result = await channel.send({
-        type: "broadcast",
-        event: ATTENDEE_CHAT_MESSAGE_EVENT,
-        payload,
-      });
-
-      clearTimeout(timeout);
-      await supabaseAdmin.removeChannel(channel);
-
-      if (result !== "ok") {
-        reject(new Error(`Attendee chat broadcast failed: ${result}`));
-        return;
-      }
-
-      resolve();
-    });
-  });
+    if (result.success === false) {
+      throw new Error(`Attendee chat broadcast failed: ${result.error}`);
+    }
+  } finally {
+    await supabaseAdmin.removeChannel(channel);
+  }
 }
