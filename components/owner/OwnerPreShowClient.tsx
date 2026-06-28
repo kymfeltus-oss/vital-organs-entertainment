@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import DeviceInventoryPreShowPanel from "@/components/owner/DeviceInventoryPreShowPanel";
 import PreShowCountdownManager from "@/components/owner/PreShowCountdownManager";
 import { derivePendingTodos } from "@/lib/owner/derive-pending-todos";
 import type { OwnerBroadcastSnapshot } from "@/lib/owner/contracts";
@@ -86,14 +87,17 @@ export default function OwnerPreShowClient() {
       {loading && !snapshot.capturedAt ? (
         <p className="p-6 font-body text-sm text-slate-500">Loading pre-show snapshot…</p>
       ) : (
-        <PreShowCountdownManager
-          snapshot={snapshot}
-          pendingTodos={derivePendingTodos(snapshot.preflight)}
-          onAdjustTimer={(offset) => void handleAdjustTimer(offset)}
-          onSavePreShow={(payload) => void handleSavePreShow(payload)}
-          timerPending={timerPending}
-          savePending={savePending}
-        />
+        <>
+          <DeviceInventoryPreShowPanel />
+          <PreShowCountdownManager
+            snapshot={snapshot}
+            pendingTodos={derivePendingTodos(snapshot.preflight)}
+            onAdjustTimer={(offset) => void handleAdjustTimer(offset)}
+            onSavePreShow={(payload) => void handleSavePreShow(payload)}
+            timerPending={timerPending}
+            savePending={savePending}
+          />
+        </>
       )}
     </div>
   );

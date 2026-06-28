@@ -120,7 +120,7 @@ export default function OwnerControlClient() {
       if (preflightData.snapshot) setSnapshot(preflightData.snapshot);
 
       if (preflightData.blocked) {
-        setActionMessage("Preflight blockers detected — review Pre-Show checklist.");
+        setActionMessage("Preflight blockers detected - review Pre-Show checklist.");
         return;
       }
 
@@ -193,7 +193,6 @@ export default function OwnerControlClient() {
         const failureMessage =
           data.message ?? data.error ?? `Drop curtain failed (HTTP ${response.status}).`;
         setActionMessage(failureMessage);
-        window.alert(failureMessage);
         return false;
       }
 
@@ -202,19 +201,17 @@ export default function OwnerControlClient() {
       if (data.ok === false) {
         const failureMessage = data.message ?? data.error ?? "Instant override failed.";
         setActionMessage(failureMessage);
-        window.alert(failureMessage);
         return false;
       }
 
       setActionMessage(
         data.message ??
-          "Drop curtain active — attendees notified for imminent live transition.",
+          "Drop curtain active - attendees notified for imminent live transition.",
       );
       return true;
     } catch {
       const failureMessage = "Drop curtain request failed.";
       setActionMessage(failureMessage);
-      window.alert(failureMessage);
       return false;
     }
   }, [setSnapshot]);

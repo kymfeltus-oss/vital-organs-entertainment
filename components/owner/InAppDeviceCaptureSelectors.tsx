@@ -84,7 +84,7 @@ export default function InAppDeviceCaptureSelectors({
     setAudioDeviceId(nextAudio);
     setDetectMessage(
       videos.length || audios.length
-        ? "Hardware detected — select video and audio inputs below."
+        ? "Hardware detected - select video and audio inputs below."
         : "No capture devices found. Connect a webcam or USB capture card.",
     );
   }, [audioDeviceId, videoDeviceId]);
@@ -101,27 +101,29 @@ export default function InAppDeviceCaptureSelectors({
   return (
     <div className="space-y-4">
       <button
+        data-testid="owner-control-detect-camera-microphone-button"
         type="button"
         disabled={disabled || detecting}
         onClick={() => void refreshDevices(true)}
-        className="min-h-10 rounded-full border border-slate-700 px-4 font-ui text-[0.62rem] font-bold uppercase tracking-[0.12em] text-slate-300 disabled:opacity-40"
+        className="min-h-11 rounded-[7px] border border-[#00A7FF] px-5 font-ui text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[#00DDEB] shadow-[0_0_16px_rgba(0,167,255,0.18)] disabled:opacity-40"
       >
-        {detecting ? "Detecting…" : "Detect Cameras & Microphones"}
+        {detecting ? "Detecting..." : "Detect Cameras & Microphones"}
       </button>
 
       {detectMessage ? (
-        <p className="font-body text-xs text-slate-400">{detectMessage}</p>
+        <p className="font-body text-sm text-white/58">{detectMessage}</p>
       ) : null}
 
       <label className="block">
-        <span className="font-ui text-[0.58rem] font-bold uppercase tracking-[0.14em] text-slate-500">
+        <span className="font-ui text-xs font-bold uppercase tracking-[0.18em] text-white/62">
           Video input
         </span>
         <select
+          data-testid="owner-control-video-input-select"
           disabled={disabled || videoDevices.length === 0}
           value={videoDeviceId}
           onChange={(event) => setVideoDeviceId(event.target.value)}
-          className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 font-body text-sm text-slate-100"
+          className="mt-2 min-h-12 w-full rounded-[7px] border border-[#263A61] bg-[#070A16] px-4 font-body text-sm text-white outline-none disabled:opacity-45"
         >
           {videoDevices.length === 0 ? (
             <option value="">No video devices</option>
@@ -136,14 +138,15 @@ export default function InAppDeviceCaptureSelectors({
       </label>
 
       <label className="block">
-        <span className="font-ui text-[0.58rem] font-bold uppercase tracking-[0.14em] text-slate-500">
+        <span className="font-ui text-xs font-bold uppercase tracking-[0.18em] text-white/62">
           Audio input
         </span>
         <select
+          data-testid="owner-control-audio-input-select"
           disabled={disabled || audioDevices.length === 0}
           value={audioDeviceId}
           onChange={(event) => setAudioDeviceId(event.target.value)}
-          className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 font-body text-sm text-slate-100"
+          className="mt-2 min-h-12 w-full rounded-[7px] border border-[#263A61] bg-[#070A16] px-4 font-body text-sm text-white outline-none disabled:opacity-45"
         >
           {audioDevices.length === 0 ? (
             <option value="">No audio devices</option>

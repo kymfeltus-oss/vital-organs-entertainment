@@ -1,7 +1,7 @@
-import OwnerPreShowClient from "@/components/owner/OwnerPreShowClient";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default function OwnerPreShowPage() {
-  return <OwnerPreShowClient />;
+  redirect("/owner/show-setup?tab=pre-show");
 }

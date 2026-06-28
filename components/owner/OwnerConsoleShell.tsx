@@ -1,15 +1,28 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { usePathname } from "next/navigation";
 import OwnerConsoleNavLink from "@/components/owner/OwnerConsoleNavLink";
 
 /** Operator-centric 5-room navigation — see docs/owner-broadcast-contract.md */
 const OWNER_NAV_ITEMS = [
   {
+    href: "/owner/show-setup",
+    icon: "SET",
+    label: "Show Setup",
+    description: "Settings + order of service",
+  },
+  {
     href: "/owner/pre-show",
     icon: "⏳",
     label: "Pre-Show Hub",
     description: "Countdown + preflight todos",
+  },
+  {
+    href: "/owner/device-inventory",
+    icon: "DEV",
+    label: "Device Inventory",
+    description: "External routing matrix",
   },
   {
     href: "/owner/control",
@@ -18,10 +31,10 @@ const OWNER_NAV_ITEMS = [
     description: "Go-live, ingest paths, dual failover",
   },
   {
-    href: "/owner/video-switcher",
-    icon: "🎥",
-    label: "Camera Switcher",
-    description: "Preview/program camera routing",
+    href: "/owner/video-hub/control",
+    icon: "LIVE",
+    label: "Video Hub",
+    description: "Live camera switching + IVS relay",
   },
   {
     href: "/owner/audio-monitoring",
@@ -55,6 +68,7 @@ function OwnerNavList({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export default function OwnerConsoleShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const closeMobileNav = useCallback(() => {
@@ -64,6 +78,16 @@ export default function OwnerConsoleShell({ children }: { children: React.ReactN
   const toggleMobileNav = useCallback(() => {
     setMobileNavOpen((open) => !open);
   }, []);
+
+  if (
+    pathname?.startsWith("/owner/show-setup") ||
+    pathname === "/owner/video-hub/control" ||
+    pathname === "/owner/device-inventory" ||
+    pathname === "/owner/control" ||
+    pathname === "/owner/audio-monitoring"
+  ) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="flex min-h-dvh flex-col bg-slate-950 text-slate-100 md:flex-row">
