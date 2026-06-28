@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       return ownerJsonResponse(
         {
           error:
-            "Invalid function. Allowed: StartStreaming, StopStreaming, StartRecording, StopRecording, Cut, Fade.",
+            "Invalid function. Allowed: StartStreaming, StopStreaming, StartRecording, StopRecording, PreviewInput, Cut, Fade.",
         },
         400,
       );

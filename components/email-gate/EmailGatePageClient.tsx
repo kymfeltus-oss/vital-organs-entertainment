@@ -1,5 +1,6 @@
 "use client";
 
+import "@/styles/features/attendee-surfaces.css";
 import { useSearchParams } from "next/navigation";
 import EmailGatePersonaPlate from "@/components/email-gate/EmailGatePersonaPlate";
 import {

@@ -1,5 +1,6 @@
 "use client";
 
+import "@/styles/features/intro-flash.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AccessContext } from "@/lib/access";
 import { fetchAccessContext } from "@/lib/access";

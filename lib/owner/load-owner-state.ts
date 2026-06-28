@@ -1,12 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { LIVE_STREAM_STATE_ID } from "@/lib/live/types";
+import { LIVE_STREAM_STATE_ID, type BroadcastCurrentState } from "@/lib/live/types";
 import type { PlaybackStatus, PublishMode, PublishStatus } from "@/lib/owner/contracts";
 
 export type OwnerStreamStateRow = {
   id: string;
   is_live: boolean;
-  playback_url: string | null;
-  active_source: string | null;
+  current_state: BroadcastCurrentState;
+  imminent_live_started_at: string | null;
+  playback_url: string | null;  active_source: string | null;
   primary_playback_url: string | null;
   backup_playback_url: string | null;
   publish_mode: PublishMode | null;
@@ -21,10 +22,10 @@ export type OwnerStreamStateRow = {
 };
 
 const SELECT_OWNER_WITH_FEEDS =
-  "id, is_live, playback_url, active_source, primary_playback_url, backup_playback_url, publish_mode, publish_status, playback_status, publish_error_message, playback_error_message, publisher_session_id, publisher_channel, updated_at, updated_by";
+  "id, is_live, current_state, imminent_live_started_at, playback_url, active_source, primary_playback_url, backup_playback_url, publish_mode, publish_status, playback_status, publish_error_message, playback_error_message, publisher_session_id, publisher_channel, updated_at, updated_by";
 
 const SELECT_OWNER_FULL =
-  "id, is_live, playback_url, active_source, publish_mode, publish_status, playback_status, publish_error_message, playback_error_message, publisher_session_id, publisher_channel, updated_at, updated_by";
+  "id, is_live, current_state, imminent_live_started_at, playback_url, active_source, publish_mode, publish_status, playback_status, publish_error_message, playback_error_message, publisher_session_id, publisher_channel, updated_at, updated_by";
 
 const SELECT_OWNER_LEGACY = "id, is_live, playback_url, active_source, updated_at, updated_by";
 
@@ -70,12 +71,23 @@ function normalizePlaybackStatus(raw: unknown, isLive: boolean): PlaybackStatus 
   return "unconfigured";
 }
 
+function normalizeCurrentState(raw: unknown, isLive: boolean): BroadcastCurrentState {
+  if (raw === "imminent_live" || raw === "live" || raw === "offline") {
+    return raw;
+  }
+  if (isLive) return "live";
+  return "offline";
+}
+
 function normalizeRow(row: Record<string, unknown>): OwnerStreamStateRow {
   const is_live = row.is_live === true;
 
   return {
     id: typeof row.id === "string" ? row.id : LIVE_STREAM_STATE_ID,
     is_live,
+    current_state: normalizeCurrentState(row.current_state, is_live),
+    imminent_live_started_at:
+      typeof row.imminent_live_started_at === "string" ? row.imminent_live_started_at : null,
     playback_url: typeof row.playback_url === "string" ? row.playback_url : null,
     active_source: typeof row.active_source === "string" ? row.active_source : null,
     primary_playback_url:
@@ -143,6 +155,10 @@ export async function updateOwnerStreamState(
     if (isMissingColumnError(error.message)) {
       const legacyPatch: Record<string, unknown> = {};
       if ("is_live" in patch) legacyPatch.is_live = patch.is_live;
+      if ("current_state" in patch) legacyPatch.current_state = patch.current_state;
+      if ("imminent_live_started_at" in patch) {
+        legacyPatch.imminent_live_started_at = patch.imminent_live_started_at;
+      }
       if ("playback_url" in patch) legacyPatch.playback_url = patch.playback_url;
       if ("active_source" in patch) legacyPatch.active_source = patch.active_source;
       if ("primary_playback_url" in patch) legacyPatch.primary_playback_url = patch.primary_playback_url;

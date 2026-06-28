@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isValidRelayTargetUrl, resolveRelayTargetCandidate } from "@/lib/live/hls";
 import {
+  parseIvsHostIdFromIngestUrl,
+  parseIvsHostIdFromPlaybackUrl,
+} from "@/lib/live/ivs-playback-url";
+import {
   manifestCorsHeaderRecord,
   resolveEnvPlaybackUrl,
 } from "@/lib/live/manifest-env-fast-path";
+import { collapseIvsMasterForDevRelay } from "@/lib/live/relay-playlist-normalize";
 import { isLiveAccessDevBypassEnabled } from "@/lib/access/live-dev-bypass";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
 
@@ -13,7 +18,37 @@ const ALLOWED_HOST_SUFFIXES = [
   "mux.dev",
   "mux.com",
   "restream.io",
+  "playback.live-video.net",
+  "playlist.live-video.net",
 ];
+
+/** IVS CDN hostnames share a channel host-id prefix: {hostId}.{edge}.playback|playlist.live-video.net */
+function parseIvsHostIdFromHostname(hostname: string): string | null {
+  const match = /^([a-f0-9]+)\./i.exec(hostname.toLowerCase());
+  return match?.[1] ?? null;
+}
+
+function resolveConfiguredIvsHostId(): string | null {
+  return (
+    process.env.AWS_IVS_HOST_ID?.trim() ||
+    parseIvsHostIdFromPlaybackUrl(resolveEnvPlaybackUrl()) ||
+    parseIvsHostIdFromPlaybackUrl(process.env.ATTENDEE_BACKUP_HLS_URL) ||
+    parseIvsHostIdFromIngestUrl(process.env.AWS_IVS_INGEST_SERVER) ||
+    null
+  );
+}
+
+/** Allow IVS child playlists, CloudFront segment hosts, etc. that share the configured host ID. */
+function isAllowedIvsSiblingHost(hostname: string): boolean {
+  const configuredHostId = resolveConfiguredIvsHostId();
+  if (!configuredHostId) return false;
+
+  const host = hostname.toLowerCase();
+  if (!host.endsWith(".live-video.net")) return false;
+
+  const targetHostId = parseIvsHostIdFromHostname(host);
+  return targetHostId === configuredHostId;
+}
 
 function relayReject(reason: string, detail: Record<string, unknown> = {}): void {
   console.error("[Relay Reject Reason]", reason, detail);
@@ -25,10 +60,16 @@ function isAllowedUpstream(url: URL): boolean {
     return false;
   }
 
+  const host = url.hostname.toLowerCase();
+
+  if (isAllowedIvsSiblingHost(host)) {
+    return true;
+  }
+
   const envUrl = resolveEnvPlaybackUrl();
   if (envUrl) {
     try {
-      if (new URL(envUrl).hostname.toLowerCase() === url.hostname.toLowerCase()) {
+      if (new URL(envUrl).hostname.toLowerCase() === host) {
         return true;
       }
     } catch {
@@ -36,7 +77,6 @@ function isAllowedUpstream(url: URL): boolean {
     }
   }
 
-  const host = url.hostname.toLowerCase();
   const allowed = ALLOWED_HOST_SUFFIXES.some(
     (suffix) => host === suffix || host.endsWith(`.${suffix}`),
   );
@@ -44,6 +84,7 @@ function isAllowedUpstream(url: URL): boolean {
   if (!allowed) {
     relayReject("upstream_host_not_allowed", {
       host,
+      configuredIvsHostId: resolveConfiguredIvsHostId(),
       allowedSuffixes: ALLOWED_HOST_SUFFIXES,
       target: url.toString(),
     });
@@ -52,28 +93,114 @@ function isAllowedUpstream(url: URL): boolean {
   return allowed;
 }
 
-function rewritePlaylistBody(body: string, upstreamUrl: URL, relayBase: URL): string {
-  return body
-    .split("\n")
-    .map((line) => {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) {
-        const uriMatch = trimmed.match(/URI="([^"]+)"/i);
-        if (uriMatch?.[1]) {
-          const absolute = new URL(uriMatch[1], upstreamUrl).href;
-          const relay = new URL(relayBase);
-          relay.searchParams.set("target", absolute);
-          return trimmed.replace(uriMatch[1], relay.toString());
-        }
-        return line;
-      }
+function buildRelayTargetUrl(relayBase: URL, absoluteHref: string): string {
+  const relay = new URL(relayBase);
+  relay.searchParams.set("target", absoluteHref);
+  return relay.toString();
+}
 
-      const absolute = new URL(trimmed, upstreamUrl).href;
-      const relay = new URL(relayBase);
-      relay.searchParams.set("target", absolute);
-      return relay.toString();
-    })
-    .join("\n");
+/** IVS low-latency tags that race through the dev relay and cause audio glitches. */
+function shouldStripLlHlsTag(trimmed: string): boolean {
+  const upper = trimmed.toUpperCase();
+  return (
+    upper.startsWith("#EXT-X-PREFETCH") ||
+    upper.startsWith("#EXT-X-PRELOAD-HINT") ||
+    upper.startsWith("#EXT-X-PART:") ||
+    upper.startsWith("#EXT-X-PART-INF") ||
+    upper.startsWith("#EXT-X-SERVER-CONTROL") ||
+    upper.startsWith("#EXT-X-SKIPPED-SEGMENTS")
+  );
+}
+
+function isPlaylistResourceLine(trimmed: string): boolean {
+  if (!trimmed || trimmed.startsWith("#")) return false;
+  if (/^https?:\/\//i.test(trimmed)) return true;
+  if (trimmed.startsWith("/")) return true;
+  return /\.(ts|m3u8|m4s|aac|mp4)(\?|$)/i.test(trimmed);
+}
+
+function relayAbsoluteUrl(
+  rawUrl: string,
+  upstreamUrl: URL,
+  relayBase: URL,
+): string | null {
+  try {
+    const absolute = new URL(rawUrl, upstreamUrl).href;
+    return buildRelayTargetUrl(relayBase, absolute);
+  } catch {
+    return null;
+  }
+}
+
+function rewriteTagLine(line: string, upstreamUrl: URL, relayBase: URL): string {
+  const trimmed = line.trim();
+  if (shouldStripLlHlsTag(trimmed)) {
+    return "";
+  }
+
+  const withRelayUrls = trimmed.replace(/https:\/\/[^\s"'<>]+/g, (rawUrl) => {
+    return relayAbsoluteUrl(rawUrl, upstreamUrl, relayBase) ?? rawUrl;
+  });
+
+  const uriMatch = withRelayUrls.match(/URI="([^"]+)"/i);
+  if (uriMatch?.[1] && !uriMatch[1].includes("localhost")) {
+    const relayed = relayAbsoluteUrl(uriMatch[1], upstreamUrl, relayBase);
+    if (relayed) {
+      return withRelayUrls.replace(uriMatch[1], relayed);
+    }
+  }
+
+  return withRelayUrls;
+}
+
+/**
+ * Strip LL-HLS prefetch/part hints, then rewrite every segment and playlist URL
+ * (absolute or relative) so nothing bypasses the same-origin relay.
+ */
+function rewritePlaylistBody(body: string, upstreamUrl: URL, relayBase: URL): string {
+  const normalized = collapseIvsMasterForDevRelay(body);
+  const lines = normalized.split("\n");
+  const output: string[] = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      output.push(line);
+      continue;
+    }
+
+    if (shouldStripLlHlsTag(trimmed)) {
+      const nextTrimmed = lines[index + 1]?.trim() ?? "";
+      if (isPlaylistResourceLine(nextTrimmed)) {
+        index += 1;
+      }
+      continue;
+    }
+
+    if (trimmed.startsWith("#EXT-X-RENDITION-REPORT")) {
+      continue;
+    }
+
+    if (trimmed.startsWith("#")) {
+      const rewritten = rewriteTagLine(line, upstreamUrl, relayBase);
+      if (rewritten) {
+        output.push(rewritten);
+      }
+      continue;
+    }
+
+    if (isPlaylistResourceLine(trimmed)) {
+      const relayed = relayAbsoluteUrl(trimmed, upstreamUrl, relayBase);
+      output.push(relayed ?? line);
+      continue;
+    }
+
+    output.push(line);
+  }
+
+  return output.join("\n");
 }
 
 async function authorizeRelay(request: NextRequest): Promise<boolean> {

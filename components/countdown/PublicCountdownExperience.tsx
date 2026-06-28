@@ -1,5 +1,6 @@
 "use client";
 
+import "@/styles/features/public-countdown.css";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import PublicCountdownChatMonitor from "@/components/countdown/PublicCountdownChatMonitor";

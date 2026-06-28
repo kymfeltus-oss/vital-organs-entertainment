@@ -17,6 +17,7 @@ const NAV_HIDDEN_PREFIXES = [
   "/watch",
   "/stream",
   "/studio",
+  "/owner",
   "/email-gate",
   "/experience/live",
   "/dashboard/live",

@@ -14,6 +14,7 @@ const ALLOWED_VMIX_FUNCTIONS = new Set([
   "StopStreaming",
   "StartRecording",
   "StopRecording",
+  "PreviewInput",
   "Cut",
   "Fade",
 ]);

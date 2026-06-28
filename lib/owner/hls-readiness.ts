@@ -1,5 +1,5 @@
 import { isValidHlsUrl } from "@/lib/live/hls";
-import { resolveAttendeePlaybackFromEnv } from "@/lib/live/manifest-dev-fallback";
+import { resolveAttendeePlaybackFromEnv, rejectDemoPlaybackUrl } from "@/lib/live/manifest-dev-fallback";
 
 export type HlsProbeResult = {
   envConfigured: boolean;
@@ -14,7 +14,7 @@ export function resolveSafePublicHlsUrl(
   dbPlaybackUrl: string | null | undefined,
 ): string | null {
   const envUrl = resolveAttendeePlaybackFromEnv();
-  const dbUrl = dbPlaybackUrl?.trim() ?? "";
+  const dbUrl = rejectDemoPlaybackUrl(dbPlaybackUrl);
 
   if (envUrl && isValidHlsUrl(envUrl)) return envUrl;
   if (dbUrl && isValidHlsUrl(dbUrl)) return dbUrl;

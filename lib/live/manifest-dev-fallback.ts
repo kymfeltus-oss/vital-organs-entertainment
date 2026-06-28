@@ -1,8 +1,12 @@
-import { isValidHlsUrl, isValidHttpPlaybackUrl } from "@/lib/live/hls";
+import { isValidHlsUrl } from "@/lib/live/hls";
+import {
+  logPlaybackValidationWarnings,
+  sanitizeAttendeePlaybackUrl,
+  validateAttendeePlaybackUrl,
+} from "@/lib/live/playback-url-validation";
 
-/** Public Mux test HLS (Big Buck Bunny) — opt-in dev fallback only. */
-export const DEV_MANIFEST_FALLBACK_HLS =
-  "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
+/** Legacy Mux test stream — never serve to attendees. */
+const LEGACY_MUX_DEMO_HLS = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
 
 const ENV_PLAYBACK_KEYS = [
   "ATTENDEE_PLAYBACK_HLS_URL",
@@ -34,27 +38,44 @@ function logManifestEnvRoutingCheck(): void {
   const publicRaw = process.env.NEXT_PUBLIC_HLS_STREAM_URL;
   const attendee = normalizeEnvPlaybackString(attendeeRaw);
   const publicUrl = normalizeEnvPlaybackString(publicRaw);
+
+  const attendeeValidation = attendee
+    ? validateAttendeePlaybackUrl(attendee, "ATTENDEE_PLAYBACK_HLS_URL")
+    : null;
+  const publicValidation = publicUrl
+    ? validateAttendeePlaybackUrl(publicUrl, "NEXT_PUBLIC_HLS_STREAM_URL")
+    : null;
+
+  if (attendeeValidation) logPlaybackValidationWarnings(attendeeValidation, "env_startup");
+  if (publicValidation) logPlaybackValidationWarnings(publicValidation, "env_startup");
+
   const resolved = resolveAttendeePlaybackFromEnv();
 
   console.log(
-    "[Manifest Routing Cache Check]",
-    attendee || publicUrl ? "FOUND ENV" : "ENV EMPTY",
+    "[stream/manifest] Env routing check",
+    attendee || publicUrl ? "CONFIGURED" : "EMPTY",
     {
       attendeeDefined: Boolean(attendeeRaw?.trim()),
       publicDefined: Boolean(publicRaw?.trim()),
-      attendeeNormalized: attendee || null,
-      publicNormalized: publicUrl || null,
+      attendeePassesValidation: attendeeValidation?.ok ?? false,
+      publicPassesValidation: publicValidation?.ok ?? false,
       resolvedPlaybackUrl: resolved,
-      passesHlsValidation: resolved ? isValidHlsUrl(resolved) : false,
     },
   );
+
+  if ((attendeeRaw?.trim() || publicRaw?.trim()) && !resolved) {
+    console.error(
+      "[stream/manifest] Playback env is set but invalid. Use a Restream/CDN .m3u8 URL in ATTENDEE_PLAYBACK_HLS_URL, then restart the dev server.",
+    );
+  }
 }
 
 /** ATTENDEE_PLAYBACK_HLS_URL only — highest-priority env lane for production. */
 export function resolvePrimaryAttendeePlaybackFromEnv(): string | null {
-  const attendee = normalizeEnvPlaybackString(process.env.ATTENDEE_PLAYBACK_HLS_URL);
-  if (attendee && isValidHlsUrl(attendee)) return attendee;
-  return null;
+  return sanitizeAttendeePlaybackUrl(
+    normalizeEnvPlaybackString(process.env.ATTENDEE_PLAYBACK_HLS_URL),
+    "ATTENDEE_PLAYBACK_HLS_URL",
+  );
 }
 
 /** Production HLS from env — ATTENDEE_PLAYBACK_HLS_URL first, then NEXT_PUBLIC_HLS_STREAM_URL. */
@@ -64,11 +85,10 @@ export function resolveAttendeePlaybackFromEnv(): string | null {
   const configuredAttendee = resolveConfiguredAttendeePlaybackFromEnv();
   if (configuredAttendee) return configuredAttendee;
 
-  const publicUrl = normalizeEnvPlaybackString(process.env.NEXT_PUBLIC_HLS_STREAM_URL);
-  if (publicUrl && isValidHlsUrl(publicUrl)) return publicUrl;
-  if (publicUrl && isValidHttpPlaybackUrl(publicUrl)) return publicUrl;
-
-  return null;
+  return sanitizeAttendeePlaybackUrl(
+    normalizeEnvPlaybackString(process.env.NEXT_PUBLIC_HLS_STREAM_URL),
+    "NEXT_PUBLIC_HLS_STREAM_URL",
+  );
 }
 
 export function hasAttendeePlaybackEnvConfigured(): boolean {
@@ -81,7 +101,14 @@ export function hasAttendeePlaybackEnvConfigured(): boolean {
 export function isDemoManifestPlaybackUrl(url: string | null | undefined): boolean {
   const trimmed = url?.trim() ?? "";
   if (!trimmed) return false;
-  return trimmed.includes("test-streams.mux.dev") || trimmed === DEV_MANIFEST_FALLBACK_HLS;
+  if (trimmed.includes("test-streams.mux.dev") || trimmed === LEGACY_MUX_DEMO_HLS) return true;
+  const validation = validateAttendeePlaybackUrl(trimmed, "demo_check");
+  return validation.ok === false && validation.reason === "known_demo_host";
+}
+
+/** Strip legacy demo/test manifests — returns null when URL is a demo stream. */
+export function rejectDemoPlaybackUrl(url: string | null | undefined): string | null {
+  return sanitizeAttendeePlaybackUrl(url, "playback_url");
 }
 
 export type ManifestExperienceKey =
@@ -104,26 +131,21 @@ export function isAttendeePlaybackEnvPopulated(): boolean {
   return Boolean(normalizeEnvPlaybackString(process.env.ATTENDEE_PLAYBACK_HLS_URL));
 }
 
-/**
- * ATTENDEE_PLAYBACK_HLS_URL when set in .env — prefers valid .m3u8, accepts any http(s) URL.
- * Stops the manifest from falling through to the Mux demo when the operator configured env.
- */
+/** ATTENDEE_PLAYBACK_HLS_URL when set — must pass .m3u8 + demo-host validation. */
 export function resolveConfiguredAttendeePlaybackFromEnv(): string | null {
-  const attendee = normalizeEnvPlaybackString(process.env.ATTENDEE_PLAYBACK_HLS_URL);
-  if (!attendee) return null;
-  return attendee;
+  return sanitizeAttendeePlaybackUrl(
+    normalizeEnvPlaybackString(process.env.ATTENDEE_PLAYBACK_HLS_URL),
+    "ATTENDEE_PLAYBACK_HLS_URL",
+  );
 }
 
-/** True only when Mux demo fallback is explicitly allowed and no env playback is configured. */
+/** @deprecated Demo manifest fallback removed — production/env URLs only. */
 export function isDevMuxManifestFallbackEnabled(): boolean {
-  if (isAttendeePlaybackEnvPopulated()) return false;
-  if (resolveConfiguredAttendeePlaybackFromEnv()) return false;
-  if (resolveAttendeePlaybackFromEnv()) return false;
-  return process.env.ENABLE_DEV_MANIFEST_FALLBACK?.trim() === "1";
+  return false;
 }
 
 export function isDevManifestFallbackEnabled(): boolean {
-  return process.env.NODE_ENV === "development";
+  return false;
 }
 
 /** Production env manifest — never flagged as demo fallback. */
@@ -132,10 +154,6 @@ export function buildProductionEnvManifestPayload(
 ): ManifestSuccessPayload | null {
   const playbackUrl = resolveAttendeePlaybackFromEnv();
   if (!playbackUrl) return null;
-
-  console.warn(
-    `[stream/manifest] Production env manifest → ${playbackUrl} [env override, fallback=false]`,
-  );
 
   return {
     success: true,
@@ -148,28 +166,11 @@ export function buildProductionEnvManifestPayload(
 
 export function buildDevManifestFallbackPayload(
   experience: ManifestExperienceKey,
-  reason: string,
-  options?: { suppressDemoFallback?: boolean },
+  _reason: string,
+  _options?: { suppressDemoFallback?: boolean },
 ): ManifestSuccessPayload | null {
-  const productionPayload = buildProductionEnvManifestPayload(experience);
-  if (productionPayload) {
-    return productionPayload;
-  }
-
-  if (options?.suppressDemoFallback || !isDevMuxManifestFallbackEnabled()) {
-    return null;
-  }
-
-  console.warn(
-    `[stream/manifest] Manifest payload (${reason}) → ${DEV_MANIFEST_FALLBACK_HLS} [mux demo fallback]`,
-  );
-
-  return {
-    success: true,
-    playbackUrl: DEV_MANIFEST_FALLBACK_HLS,
-    activeExperience: experience,
-    activeSource: "primary",
-    fallback: true,
-    fallbackReason: reason,
-  };
+  return buildProductionEnvManifestPayload(experience);
 }
+
+/** @internal re-export for tests */
+export { isValidHlsUrl };

@@ -1,0 +1,49 @@
+---
+description: Structural architecture rules for the desktop-first owner control console workspaces.
+globs: app/owner/**/*, components/owner/**/*, lib/owner/**/*
+alwaysApply: false
+---
+
+# Owner Control Console Architecture Rules
+
+## 1. Single Control Plane Principle
+
+- Never instantiate raw browser media tasks (`new AudioContext()`), local canvas frame loops (`requestAnimationFrame`), or video encoding routines inside dashboard views under `components/owner/`.
+- Dashboard rooms are **presentational layouts** driven by props from `OwnerBroadcastSnapshot` and related types in `lib/owner/contracts.ts`.
+- Canonical behavior reference: `docs/owner-broadcast-contract.md`.
+- Media capture, WebRTC publish, and encoder loops belong on dedicated routes (e.g. `/owner/publish/camera`, reachable from Broadcast Control — not a sidebar item) or external services.
+
+## 2. Security Invariant
+
+- Never render raw RTMP ingest URLs, stream keys, or full HLS playback URL strings in attendee surfaces or public API responses.
+- **Exception:** `/owner/control` (Broadcast Control wizard) may show RTMP URL + stream key to authenticated `ADMIN_EMAILS` operators via `GET /api/owner/ingest/credentials` only.
+- All other owner rooms track pipelines via status badges, "Configured / Missing" tokens, preflight checks, and manifest health.
+- All `/owner/**` pages require server-side `requireOwnerUser()` (`ADMIN_EMAILS`) in `app/owner/layout.tsx` before any layout pixels render.
+
+## 3. UI Composition Requirements
+
+- Scope owner console components strictly to **TypeScript** (`.tsx`).
+- Group all dashboard rooms under the unified owner layout shell (`app/owner/layout.tsx`).
+- Operator-centric **five-room** sidebar navigation:
+  - `/owner/pre-show` — Pre-Show Hub (schedule + preflight todos)
+  - `/owner/control` — Broadcast Control (go-live, dual-ingest failover)
+  - `/owner/video-switcher` — Camera Switcher (preview/program routing)
+  - `/owner/audio-monitoring` — Sound Control (VU telemetry + AI gain guard via `POST /api/owner/audio/config`)
+  - `/owner/audio-mixing` — Mastering Desk (FX rack config via `POST /api/owner/audio/presets`)
+- Go-live actions must respect **pending todos** (preflight fail/warn blockers) before enabling master transmit controls.
+
+## 4. Three Axes (never collapse)
+
+Always show **event phase**, **publish**, and **playback** separately in control surfaces. Do not merge into a single "LIVE" badge.
+
+## 5. Drop Curtain (instant override)
+
+Instant go-live bypasses schedule registries — see `.cursor/rules/owner-drop-curtain-override.mdc` for the non-blocking `current_state = 'imminent_live'` invariant and server-anchored attendee countdown (`dropStartedAt`).
+
+## 6. Responsive layout
+
+Mobile/tablet/desktop scaling uses Tailwind breakpoints only — see `.cursor/rules/owner-responsive.mdc`. No resize listeners in owner rooms.
+
+## 7. Event binding
+
+Critical operator buttons use direct native `onClick` handlers — see `.cursor/rules/owner-event-binding.mdc`.

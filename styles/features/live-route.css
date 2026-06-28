@@ -1,0 +1,287 @@
+﻿@keyframes experience-go-live-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes experience-go-live-sweep {
+  0% {
+    transform: translateX(-120%) skewX(-12deg);
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateX(120%) skewX(-12deg);
+    opacity: 0;
+  }
+}
+
+.experience-go-live-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: clamp(1rem, 4cqw, 1.5rem);
+  text-align: center;
+  background-color: rgb(0 0 0 / 0.92);
+  animation: experience-go-live-in 1.2s ease-out forwards;
+}
+
+.experience-go-live-countdown {
+  font-size: clamp(4.5rem, 18vw, 7.5rem);
+  text-shadow:
+    0 0 24px rgb(0 168 255 / 0.85),
+    0 0 48px rgb(0 168 255 / 0.35);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .experience-go-live-countdown {
+    animation: experience-go-live-countdown-pulse 1s ease-in-out infinite;
+  }
+}
+
+@keyframes experience-go-live-countdown-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+.experience-go-live-sweep {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.experience-go-live-sweep::after {
+  content: "";
+  position: absolute;
+  inset: -20% 0;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(30, 64, 175, 0.1) 35%,
+    rgba(30, 64, 175, 0.5) 50%,
+    rgba(176, 38, 122, 0.22) 65%,
+    transparent 100%
+  );
+  animation: experience-go-live-sweep 1.35s ease-out forwards;
+}
+
+/* /experience/live mockup theme â€” scoped attendee livestream palette */
+.experience-live-root {
+  --exp-bg: #07070a;
+  --exp-panel: #0c0c10;
+  --exp-blue: #00a8ff;
+  --exp-magenta: #ff2faf;
+  --exp-border: rgba(255, 255, 255, 0.08);
+  background-color: var(--exp-bg);
+  color: #ffffff;
+}
+
+.experience-live-root .exp-text-blue {
+  color: var(--exp-blue);
+}
+
+.experience-live-root .exp-text-magenta {
+  color: var(--exp-magenta);
+}
+
+.experience-stream-stage {
+  position: relative;
+  background: var(--exp-bg);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 20px 64px rgba(0, 0, 0, 0.72),
+    0 0 40px rgba(30, 64, 175, 0.22);
+}
+
+.experience-stream-stage::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(11, 9, 10, 0.45) 0%,
+    transparent 30%,
+    transparent 68%,
+    rgba(11, 9, 10, 0.65) 100%
+  );
+  z-index: 1;
+}
+
+.experience-glass-chip {
+  background: rgba(17, 17, 17, 0.82);
+  border: 1px solid var(--exp-border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.experience-glass-panel {
+  background: rgba(17, 17, 17, 0.92);
+  border: 1px solid var(--exp-border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.experience-tab {
+  border: 1px solid var(--exp-border);
+  background: rgba(17, 17, 17, 0.88);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    background 180ms ease;
+}
+
+.experience-tab:hover {
+  border-color: rgba(30, 64, 175, 0.45);
+  color: #ffffff;
+}
+
+.experience-tab:active {
+  border-color: rgba(176, 38, 122, 0.45);
+}
+
+.experience-tab-active {
+  border-color: rgba(30, 64, 175, 0.75);
+  background: rgba(30, 64, 175, 0.18);
+  color: #93c5fd;
+  box-shadow:
+    0 0 22px rgba(30, 64, 175, 0.45),
+    inset 0 0 0 1px rgba(30, 64, 175, 0.2);
+}
+
+.experience-send-btn {
+  background: var(--exp-blue);
+  color: #ffffff;
+  box-shadow: 0 0 18px rgba(30, 64, 175, 0.5);
+}
+
+.experience-send-btn:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+.experience-recovery-overlay {
+  background: rgba(17, 17, 17, 0.96);
+}
+
+.experience-emblem-glow-blue {
+  background: rgba(30, 64, 175, 0.22);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .experience-go-live-sweep::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+@keyframes live-waveform-pulse {
+  0%,
+  100% {
+    height: 18%;
+  }
+  50% {
+    height: 55%;
+  }
+}
+
+.live-waveform-bar {
+  height: 18%;
+  animation: live-waveform-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes live-reaction-float {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 70%) scale(0.55);
+  }
+  12% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -130%) scale(1.05);
+  }
+}
+
+.live-reaction-burst {
+  animation: live-reaction-float 1.5s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-reaction-burst {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/* Fullscreen live stream â€” floating chat + reactions */
+@keyframes trouble-alert-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes live-chat-float-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes live-heart-float {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-120px) scale(1.15);
+  }
+}
+
+.live-chat-float-in {
+  animation: live-chat-float-in 0.35s ease-out both;
+}
+
+.live-heart-float {
+  animation: live-heart-float 1.8s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-chat-float-in,
+  .live-heart-float {
+    animation: none !important;
+  }
+}

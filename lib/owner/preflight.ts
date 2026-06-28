@@ -170,7 +170,7 @@ function cameraSessionCheck(
     id: "camera_session",
     label: "Browser camera publisher session",
     status: "fail",
-    detail: "Start a publisher session from /owner/publish/camera before go-live.",
+    detail: "Create a publisher session from Broadcast Control before go-live.",
   };
 }
 

@@ -13,6 +13,8 @@ export type AccessContext = {
 
 export type LivePublishMode = "none" | "external_hls" | "rtmp_encoder" | "browser_camera";
 
+export type LiveBroadcastCurrentState = "offline" | "imminent_live" | "live";
+
 export type LiveAccessEvaluation = {
   authenticated: boolean;
   userId: string | null;
@@ -26,6 +28,11 @@ export type LiveAccessEvaluation = {
   playbackUrl: string;
   publishMode: LivePublishMode;
   publisherChannel: string | null;
+  broadcastCurrentState: LiveBroadcastCurrentState;
+  imminentLiveStartedAt: string | null;
+  imminentLiveDurationSeconds: number;
+  /** Local dev only — keep manifest polling even when Supabase is_live flickers. */
+  devPlaybackOverride?: boolean;
 };
 
 export function generateGuestEmail(): string {
@@ -101,6 +108,9 @@ export function evaluateLiveAccessFromFlags(
     playbackUrl: "",
     publishMode: "none",
     publisherChannel: null,
+    broadcastCurrentState: "offline",
+    imminentLiveStartedAt: null,
+    imminentLiveDurationSeconds: 10,
   };
 }
 

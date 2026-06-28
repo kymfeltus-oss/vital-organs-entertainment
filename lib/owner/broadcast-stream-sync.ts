@@ -6,8 +6,12 @@ import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 const SYNC_TIMEOUT_MS = 5_000;
 
-/** Notify attendee clients to re-sync /api/access/live after owner mutations. */
-export async function emitStreamStateSync(): Promise<void> {
+import type { StreamStateSyncPayload } from "@/lib/live/types";
+
+/** Notify attendee clients to re-sync after owner mutations. */
+export async function emitStreamStateSync(
+  payload: StreamStateSyncPayload = {},
+): Promise<void> {
   try {
     const supabase = getSupabaseAdmin();
     const channel = supabase.channel(LIVE_ROOM_PLATFORM_CHANNEL);
@@ -31,7 +35,10 @@ export async function emitStreamStateSync(): Promise<void> {
           await channel.send({
             type: "broadcast",
             event: LIVE_STREAM_STATE_BROADCAST_EVENT,
-            payload: { at: new Date().toISOString() },
+            payload: {
+              at: new Date().toISOString(),
+              ...payload,
+            },
           });
         } catch (error) {
           console.error("[owner] stream-state-sync broadcast failed:", error);

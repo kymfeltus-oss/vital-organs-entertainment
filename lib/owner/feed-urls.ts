@@ -1,9 +1,10 @@
-import { isValidHlsUrl } from "@/lib/live/hls";
 import type { ManifestStreamSource } from "@/lib/live/fetch-manifest-stream-config";
 import {
   normalizeEnvPlaybackString,
+  rejectDemoPlaybackUrl,
   resolvePrimaryAttendeePlaybackFromEnv,
 } from "@/lib/live/manifest-dev-fallback";
+import { sanitizeAttendeePlaybackUrl } from "@/lib/live/playback-url-validation";
 
 export type FeedUrlInputs = {
   primary_playback_url?: string | null;
@@ -15,20 +16,27 @@ export type FeedUrlInputs = {
 
 /** Server-only backup HLS manifest (Amazon IVS, etc.). */
 export function resolveBackupPlaybackFromEnv(): string | null {
-  const backup = normalizeEnvPlaybackString(process.env.ATTENDEE_BACKUP_HLS_URL);
-  if (backup && isValidHlsUrl(backup)) return backup;
-  return null;
+  return sanitizeAttendeePlaybackUrl(
+    normalizeEnvPlaybackString(process.env.ATTENDEE_BACKUP_HLS_URL),
+    "ATTENDEE_BACKUP_HLS_URL",
+  );
 }
 
 export function resolvePrimaryFeedUrl(inputs: FeedUrlInputs = {}): string | null {
   const env = resolvePrimaryAttendeePlaybackFromEnv();
   if (env) return env;
 
-  const dbPrimary = inputs.primary_playback_url?.trim() ?? "";
-  if (dbPrimary && isValidHlsUrl(dbPrimary)) return dbPrimary;
+  const dbPrimary = sanitizeAttendeePlaybackUrl(
+    rejectDemoPlaybackUrl(inputs.primary_playback_url),
+    "live_stream_state.primary_playback_url",
+  );
+  if (dbPrimary) return dbPrimary;
 
-  const legacy = inputs.playback_url?.trim() ?? "";
-  if (legacy && isValidHlsUrl(legacy)) return legacy;
+  const legacy = sanitizeAttendeePlaybackUrl(
+    rejectDemoPlaybackUrl(inputs.playback_url),
+    "live_stream_state.playback_url",
+  );
+  if (legacy) return legacy;
 
   return null;
 }
@@ -37,10 +45,10 @@ export function resolveBackupFeedUrl(inputs: FeedUrlInputs = {}): string | null 
   const env = resolveBackupPlaybackFromEnv();
   if (env) return env;
 
-  const dbBackup = inputs.backup_playback_url?.trim() ?? "";
-  if (dbBackup && isValidHlsUrl(dbBackup)) return dbBackup;
-
-  return null;
+  return sanitizeAttendeePlaybackUrl(
+    inputs.backup_playback_url,
+    "live_stream_state.backup_playback_url",
+  );
 }
 
 export function normalizeActiveFeedSource(

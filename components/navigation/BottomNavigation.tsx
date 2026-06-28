@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import "@/styles/features/attendee-surfaces.css";
 import AttendeeLiveNavLink from "@/components/navigation/AttendeeLiveNavLink";
 import Link from "next/link";
 import {

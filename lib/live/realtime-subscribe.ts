@@ -39,6 +39,13 @@ export type RealtimeSubscribeHandler = (
   err?: Error,
 ) => void;
 
+/** Subscribe statuses that indicate the socket dropped or timed out. */
+export const STALE_REALTIME_SUBSCRIBE_STATUSES = new Set([
+  "CLOSED",
+  "CHANNEL_ERROR",
+  "TIMED_OUT",
+]);
+
 const REALTIME_LOG_PREFIX = "[Supabase Realtime]";
 
 /** Dev-visible subscription status — surfaces CHANNEL_ERROR / TIMED_OUT instead of failing silently. */
@@ -85,6 +92,55 @@ export async function teardownRealtimeChannel(
   await supabase.removeChannel(channel);
 }
 
+type ErrorGuardChannel = RealtimeChannel & {
+  on(
+    type: "error",
+    filter: Record<string, never>,
+    callback: (err: unknown) => void,
+  ): RealtimeChannel;
+};
+
+/**
+ * Absorb transport/system socket errors on a channel before subscribe().
+ * Prevents normal closure drops from bubbling into the Next.js dev overlay.
+ */
+export function attachRealtimeChannelErrorGuard(channel: RealtimeChannel): RealtimeChannel {
+  channel.on("system", {}, () => undefined);
+
+  try {
+    (channel as ErrorGuardChannel).on("error", {}, () => undefined);
+  } catch {
+    // Realtime-js builds that route errors only through subscribe() are still covered below.
+  }
+
+  return channel;
+}
+
+/** Bind subscribe() with optional silent error handling and stale-channel detection. */
+export function subscribeChannelWithResilience(
+  channel: RealtimeChannel,
+  channelLabel: string,
+  options: {
+    onStatus?: RealtimeSubscribeHandler;
+    onStale?: () => void;
+    silent?: boolean;
+  } = {},
+): void {
+  const { onStatus, onStale, silent = false } = options;
+
+  channel.subscribe((status, err) => {
+    if (!silent) {
+      logRealtimeSubscribeStatus(channelLabel, status, err);
+    }
+
+    if (STALE_REALTIME_SUBSCRIBE_STATUSES.has(status)) {
+      onStale?.();
+    }
+
+    onStatus?.(status, err);
+  });
+}
+
 /**
  * Create a realtime channel with all listeners bound before subscribe().
  * Clears stale channels first to avoid Strict Mode subscribe races.
@@ -119,10 +175,8 @@ export async function createRealtimeChannel(
     channel = channel.on("broadcast", { event: binding.event }, binding.callback);
   }
 
-  channel.subscribe((status, err) => {
-    logRealtimeSubscribeStatus(channelName, status, err);
-    onSubscribe?.(status, err);
-  });
+  attachRealtimeChannelErrorGuard(channel);
+  subscribeChannelWithResilience(channel, channelName, { onStatus: onSubscribe });
 
   return channel;
 }

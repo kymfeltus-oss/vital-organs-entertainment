@@ -3,6 +3,11 @@ import type { GoLiveRequestBody, OwnerBroadcastSnapshot, PublishMode, SwitchFeed
 import { buildOwnerBroadcastSnapshot } from "@/lib/owner/build-broadcast-snapshot";
 import { emitStreamStateSync } from "@/lib/owner/broadcast-stream-sync";
 import {
+  IMMINENT_LIVE_DURATION_SEC,
+  IMMINENT_LIVE_START_EVENT,
+} from "@/lib/live/types";
+import { GOING_LIVE_TRANSITION_SEC } from "@/lib/experience/live-go-live-transition";
+import {
   resolveActiveFeedPlaybackUrl,
   resolveBackupFeedUrl,
   resolvePrimaryFeedUrl,
@@ -21,6 +26,85 @@ import { mapEventPhaseState } from "@/lib/owner/map-event-phase";
 import { fetchVmixSnapshot, startVmixStreaming, stopVmixStreaming } from "@/lib/owner/vmix/client";
 
 export { parseGoLiveBody, parseSwitchFeedBody };
+
+const DROP_CURTAIN_DURATION_SEC =
+  IMMINENT_LIVE_DURATION_SEC || GOING_LIVE_TRANSITION_SEC;
+
+/**
+ * Instant Go-Live override (Drop Curtain).
+ * Bypasses schedule preflight — does not mutate event_countdown_config.
+ * Preserves is_live=true; never sets is_live=false during the transition window.
+ */
+export async function runOwnerInstantOverride(
+  admin: SupabaseClient,
+  updatedBy: string,
+): Promise<{
+  ok: boolean;
+  snapshot: OwnerBroadcastSnapshot;
+  message: string;
+  currentState: "imminent_live";
+  dropStartedAt: string;
+  durationSeconds: number;
+}> {
+  const dropStartedAt = new Date().toISOString();
+  const { row, error } = await loadOwnerStreamState(admin);
+
+  if (error && !row) {
+    const { snapshot } = await buildOwnerBroadcastSnapshot();
+    return {
+      ok: false,
+      snapshot,
+      message: error,
+      currentState: "imminent_live",
+      dropStartedAt,
+      durationSeconds: DROP_CURTAIN_DURATION_SEC,
+    };
+  }
+
+  const publishStatus =
+    row?.publish_status === "publishing" || row?.publish_status === "starting"
+      ? row.publish_status
+      : "starting";
+
+  const { error: updateError } = await updateOwnerStreamState(admin, {
+    current_state: "imminent_live",
+    imminent_live_started_at: dropStartedAt,
+    is_live: true,
+    publish_status: publishStatus,
+    playback_status: "playback_pending",
+    publish_error_message: null,
+    playback_error_message: null,
+    updated_by: updatedBy,
+  });
+
+  if (updateError) {
+    const { snapshot } = await buildOwnerBroadcastSnapshot();
+    return {
+      ok: false,
+      snapshot,
+      message: updateError,
+      currentState: "imminent_live",
+      dropStartedAt,
+      durationSeconds: DROP_CURTAIN_DURATION_SEC,
+    };
+  }
+
+  await emitStreamStateSync({
+    event: IMMINENT_LIVE_START_EVENT,
+    durationSeconds: DROP_CURTAIN_DURATION_SEC,
+    dropStartedAt,
+  });
+
+  const { snapshot } = await buildOwnerBroadcastSnapshot();
+  return {
+    ok: true,
+    snapshot,
+    message: "Drop curtain active — attendees notified for imminent live transition.",
+    currentState: "imminent_live",
+    dropStartedAt,
+    durationSeconds: DROP_CURTAIN_DURATION_SEC,
+  };
+}
 
 export async function runOwnerPreflight(
   mode?: PublishMode,

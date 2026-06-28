@@ -1,5 +1,6 @@
 "use client";
 
+import "@/styles/features/attendee-surfaces.css";
 import { useState } from "react";
 import AttendeeAuthLoginPlate from "@/components/auth/AttendeeAuthLoginPlate";
 import EmailGateShell, {

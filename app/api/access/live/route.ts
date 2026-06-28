@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
-import { evaluateLiveAccessFromFlags, parseAccessContext, type LivePublishMode } from "@/lib/access";
+import {
+  evaluateLiveAccessFromFlags,
+  parseAccessContext,
+  type LiveBroadcastCurrentState,
+  type LivePublishMode,
+} from "@/lib/access";
 import { isLiveAccessDevBypassEnabled } from "@/lib/access/live-dev-bypass";
+import { IMMINENT_LIVE_DURATION_SEC } from "@/lib/live/types";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { loadOwnerStreamState } from "@/lib/owner/load-owner-state";
@@ -16,12 +22,34 @@ function normalizePublishMode(raw: unknown): LivePublishMode {
   return "none";
 }
 
+function normalizeBroadcastCurrentState(
+  raw: unknown,
+  streamIsLive: boolean,
+): LiveBroadcastCurrentState {
+  if (raw === "imminent_live" || raw === "live" || raw === "offline") {
+    return raw;
+  }
+  if (streamIsLive) return "live";
+  return "offline";
+}
+
 function buildStreamFlags(streamRow: Awaited<ReturnType<typeof loadOwnerStreamState>>["row"]) {
   const streamIsLive = streamRow?.is_live === true;
+  const broadcastCurrentState = normalizeBroadcastCurrentState(
+    streamRow?.current_state,
+    streamIsLive,
+  );
+
   return {
     streamIsLive,
     publishMode: normalizePublishMode(streamRow?.publish_mode),
     publisherChannel: streamRow?.publisher_channel ?? null,
+    broadcastCurrentState,
+    imminentLiveStartedAt:
+      broadcastCurrentState === "imminent_live" && streamRow?.imminent_live_started_at
+        ? streamRow.imminent_live_started_at
+        : null,
+    imminentLiveDurationSeconds: IMMINENT_LIVE_DURATION_SEC,
   };
 }
 
@@ -58,6 +86,7 @@ export async function GET() {
           showStreamPaywall: false,
           showFullLockdown: false,
           playbackUrl: "",
+          devPlaybackOverride: true,
           ...streamFlags,
         });
       }
@@ -78,6 +107,7 @@ export async function GET() {
           showStreamPaywall: false,
           showFullLockdown: false,
           playbackUrl: "",
+          devPlaybackOverride: true,
           ...streamFlags,
         });
       }

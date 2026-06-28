@@ -22,14 +22,27 @@ export type HarvestProgressRow = {
 export const LIVE_ROOM_CHAT_CHANNEL = "live-room-platform";
 export const LIVE_ROOM_PLATFORM_CHANNEL = LIVE_ROOM_CHAT_CHANNEL;
 export const LIVE_STREAM_STATE_BROADCAST_EVENT = "stream-state-sync";
+export const IMMINENT_LIVE_START_EVENT = "imminent_live_start";
+export const IMMINENT_LIVE_DURATION_SEC = 10;
 export const HARVEST_METRICS_CHANNEL = LIVE_ROOM_PLATFORM_CHANNEL;
 export const STREAM_STATE_SYNC_CHANNEL = LIVE_ROOM_PLATFORM_CHANNEL;
 export const LIVE_STREAM_STATE_ID = "current_event";
 export const HARVEST_GOAL_DOLLARS = 30_000;
 
+export type StreamStateSyncPayload = {
+  at?: string;
+  event?: typeof IMMINENT_LIVE_START_EVENT;
+  durationSeconds?: number;
+  dropStartedAt?: string;
+};
+
+export type BroadcastCurrentState = "offline" | "imminent_live" | "live";
+
 export type LiveStreamStateRow = {
   id: string;
   is_live: boolean;
+  current_state: BroadcastCurrentState;
+  imminent_live_started_at: string | null;
   playback_url: string;
   active_source: "offline" | "primary" | "backup";
   primary_playback_url: string | null;

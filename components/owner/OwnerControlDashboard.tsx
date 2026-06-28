@@ -123,9 +123,6 @@ function LaneHealthCard({
           <dd className="text-white/85">{lane.hlsUrl ? "Configured" : "Missing"}</dd>
         </div>
       </dl>
-      {lane.hlsUrl ? (
-        <p className="mt-2 break-all font-body text-[0.65rem] text-white/30">{lane.hlsUrl}</p>
-      ) : null}
       {lane.detail && !lane.manifestReachable ? (
         <p className="mt-2 font-body text-xs text-amber-300/80">{lane.detail}</p>
       ) : null}
@@ -155,13 +152,13 @@ export default function OwnerControlDashboard({
   const canFailover = isLive && snapshot.publish.mode !== "browser_camera";
 
   return (
-    <main className="min-h-dvh bg-black text-white">
-      <div className="mx-auto flex min-h-dvh max-w-5xl flex-col gap-6 p-4 sm:p-6">
+    <div className="text-slate-100">
+      <div className="mx-auto flex min-h-full max-w-5xl flex-col gap-6 p-4 sm:p-6">
         <header className="border-b border-white/10 pb-4">
           <p className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.22em] text-brand-blue">
-            Owner Control
+            Broadcast Control
           </p>
-          <h1 className="font-headline text-2xl uppercase tracking-[0.08em]">Broadcast Console</h1>
+          <h1 className="font-headline text-2xl uppercase tracking-[0.08em]">Go-Live Console</h1>
           <p className="mt-2 font-body text-sm text-white/55">
             Event phase, publish pipeline, and playback are shown separately — never one combined live flag.
           </p>
@@ -207,18 +204,21 @@ export default function OwnerControlDashboard({
             </h2>
             <dl className="mt-3 space-y-2 font-body text-sm">
               <div className="flex justify-between gap-4">
-                <dt className="text-white/50">HLS configured</dt>
-                <dd className="text-white/85">{snapshot.playback.hlsUrl ? "Yes" : "No"}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-white/50">Manifest reachable</dt>
+                <dt className="text-white/50">HLS playback</dt>
                 <dd className="text-white/85">
-                  {snapshot.playback.manifestReachable ? "Yes" : "No"}
+                  {snapshot.playback.hlsUrl ? "Configured" : "Missing"}
                 </dd>
               </div>
-              {snapshot.playback.hlsUrl ? (
-                <p className="break-all text-xs text-white/40">{snapshot.playback.hlsUrl}</p>
-              ) : null}
+              <div className="flex justify-between gap-4">
+                <dt className="text-white/50">Manifest health</dt>
+                <dd className="text-white/85">
+                  {snapshot.playback.manifestReachable
+                    ? "200 OK"
+                    : snapshot.playback.hlsUrl
+                      ? "Unreachable"
+                      : "Not configured"}
+                </dd>
+              </div>
             </dl>
           </div>
         </section>
@@ -443,6 +443,6 @@ export default function OwnerControlDashboard({
           {snapshot.publisherChannel ? ` · Signaling ${snapshot.publisherChannel}` : ""}
         </footer>
       </div>
-    </main>
+    </div>
   );
 }

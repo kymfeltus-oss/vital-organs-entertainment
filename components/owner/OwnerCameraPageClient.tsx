@@ -52,20 +52,20 @@ export default function OwnerCameraPageClient() {
 
   if (loading) {
     return (
-      <main className="flex min-h-dvh items-center justify-center bg-black text-white">
-        <p className="font-body text-sm text-white/60">Preparing owner camera session...</p>
-      </main>
+      <div className="flex min-h-full items-center justify-center p-6 text-slate-100">
+        <p className="font-body text-sm text-slate-400">Preparing owner camera session...</p>
+      </div>
     );
   }
 
   if (error || !session) {
     return (
-      <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-black p-6 text-white">
+      <div className="flex min-h-full flex-col items-center justify-center gap-4 p-6 text-slate-100">
         <p className="font-body text-sm text-red-300">{error ?? "No publisher session."}</p>
-        <Link href="/owner/control" className="font-ui text-xs uppercase tracking-[0.14em] text-brand-blue">
+        <Link href="/owner/control" className="font-ui text-xs uppercase tracking-[0.14em] text-sky-400">
           Back to control room
         </Link>
-      </main>
+      </div>
     );
   }
 

@@ -1,0 +1,1070 @@
+﻿/* â”€â”€ Public countdown â€” shareable / OBS / social (fed by /api/countdown) â”€â”€ */
+.public-countdown {
+  --public-countdown-max-w: min(100%, 72rem);
+  --public-countdown-glossy-surface:
+    radial-gradient(ellipse 120% 88% at 50% -16%, rgb(255 255 255 / 0.042) 0%, transparent 54%),
+    radial-gradient(ellipse 90% 62% at 50% 112%, rgb(0 168 255 / 0.022) 0%, transparent 50%),
+    linear-gradient(180deg, #050507 0%, #020203 56%, #010102 100%);
+  position: relative;
+  display: flex;
+  min-height: 100dvh;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: hidden;
+  background-color: var(--color-brand-black-base);
+  background-image: var(--app-glossy-background);
+  background-attachment: fixed;
+  color: #ffffff;
+}
+
+.public-countdown__aurora {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.public-countdown__aurora-layer {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  opacity: 0.28;
+  mix-blend-mode: screen;
+}
+
+.public-countdown__aurora-layer--blue {
+  top: -12%;
+  left: -8%;
+  width: 55%;
+  height: 42%;
+  background: radial-gradient(circle, rgb(0 168 255 / 0.55) 0%, transparent 70%);
+  animation: public-countdown-aurora-drift-a 18s ease-in-out infinite;
+}
+
+.public-countdown__aurora-layer--purple {
+  top: 18%;
+  right: -10%;
+  width: 48%;
+  height: 38%;
+  background: radial-gradient(circle, rgb(138 46 255 / 0.5) 0%, transparent 72%);
+  animation: public-countdown-aurora-drift-b 22s ease-in-out infinite;
+}
+
+.public-countdown__aurora-layer--pink {
+  bottom: -8%;
+  left: 20%;
+  width: 52%;
+  height: 36%;
+  background: radial-gradient(circle, rgb(255 47 175 / 0.45) 0%, transparent 70%);
+  animation: public-countdown-aurora-drift-c 20s ease-in-out infinite;
+}
+
+@keyframes public-countdown-aurora-drift-a {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(6%, 8%) scale(1.08);
+  }
+}
+
+@keyframes public-countdown-aurora-drift-b {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(-8%, 5%) scale(1.06);
+  }
+}
+
+@keyframes public-countdown-aurora-drift-c {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(4%, -6%) scale(1.05);
+  }
+}
+
+.public-countdown__grid-noise {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0.035;
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  mask-image: radial-gradient(circle at 50% 40%, black 20%, transparent 78%);
+}
+
+.public-countdown__hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.public-countdown__hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+  opacity: 0.12;
+}
+
+.public-countdown__hero-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgb(2 2 3 / 0.72) 0%,
+      rgb(2 2 3 / 0.9) 45%,
+      rgb(2 2 3 / 0.98) 100%
+    ),
+    var(--app-glossy-background);
+}
+
+.public-countdown__content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  width: var(--public-countdown-max-w);
+  max-width: 100vw;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 1.75rem);
+  padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2rem);
+  padding-top: clamp(0.35rem, 1.5vw, 0.75rem);
+  padding-bottom: max(clamp(1rem, 3vw, 2rem), env(safe-area-inset-bottom));
+  text-align: center;
+}
+
+.public-countdown__header {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.35rem, 1.5vw, 0.65rem);
+}
+
+.public-countdown__lockup-wrap {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 34rem);
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 2rem);
+  padding-top: max(clamp(0.65rem, 2.5vw, 1.25rem), env(safe-area-inset-top));
+  background: transparent;
+  pointer-events: none;
+}
+
+.public-countdown__lockup {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: center top;
+  /* Lockup PNG matte is #000 â€” lighten merges into glossy page behind content layer */
+  mix-blend-mode: lighten;
+}
+
+.public-countdown__eyebrow {
+  font-size: clamp(0.52rem, 1.8vw, 0.68rem);
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #00a8ff 0%, #8a2eff 50%, #ff2faf 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.public-countdown__headline {
+  max-width: 18ch;
+  font-size: clamp(2rem, 8vw, 4.25rem);
+  line-height: 0.95;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 0 40px rgb(0 168 255 / 0.25);
+}
+
+.public-countdown__subtitle {
+  max-width: 28ch;
+  font-size: clamp(0.62rem, 2vw, 0.82rem);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.72);
+}
+
+.public-countdown__status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.25rem;
+  padding: 0.45rem 0.95rem;
+  border: 1px solid var(--color-brand-border);
+  border-radius: 9999px;
+  background-color: var(--color-brand-black-base);
+  background-image: var(--public-countdown-glossy-surface);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-size: clamp(0.52rem, 1.7vw, 0.68rem);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.82);
+}
+
+.public-countdown__status-pill--live {
+  border-color: rgb(255 47 175 / 0.45);
+  color: #ff2faf;
+  box-shadow: 0 0 28px rgb(255 47 175 / 0.28);
+}
+
+.public-countdown__status-pill--soon {
+  border-color: rgb(0 168 255 / 0.45);
+  color: #00a8ff;
+  box-shadow: 0 0 24px rgb(0 168 255 / 0.22);
+}
+
+.public-countdown__status-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 9999px;
+  background: currentcolor;
+  box-shadow: 0 0 10px currentcolor;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .public-countdown__status-pill--live .public-countdown__status-dot,
+  .public-countdown__status-pill--soon .public-countdown__status-dot {
+    animation: public-countdown-status-pulse 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes public-countdown-status-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.55;
+    transform: scale(0.88);
+  }
+}
+
+.public-countdown__event-date {
+  font-size: clamp(0.78rem, 2.2vw, 0.95rem);
+  color: rgb(255 255 255 / 0.55);
+}
+
+.public-countdown-rings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(0.65rem, 3vw, 1.35rem);
+  width: 100%;
+}
+
+.public-countdown-rings--compact {
+  gap: clamp(0.45rem, 2vw, 0.85rem);
+}
+
+.public-countdown-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.35rem, 1.2vw, 0.55rem);
+  animation: public-countdown-unit-rise 0.8s ease-out both;
+  animation-delay: var(--public-countdown-unit-delay, 0s);
+}
+
+@keyframes public-countdown-unit-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.public-countdown-unit__ring {
+  position: relative;
+  width: clamp(4.5rem, 18vw, 7.5rem);
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  padding: 3px;
+  background: conic-gradient(from 0deg, #00a8ff, #8a2eff, #ff2faf, #00a8ff);
+}
+
+.public-countdown-rings--compact .public-countdown-unit__ring {
+  width: clamp(3.25rem, 10vw, 4.75rem);
+}
+
+@keyframes public-countdown-unit-flash {
+  0% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
+
+  35% {
+    filter: brightness(1.85);
+    transform: scale(1.05);
+  }
+
+  100% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
+}
+
+.public-countdown-unit__ring-glow {
+  position: absolute;
+  inset: -12%;
+  z-index: 0;
+  border-radius: inherit;
+  filter: blur(16px);
+  opacity: 0.38;
+  background: inherit;
+}
+
+.public-countdown-unit__ring--days {
+  box-shadow: 0 0 32px rgb(0 168 255 / 0.35);
+}
+
+.public-countdown-unit__ring--hours {
+  box-shadow: 0 0 32px rgb(91 140 255 / 0.32);
+}
+
+.public-countdown-unit__ring--minutes {
+  box-shadow: 0 0 32px rgb(196 75 255 / 0.32);
+}
+
+.public-countdown-unit__ring--seconds {
+  box-shadow: 0 0 36px rgb(255 47 175 / 0.38);
+}
+
+.public-countdown-unit__core {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  background-color: var(--color-brand-black-base);
+  background-image: var(--public-countdown-glossy-surface);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+}
+
+.public-countdown-unit__digit {
+  font-size: clamp(1.35rem, 5.5vw, 2.35rem);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .public-countdown-unit--flash .public-countdown-unit__ring,
+  .public-countdown-unit--flash .public-countdown-unit__digit {
+    animation: public-countdown-unit-flash 0.52s ease-out;
+  }
+}
+
+.public-countdown-unit__digit--days {
+  color: #00a8ff;
+  text-shadow: 0 0 18px rgb(0 168 255 / 0.85);
+}
+
+.public-countdown-unit__digit--hours {
+  color: #5b8cff;
+  text-shadow: 0 0 18px rgb(91 140 255 / 0.85);
+}
+
+.public-countdown-unit__digit--minutes {
+  color: #c44bff;
+  text-shadow: 0 0 18px rgb(196 75 255 / 0.85);
+}
+
+.public-countdown-unit__digit--seconds {
+  color: #ff2faf;
+  text-shadow: 0 0 20px rgb(255 47 175 / 0.9);
+}
+
+.public-countdown-unit__label {
+  font-size: clamp(0.48rem, 1.5vw, 0.62rem);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.58);
+}
+
+.public-countdown__starting-soon {
+  font-size: clamp(1.75rem, 7vw, 3.5rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #00a8ff;
+  text-shadow: 0 0 32px rgb(0 168 255 / 0.65);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .public-countdown__starting-soon {
+    animation: public-countdown-soon-pulse 2.2s ease-in-out infinite;
+  }
+}
+
+@keyframes public-countdown-soon-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.72;
+    transform: scale(0.98);
+  }
+}
+
+.public-countdown__live-burst {
+  font-size: clamp(3rem, 14vw, 7rem);
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #00a8ff 0%, #ff2faf 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 28px rgb(255 47 175 / 0.45));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .public-countdown__live-burst {
+    animation: public-countdown-live-burst 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes public-countdown-live-burst {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 28px rgb(255 47 175 / 0.45));
+  }
+
+  50% {
+    transform: scale(1.04);
+    filter: drop-shadow(0 0 42px rgb(0 168 255 / 0.55));
+  }
+}
+
+.public-countdown__footer {
+  display: flex;
+  width: 100%;
+  max-width: 36rem;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.85rem, 2.5vw, 1.25rem);
+}
+
+.public-countdown__helper {
+  font-size: clamp(0.78rem, 2.2vw, 0.92rem);
+  line-height: 1.55;
+  color: rgb(255 255 255 / 0.62);
+}
+
+.public-countdown__actions {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+@media (min-width: 480px) {
+  .public-countdown__actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+.public-countdown__cta {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1.35rem;
+  border-radius: 9999px;
+  background-color: var(--color-brand-black-base);
+  background-image: var(--public-countdown-glossy-surface);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  font-size: clamp(0.58rem, 1.8vw, 0.68rem);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-decoration: none;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.public-countdown__cta::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--gradient-brand);
+  content: "";
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+.public-countdown__cta:hover {
+  box-shadow: 0 0 28px rgb(0 168 255 / 0.35);
+  transform: translateY(-1px);
+}
+
+.public-countdown__cta-secondary {
+  font-size: clamp(0.54rem, 1.6vw, 0.62rem);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.48);
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.public-countdown__cta-secondary:hover {
+  color: #00a8ff;
+}
+
+/* Embed â€” minimal chrome for social previews / iframe */
+.public-countdown--embed {
+  min-height: 100dvh;
+}
+
+.public-countdown--embed .public-countdown__lockup-wrap {
+  width: min(100%, 16rem);
+}
+
+.public-countdown--embed .public-countdown__actions {
+  flex-direction: column;
+}
+
+/* OBS horizontal strip */
+.public-countdown--obs {
+  min-height: 100dvh;
+  align-items: stretch;
+}
+
+.public-countdown--obs .public-countdown__content {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.75rem, 3vw, 1.5rem);
+  max-width: 100%;
+  padding: clamp(0.75rem, 3vw, 1.25rem);
+}
+
+.public-countdown--obs .public-countdown__header {
+  flex: 1 1 14rem;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.public-countdown--obs .public-countdown__headline {
+  max-width: none;
+  font-size: clamp(1.35rem, 4vw, 2.25rem);
+}
+
+.public-countdown--obs .public-countdown-rings {
+  flex: 2 1 20rem;
+  justify-content: flex-end;
+}
+
+.public-countdown--obs .public-countdown__aurora-layer {
+  filter: blur(60px);
+  opacity: 0.4;
+}
+
+/* Live chat monitor â€” /countdown production layouts (full, embed, obs) */
+.public-countdown--with-chat-sidebar {
+  padding-right: clamp(13.5rem, 21vw, 17.5rem);
+}
+
+.public-countdown--with-chat-monitor {
+  padding-bottom: clamp(3.25rem, 9vh, 4.75rem);
+}
+
+.public-countdown-chat-monitor {
+  pointer-events: none;
+  z-index: 24;
+}
+
+.public-countdown-chat-monitor--ticker {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  padding-inline: clamp(0.65rem, 2.5vw, 1.25rem);
+  padding-bottom: max(0.55rem, env(safe-area-inset-bottom));
+}
+
+.public-countdown-chat-monitor--sidebar {
+  position: fixed;
+  inset-block: 0;
+  right: 0;
+  width: clamp(12.5rem, 20vw, 16.5rem);
+  padding: clamp(0.65rem, 2vw, 1rem);
+  padding-top: max(clamp(0.65rem, 2vw, 1rem), env(safe-area-inset-top));
+  padding-bottom: max(clamp(0.65rem, 2vw, 1rem), env(safe-area-inset-bottom));
+}
+
+.public-countdown-chat-monitor__shell {
+  display: flex;
+  align-items: stretch;
+  gap: clamp(0.55rem, 1.8vw, 0.85rem);
+  width: 100%;
+  margin-inline: auto;
+  min-height: 2.35rem;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  background:
+    linear-gradient(180deg, rgb(12 12 16 / 0.82) 0%, rgb(7 7 10 / 0.9) 100%);
+  backdrop-filter: blur(10px);
+  box-shadow:
+    0 0 0 1px rgb(0 168 255 / 0.06) inset,
+    0 -8px 28px rgb(0 0 0 / 0.35);
+}
+
+.public-countdown-chat-monitor--ticker .public-countdown-chat-monitor__shell {
+  width: min(100%, 72rem);
+  border-radius: 9999px;
+}
+
+.public-countdown-chat-monitor--sidebar .public-countdown-chat-monitor__shell {
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  border-radius: 1rem;
+  box-shadow:
+    0 0 0 1px rgb(0 168 255 / 0.06) inset,
+    0 8px 28px rgb(0 0 0 / 0.35);
+}
+
+.public-countdown-chat-monitor--sidebar .public-countdown-chat-monitor__badge {
+  border-right: 0;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  justify-content: flex-start;
+}
+
+.public-countdown-chat-monitor__sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.55rem 0.65rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(0 168 255 / 0.35) transparent;
+}
+
+.public-countdown-chat-monitor__sidebar-line {
+  margin: 0;
+  font-size: clamp(0.72rem, 1.7vw, 0.82rem);
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.countdown-admin-mobile-chat .public-countdown-chat-monitor__body,
+.countdown-admin-mobile-chat .public-countdown-chat-monitor__sidebar-line {
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+.countdown-admin-mobile-chat .public-countdown-chat-monitor--sidebar {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  min-height: 45vh;
+  pointer-events: auto;
+}
+
+.countdown-admin-mobile-chat .public-countdown-chat-monitor__shell {
+  height: 100%;
+  min-height: 45vh;
+}
+
+/* Ops countdown editor â€” datetime-local picker visible on dark panels */
+.countdown-admin-datetime {
+  color-scheme: dark;
+}
+
+.countdown-admin-datetime::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.85);
+  opacity: 0.9;
+}
+
+/* Ops countdown editor â€” collapsible live chat dock (desktop) */
+.countdown-admin-chat-dock {
+  position: fixed;
+  z-index: 28;
+  pointer-events: auto;
+}
+
+.countdown-admin-chat-dock--collapsed {
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+}
+
+.countdown-admin-chat-dock__tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 2.75rem;
+  padding: 0.85rem 0.45rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-right: 0;
+  border-radius: 0.85rem 0 0 0.85rem;
+  background: linear-gradient(180deg, rgb(12 12 16 / 0.96) 0%, rgb(7 7 10 / 0.98) 100%);
+  box-shadow: -8px 0 24px rgb(0 0 0 / 0.35);
+  color: rgb(255 255 255 / 0.88);
+  font-size: 0.48rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.countdown-admin-chat-dock__tab:hover {
+  border-color: rgb(0 168 255 / 0.35);
+  background: linear-gradient(180deg, rgb(0 168 255 / 0.12) 0%, rgb(7 7 10 / 0.98) 100%);
+}
+
+.countdown-admin-chat-dock__tab-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.countdown-admin-chat-dock__tab-badge {
+  display: inline-flex;
+  min-width: 1.1rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgb(255 47 175 / 0.85);
+  padding: 0.1rem 0.3rem;
+  font-size: 0.55rem;
+  line-height: 1;
+  color: #fff;
+}
+
+.countdown-admin-chat-dock--expanded {
+  top: clamp(13rem, 24vh, 16rem);
+  right: clamp(0.65rem, 2vw, 1rem);
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  width: clamp(14rem, 22vw, 18rem);
+}
+
+.countdown-admin-chat-dock__panel {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 1rem;
+  background: rgb(7 7 10 / 0.96);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.45);
+}
+
+.countdown-admin-chat-dock__panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  padding: 0.55rem 0.65rem 0.55rem 0.85rem;
+}
+
+.countdown-admin-chat-dock__panel-body {
+  flex: 1;
+  min-height: 0;
+}
+
+.countdown-admin-chat-dock .public-countdown-chat-monitor--embedded.public-countdown-chat-monitor--sidebar {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  pointer-events: auto;
+}
+
+.countdown-admin-chat-dock .public-countdown-chat-monitor--embedded .public-countdown-chat-monitor__shell {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.public-countdown--obs.public-countdown--with-chat-monitor {
+  padding-bottom: clamp(2.75rem, 8vh, 3.5rem);
+}
+
+.public-countdown--obs.public-countdown--with-chat-sidebar {
+  padding-right: 0;
+}
+
+@media (max-width: 767px) {
+  .public-countdown--with-chat-sidebar {
+    padding-right: 0;
+    padding-bottom: clamp(3.25rem, 9vh, 4.75rem);
+  }
+
+  .public-countdown-chat-monitor--sidebar {
+    inset: auto 0 0;
+    width: 100%;
+    height: auto;
+    max-height: 38vh;
+    padding-inline: clamp(0.65rem, 2.5vw, 1rem);
+    padding-bottom: max(0.55rem, env(safe-area-inset-bottom));
+  }
+
+  .public-countdown-chat-monitor--sidebar .public-countdown-chat-monitor__shell {
+    max-height: 38vh;
+  }
+
+  .public-countdown-chat-monitor--sidebar .public-countdown-chat-monitor__sidebar-scroll {
+    max-height: 22vh;
+  }
+}
+
+.public-countdown-chat-monitor__badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem 0.45rem 0.75rem;
+  border-right: 1px solid rgb(255 255 255 / 0.08);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.82);
+  white-space: nowrap;
+}
+
+.public-countdown-chat-monitor__badge-dot {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.35);
+}
+
+.public-countdown-chat-monitor__badge-dot[data-live="true"] {
+  background: #00a8ff;
+  box-shadow: 0 0 10px rgb(0 168 255 / 0.75);
+}
+
+.public-countdown-chat-monitor__badge-meta {
+  color: rgb(255 255 255 / 0.45);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.public-countdown-chat-monitor__viewport {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding-block: 0.35rem;
+  padding-inline: 0.35rem 0.85rem;
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 6%,
+    #000 94%,
+    transparent 100%
+  );
+}
+
+.public-countdown-chat-monitor__track {
+  display: inline-flex;
+  width: max-content;
+  animation: public-countdown-chat-marquee var(--chat-monitor-duration, 36s) linear infinite;
+}
+
+.public-countdown-chat-monitor__track-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 2rem);
+  padding-inline: clamp(0.5rem, 1.5vw, 1rem);
+  white-space: nowrap;
+}
+
+.public-countdown-chat-monitor__item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-size: clamp(0.72rem, 1.8vw, 0.84rem);
+  line-height: 1.35;
+  color: rgb(255 255 255 / 0.88);
+}
+
+.public-countdown-chat-monitor__author {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.public-countdown-chat-monitor__body {
+  color: rgb(255 255 255 / 0.78);
+}
+
+.public-countdown-chat-monitor__sep {
+  margin-inline-start: clamp(0.75rem, 2vw, 1.25rem);
+  color: rgb(255 255 255 / 0.22);
+}
+
+.public-countdown-chat-monitor__empty {
+  margin: 0;
+  padding-inline: 0.25rem;
+  font-size: clamp(0.72rem, 1.8vw, 0.82rem);
+  line-height: 1.35;
+  color: rgb(255 255 255 / 0.48);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes public-countdown-chat-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (min-width: 768px) {
+  .public-countdown-chat-monitor__shell {
+    min-height: 2.55rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-countdown-chat-monitor__track {
+    animation: none;
+    transform: none;
+  }
+
+  .public-countdown-chat-monitor__viewport {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .public-countdown-chat-monitor__viewport::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-countdown__aurora-layer,
+  .public-countdown-unit--flash .public-countdown-unit__ring,
+  .public-countdown-unit--flash .public-countdown-unit__digit,
+  .public-countdown__starting-soon,
+  .public-countdown__live-burst,
+  .public-countdown__status-dot {
+    animation: none !important;
+  }
+
+  .public-countdown-unit__digit {
+    text-shadow: none;
+  }
+}
+
+/* Fullscreen live stream â€” floating chat + reactions */
+@keyframes trouble-alert-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes live-chat-float-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes live-heart-float {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-120px) scale(1.15);
+  }
+}
+
+.live-chat-float-in {
+  animation: live-chat-float-in 0.35s ease-out both;
+}
+
+.live-heart-float {
+  animation: live-heart-float 1.8s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-chat-float-in,
+  .live-heart-float {
+    animation: none !important;
+  }
+}

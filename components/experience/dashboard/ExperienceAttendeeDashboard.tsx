@@ -1,5 +1,6 @@
 "use client";
 
+import "@/styles/features/attendee-surfaces.css";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ExperienceDashboardMobileView from "@/components/experience/dashboard/ExperienceDashboardMobileView";

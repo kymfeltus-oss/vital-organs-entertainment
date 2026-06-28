@@ -1,32 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import OwnerControlDashboard from "@/components/owner/OwnerControlDashboard";
-import type { OwnerBroadcastSnapshot } from "@/lib/owner/contracts";
-import { defaultEventPhaseState } from "@/lib/owner/map-event-phase";
-
-const POLL_MS = 4_000;
-
-const EMPTY_SNAPSHOT: OwnerBroadcastSnapshot = {
-  capturedAt: "",
-  eventPhase: defaultEventPhaseState(),
-  publish: { mode: "none", status: "offline", errorMessage: null },
-  playback: {
-    status: "unconfigured",
-    hlsUrl: null,
-    manifestReachable: false,
-    errorMessage: null,
-  },
-  feed: {
-    activeSource: "offline",
-    primary: { hlsUrl: null, manifestReachable: false, detail: null },
-    backup: { hlsUrl: null, manifestReachable: false, detail: null },
-  },
-  preflight: [],
-  publisherSessionId: null,
-  publisherChannel: null,
-  vmix: null,
-};
+import BroadcastControlWizard from "@/components/owner/BroadcastControlWizard";
+import type { SelectedCaptureDevices } from "@/components/owner/InAppDeviceCaptureSelectors";
+import type { OwnerBroadcastSnapshot, OwnerPublisherSession } from "@/lib/owner/contracts";
+import { derivePendingTodos, hasBlockingTodos } from "@/lib/owner/derive-pending-todos";
+import { useOwnerBroadcastSnapshot } from "@/hooks/useOwnerBroadcastSnapshot";
 
 type BroadcastResponse = {
   snapshot?: OwnerBroadcastSnapshot;
@@ -36,73 +15,69 @@ type BroadcastResponse = {
   blocked?: boolean;
 };
 
+type IngestCredentialsResponse = {
+  credentials?: {
+    rtmpUrl: string | null;
+    streamKey: string | null;
+    detail: string | null;
+  };
+};
+
 export default function OwnerControlClient() {
-  const [snapshot, setSnapshot] = useState<OwnerBroadcastSnapshot>(EMPTY_SNAPSHOT);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { snapshot, loading, error, reload, setSnapshot } = useOwnerBroadcastSnapshot();
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [actionPending, setActionPending] = useState(false);
+  const [ingestLoading, setIngestLoading] = useState(true);
+  const [ingestCredentials, setIngestCredentials] = useState<{
+    rtmpUrl: string | null;
+    streamKey: string | null;
+    detail: string | null;
+  }>({ rtmpUrl: null, streamKey: null, detail: null });
+  const [publisherSession, setPublisherSession] = useState<OwnerPublisherSession | null>(null);
+  const [selectedDevices, setSelectedDevices] = useState<SelectedCaptureDevices>({
+    videoDeviceId: "",
+    audioDeviceId: "",
+  });
 
-  const loadSnapshot = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
+  const pendingTodos = derivePendingTodos(snapshot.preflight);
+  const hasPendingTasks = pendingTodos.length > 0 || hasBlockingTodos(snapshot.preflight);
+
+  const loadIngestCredentials = useCallback(async () => {
+    setIngestLoading(true);
     try {
-      const response = await fetch("/api/owner/broadcast", {
+      const response = await fetch("/api/owner/ingest/credentials", {
         credentials: "include",
         cache: "no-store",
       });
-
-      if (response.status === 401 || response.status === 403) {
-        setError("Owner access denied. Sign in with an ADMIN_EMAILS account.");
-        return;
-      }
-
       if (!response.ok) {
-        throw new Error("Unable to load broadcast snapshot.");
+        throw new Error("Unable to load ingest credentials.");
       }
-
-      const data = (await response.json()) as BroadcastResponse;
-      if (data.snapshot) setSnapshot(data.snapshot);
-      setError(null);
+      const data = (await response.json()) as IngestCredentialsResponse;
+      if (data.credentials) {
+        setIngestCredentials({
+          rtmpUrl: data.credentials.rtmpUrl,
+          streamKey: data.credentials.streamKey,
+          detail: data.credentials.detail,
+        });
+      }
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Load failed.");
+      setIngestCredentials({
+        rtmpUrl: null,
+        streamKey: null,
+        detail:
+          loadError instanceof Error ? loadError.message : "Ingest credentials unavailable.",
+      });
     } finally {
-      if (!silent) setLoading(false);
+      setIngestLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void loadSnapshot();
-    const intervalId = window.setInterval(() => void loadSnapshot(true), POLL_MS);
-    return () => window.clearInterval(intervalId);
-  }, [loadSnapshot]);
-
-  const runPreflight = useCallback(
-    async (mode: "external_hls" | "rtmp_encoder" | "browser_camera") => {
-      setActionPending(true);
-      setActionMessage(null);
-      try {
-        const response = await fetch("/api/owner/broadcast/preflight", {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode }),
-        });
-        const data = (await response.json()) as BroadcastResponse;
-        if (data.snapshot) setSnapshot(data.snapshot);
-        setActionMessage(
-          data.blocked ? "Preflight has blockers — review checks above." : "Preflight complete.",
-        );
-      } catch {
-        setActionMessage("Preflight request failed.");
-      } finally {
-        setActionPending(false);
-      }
-    },
-    [],
-  );
+    void loadIngestCredentials();
+  }, [loadIngestCredentials]);
 
   const runGoLive = useCallback(
-    async (mode: "external_hls" | "rtmp_encoder" | "browser_camera") => {
+    async (mode: "rtmp_encoder" | "browser_camera") => {
       setActionPending(true);
       setActionMessage(null);
       try {
@@ -115,19 +90,147 @@ export default function OwnerControlClient() {
         const data = (await response.json()) as BroadcastResponse;
         if (data.snapshot) setSnapshot(data.snapshot);
         setActionMessage(data.message ?? (data.ok ? "Go-live succeeded." : "Go-live blocked."));
+        return data.ok === true;
       } catch {
         setActionMessage("Go-live request failed.");
+        return false;
       } finally {
         setActionPending(false);
       }
     },
-    [],
+    [setSnapshot],
   );
 
-  const runEnd = useCallback(async () => {
+  const handleStartExternalBroadcast = useCallback(async () => {
+    if (hasBlockingTodos(snapshot.preflight)) {
+      setActionMessage("Resolve failing preflight checks before starting external broadcast.");
+      return;
+    }
+
     setActionPending(true);
     setActionMessage(null);
     try {
+      const preflightResponse = await fetch("/api/owner/broadcast/preflight", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "rtmp_encoder" }),
+      });
+      const preflightData = (await preflightResponse.json()) as BroadcastResponse;
+      if (preflightData.snapshot) setSnapshot(preflightData.snapshot);
+
+      if (preflightData.blocked) {
+        setActionMessage("Preflight blockers detected — review Pre-Show checklist.");
+        return;
+      }
+
+      await runGoLive("rtmp_encoder");
+    } catch {
+      setActionMessage("External broadcast activation failed.");
+    } finally {
+      setActionPending(false);
+    }
+  }, [runGoLive, setSnapshot, snapshot.preflight]);
+
+  const handleLaunchInAppCamera = useCallback(async () => {
+    if (hasBlockingTodos(snapshot.preflight)) {
+      setActionMessage("Resolve failing preflight checks before launching in-app camera.");
+      return;
+    }
+
+    setActionPending(true);
+    setActionMessage(null);
+    try {
+      const sessionResponse = await fetch("/api/owner/publisher/session", {
+        method: "POST",
+        credentials: "include",
+      });
+      const sessionData = (await sessionResponse.json()) as {
+        session?: OwnerPublisherSession;
+        error?: string;
+      };
+
+      if (!sessionResponse.ok || !sessionData.session) {
+        setActionMessage(sessionData.error ?? "Unable to create publisher session.");
+        return;
+      }
+
+      setPublisherSession(sessionData.session);
+      await reload(true);
+
+      const preflightResponse = await fetch("/api/owner/broadcast/preflight", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "browser_camera" }),
+      });
+      const preflightData = (await preflightResponse.json()) as BroadcastResponse;
+      if (preflightData.snapshot) setSnapshot(preflightData.snapshot);
+
+      const liveOk = await runGoLive("browser_camera");
+      if (!liveOk) {
+        setPublisherSession(null);
+      }
+    } catch {
+      setActionMessage("In-app camera launch failed.");
+      setPublisherSession(null);
+    } finally {
+      setActionPending(false);
+    }
+  }, [reload, runGoLive, setSnapshot, snapshot.preflight]);
+
+  const handleDropCurtain = useCallback(async (): Promise<boolean> => {
+    setActionMessage(null);
+    try {
+      const response = await fetch("/api/owner/broadcast/instant-override", {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+      });
+      const data = (await response.json()) as BroadcastResponse;
+
+      if (!response.ok) {
+        const failureMessage =
+          data.message ?? data.error ?? `Drop curtain failed (HTTP ${response.status}).`;
+        setActionMessage(failureMessage);
+        window.alert(failureMessage);
+        return false;
+      }
+
+      if (data.snapshot) setSnapshot(data.snapshot);
+
+      if (data.ok === false) {
+        const failureMessage = data.message ?? data.error ?? "Instant override failed.";
+        setActionMessage(failureMessage);
+        window.alert(failureMessage);
+        return false;
+      }
+
+      setActionMessage(
+        data.message ??
+          "Drop curtain active — attendees notified for imminent live transition.",
+      );
+      return true;
+    } catch {
+      const failureMessage = "Drop curtain request failed.";
+      setActionMessage(failureMessage);
+      window.alert(failureMessage);
+      return false;
+    }
+  }, [setSnapshot]);
+
+  const handleEndBroadcast = useCallback(async () => {
+    setActionPending(true);
+    setActionMessage(null);
+    try {
+      if (publisherSession) {
+        await fetch("/api/owner/publisher/session", {
+          method: "DELETE",
+          credentials: "include",
+        });
+        setPublisherSession(null);
+      }
+
       const response = await fetch("/api/owner/broadcast/end", {
         method: "POST",
         credentials: "include",
@@ -140,72 +243,29 @@ export default function OwnerControlClient() {
     } finally {
       setActionPending(false);
     }
-  }, []);
+  }, [publisherSession, setSnapshot]);
 
-  const runVmixCommand = useCallback(async (functionName: string) => {
-    setActionPending(true);
-    setActionMessage(null);
-    try {
-      const response = await fetch("/api/owner/vmix/command", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ function: functionName }),
-      });
-      const data = (await response.json()) as {
-        vmix?: OwnerBroadcastSnapshot["vmix"];
-        message?: string;
-        ok?: boolean;
-        error?: string;
-      };
-      if (data.vmix) {
-        setSnapshot((prev) => ({ ...prev, vmix: data.vmix ?? prev.vmix }));
-      } else {
-        await loadSnapshot(true);
-      }
-      setActionMessage(
-        data.message ?? data.error ?? (data.ok ? `${functionName} sent.` : "vMix command failed."),
-      );
-    } catch {
-      setActionMessage("vMix command request failed.");
-    } finally {
-      setActionPending(false);
-    }
-  }, [loadSnapshot]);
-
-  const runSwitchFeed = useCallback(async (source: "primary" | "backup") => {
-    setActionPending(true);
-    setActionMessage(null);
-    try {
-      const response = await fetch("/api/owner/broadcast/switch-feed", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source, confirm: true }),
-      });
-      const data = (await response.json()) as BroadcastResponse;
-      if (data.snapshot) setSnapshot(data.snapshot);
-      setActionMessage(data.message ?? (data.ok ? "Feed switched." : "Feed switch blocked."));
-    } catch {
-      setActionMessage("Feed switch request failed.");
-    } finally {
-      setActionPending(false);
-    }
-  }, []);
+  const handleRefresh = useCallback(() => {
+    void reload();
+  }, [reload]);
 
   return (
-    <OwnerControlDashboard
+    <BroadcastControlWizard
       snapshot={snapshot}
       loading={loading}
       error={error}
       actionMessage={actionMessage}
       actionPending={actionPending}
-      onRefresh={() => void loadSnapshot()}
-      onPreflight={(mode) => void runPreflight(mode)}
-      onGoLive={(mode) => void runGoLive(mode)}
-      onEnd={() => void runEnd()}
-      onVmixCommand={(fn) => void runVmixCommand(fn)}
-      onSwitchFeed={(source) => void runSwitchFeed(source)}
+      hasPendingTasks={hasPendingTasks}
+      ingestCredentials={{ ...ingestCredentials, loading: ingestLoading }}
+      publisherSession={publisherSession}
+      selectedDevices={selectedDevices}
+      onDevicesChange={setSelectedDevices}
+      onStartExternalBroadcast={handleStartExternalBroadcast}
+      onLaunchInAppCamera={handleLaunchInAppCamera}
+      onDropCurtain={handleDropCurtain}
+      onEndBroadcast={handleEndBroadcast}
+      onRefresh={handleRefresh}
     />
   );
 }

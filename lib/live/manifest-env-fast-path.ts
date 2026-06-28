@@ -9,6 +9,7 @@ import {
   type ManifestExperienceKey,
   type ManifestSuccessPayload,
 } from "@/lib/live/manifest-dev-fallback";
+import { resolveIvsSingleVariantMediaUrl } from "@/lib/live/resolve-ivs-media-playlist";
 
 /** Resolve attendee HLS URL from process env (no I/O). */
 export function resolveEnvPlaybackUrl(): string | null {
@@ -60,17 +61,22 @@ export function buildLocalHlsRelayUrl(request: NextRequest, upstreamUrl: string)
   return relay.toString();
 }
 
-export function resolveClientPlaybackUrl(request: NextRequest, upstreamUrl: string): string {
-  if (shouldUseLocalHlsRelay(request, upstreamUrl)) {
-    return buildLocalHlsRelayUrl(request, upstreamUrl);
+export async function resolveClientPlaybackUrl(
+  request: NextRequest,
+  upstreamUrl: string,
+): Promise<string> {
+  if (!shouldUseLocalHlsRelay(request, upstreamUrl)) {
+    return upstreamUrl;
   }
-  return upstreamUrl;
+
+  const relayTarget = await resolveIvsSingleVariantMediaUrl(upstreamUrl);
+  return buildLocalHlsRelayUrl(request, relayTarget);
 }
 
-export function buildMainStageEnvFastPathPayload(
+export async function buildMainStageEnvFastPathPayload(
   request: NextRequest,
   experience: ManifestExperienceKey,
-): ManifestSuccessPayload | null {
+): Promise<ManifestSuccessPayload | null> {
   if (experience !== "main_stage") return null;
   if (!isAttendeePlaybackEnvPopulated()) return null;
 
@@ -83,25 +89,25 @@ export function buildMainStageEnvFastPathPayload(
 
   return {
     success: true,
-    playbackUrl: resolveClientPlaybackUrl(request, playbackUrl),
+    playbackUrl: await resolveClientPlaybackUrl(request, playbackUrl),
     activeExperience: experience,
     activeSource: "primary",
     fallback: false,
   };
 }
 
-export function buildDevFallbackFastPathPayload(
+export async function buildDevFallbackFastPathPayload(
   request: NextRequest,
   experience: ManifestExperienceKey,
   options?: { suppressDemoFallback?: boolean },
-): ManifestSuccessPayload | null {
+): Promise<ManifestSuccessPayload | null> {
   if (!isDevManifestFallbackEnabled()) return null;
 
   const productionPayload = buildProductionEnvManifestPayload(experience);
   if (productionPayload) {
     return {
       ...productionPayload,
-      playbackUrl: resolveClientPlaybackUrl(request, productionPayload.playbackUrl),
+      playbackUrl: await resolveClientPlaybackUrl(request, productionPayload.playbackUrl),
     };
   }
 
@@ -110,6 +116,6 @@ export function buildDevFallbackFastPathPayload(
 
   return {
     ...payload,
-    playbackUrl: resolveClientPlaybackUrl(request, payload.playbackUrl),
+    playbackUrl: await resolveClientPlaybackUrl(request, payload.playbackUrl),
   };
 }

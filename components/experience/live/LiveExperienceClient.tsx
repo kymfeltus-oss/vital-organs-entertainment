@@ -6,10 +6,11 @@ import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
 import { fetchLiveAccessEvaluation, type LiveAccessEvaluation } from "@/lib/access";
+import { resolveImminentLiveRemainingSeconds } from "@/lib/experience/imminent-live-countdown";
 import { attachHlsPlayback } from "@/lib/live/attach-hls-playback";
 import { requestLiveSeedWalletRefresh } from "@/lib/live/seed-wallet-events";
-import { isDemoManifestPlaybackUrl } from "@/lib/live/manifest-dev-fallback";
 import { getSupabase } from "@/lib/supabase/client";
+import ImminentLiveOverlay from "@/components/experience/ImminentLiveOverlay";
 import {
   clearDirectCameraChannelSignals,
   createDirectCameraClientId,
@@ -23,15 +24,36 @@ import { resolvePublisherBrowserChannel } from "@/lib/owner/direct-camera-channe
 import {
   acquirePlatformChannel,
   commitPlatformChannelSubscribe,
+  isPlatformChannelSubscribed,
   registerPlatformListener,
   releasePlatformChannel,
+  resubscribePlatformChannel,
+  subscribePlatformChannelStatus,
   unregisterPlatformListener,
 } from "@/lib/live/platform-channel";
-import { LIVE_STREAM_STATE_BROADCAST_EVENT } from "@/lib/live/types";
+import { STALE_REALTIME_SUBSCRIBE_STATUSES } from "@/lib/live/realtime-subscribe";
+import {
+  IMMINENT_LIVE_DURATION_SEC,
+  IMMINENT_LIVE_START_EVENT,
+  LIVE_STREAM_STATE_BROADCAST_EVENT,
+  type StreamStateSyncPayload,
+} from "@/lib/live/types";
 
 const LIVE_ACCESS_POLL_MS = 5_000;
 const MANIFEST_RETRY_MS = 5_000;
 const MANIFEST_SYNC_LISTENER_ID = "live-manifest-stream-sync";
+
+function isStreamStateSyncPayload(value: unknown): value is StreamStateSyncPayload {
+  return Boolean(value && typeof value === "object");
+}
+
+function shouldActivateDropCurtain(
+  dropStartedAt: string | null | undefined,
+  durationSeconds: number,
+): dropStartedAt is string {
+  if (!dropStartedAt?.trim()) return false;
+  return resolveImminentLiveRemainingSeconds(dropStartedAt, durationSeconds) > 0;
+}
 
 type LiveExperienceClientProps = {
   initialProfile: AttendeeProfileSnapshot;
@@ -64,15 +86,20 @@ function resolveManifestMessage(response: ManifestResponse): ManifestState {
     };
   }
 
-  const isDevStream = response.fallback === true || isDemoManifestPlaybackUrl(playbackUrl);
   const routeLabel =
     response.activeSource === "backup" ? "Backup feed connected." : "Live stream connected.";
 
   return {
     status: "ready",
     playbackUrl,
-    message: isDevStream ? "Playing development test stream." : routeLabel,
+    message: routeLabel,
   };
+}
+
+function shouldPollLiveManifest(access: LiveAccessEvaluation | null): boolean {
+  if (!access?.canViewStream) return false;
+  if (access.streamIsLive || access.devPlaybackOverride) return true;
+  return false;
 }
 
 export default function LiveExperienceClient({
@@ -97,8 +124,13 @@ export default function LiveExperienceClient({
   const componentIsUnmountingRef = useRef(false);
   const accessSyncInFlightRef = useRef(false);
   const manifestInFlightRef = useRef(false);
+  const streamPlaybackLatchedRef = useRef(false);
   const loadManifestRef = useRef<() => Promise<void>>(async () => {});
   const syncAccessRef = useRef<() => Promise<void>>(async () => {});
+  const showImminentOverlayRef = useRef(false);
+  const handleImminentLiveStartRef = useRef<(dropStartedAt: string, durationSeconds: number) => void>(
+    () => {},
+  );
   const [access, setAccess] = useState<LiveAccessEvaluation | null>(null);
   const [accessError, setAccessError] = useState<string | null>(null);
   const [manifest, setManifest] = useState<ManifestState>({
@@ -110,6 +142,9 @@ export default function LiveExperienceClient({
   const [directAudioUnlocked, setDirectAudioUnlocked] = useState(false);
   const [directStatus, setDirectStatus] = useState<"idle" | "connecting" | "ready">("idle");
   const [directMessage, setDirectMessage] = useState("Waiting for direct camera publisher.");
+  const [showImminentOverlay, setShowImminentOverlay] = useState(false);
+  const [dropStartedAt, setDropStartedAt] = useState<string | null>(null);
+  const [imminentLiveDurationSec, setImminentLiveDurationSec] = useState(IMMINENT_LIVE_DURATION_SEC);
 
   const useDirectCamera =
     access?.publishMode === "browser_camera" &&
@@ -119,6 +154,10 @@ export default function LiveExperienceClient({
   const directBrowserChannel = directLiveChannel
     ? resolvePublisherBrowserChannel(directLiveChannel)
     : "";
+
+  useEffect(() => {
+    showImminentOverlayRef.current = showImminentOverlay;
+  }, [showImminentOverlay]);
 
   useEffect(() => {
     directAudioUnlockedRef.current = directAudioUnlocked;
@@ -443,7 +482,24 @@ export default function LiveExperienceClient({
 
       const data = (await response.json()) as ManifestResponse;
       if (componentIsUnmountingRef.current) return;
-      setManifest(resolveManifestMessage(data));
+      const nextManifest = resolveManifestMessage(data);
+      setManifest((prev) => {
+        if (
+          prev.status === "ready" &&
+          prev.playbackUrl &&
+          nextManifest.status === "ready" &&
+          nextManifest.playbackUrl
+        ) {
+          return {
+            ...nextManifest,
+            playbackUrl: prev.playbackUrl,
+          };
+        }
+        if (nextManifest.status === "ready" && nextManifest.playbackUrl) {
+          streamPlaybackLatchedRef.current = true;
+        }
+        return nextManifest;
+      });
     } catch {
       if (componentIsUnmountingRef.current) return;
       setManifest({
@@ -458,6 +514,42 @@ export default function LiveExperienceClient({
 
   loadManifestRef.current = loadManifest;
 
+  const handleImminentLiveStart = useCallback((startedAt: string, durationSeconds: number) => {
+    streamPlaybackLatchedRef.current = false;
+    setDropStartedAt(startedAt);
+    setImminentLiveDurationSec(durationSeconds);
+    setShowImminentOverlay(true);
+  }, []);
+
+  useEffect(() => {
+    handleImminentLiveStartRef.current = handleImminentLiveStart;
+  }, [handleImminentLiveStart]);
+
+  useEffect(() => {
+    if (!access || useDirectCamera) return;
+
+    if (
+      access.broadcastCurrentState === "imminent_live" &&
+      shouldActivateDropCurtain(access.imminentLiveStartedAt, access.imminentLiveDurationSeconds)
+    ) {
+      handleImminentLiveStart(access.imminentLiveStartedAt!, access.imminentLiveDurationSeconds);
+    }
+  }, [
+    access,
+    access?.broadcastCurrentState,
+    access?.imminentLiveDurationSeconds,
+    access?.imminentLiveStartedAt,
+    handleImminentLiveStart,
+    useDirectCamera,
+  ]);
+
+  const handleImminentOverlayComplete = useCallback(() => {
+    setShowImminentOverlay(false);
+    setDropStartedAt(null);
+    void syncAccess();
+    void loadManifest();
+  }, [loadManifest, syncAccess]);
+
   useEffect(() => {
     if (useDirectCamera) return;
 
@@ -470,20 +562,65 @@ export default function LiveExperienceClient({
       return;
     }
 
+    const handleStreamStateSyncPayload = (payload: unknown) => {
+      if (cancelled) return;
+
+      const syncPayload = isStreamStateSyncPayload(payload) ? payload : null;
+      if (
+        syncPayload?.event === IMMINENT_LIVE_START_EVENT &&
+        syncPayload.dropStartedAt?.trim()
+      ) {
+        handleImminentLiveStartRef.current(
+          syncPayload.dropStartedAt,
+          syncPayload.durationSeconds ?? IMMINENT_LIVE_DURATION_SEC,
+        );
+        return;
+      }
+
+      if (showImminentOverlayRef.current) return;
+
+      void syncAccessRef.current();
+      void loadManifestRef.current();
+    };
+
     acquirePlatformChannel(supabase);
 
     registerPlatformListener(MANIFEST_SYNC_LISTENER_ID, (channel) =>
-      channel.on("broadcast", { event: LIVE_STREAM_STATE_BROADCAST_EVENT }, () => {
-        if (cancelled) return;
-        void syncAccessRef.current();
-        void loadManifestRef.current();
+      channel.on("broadcast", { event: LIVE_STREAM_STATE_BROADCAST_EVENT }, ({ payload }) => {
+        handleStreamStateSyncPayload(payload);
       }),
     );
 
     commitPlatformChannelSubscribe();
 
+    const wakeStreamStateSync = () => {
+      if (cancelled) return;
+      if (!isPlatformChannelSubscribed()) {
+        resubscribePlatformChannel();
+      }
+      void syncAccessRef.current();
+      if (!showImminentOverlayRef.current) {
+        void loadManifestRef.current();
+      }
+    };
+
+    const unsubscribeChannelStatus = subscribePlatformChannelStatus((status) => {
+      if (cancelled) return;
+      if (STALE_REALTIME_SUBSCRIBE_STATUSES.has(status)) {
+        resubscribePlatformChannel();
+      }
+    });
+
+    const handleWindowFocus = () => {
+      wakeStreamStateSync();
+    };
+
+    window.addEventListener("focus", handleWindowFocus);
+
     return () => {
       cancelled = true;
+      window.removeEventListener("focus", handleWindowFocus);
+      unsubscribeChannelStatus();
       unregisterPlatformListener(MANIFEST_SYNC_LISTENER_ID);
       releasePlatformChannel(supabase);
     };
@@ -501,8 +638,14 @@ export default function LiveExperienceClient({
       return;
     }
 
-    if (!access?.canViewStream || !access.streamIsLive) {
+    if (showImminentOverlay) return;
+
+    const mayPollManifest =
+      shouldPollLiveManifest(access) || streamPlaybackLatchedRef.current;
+
+    if (!mayPollManifest) {
       queueMicrotask(() => {
+        streamPlaybackLatchedRef.current = false;
         setManifest({
           status: "idle",
           playbackUrl: null,
@@ -515,7 +658,7 @@ export default function LiveExperienceClient({
     queueMicrotask(() => void loadManifest());
     const intervalId = window.setInterval(() => void loadManifest(), MANIFEST_RETRY_MS);
     return () => window.clearInterval(intervalId);
-  }, [access?.canViewStream, access?.streamIsLive, loadManifest, useDirectCamera]);
+  }, [access?.canViewStream, access?.streamIsLive, loadManifest, showImminentOverlay, useDirectCamera]);
 
   const streamUrl = manifest.playbackUrl;
 
@@ -531,32 +674,47 @@ export default function LiveExperienceClient({
       return;
     }
 
-    video.muted = !audioUnlocked;
     let cancelled = false;
 
     void attachHlsPlayback(video, streamUrl, {
       onFatalError: (details) => {
         if (cancelled) return;
+        streamPlaybackLatchedRef.current = false;
         setManifest({
           status: "error",
           playbackUrl: null,
           message: `Live playback failed: ${details}.`,
         });
       },
-    }).then((cleanup) => {
-      if (cancelled) {
-        cleanup();
-        return;
-      }
-      hlsCleanupRef.current?.();
-      hlsCleanupRef.current = cleanup;
-    });
+    })
+      .then((cleanup) => {
+        if (cancelled) {
+          cleanup();
+          return;
+        }
+        hlsCleanupRef.current?.();
+        hlsCleanupRef.current = cleanup;
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setManifest({
+          status: "error",
+          playbackUrl: null,
+          message: "Live playback failed: could not load the HLS player.",
+        });
+      });
 
     return () => {
       cancelled = true;
       hlsCleanupRef.current?.();
       hlsCleanupRef.current = null;
     };
+  }, [streamUrl]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !audioUnlocked;
   }, [audioUnlocked, streamUrl]);
 
   const enableAudio = useCallback(() => {
@@ -578,7 +736,8 @@ export default function LiveExperienceClient({
 
   const locked = access && !access.authenticated;
   const waitingForAccess = !access && !accessError;
-  const showPlayer = Boolean(manifest.playbackUrl) && !useDirectCamera;
+  const showPlayer =
+    Boolean(manifest.playbackUrl) && !useDirectCamera && !showImminentOverlay;
   const showDirectPlayer = useDirectCamera && directStatus === "ready";
 
   return (
@@ -594,7 +753,13 @@ export default function LiveExperienceClient({
             </h1>
           </div>
           <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-white/70">
-            {showDirectPlayer ? "Direct Live" : access?.streamIsLive ? "On Air" : "Standby"}
+            {showImminentOverlay
+              ? "Initializing"
+              : showDirectPlayer
+                ? "Direct Live"
+                : access?.streamIsLive
+                  ? "On Air"
+                  : "Standby"}
           </div>
         </header>
 
@@ -677,6 +842,14 @@ export default function LiveExperienceClient({
           <span>{showDirectPlayer ? "Direct camera connected" : manifest.status === "ready" ? "Connected" : manifest.status}</span>
         </footer>
       </div>
+
+      {showImminentOverlay && dropStartedAt ? (
+        <ImminentLiveOverlay
+          dropStartedAt={dropStartedAt}
+          durationSeconds={imminentLiveDurationSec}
+          onCountdownComplete={handleImminentOverlayComplete}
+        />
+      ) : null}
     </main>
   );
 }

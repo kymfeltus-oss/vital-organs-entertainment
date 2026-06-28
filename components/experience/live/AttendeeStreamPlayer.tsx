@@ -1,5 +1,6 @@
 "use client";
 
+import "@/styles/features/live-route.css";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   DEFAULT_ATTENDEE_EXPERIENCE,
@@ -253,7 +254,6 @@ export default function AttendeeStreamPlayer({
       return;
     }
 
-    video.muted = !audioUnlocked;
     let cancelled = false;
 
     setPlaybackStatus("Loading live stream...");
@@ -285,6 +285,12 @@ export default function AttendeeStreamPlayer({
       hlsCleanupRef.current?.();
       hlsCleanupRef.current = null;
     };
+  }, [shouldPlay, streamUrl]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !shouldPlay) return;
+    video.muted = !audioUnlocked;
   }, [audioUnlocked, shouldPlay, streamUrl]);
 
   useEffect(() => {

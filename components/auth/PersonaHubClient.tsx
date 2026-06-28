@@ -1,5 +1,6 @@
 "use client";
 
+import "@/styles/features/attendee-surfaces.css";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import EmailGateShell from "@/components/auth/EmailGateShell";

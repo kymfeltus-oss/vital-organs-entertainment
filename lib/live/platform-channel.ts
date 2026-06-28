@@ -2,8 +2,9 @@
 
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import {
-  logRealtimeSubscribeStatus,
+  attachRealtimeChannelErrorGuard,
   removeChannelsByName,
+  subscribeChannelWithResilience,
 } from "@/lib/live/realtime-subscribe";
 import { LIVE_ROOM_PLATFORM_CHANNEL } from "@/lib/live/types";
 
@@ -22,9 +23,12 @@ export function subscribePlatformChannelStatus(
 }
 
 function emitPlatformChannelStatus(status: string, err?: Error): void {
-  logRealtimeSubscribeStatus(LIVE_ROOM_PLATFORM_CHANNEL, status, err);
   for (const listener of platformStatusListeners) {
-    listener(status, err);
+    try {
+      listener(status, err);
+    } catch {
+      // Absorb listener failures — socket recovery must not crash the attendee shell.
+    }
   }
 }
 
@@ -35,6 +39,7 @@ let platformSupabase: SupabaseClient | null = null;
 let isSubscribed = false;
 let subscriberCount = 0;
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
+let resubscribeTimer: ReturnType<typeof setTimeout> | null = null;
 let syncChain: Promise<void> = Promise.resolve();
 const listeners = new Map<string, PlatformListenerApply>();
 
@@ -45,12 +50,29 @@ function clearSyncTimer(): void {
   }
 }
 
+function clearResubscribeTimer(): void {
+  if (resubscribeTimer !== null) {
+    clearTimeout(resubscribeTimer);
+    resubscribeTimer = null;
+  }
+}
+
 function applyAllListeners(channel: RealtimeChannel): RealtimeChannel {
   let next = channel;
   for (const apply of listeners.values()) {
     next = apply(next);
   }
   return next;
+}
+
+function scheduleStaleChannelResubscribe(): void {
+  if (subscriberCount === 0 || listeners.size === 0) return;
+  if (resubscribeTimer !== null) return;
+
+  resubscribeTimer = setTimeout(() => {
+    resubscribeTimer = null;
+    schedulePlatformChannelSync();
+  }, 1_500);
 }
 
 async function syncPlatformChannel(): Promise<void> {
@@ -71,14 +93,24 @@ async function syncPlatformChannel(): Promise<void> {
 
   let channel = platformSupabase.channel(LIVE_ROOM_PLATFORM_CHANNEL);
   channel = applyAllListeners(channel);
-  channel.subscribe((status, err) => {
-    emitPlatformChannelStatus(status, err);
-    if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+  channel = attachRealtimeChannelErrorGuard(channel);
+
+  subscribeChannelWithResilience(channel, LIVE_ROOM_PLATFORM_CHANNEL, {
+    silent: true,
+    onStale: () => {
       isSubscribed = false;
-    } else if (status === "SUBSCRIBED") {
-      isSubscribed = true;
-    }
+      scheduleStaleChannelResubscribe();
+    },
+    onStatus: (status, err) => {
+      emitPlatformChannelStatus(status, err);
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+        isSubscribed = false;
+      } else if (status === "SUBSCRIBED") {
+        isSubscribed = true;
+      }
+    },
   });
+
   platformChannel = channel;
 }
 
@@ -89,10 +121,10 @@ function schedulePlatformChannelSync(): void {
     syncTimer = null;
     syncChain = syncChain
       .then(() => syncPlatformChannel())
-      .catch((error) => {
-        console.error("Platform channel sync failed:", error);
+      .catch(() => {
         isSubscribed = false;
         platformChannel = null;
+        scheduleStaleChannelResubscribe();
       });
   }, 0);
 }
@@ -101,6 +133,7 @@ function schedulePlatformChannelSync(): void {
 export function acquirePlatformChannel(supabase: SupabaseClient): RealtimeChannel {
   if (platformChannel && platformSupabase !== supabase) {
     clearSyncTimer();
+    clearResubscribeTimer();
     listeners.clear();
     void removeChannelsByName(platformSupabase, LIVE_ROOM_PLATFORM_CHANNEL);
     platformChannel = null;
@@ -136,11 +169,24 @@ export function commitPlatformChannelSubscribe(): void {
   schedulePlatformChannelSync();
 }
 
+/** Force a fresh subscribe() on the shared platform channel (e.g. after tab focus). */
+export function resubscribePlatformChannel(): void {
+  if (subscriberCount === 0 || listeners.size === 0) return;
+  isSubscribed = false;
+  clearResubscribeTimer();
+  schedulePlatformChannelSync();
+}
+
+export function isPlatformChannelSubscribed(): boolean {
+  return isSubscribed;
+}
+
 export function releasePlatformChannel(supabase: SupabaseClient): void {
   subscriberCount = Math.max(0, subscriberCount - 1);
 
   if (subscriberCount === 0) {
     clearSyncTimer();
+    clearResubscribeTimer();
     listeners.clear();
     syncChain = syncChain
       .then(async () => {
@@ -149,8 +195,10 @@ export function releasePlatformChannel(supabase: SupabaseClient): void {
         platformSupabase = null;
         isSubscribed = false;
       })
-      .catch((error) => {
-        console.error("Platform channel release failed:", error);
+      .catch(() => {
+        platformChannel = null;
+        platformSupabase = null;
+        isSubscribed = false;
       });
   } else {
     schedulePlatformChannelSync();

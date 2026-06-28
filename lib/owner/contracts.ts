@@ -71,9 +71,20 @@ export type FeedState = {
   backup: FeedLaneState;
 };
 
+/** Server-computed countdown — owner UI must not run local interval math. */
+export type OwnerCountdownSnapshot = {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  isComplete: boolean;
+  targetIso: string | null;
+};
+
 export type OwnerBroadcastSnapshot = {
   capturedAt: string;
   eventPhase: EventPhaseState;
+  countdown: OwnerCountdownSnapshot;
   publish: PublishState;
   playback: PlaybackState;
   feed: FeedState;
@@ -81,6 +92,10 @@ export type OwnerBroadcastSnapshot = {
   publisherSessionId: string | null;
   publisherChannel: string | null;
   vmix: VmixSnapshot | null;
+};
+
+export type AdjustCountdownRequestBody = {
+  offsetSeconds: number;
 };
 
 export type OwnerPublisherSession = {
