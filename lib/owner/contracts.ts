@@ -47,6 +47,16 @@ export type PlaybackState = {
   errorMessage: string | null;
 };
 
+export type BroadcastGateState = {
+  currentState: "offline" | "scheduled" | "imminent_live" | "live";
+  imminentLiveStartedAt: string | null;
+  concertTitle: string;
+  headlinerName: string;
+  ticketCapacityLimit: number;
+  gatesLocked: boolean;
+  preShowVipOnly: boolean;
+};
+
 export type PreflightCheckStatus = "pass" | "warn" | "fail" | "skipped";
 
 export type PreflightCheck = {
@@ -87,6 +97,7 @@ export type OwnerBroadcastSnapshot = {
   countdown: OwnerCountdownSnapshot;
   publish: PublishState;
   playback: PlaybackState;
+  gate: BroadcastGateState;
   feed: FeedState;
   preflight: PreflightCheck[];
   publisherSessionId: string | null;

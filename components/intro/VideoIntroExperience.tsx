@@ -23,7 +23,7 @@ async function resolveIntroDestination(): Promise<string> {
       fetchAccessContext(),
       new Promise((resolve) => {
         window.setTimeout(
-          () => resolve({ userId: null, email: null, isGuest: false }),
+          () => resolve({ userId: null, email: null, isGuest: false, isVip: false }),
           ACCESS_TIMEOUT_MS,
         );
       }),

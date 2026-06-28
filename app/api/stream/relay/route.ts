@@ -236,15 +236,26 @@ function relayResponse(
   body: BodyInit,
   contentType: string,
   status = 200,
+  passthroughHeaders: Record<string, string> = {},
 ): NextResponse {
   return new NextResponse(body, {
     status,
     headers: {
       ...manifestCorsHeaderRecord(request),
+      ...passthroughHeaders,
       "Content-Type": contentType,
       "Cache-Control": "no-store",
     },
   });
+}
+
+function upstreamTimingHeaders(upstreamResponse: Response): Record<string, string> {
+  const headers: Record<string, string> = {};
+  const date = upstreamResponse.headers.get("date");
+  const age = upstreamResponse.headers.get("age");
+  if (date) headers.Date = date;
+  if (age) headers.Age = age;
+  return headers;
 }
 
 export async function OPTIONS(request: NextRequest) {
@@ -305,7 +316,13 @@ export async function GET(request: NextRequest) {
         status: upstreamResponse.status,
         statusText: upstreamResponse.statusText,
       });
-      return relayResponse(request, "Upstream unavailable.", "text/plain", upstreamResponse.status);
+      return relayResponse(
+        request,
+        "Upstream unavailable.",
+        "text/plain",
+        upstreamResponse.status,
+        upstreamTimingHeaders(upstreamResponse),
+      );
     }
 
     const contentType =
@@ -323,11 +340,23 @@ export async function GET(request: NextRequest) {
       const text = await upstreamResponse.text();
       const relayBase = new URL("/api/stream/relay", request.nextUrl.origin);
       const rewritten = rewritePlaylistBody(text, upstream, relayBase);
-      return relayResponse(request, rewritten, "application/vnd.apple.mpegurl");
+      return relayResponse(
+        request,
+        rewritten,
+        "application/vnd.apple.mpegurl",
+        200,
+        upstreamTimingHeaders(upstreamResponse),
+      );
     }
 
     const buffer = await upstreamResponse.arrayBuffer();
-    return relayResponse(request, buffer, contentType);
+    return relayResponse(
+      request,
+      buffer,
+      contentType,
+      200,
+      upstreamTimingHeaders(upstreamResponse),
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Relay fetch failed.";
     relayReject("relay_fetch_exception", {

@@ -9,11 +9,12 @@ export type AccessContext = {
   userId: string | null;
   email: string | null;
   isGuest: boolean;
+  isVip: boolean;
 };
 
 export type LivePublishMode = "none" | "external_hls" | "rtmp_encoder" | "browser_camera";
 
-export type LiveBroadcastCurrentState = "offline" | "imminent_live" | "live";
+export type LiveBroadcastCurrentState = "offline" | "scheduled" | "imminent_live" | "live";
 
 export type LiveAccessEvaluation = {
   authenticated: boolean;
@@ -31,6 +32,11 @@ export type LiveAccessEvaluation = {
   broadcastCurrentState: LiveBroadcastCurrentState;
   imminentLiveStartedAt: string | null;
   imminentLiveDurationSeconds: number;
+  concertTitle: string;
+  headlinerName: string;
+  gatesLocked: boolean;
+  preShowVipOnly: boolean;
+  isVip: boolean;
   /** Local dev only — keep manifest polling even when Supabase is_live flickers. */
   devPlaybackOverride?: boolean;
 };
@@ -53,13 +59,20 @@ export function generateGuestPassword(): string {
 
 export function parseAccessContext(user: User | null): AccessContext {
   if (!user) {
-    return { userId: null, email: null, isGuest: false };
+    return { userId: null, email: null, isGuest: false, isVip: false };
   }
+
+  const role = typeof user.user_metadata?.role === "string" ? user.user_metadata.role : "";
 
   return {
     userId: user.id,
     email: user.email?.trim().toLowerCase() ?? null,
     isGuest: user.user_metadata?.is_guest === true,
+    isVip:
+      user.user_metadata?.is_vip === true ||
+      user.user_metadata?.vip_pass === true ||
+      user.user_metadata?.has_vip_pass === true ||
+      role.toLowerCase() === "vip",
   };
 }
 
@@ -72,7 +85,7 @@ export async function fetchAccessContext(): Promise<AccessContext> {
   } = await supabase.auth.getUser();
 
   if (error || !user) {
-    return { userId: null, email: null, isGuest: false };
+    return { userId: null, email: null, isGuest: false, isVip: false };
   }
 
   return parseAccessContext(user);
@@ -111,6 +124,11 @@ export function evaluateLiveAccessFromFlags(
     broadcastCurrentState: "offline",
     imminentLiveStartedAt: null,
     imminentLiveDurationSeconds: 10,
+    concertTitle: "The Awakening Experience",
+    headlinerName: "Pastor David Jenkins",
+    gatesLocked: false,
+    preShowVipOnly: true,
+    isVip: false,
   };
 }
 

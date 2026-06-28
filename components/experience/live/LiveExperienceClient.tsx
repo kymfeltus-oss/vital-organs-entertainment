@@ -39,6 +39,8 @@ import {
   type StreamStateSyncPayload,
 } from "@/lib/live/types";
 
+const FinalCountdownExperience = ImminentLiveOverlay;
+
 const LIVE_ACCESS_POLL_MS = 5_000;
 const MANIFEST_RETRY_MS = 5_000;
 const MANIFEST_SYNC_LISTENER_ID = "live-manifest-stream-sync";
@@ -74,6 +76,37 @@ type ManifestResponse = {
   fallbackReason?: string;
   error?: string;
 };
+
+function PreShowHubExperience({
+  concertTitle,
+  headlinerName,
+  isVip,
+}: {
+  concertTitle: string;
+  headlinerName: string;
+  isVip: boolean;
+}) {
+  return (
+    <div className="flex h-full min-h-[calc(100dvh-9rem)] items-center justify-center px-6 text-center">
+      <div className="max-w-xl">
+        <p className="font-ui text-[0.68rem] font-bold uppercase tracking-[0.18em] text-brand-blue">
+          Pre-show gathering
+        </p>
+        <h2 className="mt-4 font-headline text-4xl uppercase tracking-[0.08em] text-white">
+          {concertTitle}
+        </h2>
+        <p className="mt-3 font-body text-base text-white/70">{headlinerName}</p>
+        <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.04] px-5 py-5">
+          <p className="font-body text-sm text-white/75">
+            {isVip
+              ? "VIP early access is open. You are in the lounge while the public room waits."
+              : "Public doors are still closed. Please stay here while the pre-show countdown runs."}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function resolveManifestMessage(response: ManifestResponse): ManifestState {
   const playbackUrl = response.playbackUrl?.trim() ?? "";
@@ -143,6 +176,7 @@ export default function LiveExperienceClient({
   const [directStatus, setDirectStatus] = useState<"idle" | "connecting" | "ready">("idle");
   const [directMessage, setDirectMessage] = useState("Waiting for direct camera publisher.");
   const [showImminentOverlay, setShowImminentOverlay] = useState(false);
+  const [showWhiteFlash, setShowWhiteFlash] = useState(false);
   const [dropStartedAt, setDropStartedAt] = useState<string | null>(null);
   const [imminentLiveDurationSec, setImminentLiveDurationSec] = useState(IMMINENT_LIVE_DURATION_SEC);
 
@@ -546,6 +580,8 @@ export default function LiveExperienceClient({
   const handleImminentOverlayComplete = useCallback(() => {
     setShowImminentOverlay(false);
     setDropStartedAt(null);
+    setShowWhiteFlash(true);
+    window.setTimeout(() => setShowWhiteFlash(false), 180);
     void syncAccess();
     void loadManifest();
   }, [loadManifest, syncAccess]);
@@ -736,8 +772,14 @@ export default function LiveExperienceClient({
 
   const locked = access && !access.authenticated;
   const waitingForAccess = !access && !accessError;
+  const isPreShowHolding =
+    Boolean(access) &&
+    !access.streamIsLive &&
+    access.broadcastCurrentState === "scheduled" &&
+    (access.gatesLocked || access.preShowVipOnly);
+  const showPreShowHub = isPreShowHolding && !locked && !showImminentOverlay;
   const showPlayer =
-    Boolean(manifest.playbackUrl) && !useDirectCamera && !showImminentOverlay;
+    Boolean(manifest.playbackUrl) && !useDirectCamera && !showImminentOverlay && !showPreShowHub;
   const showDirectPlayer = useDirectCamera && directStatus === "ready";
 
   return (
@@ -764,7 +806,13 @@ export default function LiveExperienceClient({
         </header>
 
         <section className="relative min-h-0 flex-1 overflow-hidden bg-[#050505]">
-          {showDirectPlayer ? (
+          {showPreShowHub ? (
+            <PreShowHubExperience
+              concertTitle={access?.concertTitle ?? "The Awakening Experience"}
+              headlinerName={access?.headlinerName ?? "Pastor David Jenkins"}
+              isVip={access?.isVip === true}
+            />
+          ) : showDirectPlayer ? (
             <>
               <video
                 ref={directVideoRef}
@@ -843,8 +891,12 @@ export default function LiveExperienceClient({
         </footer>
       </div>
 
+      {showWhiteFlash ? (
+        <div className="fixed inset-0 z-[220] bg-white" aria-hidden="true" />
+      ) : null}
+
       {showImminentOverlay && dropStartedAt ? (
-        <ImminentLiveOverlay
+        <FinalCountdownExperience
           dropStartedAt={dropStartedAt}
           durationSeconds={imminentLiveDurationSec}
           onCountdownComplete={handleImminentOverlayComplete}

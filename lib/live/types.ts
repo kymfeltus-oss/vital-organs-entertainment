@@ -31,12 +31,12 @@ export const HARVEST_GOAL_DOLLARS = 30_000;
 
 export type StreamStateSyncPayload = {
   at?: string;
-  event?: typeof IMMINENT_LIVE_START_EVENT;
+  event?: typeof IMMINENT_LIVE_START_EVENT | "pre_show_updated";
   durationSeconds?: number;
   dropStartedAt?: string;
 };
 
-export type BroadcastCurrentState = "offline" | "imminent_live" | "live";
+export type BroadcastCurrentState = "offline" | "scheduled" | "imminent_live" | "live";
 
 export type LiveStreamStateRow = {
   id: string;
@@ -49,6 +49,12 @@ export type LiveStreamStateRow = {
   backup_playback_url: string | null;
   primary_rtmp_ingest_url: string | null;
   backup_rtmp_ingest_url: string | null;
+  concert_title: string;
+  headliner_name: string;
+  ticket_capacity_limit: number;
+  gates_locked: boolean;
+  pre_show_vip_only: boolean;
+  audio_master_presets: Record<string, unknown>;
   updated_at: string;
   updated_by: string | null;
 };

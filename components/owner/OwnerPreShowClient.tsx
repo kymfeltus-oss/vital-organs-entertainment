@@ -3,10 +3,11 @@
 import { useCallback, useState } from "react";
 import PreShowCountdownManager from "@/components/owner/PreShowCountdownManager";
 import { derivePendingTodos } from "@/lib/owner/derive-pending-todos";
+import type { OwnerBroadcastSnapshot } from "@/lib/owner/contracts";
 import { useOwnerBroadcastSnapshot } from "@/hooks/useOwnerBroadcastSnapshot";
 
 type CountdownResponse = {
-  snapshot?: ReturnType<typeof useOwnerBroadcastSnapshot>["snapshot"];
+  snapshot?: OwnerBroadcastSnapshot;
   message?: string;
   ok?: boolean;
   error?: string;
@@ -15,6 +16,7 @@ type CountdownResponse = {
 export default function OwnerPreShowClient() {
   const { snapshot, loading, error, reload, setSnapshot } = useOwnerBroadcastSnapshot();
   const [timerPending, setTimerPending] = useState(false);
+  const [savePending, setSavePending] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const handleAdjustTimer = useCallback(
@@ -40,6 +42,35 @@ export default function OwnerPreShowClient() {
     [setSnapshot],
   );
 
+  const handleSavePreShow = useCallback(
+    async (payload: {
+      concertTitle: string;
+      headlinerName: string;
+      gatesLocked: boolean;
+      preShowVipOnly: boolean;
+    }) => {
+      setSavePending(true);
+      setActionMessage(null);
+      try {
+        const response = await fetch("/api/owner/broadcast/update-pre-show", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = (await response.json()) as CountdownResponse;
+        if (data.snapshot) setSnapshot(data.snapshot);
+        setActionMessage(data.message ?? data.error ?? "Pre-show details saved.");
+        if (response.ok) void reload(true);
+      } catch {
+        setActionMessage("Pre-show save failed.");
+      } finally {
+        setSavePending(false);
+      }
+    },
+    [reload, setSnapshot],
+  );
+
   return (
     <div>
       {error ? (
@@ -59,7 +90,9 @@ export default function OwnerPreShowClient() {
           snapshot={snapshot}
           pendingTodos={derivePendingTodos(snapshot.preflight)}
           onAdjustTimer={(offset) => void handleAdjustTimer(offset)}
+          onSavePreShow={(payload) => void handleSavePreShow(payload)}
           timerPending={timerPending}
+          savePending={savePending}
         />
       )}
     </div>

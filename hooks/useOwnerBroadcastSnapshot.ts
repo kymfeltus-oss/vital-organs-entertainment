@@ -18,6 +18,15 @@ const EMPTY_SNAPSHOT: OwnerBroadcastSnapshot = {
     manifestReachable: false,
     errorMessage: null,
   },
+  gate: {
+    currentState: "offline",
+    imminentLiveStartedAt: null,
+    concertTitle: "The Awakening Experience",
+    headlinerName: "Pastor David Jenkins",
+    ticketCapacityLimit: 500,
+    gatesLocked: false,
+    preShowVipOnly: true,
+  },
   feed: {
     activeSource: "offline",
     primary: { hlsUrl: null, manifestReachable: false, detail: null },

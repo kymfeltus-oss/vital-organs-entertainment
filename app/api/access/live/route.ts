@@ -26,7 +26,7 @@ function normalizeBroadcastCurrentState(
   raw: unknown,
   streamIsLive: boolean,
 ): LiveBroadcastCurrentState {
-  if (raw === "imminent_live" || raw === "live" || raw === "offline") {
+  if (raw === "scheduled" || raw === "imminent_live" || raw === "live" || raw === "offline") {
     return raw;
   }
   if (streamIsLive) return "live";
@@ -50,6 +50,10 @@ function buildStreamFlags(streamRow: Awaited<ReturnType<typeof loadOwnerStreamSt
         ? streamRow.imminent_live_started_at
         : null,
     imminentLiveDurationSeconds: IMMINENT_LIVE_DURATION_SEC,
+    concertTitle: streamRow?.concert_title ?? "The Awakening Experience",
+    headlinerName: streamRow?.headliner_name ?? "Pastor David Jenkins",
+    gatesLocked: streamRow?.gates_locked ?? false,
+    preShowVipOnly: streamRow?.pre_show_vip_only ?? true,
   };
 }
 
@@ -87,6 +91,7 @@ export async function GET() {
           showFullLockdown: false,
           playbackUrl: "",
           devPlaybackOverride: true,
+          isVip: true,
           ...streamFlags,
         });
       }
@@ -108,6 +113,7 @@ export async function GET() {
           showFullLockdown: false,
           playbackUrl: "",
           devPlaybackOverride: true,
+          isVip: true,
           ...streamFlags,
         });
       }
@@ -123,6 +129,7 @@ export async function GET() {
     return NextResponse.json({
       ...evaluation,
       userId: context.userId,
+      isVip: context.isVip,
       playbackUrl: "",
       ...streamFlags,
     });

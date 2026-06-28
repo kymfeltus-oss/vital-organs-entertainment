@@ -16,6 +16,8 @@ import type {
 
   PublishState,
 
+  BroadcastGateState,
+
 } from "@/lib/owner/contracts";
 
 import { probeHlsManifest } from "@/lib/owner/hls-readiness";
@@ -121,6 +123,18 @@ function resolvePlaybackState(
 
   };
 
+}
+
+function resolveGateState(row: Awaited<ReturnType<typeof loadOwnerStreamState>>["row"]): BroadcastGateState {
+  return {
+    currentState: row?.current_state ?? "offline",
+    imminentLiveStartedAt: row?.imminent_live_started_at ?? null,
+    concertTitle: row?.concert_title ?? "The Awakening Experience",
+    headlinerName: row?.headliner_name ?? "Pastor David Jenkins",
+    ticketCapacityLimit: row?.ticket_capacity_limit ?? 500,
+    gatesLocked: row?.gates_locked ?? false,
+    preShowVipOnly: row?.pre_show_vip_only ?? true,
+  };
 }
 
 
@@ -320,6 +334,8 @@ export async function buildOwnerBroadcastSnapshot(
     publish: resolvePublishState(row),
 
     playback: resolvePlaybackState(row, hlsUrl, manifestReachable),
+
+    gate: resolveGateState(row),
 
     feed,
 

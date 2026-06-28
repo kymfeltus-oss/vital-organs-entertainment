@@ -139,10 +139,10 @@ export default function BroadcastControlWizard({
             isOverriding ? "text-emerald-300" : "text-red-400"
           }`}
         >
-          🚨 Extreme Master Broadcast Override System
+          Emergency override: open gates immediately
         </p>
         <p className="mt-2 font-body text-xs text-red-200/70">
-          Bypasses schedule registries — sets imminent live and notifies all attendee clients instantly.
+          Bypasses schedule calendars, opens the live show, and notifies all attendee screens instantly.
           Does not modify countdown configuration.
         </p>
         <button
@@ -161,11 +161,11 @@ export default function BroadcastControlWizard({
             <>
               <DropCurtainSpinner className="h-5 w-5 shrink-0 animate-spin text-emerald-300" />
               <span className="text-left leading-snug">
-                🚨 TRANSMISSION ENGAGED: SYNCHRONIZING ATTENDEE SCREENS (10s)...
+                Transmission engaged: syncing attendee screens for 10 seconds...
               </span>
             </>
           ) : (
-            "⚡ Drop Curtain: Bypass All Calendars & Transmit Live Right Now"
+            "Drop curtain: bypass system calendars and open live show right now"
           )}
         </button>
       </section>

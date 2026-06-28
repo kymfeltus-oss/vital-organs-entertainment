@@ -63,8 +63,24 @@ export function useDropCurtainCountdown({
       }
     };
 
+    let animationFrameId = 0;
+    let lastSecond = -1;
+
+    const animate = () => {
+      const remaining = resolveImminentLiveRemainingSeconds(dropStartedAt, durationSeconds);
+      if (remaining !== lastSecond) {
+        lastSecond = remaining;
+        setRemainingSeconds(remaining);
+      }
+      if (remaining <= 0) {
+        finishCountdown();
+        return;
+      }
+      animationFrameId = window.requestAnimationFrame(animate);
+    };
+
     tick();
-    const intervalId = window.setInterval(tick, 1_000);
+    animationFrameId = window.requestAnimationFrame(animate);
 
     const onVisibility = () => {
       if (document.visibilityState === "visible") tick();
@@ -72,7 +88,7 @@ export function useDropCurtainCountdown({
     document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
-      window.clearInterval(intervalId);
+      window.cancelAnimationFrame(animationFrameId);
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [dropStartedAt, durationSeconds, finishCountdown]);
