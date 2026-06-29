@@ -48,7 +48,10 @@ export default function AttendeeStreamPlayer({
 
   const shouldPlay = enabled && !showPaywall;
   const shouldPlayRef = useRef(shouldPlay);
-  shouldPlayRef.current = shouldPlay;
+
+  useEffect(() => {
+    shouldPlayRef.current = shouldPlay;
+  }, [shouldPlay]);
 
   useEffect(() => {
     experienceRef.current = experience;
@@ -188,9 +191,9 @@ export default function AttendeeStreamPlayer({
   useEffect(() => {
     if (!shouldPlay) {
       clearReconnectTimer();
-      destroyPlayer();
       queueMicrotask(() => {
         if (!isMountedRef.current) return;
+        destroyPlayer();
         setIsReconnecting(false);
         setIsBuffering(false);
         setIsPlaying(false);
@@ -268,7 +271,7 @@ export default function AttendeeStreamPlayer({
       onFatalError: () => {
         if (cancelled) return;
         console.error("[Telemetry Error] HLS fatal error");
-        setPlaybackStatus("Live stream playback error. Retrying...");
+        setPlaybackStatus("Live stream is offline or still starting. Retrying...");
         scheduleReconnectRef.current();
       },
     }).then((cleanup) => {

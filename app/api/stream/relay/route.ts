@@ -315,21 +315,26 @@ export async function GET(request: NextRequest) {
       const detail = isIvsUpstream
         ? "Amazon IVS returned this status for the manifest. The channel is usually offline or not currently broadcasting."
         : "The upstream HLS provider returned a non-success status.";
+      const relayStatus = isIvsUpstream && upstreamResponse.status === 404 ? 503 : upstreamResponse.status;
+      const playbackState = isIvsUpstream && upstreamResponse.status === 404 ? "offline" : "upstream_error";
       relayReject("upstream_fetch_failed", {
         target: upstream.toString(),
         status: upstreamResponse.status,
         statusText: upstreamResponse.statusText,
+        relayStatus,
+        playbackState,
         detail,
       });
       return relayResponse(
         request,
-        `Upstream unavailable. ${detail}`,
+        `Stream offline. ${detail}`,
         "text/plain",
-        upstreamResponse.status,
+        relayStatus,
         {
           ...upstreamTimingHeaders(upstreamResponse),
           "X-Relay-Upstream-Status": String(upstreamResponse.status),
           "X-Relay-Upstream-Host": upstream.hostname,
+          "X-Relay-Playback-State": playbackState,
         },
       );
     }
