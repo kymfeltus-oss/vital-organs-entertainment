@@ -1,0 +1,312 @@
+.public-countdown {
+  position: relative;
+  display: grid;
+  min-height: 100dvh;
+  width: 100%;
+  place-items: center;
+  overflow: hidden;
+  padding: 0;
+  background: #010106;
+  color: #fff;
+}
+
+.public-countdown > .public-countdown__cta {
+  position: fixed;
+  z-index: 20;
+  bottom: max(1.25rem, env(safe-area-inset-bottom));
+}
+
+.neon-countdown-stage {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  min-height: 100dvh;
+  width: 100%;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 52%, rgb(0 91 255 / 0.24), transparent 35%),
+    radial-gradient(circle at 82% 53%, rgb(255 0 153 / 0.25), transparent 36%),
+    linear-gradient(180deg, #010106 0%, #02020b 54%, #070013 100%);
+}
+
+.neon-countdown-stage__ambient {
+  position: absolute;
+  inset: 0;
+  z-index: -4;
+  background:
+    radial-gradient(circle at 50% 42%, rgb(111 25 255 / 0.2), transparent 34%),
+    linear-gradient(90deg, rgb(0 103 255 / 0.08), transparent 45%, rgb(255 0 148 / 0.09));
+}
+
+.neon-countdown-stage__crowd {
+  position: absolute;
+  z-index: -3;
+  inset: 34% -3% -7%;
+  background-image:
+    linear-gradient(180deg, rgb(1 1 8 / 0.25), rgb(2 0 10 / 0.18) 45%, rgb(1 1 6 / 0.72)),
+    url("/effects/hero-audience-banner.png");
+  background-position: center bottom;
+  background-size: 180% auto;
+  filter: saturate(1.12) contrast(1.04) blur(1px);
+  opacity: 0.34;
+  mask-image: linear-gradient(180deg, transparent 0%, #000 26%, #000 100%);
+}
+
+.neon-countdown-stage__wave {
+  position: absolute;
+  z-index: -2;
+  top: 42%;
+  left: -4%;
+  width: 108%;
+  height: 24%;
+  background: url("/effects/waveform-overlay.png") center / cover no-repeat;
+  mix-blend-mode: screen;
+  opacity: 0.72;
+  filter: saturate(1.45) contrast(1.15);
+}
+
+.neon-countdown-stage__content {
+  display: flex;
+  width: min(100%, 74rem);
+  min-height: 100dvh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: max(0.35rem, env(safe-area-inset-top)) clamp(0.75rem, 3vw, 2rem)
+    max(0.75rem, env(safe-area-inset-bottom));
+  text-align: center;
+}
+
+.neon-countdown-stage__lockup {
+  display: block;
+  width: auto;
+  max-width: min(94vw, 58rem);
+  height: clamp(16rem, 56vh, 38rem);
+  margin-bottom: clamp(-3.8rem, -7vh, -1.65rem);
+  object-fit: contain;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 18px rgb(93 62 255 / 0.2));
+}
+
+.neon-countdown-stage__hosts {
+  margin: 0 0 clamp(0.4rem, 1.2vh, 0.7rem);
+  font-size: clamp(0.56rem, 1vw, 0.76rem);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.66);
+}
+
+.neon-countdown-stage__lead {
+  margin: 0 0 clamp(0.65rem, 1.8vh, 1.1rem);
+  font-size: clamp(0.68rem, 1.65vw, 1.15rem);
+  font-weight: 650;
+  letter-spacing: clamp(0.22em, 0.7vw, 0.46em);
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.82);
+  text-shadow: 0 0 18px rgb(255 255 255 / 0.16);
+}
+
+.neon-countdown-stage .public-countdown-rings {
+  display: grid;
+  width: min(100%, 59rem);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(0.18rem, 0.75vw, 0.7rem);
+}
+
+.neon-countdown-stage .public-countdown-rings > div {
+  min-width: 0;
+  width: 100%;
+}
+
+.public-countdown-rings__separator {
+  align-self: center;
+  margin-top: -0.5rem;
+  font-family: var(--font-headline), sans-serif;
+  font-size: clamp(1.6rem, 4.8vw, 4.25rem);
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 0 14px rgb(167 102 255 / 0.9);
+}
+
+.neon-countdown-stage .public-countdown-unit {
+  display: block;
+  width: 100%;
+}
+
+.neon-countdown-stage .public-countdown-unit__ring {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 0.76;
+  border-radius: clamp(0.7rem, 1.8vw, 1.2rem);
+  padding: clamp(1px, 0.24vw, 3px);
+  background: linear-gradient(145deg, #5ff6ff, #2259ff 52%, #7d2bff);
+  box-shadow:
+    0 0 12px rgb(0 141 255 / 0.74),
+    0 0 30px rgb(0 88 255 / 0.28),
+    inset 0 0 8px rgb(255 255 255 / 0.45);
+}
+
+.neon-countdown-stage .public-countdown-unit__ring--hours {
+  background: linear-gradient(145deg, #5e83ff, #7a33ff 56%, #c236ff);
+  box-shadow: 0 0 14px rgb(109 54 255 / 0.75), 0 0 32px rgb(102 39 255 / 0.3);
+}
+
+.neon-countdown-stage .public-countdown-unit__ring--minutes {
+  background: linear-gradient(145deg, #b84cff, #d629ff 58%, #ff34b9);
+  box-shadow: 0 0 14px rgb(204 42 255 / 0.75), 0 0 32px rgb(190 30 255 / 0.3);
+}
+
+.neon-countdown-stage .public-countdown-unit__ring--seconds {
+  background: linear-gradient(145deg, #ff64df, #ff22aa 58%, #ff4acf);
+  box-shadow: 0 0 14px rgb(255 38 179 / 0.82), 0 0 34px rgb(255 29 171 / 0.34);
+}
+
+.neon-countdown-stage .public-countdown-unit__ring-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  filter: blur(13px);
+  opacity: 0.42;
+}
+
+.neon-countdown-stage .public-countdown-unit__core {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.55rem, 2vw, 1.15rem);
+  overflow: hidden;
+  border-radius: calc(clamp(0.7rem, 1.8vw, 1.2rem) - 2px);
+  background:
+    radial-gradient(circle at 48% 6%, rgb(102 76 255 / 0.22), transparent 40%),
+    linear-gradient(180deg, rgb(8 7 36 / 0.95), rgb(2 3 18 / 0.98));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.18),
+    inset 0 -22px 38px rgb(13 0 48 / 0.42);
+}
+
+.neon-countdown-stage .public-countdown-unit__core::before {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 8%, rgb(255 255 255 / 0.12) 35%, transparent 52%);
+  content: "";
+  pointer-events: none;
+}
+
+.neon-countdown-stage .public-countdown-unit__digit {
+  position: relative;
+  font-size: clamp(2rem, 7.2vw, 5.6rem);
+  font-weight: 800;
+  line-height: 0.88;
+  letter-spacing: -0.03em;
+  color: #fff;
+  text-shadow:
+    0 0 8px rgb(255 255 255 / 0.85),
+    0 0 18px rgb(82 99 255 / 0.9),
+    0 4px 2px rgb(0 0 0 / 0.75);
+}
+
+.neon-countdown-stage .public-countdown-unit__label {
+  position: relative;
+  font-size: clamp(0.5rem, 1.4vw, 0.86rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #00c8ff;
+  text-shadow: 0 0 12px currentcolor;
+}
+
+.neon-countdown-stage .public-countdown-unit--flash .public-countdown-unit__ring,
+.neon-countdown-stage .public-countdown-unit--flash .public-countdown-unit__digit {
+  animation: none;
+}
+
+.neon-countdown-stage .public-countdown-unit__ring--hours .public-countdown-unit__label {
+  color: #7f62ff;
+}
+
+.neon-countdown-stage .public-countdown-unit__ring--minutes .public-countdown-unit__label {
+  color: #d83aff;
+}
+
+.neon-countdown-stage .public-countdown-unit__ring--seconds .public-countdown-unit__label {
+  color: #ff37b4;
+}
+
+.neon-countdown-stage__state {
+  font-size: clamp(4rem, 18vw, 11rem);
+  line-height: 0.9;
+  letter-spacing: 0.12em;
+  background: linear-gradient(90deg, #00c8ff, #8c45ff 52%, #ff2cae);
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 28px rgb(149 56 255 / 0.48));
+}
+
+.neon-countdown-stage--compact {
+  min-height: min(62vw, 42rem);
+}
+
+.neon-countdown-stage--compact .neon-countdown-stage__content {
+  min-height: min(62vw, 42rem);
+  padding-inline: clamp(0.7rem, 2vw, 1.3rem);
+}
+
+.neon-countdown-stage--compact .neon-countdown-stage__lockup {
+  height: clamp(13rem, 34vw, 25rem);
+  margin-bottom: clamp(-2.8rem, -5vw, -1.25rem);
+}
+
+.neon-countdown-stage--compact .neon-countdown-stage__lead {
+  font-size: clamp(0.55rem, 1.25vw, 0.9rem);
+}
+
+.neon-countdown-stage--compact .public-countdown-unit__digit {
+  font-size: clamp(1.55rem, 5vw, 3.8rem);
+}
+
+.neon-countdown-stage--compact .public-countdown-unit__label {
+  font-size: clamp(0.42rem, 1vw, 0.68rem);
+}
+
+@media (max-width: 560px) {
+  .neon-countdown-stage__content {
+    justify-content: center;
+  }
+
+  .neon-countdown-stage__lockup {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin-bottom: -10vw;
+  }
+
+  .neon-countdown-stage__lead {
+    margin-bottom: 0.85rem;
+  }
+
+  .neon-countdown-stage .public-countdown-rings {
+    gap: 0.2rem;
+  }
+
+  .public-countdown-rings__separator {
+    font-size: clamp(1.15rem, 5.5vw, 1.8rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .neon-countdown-stage *,
+  .neon-countdown-stage *::before,
+  .neon-countdown-stage *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

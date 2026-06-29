@@ -180,6 +180,21 @@ export async function PATCH(request: Request) {
     }
 
     const admin = getSupabaseAdmin();
+    if (body.isActiveOnStream === true) {
+      const { error: clearError } = await admin
+        .from("owner_lower_thirds")
+        .update({
+          is_active_on_stream: false,
+          updated_at: new Date().toISOString(),
+          updated_by: auth.email,
+        })
+        .eq("event_id", EVENT_ID)
+        .eq("is_active_on_stream", true)
+        .neq("id", id);
+
+      if (clearError) throw new Error(clearError.message);
+    }
+
     const { data, error } = await admin
       .from("owner_lower_thirds")
       .update(updatePayload)
@@ -199,6 +214,42 @@ export async function PATCH(request: Request) {
       {
         success: false,
         error: error instanceof Error ? error.message : "Unable to update lower-third asset.",
+      },
+      500,
+    );
+  }
+}
+
+/** Emergency program-layer kill switch. Event-scoped and server-authorized. */
+export async function DELETE() {
+  const auth = await requireOwnerUser();
+  if (!isOwnerAuthed(auth)) return ownerAuthFailureResponse(auth);
+
+  try {
+    const admin = getSupabaseAdmin();
+    const { data, error } = await admin
+      .from("owner_lower_thirds")
+      .update({
+        is_active_on_stream: false,
+        updated_at: new Date().toISOString(),
+        updated_by: auth.email,
+      })
+      .eq("event_id", EVENT_ID)
+      .eq("is_active_on_stream", true)
+      .select("id");
+
+    if (error) throw new Error(error.message);
+
+    return ownerJsonResponse({
+      success: true,
+      clearedCount: data?.length ?? 0,
+      message: "All live graphics cleared from the program feed.",
+    });
+  } catch (error) {
+    return ownerJsonResponse(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Unable to clear live graphics.",
       },
       500,
     );

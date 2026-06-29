@@ -1,7 +1,7 @@
-import ShowSetupSettingsClient from "@/components/owner/ShowSetupSettingsClient";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default function OwnerShowSetupPage() {
-  return <ShowSetupSettingsClient />;
+  redirect("/owner/countdown");
 }

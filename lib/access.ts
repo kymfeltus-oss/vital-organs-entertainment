@@ -127,7 +127,7 @@ export function evaluateLiveAccessFromFlags(
     concertTitle: "The Awakening Experience",
     headlinerName: "Pastor David Jenkins",
     gatesLocked: false,
-    preShowVipOnly: true,
+    preShowVipOnly: false,
     isVip: false,
   };
 }

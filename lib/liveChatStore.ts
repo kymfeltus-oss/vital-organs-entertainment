@@ -4,6 +4,10 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { create } from "zustand";
 import { getClientAppUrl } from "@/lib/client-api";
 import { LIVE_REACTION_TYPES, type LiveReactionType } from "@/lib/experience/live-reactions";
+import {
+  attachRealtimeChannelErrorGuard,
+  subscribeChannelWithResilience,
+} from "@/lib/live/realtime-subscribe";
 import { getSupabase } from "@/lib/supabase/client";
 
 export type LiveChatMessageColor = "pink" | "cyan" | "purple" | "green" | "blue";
@@ -166,7 +170,7 @@ class LiveChatStore {
 
   async sendSeedMessage(
     userName: string,
-    initials: string,
+    _initials: string,
     seedAmount: number,
   ): Promise<LiveChatMessage | null> {
     const safeAmount = Number.isFinite(seedAmount) ? Math.max(0, Math.round(seedAmount)) : 0;
@@ -174,7 +178,7 @@ class LiveChatStore {
     return this.persistMessage(`${userName || "Guest"} sowed a seed gift of $${safeAmount}.`);
   }
 
-  async sendPrayerMessage(userName: string, initials: string): Promise<LiveChatMessage | null> {
+  async sendPrayerMessage(userName: string): Promise<LiveChatMessage | null> {
     return this.persistMessage(`${userName || "Guest"} sent a prayer request.`);
   }
 
@@ -272,7 +276,7 @@ class LiveChatStore {
 
       if (this.channel) return;
 
-      this.channel = supabase
+      const channel = supabase
         .channel(CHAT_CHANNEL_NAME)
         .on(
           "postgres_changes",
@@ -296,8 +300,21 @@ class LiveChatStore {
           () => {
             void this.reloadHistory();
           },
-        )
-        .subscribe();
+        );
+
+      this.channel = attachRealtimeChannelErrorGuard(channel);
+      subscribeChannelWithResilience(this.channel, CHAT_CHANNEL_NAME, {
+        onStale: () => {
+          if (this.channel !== channel) return;
+          this.channel = null;
+
+          if (this.subscribers.size > 0) {
+            void this.ensureConnected().catch(() => {
+              this.notify();
+            });
+          }
+        },
+      });
     })().finally(() => {
       this.loadingPromise = null;
     });

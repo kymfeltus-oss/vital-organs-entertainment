@@ -47,6 +47,20 @@ export const STALE_REALTIME_SUBSCRIBE_STATUSES = new Set([
 ]);
 
 const REALTIME_LOG_PREFIX = "[Supabase Realtime]";
+const EXPECTED_REALTIME_CLOSE_CODES = new Set(["1000", "1001", "1005", "1006"]);
+
+export function isExpectedRealtimeClose(err: Error | undefined): boolean {
+  if (!err) return false;
+  const message = err.message.toLowerCase();
+  const closeCode = message.match(/(?:socket closed|code)\D*(\d{4})/)?.[1];
+
+  return (
+    (closeCode ? EXPECTED_REALTIME_CLOSE_CODES.has(closeCode) : false) ||
+    message.includes("normal closure") ||
+    message.includes("abnormal closure") ||
+    message.includes("websocket closed")
+  );
+}
 
 /** Dev-visible subscription status — surfaces CHANNEL_ERROR / TIMED_OUT instead of failing silently. */
 export function logRealtimeSubscribeStatus(
@@ -57,7 +71,11 @@ export function logRealtimeSubscribeStatus(
   if (process.env.NODE_ENV === "development") {
     console.log(`${REALTIME_LOG_PREFIX} ${channelLabel} status: ${status}`);
     if (err) {
-      console.error(`${REALTIME_LOG_PREFIX} ${channelLabel} error:`, err);
+      if (isExpectedRealtimeClose(err)) {
+        console.debug(`${REALTIME_LOG_PREFIX} ${channelLabel} transient close: ${err.message}`);
+      } else {
+        console.error(`${REALTIME_LOG_PREFIX} ${channelLabel} error:`, err);
+      }
     }
   }
 }
@@ -129,11 +147,13 @@ export function subscribeChannelWithResilience(
   const { onStatus, onStale, silent = false } = options;
 
   channel.subscribe((status, err) => {
+    const expectedClose = isExpectedRealtimeClose(err);
+
     if (!silent) {
       logRealtimeSubscribeStatus(channelLabel, status, err);
     }
 
-    if (STALE_REALTIME_SUBSCRIBE_STATUSES.has(status)) {
+    if (STALE_REALTIME_SUBSCRIBE_STATUSES.has(status) && !expectedClose) {
       onStale?.();
     }
 

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useRef, type CSSProperties } from "react";
 import ExperienceDashboardGridCard from "@/components/experience/dashboard/ExperienceDashboardGridCard";
-import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
 import {
   AWAKENING_ASSETS,
   AWAKENING_CONCERT_BACKDROP_ART,
@@ -11,30 +10,12 @@ import {
   AWAKENING_DASHBOARD_OVERLAY_LAYOUT,
   AWAKENING_DASHBOARD_STORY_TOP_Y,
 } from "@/lib/experience/awakening-dashboard-assets";
-import type { EventCountdownConfig } from "@/lib/live/countdown-config";
-import type { CountdownParts } from "@/lib/live/event-lobby";
-import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
 import { useAttendeeLiveNavTarget } from "@/lib/experience/useAttendeeLiveNavTarget";
 import { MOBILE_ARTBOARD_REF, mobileArtboardStageStyle } from "@/lib/responsive";
 
-type ExperienceDashboardInterfaceLayerProps = {
-  initialCountdownConfig?: EventCountdownConfig;
-  initialCountdown?: CountdownParts;
-};
-
-export default function ExperienceDashboardInterfaceLayer({
-  initialCountdownConfig,
-  initialCountdown,
-}: ExperienceDashboardInterfaceLayerProps) {
+export default function ExperienceDashboardInterfaceLayer() {
   const backgroundRef = useRef<HTMLVideoElement>(null);
-
-  const { config, countdown, eventPhase, isLoading, showTimer } = useLobbyCountdown({
-    initialConfig: initialCountdownConfig,
-    initialCountdown,
-  });
-  const { href: liveNavHref } = useAttendeeLiveNavTarget({
-    initialConfig: initialCountdownConfig,
-  });
+  const { href: liveNavHref } = useAttendeeLiveNavTarget();
 
   useEffect(() => {
     const video = backgroundRef.current;
@@ -98,19 +79,6 @@ export default function ExperienceDashboardInterfaceLayer({
         />
 
         <div className="experience-dashboard-artboard__overlay">
-          {(showTimer || isLoading) && eventPhase === "waiting" ? (
-            <div className="experience-dashboard-countdown-slot">
-              <LobbyCountdownTimer
-                config={config}
-                countdown={countdown}
-                eventPhase={eventPhase}
-                showTimer={showTimer}
-                isLoading={isLoading}
-                variant="segmented"
-              />
-            </div>
-          ) : null}
-
           <div className="experience-dashboard-overlay__stack dashboard-page">
             <div className="experience-dashboard-overlay__content-band dashboard-card-stack">
               <Link

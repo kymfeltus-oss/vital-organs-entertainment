@@ -7,10 +7,10 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "300 Awakening Countdown | Vital Organs Entertainment",
-  description: "Count down to the live experience — synced schedule, live chat monitor, and event details.",
+  description: "Count down to the 300 Awakening live experience with the synchronized event schedule.",
 };
 
-/** Public shareable countdown — rings, schedule copy, and live chat monitor. */
+/** Public shareable neon countdown synchronized to the live event schedule. */
 export default async function PublicCountdownPage() {
   const initialConfig = await loadActiveCountdownConfig();
   const initialCountdown = computeCountdown(initialConfig.start_time);

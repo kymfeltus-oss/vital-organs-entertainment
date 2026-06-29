@@ -14,8 +14,6 @@ export const dynamic = "force-dynamic";
 type UpdatePreShowBody = {
   concertTitle?: unknown;
   headlinerName?: unknown;
-  gatesLocked?: unknown;
-  preShowVipOnly?: unknown;
 };
 
 function cleanText(value: unknown, fallback: string): string {
@@ -32,15 +30,11 @@ export async function POST(request: Request) {
 
     const concertTitle = cleanText(body.concertTitle, "The Awakening Experience");
     const headlinerName = cleanText(body.headlinerName, "Pastor David Jenkins");
-    const gatesLocked = body.gatesLocked === true;
-    const preShowVipOnly = body.preShowVipOnly !== false;
 
     const { error } = await updateOwnerStreamState(admin, {
       current_state: "scheduled",
       concert_title: concertTitle,
       headliner_name: headlinerName,
-      gates_locked: gatesLocked,
-      pre_show_vip_only: preShowVipOnly,
       publish_error_message: null,
       playback_error_message: null,
       updated_by: auth.email,

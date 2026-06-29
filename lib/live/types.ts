@@ -53,7 +53,6 @@ export type LiveStreamStateRow = {
   headliner_name: string;
   ticket_capacity_limit: number;
   gates_locked: boolean;
-  pre_show_vip_only: boolean;
   audio_master_presets: Record<string, unknown>;
   updated_at: string;
   updated_by: string | null;

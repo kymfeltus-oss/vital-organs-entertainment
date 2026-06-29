@@ -31,6 +31,7 @@ export type AccessTier = "PAYWALL" | "FREE_REGISTRATION" | "PUBLIC";
 export type ShowSetupState = {
   showTitle: string;
   presenterName: string;
+  hostNames: string[];
   targetDateTime: string;
   gateControl: "LOCKED" | "EARLY_ACCESS";
   primaryIngestEndpoint: string;
@@ -95,6 +96,14 @@ function cleanText(value: unknown, fallback: string, limit = 120): string {
 
 function cleanBool(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
+}
+
+function cleanHostNames(value: unknown, fallback: string[]): string[] {
+  if (!Array.isArray(value)) return fallback;
+  return value
+    .map((host) => cleanText(host, "", 80))
+    .filter(Boolean)
+    .slice(0, 8);
 }
 
 function cleanNumber(value: unknown, fallback: number): number {
@@ -178,6 +187,7 @@ function mergeStoredSetup(
     "gateType" in stored ? [gateType] : base.accessTiers.length ? base.accessTiers : [gateType];
   return {
     ...base,
+    hostNames: cleanHostNames(stored.hostNames, base.hostNames),
     fallbackAssetPath: cleanText(stored.fallbackAssetPath, base.fallbackAssetPath, 200),
     lowerThirds: cleanLowerThirds(stored.lowerThirds),
     programFlow: cleanProgramFlow(stored.programFlow),
@@ -209,10 +219,11 @@ export async function loadShowSetupState(): Promise<ShowSetupState> {
   const primary = resolveExternalIngestCredentials();
   const backup = resolveIvsIngestCredentials();
   const base: ShowSetupState = {
-    showTitle: row?.concert_title ?? "The Awakening Experience",
-    presenterName: row?.headliner_name ?? "Pastor David Jenkins",
+    showTitle: row?.concert_title ?? "IAN CRAIG & 300",
+    presenterName: row?.headliner_name ?? "IAN CRAIG",
+    hostNames: [],
     targetDateTime: countdownConfig.start_time,
-    gateControl: row?.gates_locked ? "LOCKED" : "EARLY_ACCESS",
+    gateControl: "EARLY_ACCESS",
     primaryIngestEndpoint: primary.rtmpUrl ?? backup.ingestServer ?? "",
     streamKey: primary.streamKey ?? backup.streamKey ?? "",
     fallbackAssetPath: "",
@@ -232,7 +243,10 @@ export async function loadShowSetupState(): Promise<ShowSetupState> {
     updatedBy: row?.updated_by ?? null,
   };
 
-  return mergeStoredSetup(base, asRecord(row?.audio_master_presets)[SETUP_KEY] as Record<string, unknown>);
+  const storedPresets = asRecord(row?.audio_master_presets);
+  const storedSetup = asRecord(storedPresets[SETUP_KEY]);
+
+  return mergeStoredSetup(base, storedSetup);
 }
 
 export async function saveShowSetupState(
@@ -268,6 +282,7 @@ export async function saveShowSetupState(
   const { row } = await loadOwnerStreamState(admin);
   const existingPresets = asRecord(row?.audio_master_presets);
   const setupPayload = {
+    hostNames: next.hostNames,
     fallbackAssetPath: next.fallbackAssetPath,
     lowerThirds: next.lowerThirds,
     programFlow: next.programFlow,
@@ -288,8 +303,6 @@ export async function saveShowSetupState(
     current_state: "scheduled",
     concert_title: next.showTitle,
     headliner_name: next.presenterName,
-    gates_locked: next.gateControl === "LOCKED",
-    pre_show_vip_only: next.gateControl === "LOCKED",
     audio_master_presets: {
       ...existingPresets,
       [SETUP_KEY]: setupPayload,

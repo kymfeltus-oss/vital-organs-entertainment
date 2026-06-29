@@ -11,7 +11,6 @@ type PreShowCountdownManagerProps = {
     concertTitle: string;
     headlinerName: string;
     gatesLocked: boolean;
-    preShowVipOnly: boolean;
   }) => void;
   timerPending?: boolean;
   savePending?: boolean;
@@ -71,15 +70,15 @@ export default function PreShowCountdownManager({
   const hasTarget = Boolean(countdown.targetIso);
   const [concertTitle, setConcertTitle] = useState(gate.concertTitle);
   const [headlinerName, setHeadlinerName] = useState(gate.headlinerName);
-  const [accessMode, setAccessMode] = useState<"vip" | "open">(
-    gate.gatesLocked || gate.preShowVipOnly ? "vip" : "open",
-  );
 
   useEffect(() => {
-    setConcertTitle(gate.concertTitle);
-    setHeadlinerName(gate.headlinerName);
-    setAccessMode(gate.gatesLocked || gate.preShowVipOnly ? "vip" : "open");
-  }, [gate.concertTitle, gate.gatesLocked, gate.headlinerName, gate.preShowVipOnly]);
+    const timer = window.setTimeout(() => {
+      setConcertTitle(gate.concertTitle);
+      setHeadlinerName(gate.headlinerName);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [gate.concertTitle, gate.headlinerName]);
 
   const encoderOk = vmix?.connection === "reachable" || snapshot.publish.status === "publishing";
   const mediaSocketOk = feed.primary.manifestReachable || feed.backup.manifestReachable;
@@ -200,29 +199,14 @@ export default function PreShowCountdownManager({
               />
             </label>
 
-            <fieldset className="mt-5">
-              <legend className="font-body text-sm font-semibold text-slate-200">Door access</legend>
-              <div className="mt-2 grid gap-2">
-                <label className="flex cursor-pointer gap-3 rounded-lg border border-slate-700 bg-slate-950/60 p-3 font-body text-sm text-slate-200">
-                  <input
-                    type="radio"
-                    name="pre-show-access"
-                    checked={accessMode === "vip"}
-                    onChange={() => setAccessMode("vip")}
-                  />
-                  Hold public doors and allow VIP early access
-                </label>
-                <label className="flex cursor-pointer gap-3 rounded-lg border border-slate-700 bg-slate-950/60 p-3 font-body text-sm text-slate-200">
-                  <input
-                    type="radio"
-                    name="pre-show-access"
-                    checked={accessMode === "open"}
-                    onChange={() => setAccessMode("open")}
-                  />
-                  Open doors to everyone immediately
-                </label>
-              </div>
-            </fieldset>
+            <div className="mt-5 rounded-lg border border-emerald-400/25 bg-emerald-400/10 p-3">
+              <p className="font-body text-sm font-semibold text-emerald-100">
+                Public pre-show access
+              </p>
+              <p className="mt-1 font-body text-xs text-emerald-100/70">
+                VIP gating is disabled. Pre-show doors are managed as a public attendee flow.
+              </p>
+            </div>
 
             <button
               type="button"
@@ -231,8 +215,7 @@ export default function PreShowCountdownManager({
                 onSavePreShow({
                   concertTitle,
                   headlinerName,
-                  gatesLocked: accessMode === "vip",
-                  preShowVipOnly: accessMode === "vip",
+                  gatesLocked: false,
                 })
               }
               className="mt-auto min-h-14 w-full rounded-xl bg-sky-400 px-4 font-ui text-[0.72rem] font-bold uppercase tracking-[0.12em] text-slate-950 disabled:opacity-50"

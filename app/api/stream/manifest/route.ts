@@ -73,7 +73,6 @@ type OwnerSessionManifestRow = {
 };
 
 type ShowSetupStreamRow = {
-  pre_show_vip_only: boolean | null;
   audio_master_presets: unknown;
 };
 
@@ -172,7 +171,7 @@ async function loadShowSetupAccessConfig(eventId: string): Promise<ShowSetupAcce
   const [streamResult, presetResult] = await Promise.all([
     admin
       .from("live_stream_state")
-      .select("pre_show_vip_only, audio_master_presets")
+      .select("audio_master_presets")
       .eq("id", "current_event")
       .maybeSingle(),
     admin
@@ -196,15 +195,8 @@ async function loadShowSetupAccessConfig(eventId: string): Promise<ShowSetupAcce
     ...audioPresetSetup,
   };
   const gateType = deriveGateType(showSetup);
-  const preShowVipOnly =
-    typeof showSetup.pre_show_vip_only === "boolean"
-      ? showSetup.pre_show_vip_only
-      : typeof showSetup.preShowVipOnly === "boolean"
-        ? showSetup.preShowVipOnly
-        : streamRow?.pre_show_vip_only === true;
-
   return {
-    preShowVipOnly,
+    preShowVipOnly: false,
     gateType,
     monetizationEnabled:
       showSetup.monetizationEnabled === true || showSetup.monetization_enabled === true,
@@ -581,8 +573,6 @@ export async function POST(request: NextRequest) {
       "Broadcast route is selected, but playback media is still loading. Waiting for a valid HLS URL.";
   } else if (!streamIsLive) {
     systemMessage = "Broadcast stream is currently offline.";
-  } else if (accessConfig.preShowVipOnly && !isVip) {
-    systemMessage = "This pre-show segment is exclusively open to VIP ticket holders.";
   } else {
     canViewStream = true;
     systemMessage = "Stream connection successfully authorized.";

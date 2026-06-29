@@ -2,22 +2,16 @@
 
 import ExperienceDashboardContent from "@/components/experience/dashboard/ExperienceDashboardContent";
 import ExperienceDashboardMobileFixedChrome from "@/components/experience/dashboard/ExperienceDashboardMobileFixedChrome";
-import type { EventCountdownConfig } from "@/lib/live/countdown-config";
-import type { CountdownParts } from "@/lib/live/event-lobby";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
 type ExperienceDashboardMobileViewProps = {
   profile: AttendeeProfileSnapshot;
   onProfileChange: (profile: AttendeeProfileSnapshot) => void;
-  initialCountdownConfig?: EventCountdownConfig;
-  initialCountdown?: CountdownParts;
 };
 
 export default function ExperienceDashboardMobileView({
   profile,
   onProfileChange,
-  initialCountdownConfig,
-  initialCountdown,
 }: ExperienceDashboardMobileViewProps) {
   return (
     <div
@@ -30,10 +24,7 @@ export default function ExperienceDashboardMobileView({
       />
 
       <div className="relative z-10 flex min-h-0 w-full flex-1 overflow-y-auto overscroll-contain">
-        <ExperienceDashboardContent
-          initialCountdownConfig={initialCountdownConfig}
-          initialCountdown={initialCountdown}
-        />
+        <ExperienceDashboardContent />
       </div>
     </div>
   );

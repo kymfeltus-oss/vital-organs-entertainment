@@ -133,7 +133,7 @@ function resolveGateState(row: Awaited<ReturnType<typeof loadOwnerStreamState>>[
     headlinerName: row?.headliner_name ?? "Pastor David Jenkins",
     ticketCapacityLimit: row?.ticket_capacity_limit ?? 500,
     gatesLocked: row?.gates_locked ?? false,
-    preShowVipOnly: row?.pre_show_vip_only ?? true,
+    preShowVipOnly: false,
   };
 }
 

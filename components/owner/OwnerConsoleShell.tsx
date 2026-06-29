@@ -4,49 +4,24 @@ import { useCallback, useState } from "react";
 import { usePathname } from "next/navigation";
 import OwnerConsoleNavLink from "@/components/owner/OwnerConsoleNavLink";
 
-/** Operator-centric 5-room navigation — see docs/owner-broadcast-contract.md */
 const OWNER_NAV_ITEMS = [
   {
-    href: "/owner/show-setup",
-    icon: "SET",
-    label: "Show Setup",
-    description: "Settings + order of service",
+    href: "/owner/countdown",
+    icon: "TIME",
+    label: "Countdown",
+    description: "Event clock and schedule",
   },
   {
-    href: "/owner/pre-show",
-    icon: "⏳",
-    label: "Pre-Show Hub",
-    description: "Countdown + preflight todos",
-  },
-  {
-    href: "/owner/device-inventory",
-    icon: "DEV",
-    label: "Device Inventory",
-    description: "External routing matrix",
-  },
-  {
-    href: "/owner/control",
-    icon: "🚀",
-    label: "Broadcast Control",
-    description: "Go-live, ingest paths, dual failover",
-  },
-  {
-    href: "/owner/video-hub/control",
+    href: "/owner/cockpit",
     icon: "LIVE",
-    label: "Video Hub",
-    description: "Live camera switching + IVS relay",
+    label: "Cockpit",
+    description: "Live production control",
   },
   {
-    href: "/owner/audio-monitoring",
-    icon: "🔊",
-    label: "Sound Control",
-    description: "Input levels + stream health",
-  },
-  {
-    href: "/owner/audio-mixing",
-    icon: "🎛️",
-    label: "Mastering Desk",
-    description: "FX chain + mix presets",
+    href: "/owner/graphics",
+    icon: "GFX",
+    label: "Graphics",
+    description: "Broadcast overlay builder",
   },
 ] as const;
 
@@ -79,19 +54,12 @@ export default function OwnerConsoleShell({ children }: { children: React.ReactN
     setMobileNavOpen((open) => !open);
   }, []);
 
-  if (
-    pathname?.startsWith("/owner/show-setup") ||
-    pathname === "/owner/video-hub/control" ||
-    pathname === "/owner/device-inventory" ||
-    pathname === "/owner/control" ||
-    pathname === "/owner/audio-monitoring"
-  ) {
+  if (pathname === "/owner/cockpit") {
     return <>{children}</>;
   }
 
   return (
     <div className="flex min-h-dvh flex-col bg-slate-950 text-slate-100 md:flex-row">
-      {/* Mobile top bar */}
       <header className="relative block border-b border-slate-800 bg-slate-950 px-4 py-3 md:hidden">
         <button
           type="button"
@@ -101,9 +69,9 @@ export default function OwnerConsoleShell({ children }: { children: React.ReactN
           className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 font-ui text-lg text-slate-100"
         >
           <span className="sr-only">Toggle owner menu</span>
-          {mobileNavOpen ? "✕" : "☰"}
+          {mobileNavOpen ? "X" : "Menu"}
         </button>
-        <div className="mx-auto max-w-md pl-12 pr-12 text-center">
+        <div className="mx-auto max-w-md pl-16 pr-12 text-center">
           <p className="font-ui text-[0.55rem] font-bold uppercase tracking-[0.18em] text-sky-400">
             Vital Organs Ent
           </p>
@@ -130,7 +98,6 @@ export default function OwnerConsoleShell({ children }: { children: React.ReactN
         </>
       ) : null}
 
-      {/* Desktop / tablet sidebar */}
       <aside className="hidden w-full shrink-0 flex-col border-r border-slate-800 bg-slate-950 md:flex md:w-[13.5rem]">
         <div className="border-b border-slate-800 px-4 py-5">
           <p className="font-ui text-[0.58rem] font-bold uppercase tracking-[0.2em] text-sky-400">

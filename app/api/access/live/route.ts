@@ -53,7 +53,7 @@ function buildStreamFlags(streamRow: Awaited<ReturnType<typeof loadOwnerStreamSt
     concertTitle: streamRow?.concert_title ?? "The Awakening Experience",
     headlinerName: streamRow?.headliner_name ?? "Pastor David Jenkins",
     gatesLocked: streamRow?.gates_locked ?? false,
-    preShowVipOnly: streamRow?.pre_show_vip_only ?? true,
+    preShowVipOnly: false,
   };
 }
 

@@ -13,7 +13,7 @@ export const SCHEDULE_TIMEZONE_OPTIONS = [
 
 export type ScheduleTimezone = (typeof SCHEDULE_TIMEZONE_OPTIONS)[number]["id"];
 
-export const DEFAULT_SCHEDULE_TIMEZONE: ScheduleTimezone = "America/New_York";
+export const DEFAULT_SCHEDULE_TIMEZONE: ScheduleTimezone = "America/Chicago";
 
 const SCHEDULE_TIMEZONE_IDS = new Set<string>(
   SCHEDULE_TIMEZONE_OPTIONS.map((option) => option.id),

@@ -36,7 +36,7 @@ export function useLiveChat(streamId: string) {
   }, []);
 
   const sendPrayerMessage = useCallback(() => {
-    return liveChatStore.sendPrayerMessage(LOCAL_USER.userName, LOCAL_USER.initials);
+    return liveChatStore.sendPrayerMessage(LOCAL_USER.userName);
   }, []);
 
   return {

@@ -80,11 +80,9 @@ type ManifestResponse = {
 function PreShowHubExperience({
   concertTitle,
   headlinerName,
-  isVip,
 }: {
   concertTitle: string;
   headlinerName: string;
-  isVip: boolean;
 }) {
   return (
     <div className="flex h-full min-h-[calc(100dvh-9rem)] items-center justify-center px-6 text-center">
@@ -98,9 +96,7 @@ function PreShowHubExperience({
         <p className="mt-3 font-body text-base text-white/70">{headlinerName}</p>
         <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.04] px-5 py-5">
           <p className="font-body text-sm text-white/75">
-            {isVip
-              ? "VIP early access is open. You are in the lounge while the public room waits."
-              : "Public doors are still closed. Please stay here while the pre-show countdown runs."}
+            Public pre-show is queued. Please stay here while the countdown runs.
           </p>
         </div>
       </div>
@@ -810,7 +806,6 @@ export default function LiveExperienceClient({
             <PreShowHubExperience
               concertTitle={access?.concertTitle ?? "The Awakening Experience"}
               headlinerName={access?.headlinerName ?? "Pastor David Jenkins"}
-              isVip={access?.isVip === true}
             />
           ) : showDirectPlayer ? (
             <>

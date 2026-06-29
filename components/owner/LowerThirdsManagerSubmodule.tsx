@@ -18,6 +18,8 @@ type LowerThirdsResponse = {
   success?: boolean;
   assets?: LowerThirdAssetRow[];
   asset?: LowerThirdAssetRow;
+  clearedCount?: number;
+  message?: string;
   error?: string;
 };
 
@@ -95,7 +97,7 @@ export default function LowerThirdsManagerSubmodule() {
   }, []);
 
   useEffect(() => {
-    void fetchLowerThirds();
+    queueMicrotask(() => void fetchLowerThirds());
 
     const supabase = getSupabase();
     const realtimeChannel = supabase
@@ -200,22 +202,6 @@ export default function LowerThirdsManagerSubmodule() {
     );
 
     try {
-      if (nextLiveState) {
-        const activeAssets = previousAssets.filter(
-          (item) => item.is_active_on_stream && item.id !== asset.id,
-        );
-        await Promise.all(
-          activeAssets.map((item) =>
-            fetch("/api/owner/lower-thirds", {
-              method: "PATCH",
-              credentials: "include",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id: item.id, isActiveOnStream: false }),
-            }).then(readLowerThirdsResponse),
-          ),
-        );
-      }
-
       const response = await fetch("/api/owner/lower-thirds", {
         method: "PATCH",
         credentials: "include",
@@ -233,11 +219,52 @@ export default function LowerThirdsManagerSubmodule() {
     }
   };
 
+  const clearAllLiveGraphics = async () => {
+    if (isProcessing) return;
+
+    setIsProcessing(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    const previousAssets = assets;
+    setAssets((current) =>
+      current.map((asset) => ({ ...asset, is_active_on_stream: false })),
+    );
+
+    try {
+      const response = await fetch("/api/owner/lower-thirds", {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await readLowerThirdsResponse(response);
+      setSuccessMessage(
+        data.clearedCount
+          ? `Panic clear complete: ${data.clearedCount} live graphic removed.`
+          : "Program graphics layer is clear.",
+      );
+      await fetchLowerThirds();
+    } catch (error) {
+      setAssets(previousAssets);
+      setErrorMessage(error instanceof Error ? error.message : "Panic clear failed.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <section className="rounded-[8px] border border-[#FF2FCF]/55 bg-zinc-950 p-4 font-mono text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_0_22px_rgba(0,0,0,0.28)]">
       <h2 className="mb-3 border-b border-zinc-800 pb-2 text-xs font-bold tracking-wider text-blue-400 uppercase">
         8. Graphics / Lower Thirds Production Generator
       </h2>
+
+      <button
+        data-testid="lower-thirds-clear-all-live-button"
+        type="button"
+        onClick={() => void clearAllLiveGraphics()}
+        disabled={isProcessing}
+        className="mb-4 min-h-12 w-full rounded border border-red-400/70 bg-red-950/70 px-4 font-ui text-xs font-black uppercase tracking-[0.18em] text-red-100 shadow-[0_0_22px_rgba(248,113,113,0.18)] transition hover:bg-red-900 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Panic — Clear All Live Graphics
+      </button>
 
       <div className="relative mb-4 flex aspect-[21/9] w-full flex-col items-center justify-center overflow-hidden rounded border border-zinc-800 bg-zinc-900 p-4">
         <div className="absolute top-2 left-2 text-[9px] font-bold tracking-widest text-zinc-500 uppercase">

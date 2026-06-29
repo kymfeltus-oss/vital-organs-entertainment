@@ -22,7 +22,8 @@ const NAV_HIDDEN_PREFIXES = [
   "/experience/live",
   "/dashboard/live",
   "/dashboard/countdown",
-  "/countdown/",
+  "/countdown",
+  "/graphics",
 ] as const;
 
 function matchesHiddenPrefix(pathname: string, prefix: string): boolean {

@@ -22,14 +22,13 @@ export type OwnerStreamStateRow = {
   headliner_name: string;
   ticket_capacity_limit: number;
   gates_locked: boolean;
-  pre_show_vip_only: boolean;
   audio_master_presets: Record<string, unknown>;
   updated_at: string | null;
   updated_by: string | null;
 };
 
 const SELECT_OWNER_WITH_FEEDS =
-  "id, is_live, current_state, imminent_live_started_at, playback_url, active_source, primary_playback_url, backup_playback_url, publish_mode, publish_status, playback_status, publish_error_message, playback_error_message, publisher_session_id, publisher_channel, concert_title, headliner_name, ticket_capacity_limit, gates_locked, pre_show_vip_only, audio_master_presets, updated_at, updated_by";
+  "id, is_live, current_state, imminent_live_started_at, playback_url, active_source, primary_playback_url, backup_playback_url, publish_mode, publish_status, playback_status, publish_error_message, playback_error_message, publisher_session_id, publisher_channel, concert_title, headliner_name, ticket_capacity_limit, gates_locked, audio_master_presets, updated_at, updated_by";
 
 const SELECT_OWNER_FULL =
   "id, is_live, current_state, imminent_live_started_at, playback_url, active_source, publish_mode, publish_status, playback_status, publish_error_message, playback_error_message, publisher_session_id, publisher_channel, updated_at, updated_by";
@@ -125,7 +124,6 @@ function normalizeRow(row: Record<string, unknown>): OwnerStreamStateRow {
         ? row.ticket_capacity_limit
         : 500,
     gates_locked: row.gates_locked === true,
-    pre_show_vip_only: row.pre_show_vip_only !== false,
     audio_master_presets:
       row.audio_master_presets && typeof row.audio_master_presets === "object"
         ? (row.audio_master_presets as Record<string, unknown>)

@@ -228,7 +228,6 @@ export default function PublicCountdownExperience({
           layout={chatMonitorLayout}
         />
       ) : null}
-
     </main>
   );
 }

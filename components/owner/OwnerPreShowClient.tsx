@@ -48,7 +48,6 @@ export default function OwnerPreShowClient() {
       concertTitle: string;
       headlinerName: string;
       gatesLocked: boolean;
-      preShowVipOnly: boolean;
     }) => {
       setSavePending(true);
       setActionMessage(null);

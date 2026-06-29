@@ -7,20 +7,14 @@ import ExperienceDashboardMobileView from "@/components/experience/dashboard/Exp
 import ProfileEditorModal from "@/components/profile/ProfileEditorModal";
 import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 import { AWAKENING_PRELOAD_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
-import type { EventCountdownConfig } from "@/lib/live/countdown-config";
-import type { CountdownParts } from "@/lib/live/event-lobby";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
 type ExperienceAttendeeDashboardProps = {
   initialProfile: AttendeeProfileSnapshot;
-  initialCountdownConfig?: EventCountdownConfig;
-  initialCountdown?: CountdownParts;
 };
 
 function ExperienceAttendeeDashboardInner({
   initialProfile,
-  initialCountdownConfig,
-  initialCountdown,
 }: ExperienceAttendeeDashboardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -28,15 +22,15 @@ function ExperienceAttendeeDashboardInner({
   const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   useEffect(() => {
-    setProfile(initialProfile);
-  }, [initialProfile]);
-
-  useEffect(() => {
     const view = searchParams.get("view");
     if (view !== "profile" && view !== "settings") return;
 
-    setProfileModalOpen(true);
-    router.replace(ATTENDEE_DASHBOARD_PATH, { scroll: false });
+    const timer = window.setTimeout(() => {
+      setProfileModalOpen(true);
+      router.replace(ATTENDEE_DASHBOARD_PATH, { scroll: false });
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [router, searchParams]);
 
   useEffect(() => {
@@ -61,8 +55,6 @@ function ExperienceAttendeeDashboardInner({
       <ExperienceDashboardMobileView
         profile={profile}
         onProfileChange={setProfile}
-        initialCountdownConfig={initialCountdownConfig}
-        initialCountdown={initialCountdown}
       />
 
       {profile.userId ? (

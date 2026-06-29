@@ -1,9 +1,5 @@
 import { EVENT_LOBBY } from "@/lib/live/event-lobby";
-import {
-  DEFAULT_SCHEDULE_TIMEZONE,
-  resolveScheduleTimezone,
-  type ScheduleTimezone,
-} from "@/lib/live/schedule-timezone";
+import { resolveScheduleTimezone, type ScheduleTimezone } from "@/lib/live/schedule-timezone";
 
 export const DEFAULT_EVENT_ID = "300-awakening";
 
@@ -32,7 +28,7 @@ export type EventCountdownConfig = {
   is_active: boolean;
 };
 
-const DEFAULT_END_ISO = "2026-06-07T23:30:00-05:00";
+const DEFAULT_END_ISO = "2026-07-03T23:30:00-05:00";
 
 export const DEFAULT_COUNTDOWN_CONFIG: EventCountdownConfig = {
   event_id: DEFAULT_EVENT_ID,
@@ -41,7 +37,7 @@ export const DEFAULT_COUNTDOWN_CONFIG: EventCountdownConfig = {
   subtitle: "THE AWAKENING BEGINS SOON",
   start_time: EVENT_LOBBY.targetIso,
   end_time: DEFAULT_END_ISO,
-  schedule_timezone: DEFAULT_SCHEDULE_TIMEZONE,
+  schedule_timezone: "America/Chicago",
   status_label: "WAITING FOR LIVE SIGNAL",
   cta_label_waiting: "WAITING FOR LIVE",
   cta_label_live: "ENTER LIVE EXPERIENCE",
