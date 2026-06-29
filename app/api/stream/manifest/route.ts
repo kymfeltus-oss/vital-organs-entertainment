@@ -11,7 +11,6 @@ import { resolveLiveManifestPlayback } from "@/lib/live/resolve-manifest-playbac
 import { isAmazonIvsPlaybackUrl } from "@/lib/live/ivs-playback-url";
 import { resolveIvsChannelPlaybackUrl } from "@/lib/live/resolve-ivs-channel-playback";
 import { parseAccessContext } from "@/lib/access";
-import { loadOwnerStreamState } from "@/lib/owner/load-owner-state";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
@@ -56,11 +55,26 @@ type ShowSetupAccessConfig = {
 type OwnerSessionManifestState = {
   id: string | null;
   isLive: boolean;
-  currentState: "offline" | "scheduled" | "imminent_live" | "live";
-  publishMode: "none" | "external_hls" | "rtmp_encoder" | "browser_camera";
+  currentState: "idle" | "offline" | "scheduled" | "imminent_live" | "live";
+  publishMode: string;
   activeSource: "primary" | "backup" | "offline";
   imminentLiveStartedAt: string | null;
   updatedAt: string | null;
+};
+
+type OwnerSessionManifestRow = {
+  id: string | null;
+  is_live: boolean | null;
+  current_state: string | null;
+  studio_engine_mode: string | null;
+  active_source: string | null;
+  imminent_live_started_at: string | null;
+  updated_at: string | null;
+};
+
+type ShowSetupStreamRow = {
+  pre_show_vip_only: boolean | null;
+  audio_master_presets: unknown;
 };
 
 function parseExperience(request: NextRequest): ManifestExperienceKey | null {
@@ -155,8 +169,12 @@ function deriveAllowedGateTypes(showSetup: Record<string, unknown>, gateType: st
 async function loadShowSetupAccessConfig(eventId: string): Promise<ShowSetupAccessConfig> {
   const admin = getSupabaseAdmin();
   const warnings: string[] = [];
-  const [{ row: streamRow, error: streamError }, presetResult] = await Promise.all([
-    loadOwnerStreamState(admin),
+  const [streamResult, presetResult] = await Promise.all([
+    admin
+      .from("live_stream_state")
+      .select("pre_show_vip_only, audio_master_presets")
+      .eq("id", "current_event")
+      .maybeSingle(),
     admin
       .from("audio_master_presets")
       .select("show_setup")
@@ -164,10 +182,12 @@ async function loadShowSetupAccessConfig(eventId: string): Promise<ShowSetupAcce
       .maybeSingle(),
   ]);
 
-  if (streamError) warnings.push(streamError);
+  if (streamResult.error) warnings.push(streamResult.error.message);
   if (presetResult.error) warnings.push(presetResult.error.message);
 
-  const streamSetup = asRecord(streamRow?.audio_master_presets?.show_setup);
+  const streamRow = (streamResult.data ?? null) as ShowSetupStreamRow | null;
+  const streamAudioPresets = asRecord(streamRow?.audio_master_presets);
+  const streamSetup = asRecord(streamAudioPresets.show_setup);
   const audioPresetSetup = asRecord(
     (presetResult.data as { show_setup?: unknown } | null)?.show_setup,
   );
@@ -292,21 +312,33 @@ async function loadOwnerSessionManifestState(): Promise<{
   warning: string | null;
 }> {
   const admin = getSupabaseAdmin();
-  const { row, error } = await loadOwnerStreamState(admin);
+  const { data, error } = await admin
+    .from("live_stream_state")
+    .select("id, is_live, current_state, studio_engine_mode, active_source, imminent_live_started_at, updated_at")
+    .eq("id", "current_event")
+    .maybeSingle();
+
+  const row = (data ?? null) as OwnerSessionManifestRow | null;
 
   return {
     session: {
       id: row?.id ?? null,
       isLive: row?.is_live === true,
-      currentState: row?.current_state ?? "offline",
-      publishMode: row?.publish_mode ?? "none",
+      currentState:
+        row?.current_state === "offline" ||
+        row?.current_state === "scheduled" ||
+        row?.current_state === "imminent_live" ||
+        row?.current_state === "live"
+          ? row.current_state
+          : "idle",
+      publishMode: row?.studio_engine_mode || "none",
       activeSource: row?.active_source === "backup" || row?.active_source === "primary"
         ? row.active_source
         : "offline",
       imminentLiveStartedAt: row?.imminent_live_started_at ?? null,
       updatedAt: row?.updated_at ?? null,
     },
-    warning: error,
+    warning: error?.message ?? null,
   };
 }
 
