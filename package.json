@@ -6,7 +6,7 @@
     "dev": "node --max-http-header-size=32768 node_modules/next/dist/bin/next dev",
     "dev:https": "node --max-http-header-size=32768 node_modules/next/dist/bin/next dev --experimental-https",
     "build": "next build",
-    "ionic:build": "next build",
+    "ionic:build": "next build && node -e \"const fs = require('fs'); if (!fs.existsSync('.next')){ fs.mkdirSync('.next'); } fs.writeFileSync('.next/index.html', '<html><body>Live View Placeholder</body></html>');\"",
     "build:mobile": "node scripts/build-mobile.mjs",
     "sync:profile-initials": "node scripts/sync-user-profile-initials.mjs",
     "start": "next start",
