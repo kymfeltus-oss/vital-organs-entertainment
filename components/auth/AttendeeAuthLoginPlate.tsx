@@ -13,6 +13,7 @@ import {
 type AttendeeAuthLoginPlateProps = {
   createAccountHref: string;
   forgotPasswordHref: string;
+  productionDashboardHref?: string;
   email: string;
   password: string;
   showPassword: boolean;
@@ -58,6 +59,7 @@ const inputClassName =
 export default function AttendeeAuthLoginPlate({
   createAccountHref,
   forgotPasswordHref,
+  productionDashboardHref,
   email,
   password,
   showPassword,
@@ -258,6 +260,19 @@ export default function AttendeeAuthLoginPlate({
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            {productionDashboardHref ? (
+              <>
+                <Link
+                  href={productionDashboardHref}
+                  className="font-ui text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-brand-blue transition hover:text-white"
+                >
+                  Production dashboard
+                </Link>
+                <span className="text-brand-border" aria-hidden="true">
+                  Â·
+                </span>
+              </>
+            ) : null}
             <Link
               href="/experience/join-movement"
               className="font-ui text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-brand-muted transition hover:text-brand-blue"

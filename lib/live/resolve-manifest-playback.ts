@@ -10,6 +10,8 @@ import {
   resolveActiveFeedPlaybackUrl,
   resolvePrimaryFeedUrl,
 } from "@/lib/owner/feed-urls";
+import { resolveIvsChannelPlaybackUrl } from "@/lib/live/resolve-ivs-channel-playback";
+import { isAmazonIvsPlaybackUrl } from "@/lib/live/ivs-playback-url";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 export type ResolvedManifestPlayback = {
@@ -19,6 +21,16 @@ export type ResolvedManifestPlayback = {
   isLive: boolean;
   resolutionSource: "database_live" | "env" | "database_primary" | "none";
 };
+
+async function resolveEnvPlaybackWithIvsGuard(
+  rawUrl: string | null,
+): Promise<string | null> {
+  if (!rawUrl) return null;
+  if (!isAmazonIvsPlaybackUrl(rawUrl)) return rawUrl;
+
+  const ivsPlayback = await resolveIvsChannelPlaybackUrl();
+  return ivsPlayback.playbackUrl ?? rawUrl;
+}
 
 /**
  * Resolve attendee HLS manifest for /api/stream/manifest.
@@ -35,6 +47,27 @@ export async function resolveLiveManifestPlayback(): Promise<ResolvedManifestPla
   const isLive = Boolean(config?.is_live);
 
   if (config?.is_live) {
+    if (config.active_source === "backup") {
+      const ivsPlayback = await resolveIvsChannelPlaybackUrl();
+      if (ivsPlayback.playbackUrl) {
+        return {
+          playbackUrl: ivsPlayback.playbackUrl,
+          activeSource: "backup",
+          fromDatabase: false,
+          isLive: true,
+          resolutionSource: "database_live",
+        };
+      }
+
+      return {
+        playbackUrl: null,
+        activeSource: "backup",
+        fromDatabase: false,
+        isLive: false,
+        resolutionSource: "none",
+      };
+    }
+
     const { url, activeSource } = resolveActiveFeedPlaybackUrl({
       primary_playback_url: config.primary_playback_url,
       backup_playback_url: config.backup_playback_url,
@@ -55,8 +88,30 @@ export async function resolveLiveManifestPlayback(): Promise<ResolvedManifestPla
     }
   }
 
-  const envPrimary =
-    resolvePrimaryAttendeePlaybackFromEnv() ?? resolveAttendeePlaybackFromEnv();
+  const ivsPlayback = await resolveIvsChannelPlaybackUrl();
+  if (ivsPlayback.playbackUrl && config?.active_source === "backup") {
+    return {
+      playbackUrl: ivsPlayback.playbackUrl,
+      activeSource: "backup",
+      fromDatabase: false,
+      isLive,
+      resolutionSource: "database_primary",
+    };
+  }
+
+  if (config?.active_source === "backup" && ivsPlayback.streamState === "offline") {
+    return {
+      playbackUrl: null,
+      activeSource: "backup",
+      fromDatabase: false,
+      isLive: false,
+      resolutionSource: "none",
+    };
+  }
+
+  const envPrimary = await resolveEnvPlaybackWithIvsGuard(
+    resolvePrimaryAttendeePlaybackFromEnv() ?? resolveAttendeePlaybackFromEnv(),
+  );
   if (envPrimary) {
     return {
       playbackUrl: envPrimary,

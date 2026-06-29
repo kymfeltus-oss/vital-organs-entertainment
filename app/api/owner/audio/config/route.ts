@@ -16,8 +16,13 @@ export async function GET() {
   const auth = await requireOwnerUser();
   if (!isOwnerAuthed(auth)) return ownerAuthFailureResponse(auth);
 
-  const state = getOwnerAudioWorkspaceState();
-  return ownerJsonResponse({ ok: true, ...state });
+  try {
+    const state = await getOwnerAudioWorkspaceState();
+    return ownerJsonResponse({ ok: true, ...state });
+  } catch (error) {
+    console.error("[owner/audio/config] GET failed:", error);
+    return ownerJsonResponse({ error: "Unable to load audio configuration." }, 500);
+  }
 }
 
 export async function POST(request: Request) {
@@ -36,7 +41,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const state = applyOwnerAudioConfigPatch(patch);
+    const state = await applyOwnerAudioConfigPatch(patch);
     return ownerJsonResponse({
       ok: true,
       message: "Audio configuration forwarded to media services.",

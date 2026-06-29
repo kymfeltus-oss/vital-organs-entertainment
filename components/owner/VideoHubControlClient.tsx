@@ -7,6 +7,7 @@ import {
   useVideoHubControlStore,
   type DestinationKey,
 } from "@/hooks/use-video-hub-control-store";
+import { useProductionLiveStore, useProductionLiveSync } from "@/hooks/use-production-live-data";
 import { useVideoHubSwitcher } from "@/hooks/use-video-hub-switcher";
 import {
   initializeWebBroadcaster,
@@ -116,6 +117,7 @@ function ToggleRow({
 }
 
 export default function VideoHubControlClient() {
+  useProductionLiveSync();
   const {
     availableCameras,
     activeMasterStream,
@@ -150,6 +152,8 @@ export default function VideoHubControlClient() {
     setDestinationEnabled,
   } = useVideoHubControlStore();
   const { cameras: inventoryCameras, error: inventoryError } = useDeviceInventoryStore();
+  const switchProgramVideoFeed = useProductionLiveStore((state) => state.switchProgramVideoFeed);
+  const updateRestreamTarget = useProductionLiveStore((state) => state.updateRestreamTarget);
 
   useEffect(() => {
     let cancelled = false;
@@ -210,6 +214,7 @@ export default function VideoHubControlClient() {
         } else if (nextStream) {
           setBroadcastMessage("Program camera switched locally.");
         }
+        await switchProgramVideoFeed(deviceId, "CUT");
       } catch (switchError) {
         setBroadcastMessage(
           switchError instanceof Error ? switchError.message : "Camera switch failed.",
@@ -218,7 +223,7 @@ export default function VideoHubControlClient() {
         setSwitchPending(null);
       }
     },
-    [broadcastStatus, fadePending, switchMasterChannel, switchPending],
+    [broadcastStatus, fadePending, switchMasterChannel, switchPending, switchProgramVideoFeed],
   );
 
   const handleAutoFadeMix = useCallback(async () => {
@@ -239,6 +244,7 @@ export default function VideoHubControlClient() {
       } else if (nextStream) {
         setBroadcastMessage("Auto Fade Mix applied to local program preview.");
       }
+      await switchProgramVideoFeed(activeDeviceId, "AUTO_FADE");
     } catch (transitionError) {
       setBroadcastMessage(
         transitionError instanceof Error ? transitionError.message : "Auto Fade Mix failed.",
@@ -246,7 +252,14 @@ export default function VideoHubControlClient() {
     } finally {
       setFadePending(false);
     }
-  }, [activeDeviceId, broadcastStatus, fadePending, switchMasterChannel, switchPending]);
+  }, [
+    activeDeviceId,
+    broadcastStatus,
+    fadePending,
+    switchMasterChannel,
+    switchPending,
+    switchProgramVideoFeed,
+  ]);
 
   const handleStartBroadcast = useCallback(async () => {
     if (broadcastStarting || broadcastStatus === "broadcasting") return;
@@ -269,8 +282,7 @@ export default function VideoHubControlClient() {
     activeMasterStream,
     broadcastStarting,
     broadcastStatus,
-    ingest?.ingestServer,
-    ingest?.streamKey,
+    ingest,
   ]);
 
   const handleRefreshHardware = useCallback(async () => {
@@ -405,6 +417,7 @@ export default function VideoHubControlClient() {
           { restreamDestinations: nextDestinations },
           `${destination} relay target saved.`,
         );
+        await updateRestreamTarget(destination, value);
       } catch (settingError) {
         setDestinationEnabled(destination, previous);
         setSettingsMessage(
@@ -423,6 +436,7 @@ export default function VideoHubControlClient() {
       persistControlPatch,
       setDestinationEnabled,
       settingsSaving,
+      updateRestreamTarget,
     ],
   );
 

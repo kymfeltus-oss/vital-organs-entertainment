@@ -75,6 +75,12 @@ const DEFAULT_PROGRAM_FLOW: ProgramSegment[] = [
   { id: "5", title: "Q&A Session", description: "Inter description", durationMinutes: 15 },
 ];
 
+const DEFAULT_RESTREAM_DESTINATIONS: ShowSetupState["restreamDestinations"] = {
+  twitch: true,
+  youtube: true,
+  facebook: true,
+};
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -166,6 +172,7 @@ function mergeStoredSetup(
   stored: Record<string, unknown>,
 ): ShowSetupState {
   const restream = asRecord(stored.restreamDestinations);
+  const baseRestream = base.restreamDestinations ?? DEFAULT_RESTREAM_DESTINATIONS;
   const gateType = cleanGateType(stored.gateType, base.gateType);
   const accessTiersFallback =
     "gateType" in stored ? [gateType] : base.accessTiers.length ? base.accessTiers : [gateType];
@@ -186,9 +193,9 @@ function mergeStoredSetup(
     dvrBufferEnabled: cleanBool(stored.dvrBufferEnabled, base.dvrBufferEnabled),
     verboseTelemetry: cleanBool(stored.verboseTelemetry, base.verboseTelemetry),
     restreamDestinations: {
-      twitch: cleanBool(restream.twitch, base.restreamDestinations.twitch),
-      youtube: cleanBool(restream.youtube, base.restreamDestinations.youtube),
-      facebook: cleanBool(restream.facebook, base.restreamDestinations.facebook),
+      twitch: cleanBool(restream.twitch, baseRestream.twitch),
+      youtube: cleanBool(restream.youtube, baseRestream.youtube),
+      facebook: cleanBool(restream.facebook, baseRestream.facebook),
     },
   };
 }
@@ -220,11 +227,7 @@ export async function loadShowSetupState(): Promise<ShowSetupState> {
     chatSlowMode: true,
     dvrBufferEnabled: true,
     verboseTelemetry: false,
-    restreamDestinations: {
-      twitch: true,
-      youtube: true,
-      facebook: true,
-    },
+    restreamDestinations: DEFAULT_RESTREAM_DESTINATIONS,
     updatedAt: row?.updated_at ?? null,
     updatedBy: row?.updated_by ?? null,
   };

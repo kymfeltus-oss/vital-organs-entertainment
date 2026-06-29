@@ -9,7 +9,7 @@ export const TEAM_GATE_PATH = "/email-gate/team";
 export const AUTH_NEXT_COOKIE = "auth_next";
 
 export const DEFAULT_ATTENDEE_NEXT = ATTENDEE_DASHBOARD_PATH;
-export const DEFAULT_TEAM_NEXT = "/owner/control";
+export const DEFAULT_TEAM_NEXT = "/owner/show-setup?tab=pre-show";
 
 const ATTENDEE_PROTECTED_EXACT = new Set(["/dashboard"]);
 const ATTENDEE_PROTECTED_PREFIXES = ["/experience", ATTENDEE_DASHBOARD_PATH];

@@ -17,8 +17,7 @@ export default function DeviceInventoryAudioPatchBay() {
     setPendingId(id);
     setMessage(pendingLabel);
     try {
-      await new Promise((resolve) => window.setTimeout(resolve, 80));
-      const result = updateDevicePatch(id, patch);
+      const result = await updateDevicePatch(id, patch);
       setMessage(result.message);
     } catch {
       setMessage("Sound Hub patch update failed.");

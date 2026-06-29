@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import OwnerConsoleShell from "@/components/owner/OwnerConsoleShell";
-import { buildTeamGateUrl } from "@/lib/auth/routing";
+import { buildTeamGateUrl, DEFAULT_TEAM_NEXT } from "@/lib/auth/routing";
 import { requireOwnerUser } from "@/lib/owner/auth";
 
 export const metadata: Metadata = {
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default async function OwnerLayout({ children }: { children: React.ReactNode }) {
   const auth = await requireOwnerUser();
   if (!auth.ok) {
-    redirect(buildTeamGateUrl("/owner/control"));
+    redirect(buildTeamGateUrl(DEFAULT_TEAM_NEXT));
   }
 
   return <OwnerConsoleShell>{children}</OwnerConsoleShell>;

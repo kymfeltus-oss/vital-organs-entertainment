@@ -130,7 +130,7 @@ export async function runOwnerGoLive(
   updatedBy: string,
 ): Promise<{ ok: boolean; snapshot: OwnerBroadcastSnapshot; message: string }> {
   const { row } = await loadOwnerStreamState(admin);
-  if (row?.is_live) {
+  if (row?.is_live && row.publish_status === "publishing") {
     const { snapshot } = await buildOwnerBroadcastSnapshot(body.mode);
     return { ok: false, snapshot, message: "Broadcast is already live." };
   }

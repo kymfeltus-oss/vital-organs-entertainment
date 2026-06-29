@@ -16,6 +16,8 @@ import {
   buildCreateAccountUrl,
   buildForgotPasswordUrl,
   buildPersonaHubUrl,
+  buildTeamGateUrl,
+  DEFAULT_TEAM_NEXT,
   resolveAttendeeDestination,
 } from "@/lib/auth/routing";
 import {
@@ -245,6 +247,7 @@ export default function AttendeeFunnelClient({
     <AttendeeAuthLoginPlate
       createAccountHref={buildCreateAccountUrl(destination)}
       forgotPasswordHref={buildForgotPasswordUrl(destination)}
+      productionDashboardHref={buildTeamGateUrl(DEFAULT_TEAM_NEXT)}
       email={email}
       password={password}
       showPassword={showPassword}

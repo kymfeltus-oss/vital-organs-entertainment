@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useDeviceInventoryStore, type DeviceDraft, type PersistedDevice } from "@/hooks/use-device-inventory-store";
 import { useOwnerBroadcastSnapshot } from "@/hooks/useOwnerBroadcastSnapshot";
+import LowerThirdsManagerSubmodule from "@/components/owner/LowerThirdsManagerSubmodule";
 import { derivePendingTodos } from "@/lib/owner/derive-pending-todos";
 import type { AccessTier, ShowSetupState } from "@/lib/owner/show-setup-state";
 import {
@@ -41,7 +42,6 @@ import {
   toDateTimeLocal,
   validateShowSetupInput,
   type LowerThirdAsset,
-  type LowerThirdTheme,
   type ProgramSegment,
 } from "@/lib/owner/show-setup-ui";
 
@@ -207,7 +207,6 @@ export default function ShowSetupSettingsClient() {
   const [lowerThirds, setLowerThirds] = useState<LowerThirdAsset[]>([
     { id: "LT_001", primaryText: "SARAH JENKINS", secondaryText: "AUDIO ENGINEER", theme: "NEON_PURPLE_SLIDE" },
   ]);
-  const [activeLowerThirdId, setActiveLowerThirdId] = useState("LT_001");
   const [programFlow, setProgramFlow] = useState<ProgramSegment[]>([
     { id: "1", title: "Opening Countdown", description: "Countdown", durationMinutes: 5 },
     { id: "2", title: "Host Welcome", description: "Host", durationMinutes: 10 },
@@ -250,7 +249,6 @@ export default function ShowSetupSettingsClient() {
     setStreamKey(state.streamKey);
     setFallbackAssetPath(state.fallbackAssetPath);
     setLowerThirds(state.lowerThirds);
-    setActiveLowerThirdId(state.lowerThirds[0]?.id ?? "LT_001");
     setProgramFlow(state.programFlow);
     setMonetizationEnabled(state.monetizationEnabled);
     setGateType(state.gateType);
@@ -311,6 +309,11 @@ export default function ShowSetupSettingsClient() {
       chatSlowMode,
       dvrBufferEnabled,
       verboseTelemetry,
+      restreamDestinations: {
+        twitch: true,
+        youtube: true,
+        facebook: true,
+      },
     }),
     [
       accessTiers,
@@ -457,7 +460,7 @@ export default function ShowSetupSettingsClient() {
       }
       setPendingDeviceId(device.id);
       try {
-        const result = updateDevicePatch(device.id, { preShowActive: !device.preShowActive });
+        const result = await updateDevicePatch(device.id, { preShowActive: !device.preShowActive });
         setDeviceMessage(result.message);
       } catch {
         setDeviceMessage("Device activation update failed.");
@@ -469,8 +472,8 @@ export default function ShowSetupSettingsClient() {
   );
 
   const recheckDevice = useCallback(
-    (device: PersistedDevice) => {
-      const result = updateDevicePatch(device.id, {
+    async (device: PersistedDevice) => {
+      const result = await updateDevicePatch(device.id, {
         healthStatus: device.healthStatus === "ERROR" ? "DISCONNECTED" : "LINKED",
       });
       setDeviceMessage(result.message);
@@ -479,8 +482,8 @@ export default function ShowSetupSettingsClient() {
   );
 
   const addDiscoveredDevice = useCallback(
-    (draft: DeviceDraft) => {
-      const result = upsertDevice(draft, null);
+    async (draft: DeviceDraft) => {
+      const result = await upsertDevice(draft, null);
       setDeviceMessage(result.message);
     },
     [upsertDevice],
@@ -489,10 +492,6 @@ export default function ShowSetupSettingsClient() {
   const countdown = useMemo(() => getCountdownParts(targetDateTime), [targetDateTime]);
   const totalRuntime = programFlow.reduce((sum, segment) => sum + segment.durationMinutes, 0);
   const projectedConclusion = useMemo(() => getProjectedConclusion(targetDateTime, totalRuntime), [targetDateTime, totalRuntime]);
-  const activeLowerThird =
-    lowerThirds.find((asset) => asset.id === activeLowerThirdId) ??
-    lowerThirds[0] ??
-    { id: "LT_001", primaryText: "SARAH JENKINS", secondaryText: "AUDIO ENGINEER", theme: "NEON_PURPLE_SLIDE" as LowerThirdTheme };
   const pendingTodos = derivePendingTodos(snapshot.preflight);
   const linkedCameraCount = cameras.filter((camera) => camera.healthStatus === "LINKED").length;
   const linkedMicCount = microphones.filter((mic) => mic.healthStatus === "LINKED").length;
@@ -791,30 +790,7 @@ export default function ShowSetupSettingsClient() {
               </div>
             </Panel>
 
-            <Panel number={8} title="Graphics / Lower Thirds" className="border-[#FF2FCF]/55">
-              <div className="rounded border border-[#263A61] bg-[#030612] p-4 text-center shadow-[inset_0_0_18px_rgba(255,47,207,0.2)]">
-                <p className="font-body text-2xl font-bold uppercase">{activeLowerThird.primaryText}</p>
-                <p className="font-body text-xs uppercase text-[#FF4CDA]">{activeLowerThird.secondaryText}</p>
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <TextInput dataTestId="show-setup-lower-third-primary-input" value={activeLowerThird.primaryText} onChange={(value) => setLowerThirds((items) => items.map((item) => item.id === activeLowerThird.id ? { ...item, primaryText: value } : item))} />
-                <TextInput dataTestId="show-setup-lower-third-secondary-input" value={activeLowerThird.secondaryText} onChange={(value) => setLowerThirds((items) => items.map((item) => item.id === activeLowerThird.id ? { ...item, secondaryText: value } : item))} />
-              </div>
-              <select data-testid="show-setup-lower-third-theme-select" value={activeLowerThird.theme} onChange={(event) => setLowerThirds((items) => items.map((item) => item.id === activeLowerThird.id ? { ...item, theme: event.target.value as LowerThirdTheme } : item))} className="mt-2 min-h-9 w-full rounded border border-[#263A61] bg-[#081427] px-2 font-body text-xs">
-                <option value="NEON_PURPLE_SLIDE">Neon Purple Slide</option>
-                <option value="MINIMAL_GLASS_FADE">Minimal Glass Fade</option>
-                <option value="CYAN_GLOW">Cyan Glow</option>
-              </select>
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                <button data-testid="show-setup-add-graphic-button" type="button" disabled={saving} onClick={() => {
-                  const id = `LT_${String(lowerThirds.length + 1).padStart(3, "0")}`;
-                  setLowerThirds((items) => [...items, { id, primaryText: "NEW SPEAKER", secondaryText: "ROLE", theme: "CYAN_GLOW" }]);
-                  setActiveLowerThirdId(id);
-                }} className="rounded bg-[#D00074] px-2 py-2 font-ui text-[0.65rem] disabled:opacity-45">Add</button>
-                <button data-testid="show-setup-edit-graphic-button" type="button" onClick={() => setStatusMessage("Selected graphic is editable.")} className="rounded border border-[#A74CFF] px-2 py-2 font-ui text-[0.65rem]">Edit</button>
-                <button data-testid="show-setup-remove-graphic-button" type="button" disabled={saving || lowerThirds.length <= 1} onClick={() => setLowerThirds((items) => items.filter((item) => item.id !== activeLowerThird.id))} className="rounded border border-red-400/50 px-2 py-2 font-ui text-[0.65rem] disabled:opacity-45">Remove</button>
-              </div>
-            </Panel>
+            <LowerThirdsManagerSubmodule />
 
             <Panel number={9} title="Program Flow" className="border-[#FF2FCF]/55">
               <div className="grid grid-cols-[1.5rem_1fr_4.5rem_3rem] gap-px text-xs">
@@ -892,8 +868,17 @@ export default function ShowSetupSettingsClient() {
           </div>
           <div className="mt-4 space-y-2">
             {["Scan Local Network", "Scan USB Devices", "Scan NDI Sources", "Scan Audio Interfaces", "Discover Cloud Destinations"].map((label) => (
-              <button key={label} data-testid={`show-setup-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} type="button" onClick={() => setDeviceMessage(`${label} complete.`)} className="flex min-h-11 w-full items-center justify-between rounded border border-[#17233B] bg-[#081427] px-3 text-left font-body text-xs">
-                <span>{label}</span><ChevronDown className="h-4 w-4 -rotate-90" />
+              <button
+                key={label}
+                data-testid={`show-setup-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                type="button"
+                disabled
+                className="flex min-h-11 w-full cursor-not-allowed items-center justify-between rounded border border-[#263244] bg-[#111827] px-3 text-left font-body text-xs text-zinc-500 opacity-55"
+              >
+                <span>{label}</span>
+                <span className="rounded bg-[#080D16] px-2 py-1 font-ui text-[0.56rem] uppercase tracking-[0.08em] text-amber-400">
+                  Unavailable in Ephemeral Ingest Mode
+                </span>
               </button>
             ))}
           </div>

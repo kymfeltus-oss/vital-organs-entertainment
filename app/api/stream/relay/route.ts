@@ -311,17 +311,26 @@ export async function GET(request: NextRequest) {
     });
 
     if (!upstreamResponse.ok) {
+      const isIvsUpstream = upstream.hostname.toLowerCase().endsWith(".live-video.net");
+      const detail = isIvsUpstream
+        ? "Amazon IVS returned this status for the manifest. The channel is usually offline or not currently broadcasting."
+        : "The upstream HLS provider returned a non-success status.";
       relayReject("upstream_fetch_failed", {
         target: upstream.toString(),
         status: upstreamResponse.status,
         statusText: upstreamResponse.statusText,
+        detail,
       });
       return relayResponse(
         request,
-        "Upstream unavailable.",
+        `Upstream unavailable. ${detail}`,
         "text/plain",
         upstreamResponse.status,
-        upstreamTimingHeaders(upstreamResponse),
+        {
+          ...upstreamTimingHeaders(upstreamResponse),
+          "X-Relay-Upstream-Status": String(upstreamResponse.status),
+          "X-Relay-Upstream-Host": upstream.hostname,
+        },
       );
     }
 

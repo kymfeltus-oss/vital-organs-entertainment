@@ -77,14 +77,13 @@ export default function DeviceInventoryClient() {
     });
   };
 
-  const runMutation = async (actionId: string, mutation: () => { ok: boolean; message: string }) => {
+  const runMutation = async (actionId: string, mutation: () => Promise<{ ok: boolean; message: string }>) => {
     if (pendingAction) return;
     setPendingAction(actionId);
     setTone("info");
     setMessage("Syncing device routing matrix...");
     try {
-      await new Promise((resolve) => window.setTimeout(resolve, 120));
-      const result = mutation();
+      const result = await mutation();
       setTone(result.ok ? "success" : "error");
       setMessage(result.message);
       if (result.ok && (actionId === "save-device" || actionId === "delete-device")) {

@@ -22,8 +22,7 @@ export default function DeviceInventoryPreShowPanel() {
     setPendingId(id);
     setMessage("Updating pre-show device monitor...");
     try {
-      await new Promise((resolve) => window.setTimeout(resolve, 100));
-      const result = updateDevicePatch(id, { preShowActive: active });
+      const result = await updateDevicePatch(id, { preShowActive: active });
       setMessage(result.message);
     } catch {
       setMessage("Pre-show device activation failed.");

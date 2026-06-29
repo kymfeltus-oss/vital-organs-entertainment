@@ -1,4 +1,4 @@
-/** Attendee live reaction types (stored in live_stream_reactions.reaction_type). */
+/** Attendee live reaction types stored in live_stream_reactions.reaction_type. */
 
 export const LIVE_REACTION_TYPES = [
   "fire",
@@ -6,6 +6,9 @@ export const LIVE_REACTION_TYPES = [
   "heart",
   "pray",
   "seed",
+  "applause",
+  "laugh",
+  "surprise",
 ] as const;
 
 export type LiveReactionType = (typeof LIVE_REACTION_TYPES)[number];
@@ -22,6 +25,9 @@ export const LIVE_REACTION_CATALOG: readonly LiveReactionDefinition[] = [
   { type: "heart", label: "Heart", emoji: "❤️" },
   { type: "pray", label: "Pray", emoji: "🙏" },
   { type: "seed", label: "Seed", emoji: "🌱" },
+  { type: "applause", label: "Applause", emoji: "👏" },
+  { type: "laugh", label: "Laugh", emoji: "😂" },
+  { type: "surprise", label: "Surprise", emoji: "😮" },
 ] as const;
 
 export const MAX_FLOATING_LIVE_REACTIONS = 25;
@@ -34,6 +40,7 @@ export const LIVE_REACTION_RETENTION_MS = 2 * 60 * 60 * 1_000;
 export type LiveReactionRow = {
   id: string;
   user_id: string | null;
+  event_id?: string;
   reaction_type: LiveReactionType;
   created_at: string;
 };
@@ -45,13 +52,7 @@ export type FloatingLiveReaction = {
 };
 
 export function isLiveReactionType(value: unknown): value is LiveReactionType {
-  return (
-    value === "fire" ||
-    value === "praise" ||
-    value === "heart" ||
-    value === "pray" ||
-    value === "seed"
-  );
+  return LIVE_REACTION_TYPES.includes(value as LiveReactionType);
 }
 
 export function getLiveReactionEmoji(type: LiveReactionType): string {

@@ -1,172 +1,246 @@
 "use client";
 
-import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
+import { useState } from "react";
 
-export default function TestSuitePage() {
-  const [logs, setLogs] = useState<string[]>([]);
-  const [hasMounted, setHasMounted] = useState(false);
-  const [windowWidth, setWindowWidth] = useState(0);
+type TestStatus = "SUCCESS" | "FAILED" | "PENDING";
 
-  const addLog = useCallback((message: string) => {
-    setLogs((prev) => [
-      ...prev,
-      `[${new Date().toLocaleTimeString()}] ${message}`,
-    ]);
-  }, []);
+type TestLog = {
+  timestamp: string;
+  endpoint: string;
+  status: TestStatus;
+  payload: string;
+};
 
-  const runDiagnostics = useCallback(
-    (width: number) => {
-      const email = localStorage.getItem("awakening_user_email");
-      if (email) {
-        addLog(
-          `✅ STEP 1 PASS: User Identity found: "${email}". Root route will instantly bypass intro video and route to Live Hub.`,
-        );
-      } else {
-        addLog(
-          "⚠️ STEP 1 ALERT: No user email found. Root route will show 12s intro video and redirect to Onboarding Gate.",
-        );
-      }
+function stringifyPayload(payload: unknown): string {
+  if (typeof payload === "string") return payload;
+  return JSON.stringify(payload, null, 2);
+}
 
-      const isGuest = localStorage.getItem("guest_session") === "true";
-      if (isGuest) {
-        addLog(
-          "ℹ️ SESSION TYPE: Active profile is a Bypass Guest. Checking live room authorization permissions...",
-        );
-      }
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Unknown integration failure.";
+}
 
-      if (width < 768) {
-        addLog(
-          `📱 RESPONSIVE BREAKPOINT: Mobile View Detected (${width}px). Nav bar will render as a BOTTOM STICKY BAR.`,
-        );
-      } else {
-        addLog(
-          `💻 RESPONSIVE BREAKPOINT: Widescreen View Detected (${width}px). Nav bar will render as a LEFT FIXED SIDEBAR (Width: 16rem). Layout will flow edge-to-edge.`,
-        );
-      }
-    },
-    [addLog],
-  );
+async function parseJson(response: Response): Promise<Record<string, unknown>> {
+  return (await response.json().catch(() => ({}))) as Record<string, unknown>;
+}
 
-  useEffect(() => {
-    const initialWidth = window.innerWidth;
-    setWindowWidth(initialWidth);
-    setHasMounted(true);
+function appendTimestamp(): string {
+  return new Date().toISOString().split("T")[1]?.slice(0, 8) ?? "00:00:00";
+}
 
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
+export default function IntegrationTestSuitePage() {
+  const [logs, setLogs] = useState<TestLog[]>([]);
+  const [isRunning, setIsRunning] = useState(false);
 
-    addLog("🚀 Initializing Awakening Application Diagnostics Suite...");
-    runDiagnostics(initialWidth);
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, [addLog, runDiagnostics]);
-
-  const simulateClearLocalStorage = () => {
-    localStorage.clear();
-    addLog(
-      "🧹 LocalStorage wiped completely. Refresh page to test clean first-time user flow.",
-    );
+  const appendLog = (endpoint: string, status: TestStatus, payload: unknown) => {
+    const newLog: TestLog = {
+      timestamp: appendTimestamp(),
+      endpoint,
+      status,
+      payload: stringifyPayload(payload),
+    };
+    setLogs((current) => [newLog, ...current]);
   };
 
-  const simulatePaidUser = () => {
-    localStorage.setItem("awakening_user_email", "test_verified_user@domain.com");
-    localStorage.removeItem("guest_session");
-    addLog("🎟️ State Injection: Simulating a verified, registered user profile.");
-  };
+  const executeLivePipelineDiagnostic = async () => {
+    if (isRunning) return;
 
-  const simulateGuestUser = () => {
-    localStorage.setItem(
-      "awakening_user_email",
-      `guest_${Math.floor(Math.random() * 10000)}@awakening.local`,
+    setIsRunning(true);
+    setLogs([]);
+
+    appendLog("/api/owner/devices", "PENDING", "Dispatching device inventory query.");
+    try {
+      const response = await fetch("/api/owner/devices", {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      });
+      const data = await parseJson(response);
+      if (!response.ok || data.success !== true) {
+        throw new Error(typeof data.error === "string" ? data.error : "Device endpoint failed.");
+      }
+      const devices = Array.isArray(data.devices) ? data.devices : [];
+      appendLog("/api/owner/devices", "SUCCESS", { devicesFound: devices.length, data });
+    } catch (error) {
+      appendLog("/api/owner/devices", "FAILED", errorMessage(error));
+    }
+
+    appendLog(
+      "/api/owner/audio/mix-state",
+      "PENDING",
+      "Attempting channel patch mutation transaction.",
     );
-    localStorage.setItem("guest_session", "true");
-    addLog(
-      "👤 State Injection: Simulating an instant Guest entry session bypass profile.",
+    try {
+      const response = await fetch("/api/owner/audio/mix-state", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event_id: "300-awakening",
+          targetType: "CHANNEL",
+          channelId: "TEST_X1",
+          label: "Integration Test Node Reference",
+          level: 82,
+          solo: false,
+          mute: true,
+        }),
+      });
+      const data = await parseJson(response);
+      if (!response.ok || data.success !== true) {
+        throw new Error(typeof data.error === "string" ? data.error : "Mix-state patch failed.");
+      }
+      appendLog("/api/owner/audio/mix-state", "SUCCESS", data);
+    } catch (error) {
+      appendLog("/api/owner/audio/mix-state", "FAILED", errorMessage(error));
+    }
+
+    appendLog(
+      "/api/owner/audio/mix-state [MASTER]",
+      "PENDING",
+      "Updating master mastering config parameters.",
     );
+    try {
+      const response = await fetch("/api/owner/audio/mix-state", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event_id: "300-awakening",
+          targetType: "MASTER_DECK",
+          whiteNoisePreset: "HIGH",
+          eqPreset: "V_SHAPE_BOOST",
+          limiterDb: -6,
+        }),
+      });
+      const data = await parseJson(response);
+      if (!response.ok || data.success !== true) {
+        throw new Error(typeof data.error === "string" ? data.error : "Master update failed.");
+      }
+      appendLog("/api/owner/audio/mix-state [MASTER]", "SUCCESS", data);
+    } catch (error) {
+      appendLog("/api/owner/audio/mix-state [MASTER]", "FAILED", errorMessage(error));
+    }
+
+    appendLog(
+      "/api/owner/video-routing",
+      "PENDING",
+      "Writing matrix program camera feed selection parameters.",
+    );
+    try {
+      const response = await fetch("/api/owner/video-routing", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event_id: "300-awakening",
+          active_program_channel_id: "CAMERA_TEST_NODE",
+          transition_type: "AUTO_FADE",
+          twitch_restream_active: true,
+        }),
+      });
+      const data = await parseJson(response);
+      if (!response.ok || data.success !== true) {
+        throw new Error(typeof data.error === "string" ? data.error : "Video routing failed.");
+      }
+      appendLog("/api/owner/video-routing", "SUCCESS", data);
+    } catch (error) {
+      appendLog("/api/owner/video-routing", "FAILED", errorMessage(error));
+    }
+
+    appendLog(
+      "/api/moderation/chat",
+      "PENDING",
+      "Testing moderator suppression boundary with non-existent valid UUID.",
+    );
+    try {
+      const response = await fetch("/api/moderation/chat", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messageId: "00000000-0000-4000-8000-000000000000",
+        }),
+      });
+      const data = await parseJson(response);
+      if (response.status >= 500) {
+        throw new Error(typeof data.error === "string" ? data.error : "Server error crash.");
+      }
+      appendLog("/api/moderation/chat", "SUCCESS", {
+        info: "Route online. Not-found or success response handled without a 500.",
+        httpStatus: response.status,
+        responsePayload: data,
+      });
+    } catch (error) {
+      appendLog("/api/moderation/chat", "FAILED", errorMessage(error));
+    }
+
+    setIsRunning(false);
   };
 
   return (
-    <main className="flex min-h-dvh w-screen flex-col gap-6 bg-zinc-950 p-6 font-mono text-xs text-white md:flex-row">
-      <div className="flex-1 space-y-4 rounded-xl border border-white/10 bg-zinc-900 p-4">
-        <h1 className="text-sm font-bold tracking-tight text-zinc-200 uppercase">
-          Interactive Simulation Deck
-        </h1>
-        <p className="text-zinc-400">
-          Force environment states to verify if your routers transition without
-          logic loops:
-        </p>
-
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={simulateClearLocalStorage}
-            className="w-full rounded-lg border border-red-500/30 bg-red-950 py-2.5 text-red-200 transition-colors hover:bg-red-900"
-          >
-            1. Force Clean First-Time Visitor View (Wipe Local Storage)
-          </button>
-          <button
-            type="button"
-            onClick={simulatePaidUser}
-            className="w-full rounded-lg border border-white/10 bg-zinc-800 py-2.5 text-white transition-colors hover:bg-zinc-700"
-          >
-            2. Force Inject Registered User Credentials
-          </button>
-          <button
-            type="button"
-            onClick={simulateGuestUser}
-            className="w-full rounded-lg border border-white/10 bg-zinc-800 py-2.5 text-white transition-colors hover:bg-zinc-700"
-          >
-            3. Force Inject Guest Session Bypass State
-          </button>
-        </div>
-
-        <div className="space-y-2 border-t border-white/5 pt-4">
-          <span className="block text-[10px] tracking-wider text-zinc-500 uppercase">
-            Manual Routing Verification Checks
-          </span>
-          <div className="grid grid-cols-2 gap-2 text-center font-semibold">
-            <Link
-              href="/"
-              className="rounded border border-white/5 bg-white/5 p-2 hover:bg-white/10"
-            >
-              Go to `/` (Intro)
-            </Link>
-            <Link
-              href="/email-gate"
-              className="rounded border border-white/5 bg-white/5 p-2 hover:bg-white/10"
-            >
-              Go to `/email-gate`
-            </Link>
-            <Link
-              href={EXPERIENCE_LIVE_PATH}
-              className="rounded border border-white/5 bg-white/5 p-2 hover:bg-white/10"
-            >
-              Go to `{EXPERIENCE_LIVE_PATH}`
-            </Link>
-            <Link
-              href={`${EXPERIENCE_LIVE_PATH}?success=true`}
-              className="rounded border border-white/5 bg-white/5 p-2 hover:bg-white/10"
-            >
-              Test Stripe Hook Retry (`?success=true`)
-            </Link>
+    <main className="min-h-screen bg-black p-6 font-mono text-white selection:bg-zinc-800">
+      <div className="mx-auto max-w-5xl">
+        <header className="mb-6 flex items-center justify-between gap-4 border-b border-zinc-800 pb-4">
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-zinc-100">
+              Live Production Architecture Integration Suite
+            </h1>
+            <p className="mt-1 text-xs text-zinc-500">
+              Verifies end-to-end multi-user relational synchronization matrices across the active network.
+            </p>
           </div>
-        </div>
-      </div>
+          <button
+            type="button"
+            data-testid="execute-infrastructure-integration-run"
+            onClick={() => void executeLivePipelineDiagnostic()}
+            disabled={isRunning}
+            className="bg-zinc-100 px-4 py-2 text-xs font-bold text-black transition hover:bg-zinc-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {isRunning ? "Running Live Audit Trace..." : "Execute Infrastructure Integration Run"}
+          </button>
+        </header>
 
-      <div className="flex h-[50dvh] flex-1 flex-col rounded-xl border border-white/10 bg-black p-4 md:h-auto">
-        <div className="mb-2 flex items-center justify-between text-[10px] text-zinc-500 uppercase">
-          <span>Diagnostic Log Stream Output</span>
-          <span>Width: {hasMounted ? `${windowWidth}px` : "—"}</span>
-        </div>
-        <div className="custom-scrollbar flex-1 space-y-1 overflow-y-auto rounded-lg border border-white/5 bg-zinc-950 p-3 text-zinc-300">
-          {logs.map((log, index) => (
-            <div key={index} className="leading-relaxed whitespace-pre-wrap">
-              {log}
+        <section>
+          <h2 className="mb-3 text-xs font-bold tracking-widest text-zinc-400 uppercase">
+            Dynamic Network Transaction Execution Stream Log
+          </h2>
+
+          {logs.length === 0 ? (
+            <div className="rounded border border-dashed border-zinc-800 p-12 text-center text-xs text-zinc-600">
+              Awaiting initialization deployment diagnostic command execution trace.
             </div>
-          ))}
-        </div>
+          ) : (
+            <div className="space-y-3">
+              {logs.map((log, index) => (
+                <article
+                  key={`${log.timestamp}-${log.endpoint}-${index}`}
+                  className="rounded border border-zinc-800 bg-zinc-950 p-4"
+                >
+                  <div className="mb-2 flex items-center justify-between border-b border-zinc-900 pb-2 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="text-zinc-600">[{log.timestamp}]</span>
+                      <span className="font-bold text-zinc-300">{log.endpoint}</span>
+                    </div>
+                    <span
+                      className={`rounded border px-2 py-0.5 text-[10px] font-bold ${
+                        log.status === "SUCCESS"
+                          ? "border-emerald-900 bg-emerald-950/60 text-emerald-400"
+                          : log.status === "FAILED"
+                            ? "border-red-900 bg-red-950/60 text-red-400"
+                            : "animate-pulse border-zinc-700 bg-zinc-900 text-zinc-400"
+                      }`}
+                    >
+                      {log.status}
+                    </span>
+                  </div>
+                  <pre className="max-h-40 overflow-x-auto whitespace-pre-wrap rounded bg-black/40 p-1 font-sans text-[11px] leading-relaxed text-zinc-400">
+                    {log.payload}
+                  </pre>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );

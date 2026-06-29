@@ -13,7 +13,14 @@ import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 type LiveReactionPostBody = {
   reactionType?: string;
+  eventId?: string;
 };
+
+function cleanEventId(value: unknown): string {
+  if (typeof value !== "string") return "300-awakening";
+  const cleaned = value.trim().replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80);
+  return cleaned || "300-awakening";
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,6 +36,7 @@ export async function POST(request: NextRequest) {
     const { buyer, withSessionCookies } = auth;
     const body = (await request.json()) as LiveReactionPostBody;
     const reactionType = body.reactionType?.trim() as LiveReactionType | undefined;
+    const eventId = cleanEventId(body.eventId);
 
     if (!reactionType || !isLiveReactionType(reactionType)) {
       return NextResponse.json({ error: "Invalid reaction." }, { status: 400 });
@@ -44,10 +52,11 @@ export async function POST(request: NextRequest) {
     const { data, error } = await admin
       .from("live_stream_reactions")
       .insert({
+        event_id: eventId,
         user_id: buyer.userId,
         reaction_type: reactionType,
       })
-      .select("id, user_id, reaction_type, created_at")
+      .select("id, event_id, user_id, reaction_type, created_at")
       .single();
 
     if (error || !data) {

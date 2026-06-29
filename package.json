@@ -21,6 +21,7 @@
     "db:verify:streaming": "node scripts/db-verify-streaming-schema.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-ivs": "^3.1075.0",
     "@capacitor/android": "^8.4.0",
     "@capacitor/cli": "^8.4.0",
     "@capacitor/core": "^8.4.0",

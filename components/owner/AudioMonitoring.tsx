@@ -22,6 +22,7 @@ import {
   Waves,
 } from "lucide-react";
 import { useDeviceInventoryStore } from "@/hooks/use-device-inventory-store";
+import { useProductionLiveStore, useProductionLiveSync } from "@/hooks/use-production-live-data";
 import {
   CONCERT_EQ_PRESET_LABELS,
   type AudioLevelTrack,
@@ -267,9 +268,33 @@ export default function AudioMonitoring({
   configPending = false,
   onConfigChange,
 }: AudioMonitoringProps) {
+  useProductionLiveSync();
   const [localState, setLocalState] = useState<LocalSoundHubState>(defaultSoundHubState);
   const [statusMessage, setStatusMessage] = useState("Sound Hub ready.");
   const { microphones, error: inventoryError } = useDeviceInventoryStore();
+  const audioChannels = useProductionLiveStore((state) => state.audioChannels);
+  const updateFaderState = useProductionLiveStore((state) => state.updateFaderState);
+
+  useEffect(() => {
+    if (!audioChannels.length) return;
+    setLocalState((current) =>
+      sanitizeSoundHubState({
+        ...current,
+        channels: current.channels.map((channel) => {
+          const synced = audioChannels.find((item) => item.channel_id === channel.id);
+          return synced
+            ? {
+                ...channel,
+                label: synced.label,
+                level: synced.level,
+                solo: synced.solo,
+                mute: synced.mute,
+              }
+            : channel;
+        }),
+      }),
+    );
+  }, [audioChannels]);
 
   useEffect(() => {
     setLocalState(readSoundHubState());
@@ -302,6 +327,7 @@ export default function AudioMonitoring({
 
   const handleChannelLevel = useCallback(
     (id: string, level: number) => {
+      const channel = localState.channels.find((item) => item.id === id);
       persistLocalState(
         (current) => ({
           ...current,
@@ -309,14 +335,18 @@ export default function AudioMonitoring({
             channel.id === id ? { ...channel, level: clampPercent(level) } : channel,
           ),
         }),
-        "Channel fader saved locally.",
+        "Channel fader saved to production mix state.",
       );
+      void updateFaderState(id, clampPercent(level), channel?.mute ?? false, channel?.solo ?? false, channel?.label ?? id);
     },
-    [persistLocalState],
+    [localState.channels, persistLocalState, updateFaderState],
   );
 
   const toggleChannelFlag = useCallback(
     (id: string, flag: "solo" | "mute") => {
+      const channel = localState.channels.find((item) => item.id === id);
+      const nextMute = flag === "mute" ? !(channel?.mute ?? false) : (channel?.mute ?? false);
+      const nextSolo = flag === "solo" ? !(channel?.solo ?? false) : (channel?.solo ?? false);
       persistLocalState(
         (current) => ({
           ...current,
@@ -324,10 +354,11 @@ export default function AudioMonitoring({
             channel.id === id ? { ...channel, [flag]: !channel[flag] } : channel,
           ),
         }),
-        `${flag === "solo" ? "Solo" : "Mute"} state saved.`,
+        `${flag === "solo" ? "Solo" : "Mute"} state saved to production mix state.`,
       );
+      void updateFaderState(id, channel?.level ?? 75, nextMute, nextSolo, channel?.label ?? id);
     },
-    [persistLocalState],
+    [localState.channels, persistLocalState, updateFaderState],
   );
 
   const handleSmartMix = useCallback(() => {
