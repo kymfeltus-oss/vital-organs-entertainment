@@ -17,11 +17,13 @@ const NAV_HIDDEN_PREFIXES = [
   "/watch",
   "/stream",
   "/studio",
+  "/owner",
   "/email-gate",
   "/experience/live",
   "/dashboard/live",
   "/dashboard/countdown",
-  "/countdown/",
+  "/countdown",
+  "/graphics",
 ] as const;
 
 function matchesHiddenPrefix(pathname: string, prefix: string): boolean {

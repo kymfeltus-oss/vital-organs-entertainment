@@ -4810,15 +4810,10 @@ body::-webkit-scrollbar {
   font-size: calc(100cqw * 11 / 941);
 }
 
-/* Bottom dock — proportional icon row (1290×250) + phone safe area */
+/* Bottom dock - native-style app tab bar + phone safe area */
 :root {
-  --bottom-dock-art-w: 1290;
-  --bottom-dock-art-h: 250;
-  /* Match track width → PNG aspect so art is full-bleed without cover crop. */
-  --bottom-dock-display-h: calc(
-    var(--mobile-app-track-w) * var(--bottom-dock-art-h) / var(--bottom-dock-art-w)
-  );
-  /* Tab pages — same locked track; height subtracts bottom dock in shell CSS. */
+  --bottom-dock-display-h: 64px;
+  /* Tab pages - same locked track; height subtracts bottom dock in shell CSS. */
   --mobile-tab-track-w: min(
     100vw,
     calc(
@@ -4850,29 +4845,21 @@ body::-webkit-scrollbar {
   width: 100%;
   height: var(--bottom-dock-display-h);
   margin: 0 auto;
-  overflow: hidden;
+  overflow: visible;
+  border-top: 1px solid rgb(255 255 255 / 0.12);
+  background:
+    linear-gradient(180deg, rgb(14 14 18 / 0.93), rgb(5 5 8 / 0.98)),
+    radial-gradient(circle at 18% 0%, rgb(0 168 255 / 0.16), transparent 32%),
+    radial-gradient(circle at 84% 0%, rgb(255 47 175 / 0.14), transparent 34%);
+  box-shadow: 0 -12px 30px rgb(0 0 0 / 0.42);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   pointer-events: auto;
 }
 
-.bottom-dock__art {
+.bottom-dock__items {
   position: absolute;
   inset: 0;
-  z-index: 1;
-  display: block;
-  width: 100%;
-  height: 100%;
-  /* Frame matches PNG aspect at track width — full width, no clip, no bunching. */
-  object-fit: contain;
-  object-position: center bottom;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.bottom-dock__hotspots {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
   display: flex;
   flex-direction: row;
   align-items: stretch;
@@ -4882,47 +4869,96 @@ body::-webkit-scrollbar {
   pointer-events: none;
 }
 
-.bottom-dock__hit {
+.bottom-dock__item {
   position: relative;
   flex: 1 1 0%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 0.14rem;
   min-width: 0;
   min-height: 44px;
   height: 100%;
   border: 0;
   background: transparent;
+  color: rgb(255 255 255 / 0.54);
   text-decoration: none;
   pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
   transition:
-    box-shadow 180ms ease,
+    background 160ms ease,
+    color 160ms ease,
     transform 120ms ease;
 }
 
-.bottom-dock__hit:hover {
-  box-shadow: inset 0 0 0 9999px rgba(0, 168, 255, 0.03);
+.bottom-dock__item:hover {
+  color: rgb(255 255 255 / 0.82);
+  background: rgb(255 255 255 / 0.035);
 }
 
-.bottom-dock__hit:active {
-  transform: scale(0.98);
-  box-shadow: inset 0 0 0 9999px rgba(255, 0, 140, 0.04);
+.bottom-dock__item:active {
+  transform: scale(0.97);
+  background: rgb(255 255 255 / 0.06);
 }
 
-/* PNG carries tab artwork — no CSS active overlays. */
+.bottom-dock__item--active {
+  color: #ffffff;
+}
 
-.bottom-dock__hit:focus-visible {
+.bottom-dock__item--active::before {
+  position: absolute;
+  left: 50%;
+  top: 3px;
+  width: 1.8rem;
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #00a8ff, #ff2faf);
+  box-shadow: 0 0 14px rgb(0 168 255 / 0.55);
+  content: "";
+  transform: translateX(-50%);
+}
+
+.bottom-dock__icon-wrap {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border-radius: 9999px;
+}
+
+.bottom-dock__item--active .bottom-dock__icon-wrap {
+  background: linear-gradient(135deg, rgb(0 168 255 / 0.22), rgb(255 47 175 / 0.18));
+}
+
+.bottom-dock__icon {
+  width: 19px;
+  height: 19px;
+}
+
+.bottom-dock__label {
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--font-ui), system-ui, sans-serif;
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bottom-dock__item:focus-visible {
   outline: 2px solid #00a8ff;
-  outline-offset: -2px;
+  outline-offset: -3px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bottom-dock__hit {
+  .bottom-dock__item {
     transition: none;
   }
 
-  .bottom-dock__hit:active {
+  .bottom-dock__item:active {
     transform: none;
   }
 }
