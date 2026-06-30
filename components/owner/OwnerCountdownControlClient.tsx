@@ -19,6 +19,10 @@ import {
   scheduleDatetimeLocalToIso,
   type ScheduleTimezone,
 } from "@/lib/live/schedule-timezone";
+import {
+  DEFAULT_COUNTDOWN_CONFIG,
+  type EventCountdownConfig,
+} from "@/lib/live/countdown-config";
 
 const EVENT_NAME = "IAN CRAIG & 300";
 const PRESENTER_NAME = "IAN CRAIG";
@@ -47,6 +51,12 @@ function countdownParts(targetIso: string, nowMs: number) {
     seconds: totalSeconds % 60,
     isComplete: remaining === 0,
   };
+}
+
+function buildPreviewEndIso(startIso: string): string {
+  const startMs = new Date(startIso).getTime();
+  if (Number.isNaN(startMs)) return DEFAULT_COUNTDOWN_CONFIG.end_time;
+  return new Date(startMs + 4 * 60 * 60 * 1_000).toISOString();
 }
 
 export default function OwnerCountdownControlClient() {
@@ -207,15 +217,16 @@ export default function OwnerCountdownControlClient() {
     setMessage("OBS/Restream countdown overlay URL copied.");
   };
 
-  // Maps properties seamlessly for the native live overlay wrapper component
-  const simulatedConfig = useMemo(() => {
+  const simulatedConfig = useMemo<EventCountdownConfig>(() => {
     return {
-      targetDateTime: targetIso,
-      showTitle: eventName,
-      presenterName: presenterName,
-      hostNames: hostNames,
+      ...DEFAULT_COUNTDOWN_CONFIG,
+      headline: eventName.trim() || DEFAULT_COUNTDOWN_CONFIG.headline,
+      subtitle: presenterName.trim() || DEFAULT_COUNTDOWN_CONFIG.subtitle,
+      start_time: targetIso,
+      end_time: buildPreviewEndIso(targetIso),
+      schedule_timezone: timezone,
     };
-  }, [targetIso, eventName, presenterName, hostNames]);
+  }, [eventName, presenterName, targetIso, timezone]);
 
   return (
     <main className="min-h-screen bg-[#030611] px-4 py-6 text-white sm:px-6 lg:px-10">
