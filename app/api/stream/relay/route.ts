@@ -325,6 +325,26 @@ export async function GET(request: NextRequest) {
         playbackState,
         detail,
       });
+      // #region agent log
+      fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "675ed0" },
+        body: JSON.stringify({
+          sessionId: "675ed0",
+          runId: "ivs-relay-offline",
+          hypothesisId: "H3",
+          location: "relay/route.ts:GET",
+          message: "upstream fetch failed",
+          data: {
+            upstreamHost: upstream.hostname,
+            upstreamStatus: upstreamResponse.status,
+            relayStatus,
+            playbackState,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
       return relayResponse(
         request,
         `Stream offline. ${detail}`,

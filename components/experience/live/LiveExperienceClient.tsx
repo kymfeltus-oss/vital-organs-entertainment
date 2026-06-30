@@ -11,6 +11,10 @@ import { buildAttendeeGateUrl } from "@/lib/auth/routing";
 import { fetchLiveAccessEvaluation, type LiveAccessEvaluation } from "@/lib/access";
 import { resolveImminentLiveRemainingSeconds } from "@/lib/experience/imminent-live-countdown";
 import { attachHlsPlayback } from "@/lib/live/attach-hls-playback";
+import {
+  probeRelayPlaybackState,
+  relayOfflineUserMessage,
+} from "@/lib/live/probe-relay-playback";
 import { requestLiveSeedWalletRefresh } from "@/lib/live/seed-wallet-events";
 import { getSupabase } from "@/lib/supabase/client";
 import ImminentLiveOverlay from "@/components/experience/ImminentLiveOverlay";
@@ -492,6 +496,45 @@ export default function LiveExperienceClient({
       const data = (await response.json()) as ManifestResponse;
       if (componentIsUnmountingRef.current) return;
       const nextManifest = resolveManifestMessage(data);
+
+      if (nextManifest.status === "ready" && nextManifest.playbackUrl) {
+        const relayState = await probeRelayPlaybackState(nextManifest.playbackUrl);
+        // #region agent log
+        fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "675ed0" },
+          body: JSON.stringify({
+            sessionId: "675ed0",
+            runId: "ivs-relay-offline",
+            hypothesisId: "H2-H3",
+            location: "LiveExperienceClient.tsx:loadManifest",
+            message: "relay playback probe",
+            data: {
+              relayState,
+              playbackHost: (() => {
+                try {
+                  return new URL(nextManifest.playbackUrl!).host;
+                } catch {
+                  return null;
+                }
+              })(),
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
+
+        if (relayState === "offline") {
+          streamPlaybackLatchedRef.current = false;
+          setManifest({
+            status: "waiting",
+            playbackUrl: null,
+            message: relayOfflineUserMessage(),
+          });
+          return;
+        }
+      }
+
       setManifest((prev) => {
         if (
           prev.status === "ready" &&
@@ -526,6 +569,22 @@ export default function LiveExperienceClient({
   }, [loadManifest]);
 
   const handleImminentLiveStart = useCallback((startedAt: string, durationSeconds: number) => {
+    // #region agent log
+    fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "675ed0" },
+      body: JSON.stringify({
+        sessionId: "675ed0",
+        runId: "holding-countdown-live",
+        hypothesisId: "H2",
+        location: "LiveExperienceClient.tsx:handleImminentLiveStart",
+        message: "overlay activated",
+        data: { startedAt, durationSeconds },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+
     streamPlaybackLatchedRef.current = false;
     setDropStartedAt(startedAt);
     setImminentLiveDurationSec(durationSeconds);
@@ -539,10 +598,68 @@ export default function LiveExperienceClient({
   useEffect(() => {
     if (!access || useDirectCamera) return;
 
+    const remainingSec =
+      access.imminentLiveStartedAt != null
+        ? resolveImminentLiveRemainingSeconds(
+            access.imminentLiveStartedAt,
+            access.imminentLiveDurationSeconds || IMMINENT_LIVE_DURATION_SEC,
+          )
+        : null;
+    const curtainActive =
+      access.imminentLiveStartedAt != null &&
+      shouldActivateDropCurtain(
+        access.imminentLiveStartedAt,
+        access.imminentLiveDurationSeconds || IMMINENT_LIVE_DURATION_SEC,
+      );
+
+    // #region agent log
+    fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "675ed0" },
+      body: JSON.stringify({
+        sessionId: "675ed0",
+        runId: "holding-countdown-live",
+        hypothesisId: "H1-H4",
+        location: "LiveExperienceClient.tsx:imminent-effect",
+        message: "access imminent evaluation",
+        data: {
+          broadcastCurrentState: access.broadcastCurrentState,
+          streamIsLive: access.streamIsLive,
+          imminentLiveStartedAt: access.imminentLiveStartedAt,
+          imminentLiveDurationSeconds: access.imminentLiveDurationSeconds,
+          remainingSec,
+          curtainActive,
+          showImminentOverlay,
+          useDirectCamera,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+
     if (
       access.broadcastCurrentState === "imminent_live" &&
       shouldActivateDropCurtain(access.imminentLiveStartedAt, access.imminentLiveDurationSeconds)
     ) {
+      // #region agent log
+      fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "675ed0" },
+        body: JSON.stringify({
+          sessionId: "675ed0",
+          runId: "holding-countdown-live",
+          hypothesisId: "H2",
+          location: "LiveExperienceClient.tsx:imminent-effect",
+          message: "triggering handleImminentLiveStart",
+          data: {
+            startedAt: access.imminentLiveStartedAt,
+            duration: access.imminentLiveDurationSeconds,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
+
       queueMicrotask(() =>
         handleImminentLiveStart(access.imminentLiveStartedAt!, access.imminentLiveDurationSeconds),
       );
@@ -585,6 +702,25 @@ export default function LiveExperienceClient({
         syncPayload?.event === IMMINENT_LIVE_START_EVENT &&
         syncPayload.dropStartedAt?.trim()
       ) {
+        // #region agent log
+        fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "675ed0" },
+          body: JSON.stringify({
+            sessionId: "675ed0",
+            runId: "holding-countdown-live",
+            hypothesisId: "H3",
+            location: "LiveExperienceClient.tsx:realtime-sync",
+            message: "IMMINENT_LIVE_START_EVENT received",
+            data: {
+              dropStartedAt: syncPayload.dropStartedAt,
+              durationSeconds: syncPayload.durationSeconds ?? IMMINENT_LIVE_DURATION_SEC,
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
+
         handleImminentLiveStartRef.current(
           syncPayload.dropStartedAt,
           syncPayload.durationSeconds ?? IMMINENT_LIVE_DURATION_SEC,
@@ -695,10 +831,16 @@ export default function LiveExperienceClient({
       onFatalError: (details) => {
         if (cancelled) return;
         streamPlaybackLatchedRef.current = false;
+        const isLikelyOffline =
+          details.includes("manifestLoadError") ||
+          details.includes("networkError") ||
+          details.includes("levelLoadError");
         setManifest({
-          status: "error",
+          status: "waiting",
           playbackUrl: null,
-          message: `Live playback failed: ${details}.`,
+          message: isLikelyOffline
+            ? relayOfflineUserMessage()
+            : `Live playback failed: ${details}.`,
         });
       },
     })
@@ -751,6 +893,30 @@ export default function LiveExperienceClient({
 
   const showHoldingRoom =
     !access?.streamIsLive && !access?.devPlaybackOverride && !showImminentOverlay;
+
+  // #region agent log
+  fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "675ed0" },
+    body: JSON.stringify({
+      sessionId: "675ed0",
+      runId: "holding-countdown-live",
+      hypothesisId: "H4-H5",
+      location: "LiveExperienceClient.tsx:render-branch",
+      message: "render branch decision",
+      data: {
+        showHoldingRoom,
+        showImminentOverlay,
+        dropStartedAt,
+        streamIsLive: access?.streamIsLive ?? null,
+        broadcastCurrentState: access?.broadcastCurrentState ?? null,
+        manifestStatus: manifest.status,
+        hasPlaybackUrl: Boolean(manifest.playbackUrl),
+      },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
 
   if (showHoldingRoom) {
     return <ExperienceHoldingRoomPageClient initialProfile={profile} />;

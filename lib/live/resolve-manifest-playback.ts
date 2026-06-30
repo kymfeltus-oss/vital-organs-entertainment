@@ -29,7 +29,41 @@ async function resolveEnvPlaybackWithIvsGuard(
   if (!isAmazonIvsPlaybackUrl(rawUrl)) return rawUrl;
 
   const ivsPlayback = await resolveIvsChannelPlaybackUrl();
-  return ivsPlayback.playbackUrl ?? rawUrl;
+
+  // #region agent log
+  fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "675ed0" },
+    body: JSON.stringify({
+      sessionId: "675ed0",
+      runId: "ivs-relay-offline",
+      hypothesisId: "H1",
+      location: "resolve-manifest-playback.ts:resolveEnvPlaybackWithIvsGuard",
+      message: "IVS env guard evaluation",
+      data: {
+        streamState: ivsPlayback.streamState,
+        source: ivsPlayback.source,
+        hasAwsPlaybackUrl: Boolean(ivsPlayback.playbackUrl),
+        envHost: rawUrl.split("/")[2] ?? null,
+      },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+
+  if (ivsPlayback.streamState === "offline") {
+    return null;
+  }
+
+  if (ivsPlayback.playbackUrl) {
+    return ivsPlayback.playbackUrl;
+  }
+
+  if (ivsPlayback.source === "unconfigured") {
+    return rawUrl;
+  }
+
+  return null;
 }
 
 /**

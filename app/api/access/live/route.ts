@@ -81,6 +81,27 @@ export async function GET() {
 
     const streamFlags = buildStreamFlags(streamRow);
 
+    // #region agent log
+    fetch("http://127.0.0.1:7287/ingest/924e23f7-c306-4f6a-be8c-fe2ff2718b00", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "675ed0" },
+      body: JSON.stringify({
+        sessionId: "675ed0",
+        runId: "holding-countdown-live",
+        hypothesisId: "H1",
+        location: "access/live/route.ts:GET",
+        message: "stream flags built",
+        data: {
+          dbCurrentState: streamRow?.current_state ?? null,
+          dbIsLive: streamRow?.is_live ?? null,
+          dbImminentStartedAt: streamRow?.imminent_live_started_at ?? null,
+          ...streamFlags,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
