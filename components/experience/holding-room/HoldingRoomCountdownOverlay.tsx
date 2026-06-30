@@ -100,7 +100,9 @@ export default function HoldingRoomCountdownOverlay({
   return (
     <div
       className="holding-room-countdown"
+      role="status"
       aria-live="polite"
+      aria-atomic="true"
       aria-label={ariaLabel}
     >
       {startingShortly ? (

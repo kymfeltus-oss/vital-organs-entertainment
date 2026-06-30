@@ -42,13 +42,20 @@ function ExperienceHoldingRoomPageContent({
   }, []);
 
   return (
-    <main className="min-h-dvh overflow-x-hidden overflow-y-auto bg-black text-white">
+    <main
+      id="main-content"
+      className="min-h-dvh overflow-x-hidden overflow-y-auto bg-black text-white"
+    >
       <section className="mx-auto flex min-h-dvh w-full max-w-[600px] items-center justify-center bg-black">
         <div
           className={`relative w-full overflow-hidden bg-black ${MOBILE_ARTBOARD_TAB_STAGE}`}
           style={
             mobileArtboardStageStyle({
               native: HOLDING_ROOM_ART_NATIVE,
+              extra: {
+                height: "min(100dvh, calc(100vw * 1920 / 1080))",
+                aspectRatio: "1080 / 1920",
+              },
             }) as CSSProperties
           }
         >
