@@ -1,7 +1,7 @@
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import LiveExperienceClient from "@/components/experience/live/LiveExperienceClient";
 import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
-import { fetchInitialAttendeeProfile } from "@/lib/profile/attendee-profile";
+import { buildAttendeeProfileSnapshot } from "@/lib/profile/attendee-profile"; // Updated function name
 import { resolveLiveManifestPlayback } from "@/lib/live/resolve-manifest-playback";
 import { isAmazonIvsPlaybackUrl } from "@/lib/live/ivs-playback-url";
 import { resolveIvsChannelPlaybackUrl } from "@/lib/live/resolve-ivs-channel-playback";
@@ -20,8 +20,8 @@ async function checkIsUpstreamOffline(playbackUrl: string | null): Promise<boole
 }
 
 export default async function LiveExperiencePage() {
-  // 1. Fetch the user profile session
-  const profile = await fetchInitialAttendeeProfile();
+  // 1. Fetch the user profile session using the canonical profile snapshot function
+  const profile = await buildAttendeeProfileSnapshot();
 
   // 2. Query the live database states
   const admin = getSupabaseAdmin();
