@@ -34,8 +34,8 @@ function matchesPrefix(path: string) {
     pathname === path || pathname.startsWith(`${path}/`);
 }
 
-/** Icon row height at ~390px track; phone safe area is added separately in CSS. */
-export const BOTTOM_NAV_BAR_HEIGHT_PX = 76;
+/** Native-style tab bar height; phone safe area is added separately in CSS. */
+export const BOTTOM_NAV_BAR_HEIGHT_PX = 64;
 
 const TAB_WIDTH = 100 / 5;
 

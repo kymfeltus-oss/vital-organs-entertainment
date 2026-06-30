@@ -3786,11 +3786,7 @@
 
 /* Bottom dock - ombre artwork tab bar + phone safe area */
 :root {
-  --bottom-dock-art-w: 1290;
-  --bottom-dock-art-h: 250;
-  --bottom-dock-display-h: calc(
-    var(--mobile-app-track-w) * var(--bottom-dock-art-h) / var(--bottom-dock-art-w)
-  );
+  --bottom-dock-display-h: 64px;
   /* Tab pages - same locked track; height subtracts bottom dock in shell CSS. */
   --mobile-tab-track-w: min(
     100vw,
