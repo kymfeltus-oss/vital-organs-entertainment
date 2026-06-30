@@ -1,11 +1,9 @@
 import LiveExperienceClient from "@/components/experience/live/LiveExperienceClient";
-import { buildAttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
+import { loadTabPageProfile } from "@/lib/experience/load-tab-page-profile";
 
-type LiveDataLoaderProps = Record<string, never>;
-
-/** Renders the clean /live shell without blocking on server profile reads. */
-export default function LiveDataLoader(_props: LiveDataLoaderProps = {}) {
-  const initialProfile = buildAttendeeProfileSnapshot(null, null);
+/** Renders the clean /live shell with the shared attendee tab profile state. */
+export default async function LiveDataLoader() {
+  const initialProfile = await loadTabPageProfile();
 
   return (
     <LiveExperienceClient initialProfile={initialProfile} />

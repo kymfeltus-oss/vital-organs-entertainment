@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
+import { loadTabPageProfile } from "@/lib/experience/load-tab-page-profile";
 import { DEFAULT_COUNTDOWN_CONFIG } from "@/lib/live/countdown-config";
 import { computeCountdown } from "@/lib/live/event-lobby";
-import { buildAttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "300 Awakening Holding Room | Vital Organs Entertainment",
@@ -14,11 +14,11 @@ export const metadata: Metadata = {
 /**
  * Original PNG-based pre-live holding room.
  *
- * Keep this route render-fast: it must not block first paint on Supabase/auth reads.
- * The client countdown hook immediately syncs the saved owner show settings from `/api/countdown`.
+ * Loads the shared attendee profile snapshot so the header/profile orb behaves
+ * like Music, Giving, Buy Seeds, and the other artboard tabs.
  */
-export default function ExperienceHoldingRoomPage() {
-  const initialProfile = buildAttendeeProfileSnapshot(null, null);
+export default async function ExperienceHoldingRoomPage() {
+  const initialProfile = await loadTabPageProfile();
   const initialCountdown = computeCountdown(DEFAULT_COUNTDOWN_CONFIG.start_time);
 
   return (

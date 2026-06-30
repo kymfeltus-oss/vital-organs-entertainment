@@ -4,6 +4,7 @@ import "@/styles/features/attendee-surfaces.css";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import MobileArtboardTabHeader from "@/components/navigation/MobileArtboardTabHeader";
+import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
@@ -78,33 +79,6 @@ type ManifestResponse = {
   fallbackReason?: string;
   error?: string;
 };
-
-function PreShowHubExperience({
-  concertTitle,
-  headlinerName,
-}: {
-  concertTitle: string;
-  headlinerName: string;
-}) {
-  return (
-    <div className="flex h-full min-h-[calc(100dvh-9rem)] items-center justify-center px-6 text-center">
-      <div className="max-w-xl">
-        <p className="font-ui text-[0.68rem] font-bold uppercase tracking-[0.18em] text-brand-blue">
-          Pre-show gathering
-        </p>
-        <h2 className="mt-4 font-headline text-4xl uppercase tracking-[0.08em] text-white">
-          {concertTitle}
-        </h2>
-        <p className="mt-3 font-body text-base text-white/70">{headlinerName}</p>
-        <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.04] px-5 py-5">
-          <p className="font-body text-sm text-white/75">
-            Public pre-show is queued. Please stay here while the countdown runs.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function resolveManifestMessage(response: ManifestResponse): ManifestState {
   const playbackUrl = response.playbackUrl?.trim() ?? "";
@@ -775,16 +749,17 @@ export default function LiveExperienceClient({
     void video.play().catch(() => undefined);
   }, []);
 
+  const showHoldingRoom =
+    !access?.streamIsLive && !access?.devPlaybackOverride && !showImminentOverlay;
+
+  if (showHoldingRoom) {
+    return <ExperienceHoldingRoomPageClient initialProfile={profile} />;
+  }
+
   const locked = access && !access.authenticated;
   const waitingForAccess = !access && !accessError;
-  const isPreShowHolding =
-    Boolean(access) &&
-    !access.streamIsLive &&
-    access.broadcastCurrentState === "scheduled" &&
-    (access.gatesLocked || access.preShowVipOnly);
-  const showPreShowHub = isPreShowHolding && !locked && !showImminentOverlay;
   const showPlayer =
-    Boolean(manifest.playbackUrl) && !useDirectCamera && !showImminentOverlay && !showPreShowHub;
+    Boolean(manifest.playbackUrl) && !useDirectCamera && !showImminentOverlay;
   const showDirectPlayer = useDirectCamera && directStatus === "ready";
 
   return (
@@ -795,12 +770,7 @@ export default function LiveExperienceClient({
 
       <div className="flex min-h-dvh flex-col">
         <section className="relative min-h-0 flex-1 overflow-hidden bg-[#050505]">
-          {showPreShowHub ? (
-            <PreShowHubExperience
-              concertTitle={access?.concertTitle ?? "The Awakening Experience"}
-              headlinerName={access?.headlinerName ?? "Pastor David Jenkins"}
-            />
-          ) : showDirectPlayer ? (
+          {showDirectPlayer ? (
             <>
               <video
                 ref={directVideoRef}

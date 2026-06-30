@@ -51,9 +51,16 @@ function resolveUnitValues(
   unit: HoldingRoomCountdownUnitId,
   countdown: ReturnType<typeof useLobbyCountdown>["countdown"],
 ): string {
+  const hasPartialDayRemainder =
+    countdown.hours > 0 || countdown.minutes > 0 || countdown.seconds > 0;
+  const displayDays =
+    countdown.isComplete || countdown.days === 0
+      ? countdown.days
+      : countdown.days + (hasPartialDayRemainder ? 1 : 0);
+
   switch (unit) {
     case "days":
-      return pad(countdown.days);
+      return pad(displayDays);
     case "hours":
       return pad(countdown.hours);
     case "minutes":

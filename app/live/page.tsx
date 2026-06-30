@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import LiveDataLoader from "@/components/experience/live/LiveDataLoader";
 
 /** Dynamic — manifest + env playback resolved per request; no static asset preloads. */
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "300 Awakening Live | Vital Organs Entertainment",
