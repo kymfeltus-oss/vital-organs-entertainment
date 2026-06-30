@@ -1,7 +1,7 @@
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import LiveExperienceClient from "@/components/experience/live/LiveExperienceClient";
 import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
-import { fetchInitialAttendeeProfile } from "@/lib/profile/attendee-profile-server";
+import { fetchInitialAttendeeProfile } from "@/lib/profile/attendee-profile";
 import { resolveLiveManifestPlayback } from "@/lib/live/resolve-manifest-playback";
 import { isAmazonIvsPlaybackUrl } from "@/lib/live/ivs-playback-url";
 import { resolveIvsChannelPlaybackUrl } from "@/lib/live/resolve-ivs-channel-playback";
