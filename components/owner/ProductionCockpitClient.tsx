@@ -1114,7 +1114,6 @@ export default function ProductionCockpitClient() {
     } catch (clearError) {
       setGraphicsError(clearError instanceof Error ? clearError.message : "Unable to clear live graphics.");
     } finally {
-      style-locked
       setClearing(false);
     }
   }, []);
