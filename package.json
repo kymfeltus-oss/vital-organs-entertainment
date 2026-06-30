@@ -50,5 +50,9 @@
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.7",
     "typescript": "6.0.3"
+  },
+  "optionalDependencies": {
+    "@emnapi/core": "1.11.1",
+    "@emnapi/runtime": "1.11.1"
   }
 }
