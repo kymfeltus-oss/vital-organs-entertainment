@@ -96,14 +96,6 @@ export default function ExperienceDashboardInterfaceLayer({
         />
 
         <div className="experience-dashboard-artboard__overlay">
-          <div
-            className="experience-dashboard-welcome-stack"
-            aria-label={`Welcome ${welcomeName}`}
-          >
-            <p className="experience-dashboard-welcome-label">Welcome</p>
-            <p className="experience-dashboard-welcome-name">{welcomeName}</p>
-          </div>
-
           <div className="experience-dashboard-overlay__stack dashboard-page">
             <div className="experience-dashboard-overlay__content-band dashboard-card-stack">
               <Link
@@ -121,6 +113,17 @@ export default function ExperienceDashboardInterfaceLayer({
                   decoding="async"
                   draggable={false}
                 />
+                <span
+                  className="experience-dashboard-overlay__story-name-mask"
+                  aria-label={`Welcome ${welcomeName}`}
+                >
+                  <span
+                    className="experience-dashboard-overlay__story-name"
+                    aria-hidden="true"
+                  >
+                    {welcomeName}
+                  </span>
+                </span>
               </Link>
 
               <nav

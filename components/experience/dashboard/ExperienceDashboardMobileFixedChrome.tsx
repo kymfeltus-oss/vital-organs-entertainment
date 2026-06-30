@@ -21,7 +21,12 @@ export default function ExperienceDashboardMobileFixedChrome({
       aria-label="Dashboard navigation"
     >
       <div className="dashboard-mobile-fixed-chrome__actions pointer-events-auto">
-        <ProfileOrbEditor profile={profile} onProfileChange={onProfileChange} size={36} />
+        <ProfileOrbEditor
+          profile={profile}
+          onProfileChange={onProfileChange}
+          size={36}
+          forceInitials
+        />
         <AwakeningMenuButton className="dashboard-mobile-fixed-chrome__menu shrink-0" />
       </div>
     </header>

@@ -10,12 +10,14 @@ type ProfileOrbEditorProps = {
   profile: AttendeeProfileSnapshot;
   onProfileChange: (profile: AttendeeProfileSnapshot) => void;
   size?: ProfileOrbSize | number;
+  forceInitials?: boolean;
 };
 
 export default function ProfileOrbEditor({
   profile,
   onProfileChange,
   size = "sm",
+  forceInitials = false,
 }: ProfileOrbEditorProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -23,7 +25,7 @@ export default function ProfileOrbEditor({
     return (
       <ProfileOrb
         initials={profile.profileInitials}
-        avatarUrl={profile.avatarUrl}
+        avatarUrl={forceInitials ? null : profile.avatarUrl}
         size={size}
         aria-label="Profile"
       />
@@ -34,7 +36,7 @@ export default function ProfileOrbEditor({
     <>
       <ProfileOrb
         initials={profile.profileInitials}
-        avatarUrl={profile.avatarUrl}
+        avatarUrl={forceInitials ? null : profile.avatarUrl}
         size={size}
         active={isOpen}
         onClick={() => setIsOpen(true)}
