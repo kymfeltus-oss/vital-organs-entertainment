@@ -1954,15 +1954,17 @@ body::-webkit-scrollbar {
   left: 4.1%;
   z-index: 2;
   display: flex;
-  width: 21.5%;
+  width: 26%;
   height: 25%;
   align-items: center;
   overflow: hidden;
-  background: linear-gradient(90deg, #030304 0%, #030304 74%, rgb(3 3 4 / 0) 100%);
+  background: transparent;
   pointer-events: none;
 }
 
 .experience-dashboard-overlay__story-name {
+  position: relative;
+  z-index: 1;
   display: block;
   max-width: 100%;
   overflow: hidden;

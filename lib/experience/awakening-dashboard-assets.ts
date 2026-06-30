@@ -84,7 +84,7 @@ export const AWAKENING_ASSETS = {
   logo: "/branding/awakening-lockup.png",
   welcomeHeader: "/awakening/300_dashboard_assets/welcome_header.png",
   /** Story poster (2752×1536) — swap to MP4 via `ianCraigStoryVideo` when ready. */
-  ianCraigStoryPoster: "/awakening/300_dashboard_assets/ian%20craig%20story.png",
+  ianCraigStoryPoster: "/awakening/300_dashboard_assets/ian%20craig%20story%20clean.png",
   ianCraigStoryVideo: null as string | null,
   routes: {
     enterExperience: EXPERIENCE_LIVE_PATH,
