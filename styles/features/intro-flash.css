@@ -61,10 +61,11 @@
 .intro-flash-artboard {
   position: relative;
   flex-shrink: 0;
-  height: 100%;
-  width: auto;
-  max-width: min(100cqw, var(--mobile-app-track-w));
-  aspect-ratio: 1080 / 1920;
+  width: var(--mobile-app-track-w);
+  height: var(--mobile-artboard-stage-h-full);
+  max-width: 100vw;
+  max-height: 100%;
+  aspect-ratio: var(--intro-art-w, 720) / var(--intro-art-h, 1280);
 }
 
 .intro-flash-artboard__video {

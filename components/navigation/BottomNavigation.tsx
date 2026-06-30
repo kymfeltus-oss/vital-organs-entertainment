@@ -4,11 +4,20 @@ import { usePathname } from "next/navigation";
 import "@/styles/features/attendee-surfaces.css";
 import AttendeeLiveNavLink from "@/components/navigation/AttendeeLiveNavLink";
 import Link from "next/link";
+import { HeartHandshake, Home, Music2, Radio, Sprout } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import {
-  BOTTOM_MENU_ARTBOARD,
-  BOTTOM_MENU_BAR_SRC,
   BOTTOM_NAV_HOTSPOTS,
+  type BottomNavItemId,
 } from "@/lib/navigation/bottom-nav-config";
+
+const BOTTOM_NAV_ICONS: Record<BottomNavItemId, LucideIcon> = {
+  home: Home,
+  live: Radio,
+  giving: HeartHandshake,
+  music: Music2,
+  "buy-seeds": Sprout,
+};
 
 export default function BottomNavigation() {
   const pathname = usePathname();
@@ -16,22 +25,19 @@ export default function BottomNavigation() {
   return (
     <nav aria-label="Primary" className="bottom-dock">
       <div className="bottom-dock__frame">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={BOTTOM_MENU_BAR_SRC}
-          alt=""
-          aria-hidden="true"
-          width={BOTTOM_MENU_ARTBOARD.width}
-          height={BOTTOM_MENU_ARTBOARD.height}
-          className="bottom-dock__art"
-          decoding="sync"
-          fetchPriority="high"
-          draggable={false}
-        />
-        <div className="bottom-dock__hotspots">
+        <div className="bottom-dock__items">
           {BOTTOM_NAV_HOTSPOTS.map((item) => {
             const active = item.isActive(pathname);
-            const className = `bottom-dock__hit touch-target${active ? " bottom-dock__hit--active" : ""}`;
+            const Icon = BOTTOM_NAV_ICONS[item.id];
+            const className = `bottom-dock__item touch-target${active ? " bottom-dock__item--active" : ""}`;
+            const content = (
+              <>
+                <span className="bottom-dock__icon-wrap" aria-hidden="true">
+                  <Icon className="bottom-dock__icon" strokeWidth={2.25} />
+                </span>
+                <span className="bottom-dock__label">{item.label}</span>
+              </>
+            );
 
             if (item.id === "live") {
               return (
@@ -41,7 +47,7 @@ export default function BottomNavigation() {
                   aria-current={active ? "page" : undefined}
                   className={className}
                 >
-                  <span className="sr-only">{item.label}</span>
+                  {content}
                 </AttendeeLiveNavLink>
               );
             }
@@ -54,7 +60,7 @@ export default function BottomNavigation() {
                 aria-current={active ? "page" : undefined}
                 className={className}
               >
-                <span className="sr-only">{item.label}</span>
+                {content}
               </Link>
             );
           })}

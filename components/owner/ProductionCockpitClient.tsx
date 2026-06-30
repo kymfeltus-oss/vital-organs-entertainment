@@ -375,7 +375,7 @@ function CountdownPanel({
           ))}
         </div>
         <p className="mt-2 rounded border border-brand-blue/20 bg-brand-blue/8 px-2 py-1 text-center font-ui text-[0.48rem] uppercase leading-snug text-brand-blue sm:text-[0.52rem]">
-          Synced from /owner/countdown and /owner/show-setup
+          Synced from /owner/countdown
         </p>
 
         <div className="mt-auto pt-2">

@@ -1,7 +1,7 @@
-import OwnerMasteringDeskClient from "@/components/owner/OwnerMasteringDeskClient";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default function OwnerAudioMixingPage() {
-  return <OwnerMasteringDeskClient />;
+  redirect("/owner/cockpit");
 }

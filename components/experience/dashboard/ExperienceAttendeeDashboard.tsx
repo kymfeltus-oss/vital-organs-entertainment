@@ -23,7 +23,7 @@ function ExperienceAttendeeDashboardInner({
 
   useEffect(() => {
     const view = searchParams.get("view");
-    if (view !== "profile" && view !== "settings") return;
+    if (view !== "profile") return;
 
     const timer = window.setTimeout(() => {
       setProfileModalOpen(true);

@@ -1,7 +1,7 @@
-import VideoHubControlClient from "@/components/owner/VideoHubControlClient";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default function VideoHubControlPage() {
-  return <VideoHubControlClient />;
+  redirect("/owner/cockpit");
 }

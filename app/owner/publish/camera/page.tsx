@@ -1,7 +1,7 @@
-import OwnerCameraPageClient from "@/components/owner/OwnerCameraPageClient";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default function OwnerPublishCameraPage() {
-  return <OwnerCameraPageClient />;
+  redirect("/owner/cockpit");
 }

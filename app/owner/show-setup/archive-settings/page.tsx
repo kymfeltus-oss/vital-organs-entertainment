@@ -1,7 +1,7 @@
-import ArchiveSettingsClient from "@/components/owner/ArchiveSettingsClient";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default function OwnerShowSetupArchiveSettingsPage() {
-  return <ArchiveSettingsClient />;
+  redirect("/owner/countdown");
 }

@@ -14,6 +14,7 @@ import AttendeeLiveNavLink from "@/components/navigation/AttendeeLiveNavLink";
 import { PERSONA_HUB_PATH } from "@/lib/auth/routing";
 import { isAttendeeLiveSurfacePath, EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
+import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 
 export type AwakeningMenuItem = {
@@ -31,7 +32,6 @@ export const AWAKENING_MENU_ITEMS: AwakeningMenuItem[] = [
   { id: "music", label: "Music", href: "/experience/music", match: "prefix" },
   { id: "contact", label: "Contact", href: "/experience/contact-us", match: "prefix" },
   { id: "profile", label: "Profile", href: `${ATTENDEE_DASHBOARD_PATH}?view=profile` },
-  { id: "settings", label: "Settings", href: `${ATTENDEE_DASHBOARD_PATH}?view=settings` },
 ];
 
 type AwakeningMenuButtonProps = {
@@ -69,7 +69,9 @@ export default function AwakeningMenuButton({
   const closeMenu = useCallback(() => setOpen(false), []);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = window.setTimeout(() => setMounted(true), 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -93,7 +95,9 @@ export default function AwakeningMenuButton({
   }, [closeMenu, open]);
 
   useEffect(() => {
-    closeMenu();
+    const timer = window.setTimeout(closeMenu, 0);
+
+    return () => window.clearTimeout(timer);
   }, [closeMenu, pathname]);
 
   const handleLogout = async (event: MouseEvent<HTMLButtonElement>) => {
@@ -103,16 +107,22 @@ export default function AwakeningMenuButton({
     setIsLoggingOut(true);
 
     try {
-      const res = await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
+      try {
+        const res = await fetch("/api/auth/logout", {
+          method: "POST",
+          credentials: "include",
+        });
 
-      if (res.ok) {
-        closeMenu();
-        router.refresh();
-        router.push(PERSONA_HUB_PATH);
+        if (!res.ok) {
+          await createBrowserSupabaseClient().auth.signOut({ scope: "local" });
+        }
+      } catch {
+        await createBrowserSupabaseClient().auth.signOut({ scope: "local" });
       }
+
+      closeMenu();
+      router.refresh();
+      router.push(PERSONA_HUB_PATH);
     } finally {
       setIsLoggingOut(false);
     }

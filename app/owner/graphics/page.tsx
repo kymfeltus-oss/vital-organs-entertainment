@@ -11,10 +11,10 @@ export default function OwnerGraphicsPage() {
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
           <div>
             <Link
-              href="/owner/control"
+              href="/owner/cockpit"
               className="inline-flex items-center gap-2 font-ui text-xs uppercase tracking-[0.16em] text-[#00DDEB]"
             >
-              <ArrowLeft className="h-4 w-4" /> Production Control
+              <ArrowLeft className="h-4 w-4" /> Production Cockpit
             </Link>
             <h1 className="mt-3 font-headline text-3xl uppercase tracking-[0.08em] sm:text-4xl">
               Broadcast Graphics Data Plane

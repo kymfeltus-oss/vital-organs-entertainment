@@ -1,7 +1,7 @@
-import OwnerAudioMonitoringClient from "@/components/owner/OwnerAudioMonitoringClient";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default function OwnerAudioMonitoringPage() {
-  return <OwnerAudioMonitoringClient />;
+  redirect("/owner/cockpit");
 }

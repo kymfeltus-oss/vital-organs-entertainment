@@ -108,36 +108,14 @@ export default function VideoIntroExperience() {
     const audio = musicRef.current;
     if (!audio) return;
 
+    audio.muted = false;
     audio.volume = 0.85;
     audio.loop = true;
+    audio.preload = "auto";
 
     try {
-      if (audio.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+      if (audio.readyState === HTMLMediaElement.HAVE_NOTHING) {
         audio.load();
-        await new Promise<void>((resolve, reject) => {
-          if (audio.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-            resolve();
-            return;
-          }
-
-          const onReady = () => {
-            cleanup();
-            resolve();
-          };
-
-          const onError = () => {
-            cleanup();
-            reject(new Error("Intro music failed to load."));
-          };
-
-          const cleanup = () => {
-            audio.removeEventListener("canplaythrough", onReady);
-            audio.removeEventListener("error", onError);
-          };
-
-          audio.addEventListener("canplaythrough", onReady);
-          audio.addEventListener("error", onError);
-        });
       }
 
       if (audio.paused) {
@@ -168,14 +146,38 @@ export default function VideoIntroExperience() {
       unlockIntroAudio();
     };
 
+    const retryIntroMusic = () => {
+      if (!musicPlayingRef.current) {
+        void playIntroMusic();
+      }
+    };
+
+    const retryWhenVisible = () => {
+      if (document.visibilityState === "visible") {
+        retryIntroMusic();
+      }
+    };
+
     window.addEventListener("pointerdown", unlockOnGesture, { passive: true });
     window.addEventListener("touchstart", unlockOnGesture, { passive: true });
     window.addEventListener("keydown", unlockOnGesture, { passive: true });
+    window.addEventListener("pageshow", retryIntroMusic);
+    document.addEventListener("visibilitychange", retryWhenVisible);
+
+    const audio = musicRef.current;
+    audio?.addEventListener("loadeddata", retryIntroMusic);
+    audio?.addEventListener("canplay", retryIntroMusic);
+    audio?.addEventListener("canplaythrough", retryIntroMusic);
 
     return () => {
       window.removeEventListener("pointerdown", unlockOnGesture);
       window.removeEventListener("touchstart", unlockOnGesture);
       window.removeEventListener("keydown", unlockOnGesture);
+      window.removeEventListener("pageshow", retryIntroMusic);
+      document.removeEventListener("visibilitychange", retryWhenVisible);
+      audio?.removeEventListener("loadeddata", retryIntroMusic);
+      audio?.removeEventListener("canplay", retryIntroMusic);
+      audio?.removeEventListener("canplaythrough", retryIntroMusic);
     };
   }, [playIntroMusic, unlockIntroAudio]);
 
@@ -226,7 +228,7 @@ export default function VideoIntroExperience() {
       onPointerDown={unlockIntroAudio}
       onTouchStart={unlockIntroAudio}
     >
-      <audio ref={musicRef} loop preload="auto" className="intro-flash-audio" aria-hidden="true">
+      <audio ref={musicRef} autoPlay loop preload="auto" className="intro-flash-audio" aria-hidden="true">
         <source src={INTRO_MUSIC_SRC} type="audio/mp4" />
       </audio>
 
