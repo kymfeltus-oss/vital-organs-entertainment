@@ -1,7 +1,9 @@
 "use client";
 
+import "@/styles/features/attendee-surfaces.css";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import MobileArtboardTabHeader from "@/components/navigation/MobileArtboardTabHeader";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
@@ -134,7 +136,8 @@ function shouldPollLiveManifest(access: LiveAccessEvaluation | null): boolean {
 export default function LiveExperienceClient({
   initialProfile,
 }: LiveExperienceClientProps) {
-  const attendeeName = initialProfile.headerDisplayName || initialProfile.email || "Guest";
+  const [profile, setProfile] = useState(initialProfile);
+  const attendeeName = profile.headerDisplayName || profile.email || "Guest";
   const videoRef = useRef<HTMLVideoElement>(null);
   const directVideoRef = useRef<HTMLVideoElement>(null);
   const hlsCleanupRef = useRef<(() => void) | null>(null);
@@ -467,7 +470,9 @@ export default function LiveExperienceClient({
     }
   }, []);
 
-  syncAccessRef.current = syncAccess;
+  useEffect(() => {
+    syncAccessRef.current = syncAccess;
+  }, [syncAccess]);
 
   useEffect(() => {
     queueMicrotask(() => void syncAccess());
@@ -542,7 +547,9 @@ export default function LiveExperienceClient({
     }
   }, []);
 
-  loadManifestRef.current = loadManifest;
+  useEffect(() => {
+    loadManifestRef.current = loadManifest;
+  }, [loadManifest]);
 
   const handleImminentLiveStart = useCallback((startedAt: string, durationSeconds: number) => {
     streamPlaybackLatchedRef.current = false;
@@ -562,7 +569,9 @@ export default function LiveExperienceClient({
       access.broadcastCurrentState === "imminent_live" &&
       shouldActivateDropCurtain(access.imminentLiveStartedAt, access.imminentLiveDurationSeconds)
     ) {
-      handleImminentLiveStart(access.imminentLiveStartedAt!, access.imminentLiveDurationSeconds);
+      queueMicrotask(() =>
+        handleImminentLiveStart(access.imminentLiveStartedAt!, access.imminentLiveDurationSeconds),
+      );
     }
   }, [
     access,
@@ -690,7 +699,7 @@ export default function LiveExperienceClient({
     queueMicrotask(() => void loadManifest());
     const intervalId = window.setInterval(() => void loadManifest(), MANIFEST_RETRY_MS);
     return () => window.clearInterval(intervalId);
-  }, [access?.canViewStream, access?.streamIsLive, loadManifest, showImminentOverlay, useDirectCamera]);
+  }, [access, loadManifest, showImminentOverlay, useDirectCamera]);
 
   const streamUrl = manifest.playbackUrl;
 
@@ -779,28 +788,12 @@ export default function LiveExperienceClient({
   const showDirectPlayer = useDirectCamera && directStatus === "ready";
 
   return (
-    <main className="min-h-dvh bg-black text-white">
-      <div className="flex min-h-dvh flex-col">
-        <header className="flex items-center justify-between border-b border-white/10 px-4 py-3 sm:px-6">
-          <div>
-            <p className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.22em] text-brand-blue">
-              300 Awakening
-            </p>
-            <h1 className="font-headline text-xl uppercase tracking-[0.08em] sm:text-2xl">
-              Live
-            </h1>
-          </div>
-          <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-white/70">
-            {showImminentOverlay
-              ? "Initializing"
-              : showDirectPlayer
-                ? "Direct Live"
-                : access?.streamIsLive
-                  ? "On Air"
-                  : "Standby"}
-          </div>
-        </header>
+    <main className="relative min-h-dvh bg-black text-white">
+      <div className="pointer-events-none absolute inset-0 z-30">
+        <MobileArtboardTabHeader profile={profile} onProfileChange={setProfile} />
+      </div>
 
+      <div className="flex min-h-dvh flex-col">
         <section className="relative min-h-0 flex-1 overflow-hidden bg-[#050505]">
           {showPreShowHub ? (
             <PreShowHubExperience

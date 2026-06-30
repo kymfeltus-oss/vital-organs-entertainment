@@ -1060,6 +1060,10 @@
 }
 
 .experience-dashboard-welcome-stack {
+  position: absolute;
+  top: calc(210 / var(--dash-artboard-w, 1080) * 100cqw);
+  left: calc(116 / var(--dash-artboard-w, 1080) * 100cqw);
+  z-index: 4;
   display: flex;
   width: min(52%, 20rem);
   flex-direction: column;

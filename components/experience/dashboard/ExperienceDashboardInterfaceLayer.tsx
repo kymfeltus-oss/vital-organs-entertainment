@@ -11,11 +11,28 @@ import {
   AWAKENING_DASHBOARD_STORY_TOP_Y,
 } from "@/lib/experience/awakening-dashboard-assets";
 import { useAttendeeLiveNavTarget } from "@/lib/experience/useAttendeeLiveNavTarget";
+import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { MOBILE_ARTBOARD_REF, mobileArtboardStageStyle } from "@/lib/responsive";
 
-export default function ExperienceDashboardInterfaceLayer() {
+type ExperienceDashboardInterfaceLayerProps = {
+  profile: AttendeeProfileSnapshot;
+};
+
+function resolveDashboardWelcomeName(profile: AttendeeProfileSnapshot): string {
+  const firstName = profile.firstName.trim();
+  if (firstName && firstName.toLowerCase() !== "guest") {
+    return firstName.toUpperCase();
+  }
+
+  return profile.headerDisplayName || "GUEST";
+}
+
+export default function ExperienceDashboardInterfaceLayer({
+  profile,
+}: ExperienceDashboardInterfaceLayerProps) {
   const backgroundRef = useRef<HTMLVideoElement>(null);
   const { href: liveNavHref } = useAttendeeLiveNavTarget();
+  const welcomeName = resolveDashboardWelcomeName(profile);
 
   useEffect(() => {
     const video = backgroundRef.current;
@@ -79,6 +96,14 @@ export default function ExperienceDashboardInterfaceLayer() {
         />
 
         <div className="experience-dashboard-artboard__overlay">
+          <div
+            className="experience-dashboard-welcome-stack"
+            aria-label={`Welcome ${welcomeName}`}
+          >
+            <p className="experience-dashboard-welcome-label">Welcome</p>
+            <p className="experience-dashboard-welcome-name">{welcomeName}</p>
+          </div>
+
           <div className="experience-dashboard-overlay__stack dashboard-page">
             <div className="experience-dashboard-overlay__content-band dashboard-card-stack">
               <Link
