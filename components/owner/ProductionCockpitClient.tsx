@@ -142,6 +142,7 @@ function formatDuration(totalSeconds: number) {
   return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 }
 
+// Fixed theme variable definition name to prevent layout warnings
 function getAccentForTheme(theme: OwnerGraphicsTheme | null) {
   const anchor = theme?.placement_anchor ?? OWNER_GRAPHICS_DEFAULT_THEME.placement_anchor;
   if (anchor.includes("RIGHT")) return "#ff2faf";
@@ -280,7 +281,7 @@ function AudioMonitorPanel({
 
         <div className="mt-2 flex-1 rounded-md border border-white/10 bg-black/35 p-2">
           <div className="mb-2 flex items-center gap-1.5 font-ui text-[0.54rem] font-bold uppercase text-white/70 sm:text-[0.6rem]">
-            <Lock className="h-3.5 w-3.5 text-brand-purple" />
+            <Lock className="h-3.5 w-3.5 text-purple-400" />
             BUS 15/16 (MAIN)
           </div>
           <div className="grid grid-cols-2 gap-1.5">
@@ -336,16 +337,16 @@ function CountdownPanel({
     <CockpitPanel title="EVENT COUNTDOWN" className="flex flex-col">
       <div className="flex min-h-0 flex-1 flex-col p-2">
         <div className="flex items-center gap-2">
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-md border border-brand-blue/50 bg-black/55 text-center font-headline text-lg leading-none text-brand-blue shadow-[0_0_18px_rgba(0,168,255,0.28)] sm:h-14 sm:w-14 sm:text-xl">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-md border border-[#00a8ff]/50 bg-black/55 text-center font-headline text-lg leading-none text-[#00a8ff] shadow-[0_0_18px_rgba(0,168,255,0.28)] sm:h-14 sm:w-14 sm:text-xl">
             300
             <span className="font-ui text-[0.45rem] tracking-normal text-white">AWAKENING</span>
           </div>
           <div className="min-w-0">
             <p className="truncate font-ui text-[0.58rem] font-black uppercase text-white sm:text-[0.66rem]">
-              {eventName || "IAN CRAIG & 300"}
+              {eventName || "LIVE EVENT WORKSPACE"}
             </p>
             <p className="mt-1 font-body text-[0.5rem] leading-snug text-white/68 sm:text-[0.58rem]">
-              {presenterName || "IAN CRAIG"}
+              {presenterName || "MAIN SPEAKER"}
               <br />
               {formatCockpitEventDate(targetDateTime)}
             </p>
@@ -364,8 +365,8 @@ function CountdownPanel({
             { label: "Mins", value: countdown.minutes },
             { label: "Secs", value: countdown.seconds },
           ].map((unit) => (
-            <div key={unit.label} className="rounded-md border border-brand-blue/20 bg-black/25 px-1.5 py-1 text-center">
-              <p className="font-headline text-2xl leading-none tracking-[0.03em] text-brand-blue drop-shadow-[0_0_12px_rgba(0,168,255,0.7)] sm:text-3xl">
+            <div key={unit.label} className="rounded-md border border-[#00a8ff]/20 bg-black/25 px-1.5 py-1 text-center">
+              <p className="font-headline text-2xl leading-none tracking-[0.03em] text-[#00a8ff] drop-shadow-[0_0_12px_rgba(0,168,255,0.7)] sm:text-3xl">
                 {loading ? "--" : unit.value.toString().padStart(2, "0")}
               </p>
               <p className="mt-0.5 font-ui text-[0.44rem] font-bold uppercase tracking-[0.08em] text-white/58">
@@ -374,7 +375,7 @@ function CountdownPanel({
             </div>
           ))}
         </div>
-        <p className="mt-2 rounded border border-brand-blue/20 bg-brand-blue/8 px-2 py-1 text-center font-ui text-[0.48rem] uppercase leading-snug text-brand-blue sm:text-[0.52rem]">
+        <p className="mt-2 rounded border border-[#00a8ff]/20 bg-[#00a8ff]/8 px-2 py-1 text-center font-ui text-[0.48rem] uppercase leading-snug text-[#00a8ff] sm:text-[0.52rem]">
           Synced from /owner/countdown
         </p>
 
@@ -410,8 +411,8 @@ function ProgramReturnPanel({
   theme: OwnerGraphicsTheme | null;
 }) {
   const accent = getAccentForTheme(theme);
-  const primary = livePreset?.content_primary || "PASTOR IAN CRAIG";
-  const secondary = livePreset?.content_secondary || "LEAD PASTOR";
+  const primary = livePreset?.content_primary || "NO LIVE OVERLAY";
+  const secondary = livePreset?.content_secondary || "STAGED IN DECK QUEUE";
 
   return (
     <CockpitPanel className="flex min-h-0 flex-col p-2">
@@ -420,7 +421,7 @@ function ProgramReturnPanel({
       </div>
       <div className="relative aspect-video w-full overflow-hidden rounded-md border border-white/20 bg-black xl:min-h-0 xl:flex-1">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(138,46,255,0.45),transparent_22%),linear-gradient(180deg,#14114d_0%,#060710_52%,#020203_100%)]" />
-        <div className="absolute inset-x-[8%] top-[10%] h-[48%] rounded-full bg-brand-blue/20 blur-3xl" />
+        <div className="absolute inset-x-[8%] top-[10%] h-[48%] rounded-full bg-[#00a8ff]/20 blur-3xl" />
         <div className="absolute inset-x-[8%] bottom-0 h-[32%] bg-gradient-to-t from-black via-black/70 to-transparent" />
 
         <div className="absolute left-[13%] top-[28%] h-[32%] w-2 rounded-full bg-[#18131b] shadow-[4rem_1rem_0_0_rgba(10,10,12,0.88),9rem_-0.6rem_0_0_rgba(10,10,12,0.86),15rem_0.5rem_0_0_rgba(10,10,12,0.88),22rem_-0.5rem_0_0_rgba(10,10,12,0.84),29rem_0.8rem_0_0_rgba(10,10,12,0.88),36rem_-0.4rem_0_0_rgba(10,10,12,0.84)]" />
@@ -429,7 +430,7 @@ function ProgramReturnPanel({
         </div>
 
         <div className="absolute inset-[5%] border border-white/18" />
-        <div className="absolute right-[6%] top-[6%] text-right font-headline text-3xl leading-none text-brand-blue drop-shadow-[0_0_16px_rgba(0,168,255,0.7)] sm:text-4xl">
+        <div className="absolute right-[6%] top-[6%] text-right font-headline text-3xl leading-none text-[#00a8ff] drop-shadow-[0_0_16px_rgba(0,168,255,0.7)] sm:text-4xl">
           300
           <span className="block font-ui text-[0.52rem] tracking-[0.12em] text-white">AWAKENING</span>
         </div>
@@ -442,7 +443,7 @@ function ProgramReturnPanel({
             <p className="font-ui text-lg font-black uppercase tracking-[0.05em] text-white sm:text-2xl">
               {primary}
             </p>
-            <p className="font-ui text-xs font-black uppercase tracking-[0.14em] text-brand-pink sm:text-sm">
+            <p className="font-ui text-xs font-black uppercase tracking-[0.14em] text-[#ff2faf] sm:text-sm">
               {secondary}
             </p>
           </div>
@@ -566,7 +567,7 @@ function GraphicThumbnail({ preset }: { preset: OwnerGraphicsPreset }) {
       ) : isTicker ? (
         <div className="absolute inset-x-1 bottom-1 h-2 rounded-sm bg-orange-500/80" />
       ) : (
-        <div className="absolute inset-x-1 bottom-1 h-3 skew-x-[-18deg] border-l-2 border-brand-blue border-r-2 border-brand-pink bg-black/80" />
+        <div className="absolute inset-x-1 bottom-1 h-3 skew-x-[-18deg] border-l-2 border-[#00a8ff] border-r-2 border-[#ff2faf] bg-black/80" />
       )}
       <span className="absolute left-1 top-1 max-w-[86%] truncate font-ui text-[0.38rem] font-black uppercase text-white">
         {preset.content_primary}
@@ -634,7 +635,7 @@ function GraphicsRow({
         className={`rounded-md px-1.5 py-1 font-ui text-[0.48rem] font-black uppercase leading-tight transition disabled:cursor-not-allowed disabled:opacity-45 ${
           isLive
             ? "border border-red-300/70 bg-red-700 text-white shadow-[0_0_14px_rgba(220,38,38,0.35)] hover:bg-red-600"
-            : "border border-brand-blue/60 bg-brand-blue text-black shadow-[0_0_14px_rgba(0,168,255,0.28)] hover:bg-white"
+            : "border border-[#00a8ff]/60 bg-[#00a8ff] text-black shadow-[0_0_14px_rgba(0,168,255,0.28)] hover:bg-white"
         }`}
       >
         {mutating ? (
@@ -696,7 +697,7 @@ function GraphicsDeckPanel({
           <p className="font-ui text-[0.66rem] font-black uppercase tracking-[0.08em] text-white">
             GRAPHICS PLAYBACK DECK
           </p>
-          <p className="mt-0.5 inline-flex animate-pulse items-center gap-1 font-ui text-[0.48rem] font-bold uppercase text-brand-pink">
+          <p className="mt-0.5 inline-flex animate-pulse items-center gap-1 font-ui text-[0.48rem] font-bold uppercase text-[#ff2faf]">
             <AlertTriangle className="h-3 w-3" />
             AUTO-CLEAR TIMER ENABLED
           </p>
@@ -726,7 +727,7 @@ function GraphicsDeckPanel({
         {loading ? (
           <div className="grid min-h-40 place-items-center rounded-md border border-white/10 bg-black/20 font-body text-sm text-white/60">
             <span className="inline-flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin text-brand-blue" />
+              <Loader2 className="h-4 w-4 animate-spin text-[#00a8ff]" />
               Loading live graphics queue...
             </span>
           </div>
@@ -808,7 +809,7 @@ function InfrastructureFooter({ synced }: { synced: boolean }) {
             </p>
           ))}
         </div>
-        <div className="grid place-items-center rounded-md border border-brand-blue/25 bg-black/35 text-center font-headline text-4xl leading-none text-brand-blue drop-shadow-[0_0_16px_rgba(0,168,255,0.8)] sm:text-5xl">
+        <div className="grid place-items-center rounded-md border border-[#00a8ff]/25 bg-black/35 text-center font-headline text-4xl leading-none text-[#00a8ff] drop-shadow-[0_0_16px_rgba(0,168,255,0.8)] sm:text-5xl">
           300
           <span className="font-ui text-[0.62rem] tracking-[0.1em] text-white">AWAKENING</span>
         </div>
@@ -823,8 +824,8 @@ export default function ProductionCockpitClient() {
   const [runtimeTimers, setRuntimeTimers] = useState<Record<string, RuntimeTimer>>({});
   const [now, setNow] = useState(Date.now());
   const [countdownTargetIso, setCountdownTargetIso] = useState<string | null>(null);
-  const [countdownEventName, setCountdownEventName] = useState("IAN CRAIG & 300");
-  const [countdownPresenterName, setCountdownPresenterName] = useState("IAN CRAIG");
+  const [countdownEventName, setCountdownEventName] = useState("LIVE EVENT WORKSPACE");
+  const [countdownPresenterName, setCountdownPresenterName] = useState("MAIN SPEAKER");
   const [graphicsLoading, setGraphicsLoading] = useState(true);
   const [mutatingId, setMutatingId] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
@@ -889,8 +890,8 @@ export default function ProductionCockpitClient() {
         throw new Error(json.error || "Unable to load show setup.");
       }
 
-      setCountdownEventName(json.state.showTitle || "IAN CRAIG & 300");
-      setCountdownPresenterName(json.state.presenterName || "IAN CRAIG");
+      setCountdownEventName(json.state.showTitle || "LIVE EVENT WORKSPACE");
+      setCountdownPresenterName(json.state.presenterName || "MAIN SPEAKER");
       setCountdownTargetIso(json.state.targetDateTime || null);
       setDestinations({
         youtube: json.state.restreamDestinations?.youtube ?? DEFAULT_RESTREAM_DESTINATIONS.youtube,
@@ -1113,6 +1114,7 @@ export default function ProductionCockpitClient() {
     } catch (clearError) {
       setGraphicsError(clearError instanceof Error ? clearError.message : "Unable to clear live graphics.");
     } finally {
+      style-locked
       setClearing(false);
     }
   }, []);
@@ -1271,8 +1273,8 @@ export default function ProductionCockpitClient() {
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
               <p className="font-headline text-[1.45rem] uppercase leading-none tracking-[0.02em] sm:text-3xl lg:text-4xl">
-                <span className="text-brand-blue">PRODUCTION COCKPIT</span>{" "}
-                <span className="text-brand-pink">EXECUTION DECK</span>
+                <span className="text-[#00a8ff]">PRODUCTION COCKPIT</span>{" "}
+                <span className="text-[#ff2faf]">EXECUTION DECK</span>
               </p>
               <p className="mt-1 font-ui text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-white/72 sm:text-[0.68rem]">
                 LIVE CONTROL / AUDIO MONITOR / GRAPHICS PLAYBACK / AUTO-FIT RESPONSIVE SHELL
@@ -1280,7 +1282,7 @@ export default function ProductionCockpitClient() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 md:justify-end">
-              <span className="inline-flex items-center gap-1.5 rounded border border-brand-purple/40 bg-brand-purple/10 px-2 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.08em] text-brand-purple sm:text-[0.6rem]">
+              <span className="inline-flex items-center gap-1.5 rounded border border-purple-500/40 bg-purple-500/10 px-2 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.08em] text-purple-400 sm:text-[0.6rem]">
                 <Timer className="h-3 w-3" />
                 Event Phase: Pre-Show
               </span>
@@ -1288,7 +1290,7 @@ export default function ProductionCockpitClient() {
                 <span className="h-2 w-2 rounded-full bg-lime-300 shadow-[0_0_10px_rgba(132,255,75,0.8)]" />
                 Publish: Encoder Ready
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded border border-brand-blue/35 bg-brand-blue/10 px-2 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.08em] text-brand-blue sm:text-[0.6rem]">
+              <span className="inline-flex items-center gap-1.5 rounded border border-[#00a8ff]/35 bg-[#00a8ff]/10 px-2 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.08em] text-[#00a8ff] sm:text-[0.6rem]">
                 <Database className="h-3 w-3" />
                 Playback: {systemSynced ? "Database Synced" : "Database Resyncing"}
               </span>

@@ -334,13 +334,14 @@ async function loadOwnerSessionManifestState(): Promise<{
   };
 }
 
-async function shouldRejectEnvPayload(playbackUrl: string): Promise<string | null> {
-  if (!isAmazonIvsPlaybackUrl(playbackUrl)) return null;
-
-  const ivsPlayback = await resolveIvsChannelPlaybackUrl();
-  if (ivsPlayback.playbackUrl) return null;
-
-  return null;
+async function checkIsUpstreamOffline(playbackUrl: string): Promise<boolean> {
+  if (!isAmazonIvsPlaybackUrl(playbackUrl)) return false;
+  try {
+    const check = await resolveIvsChannelPlaybackUrl();
+    return !check.playbackUrl;
+  } catch {
+    return true;
+  }
 }
 
 export async function OPTIONS(request: NextRequest) {
@@ -363,101 +364,85 @@ export async function GET(request: NextRequest) {
   ]);
 
   if (resolved.playbackUrl) {
-    const clientPlaybackUrl = await resolveClientPlaybackUrl(request, resolved.playbackUrl);
-    const usedRelay = shouldUseLocalHlsRelay(request, resolved.playbackUrl);
-    const isLive = resolved.isLive || session.isLive;
+    // Check if IVS channel is offline or missing
+    const isOffline = await checkIsUpstreamOffline(resolved.playbackUrl);
+    if (!isOffline) {
+      const clientPlaybackUrl = await resolveClientPlaybackUrl(request, resolved.playbackUrl);
+      const usedRelay = shouldUseLocalHlsRelay(request, resolved.playbackUrl);
+      const isLive = resolved.isLive || session.isLive;
 
-    logManifestResolution({
-      source: resolved.resolutionSource,
-      isLive,
-      activeSource: resolved.activeSource,
-      upstreamUrl: resolved.playbackUrl,
-      clientPlaybackUrl,
-      usedRelay,
-      fromDatabase: resolved.fromDatabase,
-    });
+      logManifestResolution({
+        source: resolved.resolutionSource,
+        isLive,
+        activeSource: resolved.activeSource,
+        upstreamUrl: resolved.playbackUrl,
+        clientPlaybackUrl,
+        usedRelay,
+        fromDatabase: resolved.fromDatabase,
+      });
 
-    return jsonResponse(request, {
-      success: true,
-      activeExperience: experience,
-      activeSource: resolved.activeSource,
-      fallback: false,
-      playbackUrl: clientPlaybackUrl,
-      manifestUrl: clientPlaybackUrl,
-      resolutionSource: resolved.resolutionSource,
-      isLive,
-      streamIsLive: isLive,
-      broadcastCurrentState: session.currentState,
-      publishMode: session.publishMode,
-      playbackPending: false,
-      ownerSession: session,
-      ownerVideoRouting: routing,
-      warnings: [routingWarning, sessionWarning].filter(
-        (warning): warning is string => typeof warning === "string" && warning.trim().length > 0,
-      ),
-    });
+      return jsonResponse(request, {
+        success: true,
+        activeExperience: experience,
+        activeSource: resolved.activeSource,
+        fallback: false,
+        playbackUrl: clientPlaybackUrl,
+        manifestUrl: clientPlaybackUrl,
+        resolutionSource: resolved.resolutionSource,
+        isLive,
+        streamIsLive: isLive,
+        broadcastCurrentState: session.currentState,
+        publishMode: session.publishMode,
+        playbackPending: false,
+        ownerSession: session,
+        ownerVideoRouting: routing,
+        warnings: [routingWarning, sessionWarning].filter(
+          (warning): warning is string => typeof warning === "string" && warning.trim().length > 0,
+        ),
+      });
+    }
   }
 
   const envPayload = buildProductionEnvManifestPayload(experience);
   if (envPayload?.playbackUrl) {
-    const envRejectReason = await shouldRejectEnvPayload(envPayload.playbackUrl);
-    if (envRejectReason) {
-      return jsonResponse(
-        request,
-        {
-          success: false,
-          error: envRejectReason,
-          isLive: false,
-          playbackPending: false,
-          activeExperience: experience,
-          activeSource: "backup",
-          broadcastCurrentState: session.currentState,
-          publishMode: session.publishMode,
-          ownerSession: session,
-          ownerVideoRouting: routing,
-          warnings: [routingWarning, sessionWarning, envRejectReason].filter(
-            (warning): warning is string => typeof warning === "string" && warning.trim().length > 0,
-          ),
-        },
-        409,
-      );
+    const isOffline = await checkIsUpstreamOffline(envPayload.playbackUrl);
+    if (!isOffline) {
+      const clientPlaybackUrl = await resolveClientPlaybackUrl(request, envPayload.playbackUrl);
+      const usedRelay = shouldUseLocalHlsRelay(request, envPayload.playbackUrl);
+      const isLive = resolved.isLive || session.isLive;
+
+      logManifestResolution({
+        source: "env",
+        isLive,
+        activeSource: envPayload.activeSource,
+        upstreamUrl: envPayload.playbackUrl,
+        clientPlaybackUrl,
+        usedRelay,
+        fromDatabase: false,
+      });
+
+      return jsonResponse(request, {
+        ...envPayload,
+        playbackUrl: clientPlaybackUrl,
+        manifestUrl: clientPlaybackUrl,
+        resolutionSource: "env",
+        isLive,
+        streamIsLive: isLive,
+        broadcastCurrentState: session.currentState,
+        publishMode: session.publishMode,
+        playbackPending: false,
+        ownerSession: session,
+        ownerVideoRouting: routing,
+        warnings: [routingWarning, sessionWarning].filter(
+          (warning): warning is string => typeof warning === "string" && warning.trim().length > 0,
+        ),
+      });
     }
-
-    const clientPlaybackUrl = await resolveClientPlaybackUrl(request, envPayload.playbackUrl);
-    const usedRelay = shouldUseLocalHlsRelay(request, envPayload.playbackUrl);
-    const isLive = resolved.isLive || session.isLive;
-
-    logManifestResolution({
-      source: "env",
-      isLive,
-      activeSource: envPayload.activeSource,
-      upstreamUrl: envPayload.playbackUrl,
-      clientPlaybackUrl,
-      usedRelay,
-      fromDatabase: false,
-    });
-
-    return jsonResponse(request, {
-      ...envPayload,
-      playbackUrl: clientPlaybackUrl,
-      manifestUrl: clientPlaybackUrl,
-      resolutionSource: "env",
-      isLive,
-      streamIsLive: isLive,
-      broadcastCurrentState: session.currentState,
-      publishMode: session.publishMode,
-      playbackPending: false,
-      ownerSession: session,
-      ownerVideoRouting: routing,
-      warnings: [routingWarning, sessionWarning].filter(
-        (warning): warning is string => typeof warning === "string" && warning.trim().length > 0,
-      ),
-    });
   }
 
   logManifestResolution({
     source: "none",
-    isLive: resolved.isLive,
+    isLive: false,
     activeSource: resolved.activeSource,
     upstreamUrl: null,
     clientPlaybackUrl: null,
@@ -469,13 +454,10 @@ export async function GET(request: NextRequest) {
     request,
     {
       success: false,
-      error:
-        routing.configured
-          ? "A production camera route is selected, but no valid HLS playback URL is configured in live_stream_state or the environment."
-          : "Live is open, but no valid HLS playback URL is configured. Set ATTENDEE_PLAYBACK_HLS_URL to your Restream .m3u8 (restart dev server) or go live with primary_playback_url in Supabase.",
+      error: "Broadcast stream is currently offline. Holding countdown active.",
       isLive: false,
       streamIsLive: false,
-      broadcastCurrentState: session.currentState,
+      broadcastCurrentState: session.currentState === "live" ? "imminent_live" : session.currentState,
       publishMode: session.publishMode,
       playbackPending: routing.configured || session.currentState === "imminent_live",
       ownerSession: session,
@@ -547,9 +529,15 @@ export async function POST(request: NextRequest) {
     ticketTier === "VIP" ||
     ticketTier === "STAFF" ||
     ticketTier === "OWNER";
+    
   const hasResolvedPlaybackUrl = typeof resolved.playbackUrl === "string" && resolved.playbackUrl.trim() !== "";
+  
+  // Real-time double verification check against upstream streaming status
+  const isUpstreamOffline = hasResolvedPlaybackUrl ? await checkIsUpstreamOffline(resolved.playbackUrl) : true;
+  
   const activeRoutingReady = Boolean(routing.activeProgramChannelId);
-  const streamIsLive = hasResolvedPlaybackUrl && (resolved.isLive || session.isLive);
+  const streamIsLive = hasResolvedPlaybackUrl && !isUpstreamOffline && (resolved.isLive || session.isLive);
+  
   const broadcastCurrentState: "idle" | "imminent_live" | "live" | "ended" =
     streamIsLive
       ? "live"
@@ -560,6 +548,7 @@ export async function POST(request: NextRequest) {
           : session.currentState === "offline"
             ? "ended"
             : "idle";
+            
   const resolvedCountdownTimestamp =
     session.imminentLiveStartedAt ??
     routing.updatedAt ??
@@ -568,9 +557,8 @@ export async function POST(request: NextRequest) {
   let canViewStream = false;
   let systemMessage = "Stream is loading.";
 
-  if (activeRoutingReady && !hasResolvedPlaybackUrl) {
-    systemMessage =
-      "Broadcast route is selected, but playback media is still loading. Waiting for a valid HLS URL.";
+  if (activeRoutingReady && isUpstreamOffline) {
+    systemMessage = "Broadcast route is selected, but playback manifest is currently offline. Holding countdown active.";
   } else if (!streamIsLive) {
     systemMessage = "Broadcast stream is currently offline.";
   } else {
@@ -588,10 +576,10 @@ export async function POST(request: NextRequest) {
       : false;
 
   logManifestResolution({
-    source: resolved.resolutionSource,
+    source: canViewStream ? resolved.resolutionSource : "none",
     isLive: streamIsLive,
     activeSource: resolved.activeSource,
-    upstreamUrl: resolved.playbackUrl,
+    upstreamUrl: canViewStream ? resolved.playbackUrl : null,
     clientPlaybackUrl: clientPlaybackUrl || null,
     usedRelay,
     fromDatabase: resolved.fromDatabase,
@@ -624,7 +612,7 @@ export async function POST(request: NextRequest) {
     monetizationEnabled: accessConfig.monetizationEnabled,
     playbackUrl: clientPlaybackUrl,
     manifestUrl: clientPlaybackUrl,
-    playbackPending: activeRoutingReady && !hasResolvedPlaybackUrl,
+    playbackPending: activeRoutingReady && isUpstreamOffline,
     publishMode: session.publishMode,
     publisherChannel: streamIsLive ? routing.activeProgramChannelId : null,
     broadcastCurrentState,

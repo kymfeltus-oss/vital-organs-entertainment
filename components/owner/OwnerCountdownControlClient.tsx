@@ -1,9 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { ArrowLeft, Check, Clock3, Copy, ExternalLink, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
-import NeonCountdownStage from "@/components/countdown/NeonCountdownStage";
+import HoldingRoomCountdownOverlay from "@/components/experience/holding-room/HoldingRoomCountdownOverlay";
+import {
+  HOLDING_ROOM_ART_NATIVE,
+  HOLDING_ROOM_ASSETS,
+} from "@/lib/experience/holding-room-assets";
+import {
+  MOBILE_ARTBOARD_FULL_SHELL,
+  mobileArtboardStageStyle,
+} from "@/lib/responsive";
 import type { ShowSetupState } from "@/lib/owner/show-setup-state";
 import {
   getScheduleTimezoneLabel,
@@ -34,8 +42,8 @@ function countdownParts(targetIso: string, nowMs: number) {
   const totalSeconds = Math.floor(remaining / 1_000);
   return {
     days: Math.floor(totalSeconds / 86_400),
-    hours: Math.floor((totalSeconds % 86_400) / 3_600),
-    minutes: Math.floor((totalSeconds % 3_600) / 60),
+    hours: Math.floor((totalSeconds % 86_400) / 3600),
+    minutes: Math.floor((totalSeconds % 3600) / 60),
     seconds: totalSeconds % 60,
     isComplete: remaining === 0,
   };
@@ -199,6 +207,16 @@ export default function OwnerCountdownControlClient() {
     setMessage("OBS/Restream countdown overlay URL copied.");
   };
 
+  // Maps properties seamlessly for the native live overlay wrapper component
+  const simulatedConfig = useMemo(() => {
+    return {
+      targetDateTime: targetIso,
+      showTitle: eventName,
+      presenterName: presenterName,
+      hostNames: hostNames,
+    };
+  }, [targetIso, eventName, presenterName, hostNames]);
+
   return (
     <main className="min-h-screen bg-[#030611] px-4 py-6 text-white sm:px-6 lg:px-10">
       <div className="mx-auto max-w-7xl">
@@ -323,16 +341,37 @@ export default function OwnerCountdownControlClient() {
             </p>
           </section>
 
-          <section className="overflow-hidden rounded-2xl border border-[#00DDEB]/35 bg-black">
-            <NeonCountdownStage
-              countdown={countdown}
-              eventName={eventName || EVENT_NAME}
-              hostNames={hostNames}
-              compact
-            />
-            <div className="border-t border-white/10 bg-[#030611] px-4 py-3 text-center">
-              <p className="font-ui text-xs uppercase tracking-[0.15em] text-white/65">{eventDateLabel}</p>
-              <p className="mt-1 font-body text-[0.68rem] text-white/35">{getScheduleTimezoneLabel(timezone)}</p>
+          {/* DYNAMIC PUBLIC ATTENDEE HOLDING ROOM COMPOSITE ARTBOARD PREVIEW PANEL */}
+          <section className="overflow-hidden rounded-2xl border border-[#00DDEB]/35 bg-black flex items-center justify-center p-4">
+            <div className="live-holding-shell bg-black text-white w-full flex justify-center">
+              <div className={`${MOBILE_ARTBOARD_FULL_SHELL} border border-white/10 rounded-xl overflow-hidden shadow-2xl`}>
+                <div
+                  className="holding-room-page__stage"
+                  style={
+                    mobileArtboardStageStyle({ native: HOLDING_ROOM_ART_NATIVE }) as CSSProperties
+                  }
+                >
+                  <div className="mobile-artboard-art-fit holding-room-page__art-fit">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/holding page/holding-room.png"
+                      alt="300 Awakening holding room"
+                      width={HOLDING_ROOM_ART_NATIVE.width}
+                      height={HOLDING_ROOM_ART_NATIVE.height}
+                      className="holding-room-page__bg"
+                      loading="eager"
+                      draggable={false}
+                    />
+
+                    <div className="absolute inset-0">
+                      <HoldingRoomCountdownOverlay
+                        initialCountdownConfig={simulatedConfig}
+                        initialCountdown={countdown}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
         </div>
