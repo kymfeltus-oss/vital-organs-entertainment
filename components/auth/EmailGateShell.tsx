@@ -54,30 +54,30 @@ export default function EmailGateShell({
           </Link>
         ) : null}
 
-        <header className="mb-6 text-center">
-          <div className="relative mx-auto aspect-[3/2] w-full max-w-[20rem] sm:max-w-[26rem]">
+        <header className="mb-4 text-center">
+          <div className="relative mx-auto h-[6.75rem] w-full max-w-[17rem] sm:h-[8rem]">
             <Image
               src={EXPERIENCE_BRAND_ASSETS.lockup}
               alt="300 Awakening"
               fill
               priority
-              sizes="(max-width: 640px) 80vw, 416px"
+              sizes="(max-width: 640px) 68vw, 272px"
               className="object-contain"
             />
           </div>
 
           {eyebrow ? (
-            <p className="mt-5 font-ui text-[0.58rem] font-bold uppercase tracking-[0.24em] text-brand-blue">
+            <p className="mt-2 font-ui text-[0.54rem] font-bold uppercase tracking-[0.2em] text-brand-blue">
               {eyebrow}
             </p>
           ) : null}
           {title ? (
-            <h1 className="mt-2 font-headline text-[clamp(1.35rem,5vw,1.75rem)] uppercase tracking-[0.1em] text-white">
+            <h1 className="mt-2 font-headline text-[clamp(1.3rem,4.8vw,1.65rem)] uppercase tracking-[0.08em] text-white">
               {title}
             </h1>
           ) : null}
           {description ? (
-            <p className="mx-auto mt-3 max-w-md font-body text-sm leading-relaxed text-brand-muted">
+            <p className="mx-auto mt-2 max-w-sm font-body text-[0.82rem] leading-snug text-brand-muted">
               {description}
             </p>
           ) : null}
@@ -92,6 +92,8 @@ export default function EmailGateShell({
 }
 
 export function gateFieldClass(_isValid: boolean, _isInvalid: boolean): string {
+  void _isValid;
+  void _isInvalid;
   return "w-full min-h-11 rounded-xl border border-brand-border bg-brand-panel/80 px-4 py-2.5 font-body text-sm text-white outline-none transition placeholder:text-brand-muted/45 focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/25";
 }
 

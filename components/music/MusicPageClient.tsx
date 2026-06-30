@@ -37,7 +37,7 @@ export default function MusicPageClient({ initialProfile }: MusicPageClientProps
             decoding="async"
             draggable={false}
           />
-          <MobileArtboardTabHeader profile={profile} onProfileChange={setProfile} />
+          <MobileArtboardTabHeader title="Music" profile={profile} onProfileChange={setProfile} />
           <MusicOverlay />
         </div>
       </div>

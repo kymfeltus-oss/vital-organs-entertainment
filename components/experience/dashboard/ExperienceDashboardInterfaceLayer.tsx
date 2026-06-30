@@ -16,13 +16,26 @@ import type { CountdownParts } from "@/lib/live/event-lobby";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
 import { useAttendeeLiveNavTarget } from "@/lib/experience/useAttendeeLiveNavTarget";
 import { MOBILE_ARTBOARD_REF, mobileArtboardStageStyle } from "@/lib/responsive";
+import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
 type ExperienceDashboardInterfaceLayerProps = {
+  profile: AttendeeProfileSnapshot;
   initialCountdownConfig?: EventCountdownConfig;
   initialCountdown?: CountdownParts;
 };
 
+function resolveDashboardWelcomeName(profile: AttendeeProfileSnapshot): string {
+  const firstName = profile.firstName?.trim();
+  if (firstName) return firstName.toUpperCase();
+
+  const displayName = profile.headerDisplayName?.trim();
+  if (displayName) return displayName.split(/\s+/)[0]?.toUpperCase() || "GUEST";
+
+  return "GUEST";
+}
+
 export default function ExperienceDashboardInterfaceLayer({
+  profile,
   initialCountdownConfig,
   initialCountdown,
 }: ExperienceDashboardInterfaceLayerProps) {
@@ -35,6 +48,7 @@ export default function ExperienceDashboardInterfaceLayer({
   const { href: liveNavHref } = useAttendeeLiveNavTarget({
     initialConfig: initialCountdownConfig,
   });
+  const welcomeName = resolveDashboardWelcomeName(profile);
 
   useEffect(() => {
     const video = backgroundRef.current;
@@ -128,6 +142,17 @@ export default function ExperienceDashboardInterfaceLayer({
                   decoding="async"
                   draggable={false}
                 />
+                <span
+                  className="experience-dashboard-overlay__story-name-mask"
+                  aria-label={`Welcome ${welcomeName}`}
+                >
+                  <span
+                    className="experience-dashboard-overlay__story-name"
+                    aria-hidden="true"
+                  >
+                    {welcomeName}
+                  </span>
+                </span>
               </Link>
 
               <nav

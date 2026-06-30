@@ -3,7 +3,6 @@
 import { Suspense, useState, type CSSProperties } from "react";
 import MobileArtboardTabHeader from "@/components/navigation/MobileArtboardTabHeader";
 import HoldingRoomCountdownOverlay from "@/components/experience/holding-room/HoldingRoomCountdownOverlay";
-import HoldingRoomFellowshipChat from "@/components/experience/holding-room/HoldingRoomFellowshipChat";
 import {
   HOLDING_ROOM_ART_NATIVE,
   HOLDING_ROOM_ASSETS,
@@ -57,8 +56,7 @@ function ExperienceHoldingRoomPageContent({
             initialCountdownConfig={initialCountdownConfig}
             initialCountdown={initialCountdown}
           />
-          <HoldingRoomFellowshipChat />
-          <MobileArtboardTabHeader profile={profile} onProfileChange={setProfile} />
+          <MobileArtboardTabHeader title="Live" profile={profile} onProfileChange={setProfile} />
         </div>
       </div>
     </div>

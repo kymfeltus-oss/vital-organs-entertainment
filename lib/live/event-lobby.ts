@@ -3,7 +3,7 @@ export const EVENT_LOBBY = {
   eyebrow: "LIVE RECORDING EXPERIENCE",
   title: "300 AWAKENING",
   venue: "Digital Cathedral · Worldwide Broadcast",
-  targetIso: "2026-06-07T19:30:00-05:00",
+  targetIso: "2026-07-03T19:30:00-05:00",
   streamQualityLabel: "Crystal HD · Secure Feed Ready",
   community: {
     viewersReady: 2847,

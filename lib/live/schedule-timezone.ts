@@ -13,14 +13,14 @@ export const SCHEDULE_TIMEZONE_OPTIONS = [
 
 export type ScheduleTimezone = (typeof SCHEDULE_TIMEZONE_OPTIONS)[number]["id"];
 
-export const DEFAULT_SCHEDULE_TIMEZONE: ScheduleTimezone = "America/New_York";
+export const DEFAULT_SCHEDULE_TIMEZONE: ScheduleTimezone = "America/Chicago";
 
 const SCHEDULE_TIMEZONE_IDS = new Set<string>(
   SCHEDULE_TIMEZONE_OPTIONS.map((option) => option.id),
 );
 
 const US_TIMEZONE_BY_OFFSET: Record<string, ScheduleTimezone> = {
-  "-05:00": "America/New_York",
+  "-05:00": "America/Chicago",
   "-04:00": "America/New_York",
   "-06:00": "America/Chicago",
   "-07:00": "America/Denver",

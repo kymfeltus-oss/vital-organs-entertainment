@@ -32,7 +32,7 @@ export type EventCountdownConfig = {
   is_active: boolean;
 };
 
-const DEFAULT_END_ISO = "2026-06-07T23:30:00-05:00";
+const DEFAULT_END_ISO = "2026-07-03T23:30:00-05:00";
 
 export const DEFAULT_COUNTDOWN_CONFIG: EventCountdownConfig = {
   event_id: DEFAULT_EVENT_ID,

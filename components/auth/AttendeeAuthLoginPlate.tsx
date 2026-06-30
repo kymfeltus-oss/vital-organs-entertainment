@@ -78,25 +78,25 @@ export default function AttendeeAuthLoginPlate({
   const messageIsError = Boolean(formError);
 
   return (
-    <div className="auth-login-page flex min-h-0 w-full flex-1 flex-col items-center overflow-y-auto py-8 pt-safe pb-safe sm:py-12">
+    <div className="auth-login-page flex min-h-0 w-full flex-1 flex-col items-center overflow-y-auto py-3 pt-safe pb-safe sm:py-6">
       <div className="auth-login-page__glow pointer-events-none" aria-hidden="true" />
 
       <div className="relative z-[1] w-[var(--mobile-app-track-w)] max-w-[100vw]">
-        <header className="mb-8 text-center">
-          <div className="relative aspect-[3/2] w-full">
+        <header className="mb-4 text-center">
+          <div className="relative mx-auto h-[6.75rem] w-full max-w-[17rem] sm:h-[8rem]">
             <Image
               src={EXPERIENCE_BRAND_ASSETS.lockup}
               alt="300 Awakening"
               fill
               priority
-              sizes="min(100vw, calc(100dvh * 1080 / 1920))"
-              className="object-contain object-[center_top]"
+              sizes="(max-width: 640px) 68vw, 272px"
+              className="object-contain"
             />
           </div>
-          <h1 className="mt-6 px-4 font-headline text-[clamp(1.75rem,7vw,2.5rem)] uppercase leading-none tracking-[0.1em] text-white sm:px-6">
+          <h1 className="mt-2 px-4 font-headline text-[clamp(1.55rem,6.2vw,2.15rem)] uppercase leading-none tracking-[0.08em] text-white sm:px-6">
             Welcome Back
           </h1>
-          <p className="mx-auto mt-3 max-w-[18rem] px-4 font-body text-sm leading-relaxed text-brand-muted sm:px-6">
+          <p className="mx-auto mt-2 max-w-[17rem] px-4 font-body text-[0.82rem] leading-snug text-brand-muted sm:px-6">
             Sign in to pick up your journey where you left off.
           </p>
         </header>

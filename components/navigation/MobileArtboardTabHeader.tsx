@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
-import MobileArtboardBackButton from "@/components/navigation/MobileArtboardBackButton";
-import MobileArtboardTopChrome from "@/components/navigation/MobileArtboardTopChrome";
+import MobileNativeHeader from "@/components/navigation/MobileNativeHeader";
 import { MOBILE_ARTBOARD_TAB_CHROME } from "@/lib/navigation/mobile-artboard-chrome";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
@@ -11,6 +10,7 @@ type MobileArtboardTabHeaderProps = {
   onProfileChange?: (profile: AttendeeProfileSnapshot) => void;
   backVariant?: "back" | "close";
   showBack?: boolean;
+  title?: string;
 };
 
 /** Uniform top row — masks baked PNG chrome, native back + profile + menu on every tab. */
@@ -19,6 +19,7 @@ export default function MobileArtboardTabHeader({
   onProfileChange,
   backVariant = "back",
   showBack = true,
+  title,
 }: MobileArtboardTabHeaderProps) {
   const [localProfile, setLocalProfile] = useState(profile);
   const masks = MOBILE_ARTBOARD_TAB_CHROME.bakedMask;
@@ -55,13 +56,11 @@ export default function MobileArtboardTabHeader({
         }
       />
 
-      {showBack ? <MobileArtboardBackButton variant={backVariant} /> : null}
-
-      <MobileArtboardTopChrome
+      <MobileNativeHeader
+        title={title}
         profile={localProfile}
         onProfileChange={handleProfileChange}
-        actionsSlot={MOBILE_ARTBOARD_TAB_CHROME.actions}
-        profileOrbSize={MOBILE_ARTBOARD_TAB_CHROME.profileOrbSize}
+        leading={showBack ? backVariant : "none"}
       />
     </>
   );

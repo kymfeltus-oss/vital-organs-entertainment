@@ -47,7 +47,7 @@ export const MOBILE_APP_TRACK_WIDTH =
 
 /** Tab content track — viewport minus bottom dock + safe areas (Giving · Music · Buy Seeds · Prayer). */
 export const MOBILE_TAB_TRACK_WIDTH =
-  "min(100vw, calc((100dvh - var(--bottom-dock-display-h, 76px) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 1080 / 1920))" as const;
+  "min(100vw, calc((100dvh - var(--bottom-dock-display-h, 56px) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 1080 / 1920))" as const;
 
 /** Reference artboard — every PNG/tab page uses this same stage as `/attendee-dashboard`. */
 export const MOBILE_ARTBOARD_REF = {
@@ -98,7 +98,7 @@ export const MOBILE_ARTBOARD_ART_FIT = "mobile-artboard-art-fit";
 
 /** Content offset when PNG bottom dock is present (display height + safe area). */
 export const CONTENT_WITH_NAV =
-  "pb-[calc(var(--bottom-dock-display-h,76px)+env(safe-area-inset-bottom))]";
+  "pb-[calc(var(--bottom-dock-display-h,56px)+env(safe-area-inset-bottom))]";
 
 /** Dashboard card grid — scales with viewport */
 export const CARD_GRID_DASHBOARD =

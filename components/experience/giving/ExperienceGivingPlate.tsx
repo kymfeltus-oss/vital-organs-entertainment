@@ -37,12 +37,24 @@ export default function ExperienceGivingPlate({
     if (!stage || !overlay) return;
 
     const stageRect = stage.getBoundingClientRect();
+    if (stageRect.height <= 0) return;
+
     const nativeW = VITAL_SEED_GIVING_MOBILE_ART_NATIVE.width;
     const nativeH = VITAL_SEED_GIVING_MOBILE_ART_NATIVE.height;
     const scale = Math.min(stageRect.width / nativeW, stageRect.height / nativeH);
     const paintedHeightPx = nativeH * scale;
     const paintedBottomPct = (paintedHeightPx / stageRect.height) * 100;
-    const formTopPct = Math.min(paintedBottomPct + 1.25, 62);
+    const desiredTopPct = Math.min(paintedBottomPct + 1, 56);
+    const rootStyle = getComputedStyle(document.documentElement);
+    const bottomDockHeight = Number.parseFloat(
+      rootStyle.getPropertyValue("--bottom-dock-display-h"),
+    );
+    const dockClearancePx = (Number.isFinite(bottomDockHeight) ? bottomDockHeight : 56) + 24;
+    const contentHeightPx =
+      overlay.firstElementChild?.getBoundingClientRect().height ?? overlay.scrollHeight;
+    const highestSafeTopPct =
+      ((stageRect.height - dockClearancePx - contentHeightPx) / stageRect.height) * 100;
+    const formTopPct = Math.max(0, Math.min(desiredTopPct, highestSafeTopPct));
 
     overlay.style.setProperty("--vital-giving-form-top", `${formTopPct}%`);
   }, []);
@@ -71,7 +83,7 @@ export default function ExperienceGivingPlate({
         style={
           {
             ...mobileArtboardStageStyle(),
-            "--vital-giving-form-top": `${VITAL_SEED_GIVING_HEADER_STAGE_RATIO * 100 + 1.25}%`,
+            "--vital-giving-form-top": `${VITAL_SEED_GIVING_HEADER_STAGE_RATIO * 100 + 1}%`,
           } as CSSProperties
         }
       >
@@ -90,7 +102,11 @@ export default function ExperienceGivingPlate({
             onLoad={syncFormPlacement}
           />
 
-          <MobileArtboardTabHeader profile={profile} onProfileChange={onProfileChange} />
+          <MobileArtboardTabHeader
+            title="Giving"
+            profile={profile}
+            onProfileChange={onProfileChange}
+          />
 
           <div ref={formOverlayRef} className="vital-giving-page__form-overlay">
             {children}
@@ -100,3 +116,7 @@ export default function ExperienceGivingPlate({
     </div>
   );
 }
+
+
+
+

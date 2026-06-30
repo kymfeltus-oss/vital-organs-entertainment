@@ -62,7 +62,11 @@ export default function BuySeedsPlate({
             draggable={false}
           />
 
-          <MobileArtboardTabHeader profile={profile} onProfileChange={onProfileChange} />
+          <MobileArtboardTabHeader
+            title="Buy Seeds"
+            profile={profile}
+            onProfileChange={onProfileChange}
+          />
 
           <BuySeedsOverlay
             selectedPackageId={selectedPackageId}

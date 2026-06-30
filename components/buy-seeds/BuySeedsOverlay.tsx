@@ -67,6 +67,7 @@ export default function BuySeedsOverlay({
       }
     >
       <div className="buy-seeds-page__baked-mask" aria-hidden="true" />
+      <div className="buy-seeds-page__secure-copy-mask" aria-hidden="true" />
 
       <div
         className="buy-seeds-page__packages-panel pointer-events-auto"

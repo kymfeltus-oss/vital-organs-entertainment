@@ -26,6 +26,7 @@ export type AwakeningMenuItem = {
 export const AWAKENING_MENU_ITEMS: AwakeningMenuItem[] = [
   { id: "home", label: "Home", href: ATTENDEE_DASHBOARD_PATH, match: "exact" },
   { id: "live", label: "Live Room", href: EXPERIENCE_LIVE_PATH, match: "prefix" },
+  { id: "program", label: "Program", href: "/program", match: "prefix" },
   { id: "seed", label: "Vital Seed", href: "/experience/giving", match: "prefix" },
   { id: "music", label: "Music", href: "/experience/music", match: "prefix" },
   { id: "contact", label: "Contact", href: "/experience/contact-us", match: "prefix" },
@@ -68,7 +69,8 @@ export default function AwakeningMenuButton({
   const closeMenu = useCallback(() => setOpen(false), []);
 
   useEffect(() => {
-    setMounted(true);
+    const frame = window.requestAnimationFrame(() => setMounted(true));
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {
@@ -92,7 +94,8 @@ export default function AwakeningMenuButton({
   }, [closeMenu, open]);
 
   useEffect(() => {
-    closeMenu();
+    const frame = window.requestAnimationFrame(closeMenu);
+    return () => window.cancelAnimationFrame(frame);
   }, [closeMenu, pathname]);
 
   const handleLogout = async (event: MouseEvent<HTMLButtonElement>) => {

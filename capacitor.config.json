@@ -2,5 +2,9 @@
   "appId": "com.iancraig.awakening",
   "appName": "Awakening",
   "webDir": "out",
-  "bundledWebRuntime": false
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://vital-organs-entertainment.vercel.app",
+    "cleartext": false
+  }
 }

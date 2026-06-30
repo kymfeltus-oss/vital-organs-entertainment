@@ -100,14 +100,14 @@ export const BUY_SEEDS_DEFAULT_PACKAGE_ID: SeedPackageId = SEED_BILLING_DEFAULT_
 export const BUY_SEEDS_CONTINUE_SLOT = {
   label: "Continue to payment",
   left: BUY_SEEDS_PANEL_INSET_LEFT,
-  top: "81.2%",
+  top: "79.65%",
   width: BUY_SEEDS_PANEL_WIDTH,
   height: "6.2%",
 } as const;
 
 export const BUY_SEEDS_ERROR_SLOT = {
   left: BUY_SEEDS_PANEL_INSET_LEFT,
-  top: "79.4%",
+  top: "77.95%",
   width: BUY_SEEDS_PANEL_WIDTH,
   height: "1.6%",
 } as const;

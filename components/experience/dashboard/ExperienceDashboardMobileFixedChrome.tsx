@@ -1,7 +1,6 @@
 "use client";
 
-import AwakeningMenuButton from "@/components/AwakeningMenuButton";
-import ProfileOrbEditor from "@/components/profile/ProfileOrbEditor";
+import MobileNativeHeader from "@/components/navigation/MobileNativeHeader";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
 type ExperienceDashboardMobileFixedChromeProps = {
@@ -15,15 +14,11 @@ export default function ExperienceDashboardMobileFixedChrome({
   onProfileChange,
 }: ExperienceDashboardMobileFixedChromeProps) {
   return (
-    <header
-      data-dashboard-mobile-chrome
-      className="dashboard-mobile-fixed-chrome pointer-events-none"
-      aria-label="Dashboard navigation"
-    >
-      <div className="dashboard-mobile-fixed-chrome__actions pointer-events-auto">
-        <ProfileOrbEditor profile={profile} onProfileChange={onProfileChange} size={36} />
-        <AwakeningMenuButton className="dashboard-mobile-fixed-chrome__menu shrink-0" />
-      </div>
-    </header>
+    <MobileNativeHeader
+      profile={profile}
+      onProfileChange={onProfileChange}
+      leading="none"
+      className="dashboard-mobile-fixed-chrome"
+    />
   );
 }

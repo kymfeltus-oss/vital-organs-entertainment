@@ -114,7 +114,7 @@ export default function ExperienceGivingNativeForm({
         type="button"
         disabled={isLoading}
         onClick={onGiveNow}
-        className="vital-giving-give-btn touch-target mt-auto shrink-0 font-ui"
+        className="vital-giving-give-btn touch-target shrink-0 font-ui"
       >
         {isLoading ? (
           <>
