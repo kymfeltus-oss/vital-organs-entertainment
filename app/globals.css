@@ -4842,19 +4842,48 @@ body::-webkit-scrollbar {
 
 .bottom-dock__frame {
   position: relative;
+  isolation: isolate;
   width: 100%;
   height: var(--bottom-dock-display-h);
   margin: 0 auto;
   overflow: visible;
-  border-top: 1px solid rgb(255 255 255 / 0.12);
+  border-top: 1px solid rgb(255 255 255 / 0.18);
   background:
-    linear-gradient(180deg, rgb(14 14 18 / 0.93), rgb(5 5 8 / 0.98)),
-    radial-gradient(circle at 18% 0%, rgb(0 168 255 / 0.16), transparent 32%),
-    radial-gradient(circle at 84% 0%, rgb(255 47 175 / 0.14), transparent 34%);
-  box-shadow: 0 -12px 30px rgb(0 0 0 / 0.42);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+    linear-gradient(92deg, rgb(0 168 255 / 0.22) 0%, rgb(138 46 255 / 0.18) 48%, rgb(255 47 175 / 0.22) 100%),
+    radial-gradient(ellipse 48% 135% at 14% 0%, rgb(0 168 255 / 0.36), transparent 62%),
+    radial-gradient(ellipse 54% 145% at 86% 0%, rgb(255 47 175 / 0.34), transparent 62%),
+    linear-gradient(180deg, rgb(21 18 28 / 0.96), rgb(5 5 9 / 0.98));
+  box-shadow:
+    0 -1px 0 rgb(255 255 255 / 0.08) inset,
+    0 -18px 38px rgb(0 0 0 / 0.5),
+    0 -10px 34px rgb(0 168 255 / 0.18),
+    0 -8px 32px rgb(255 47 175 / 0.14);
+  backdrop-filter: blur(20px) saturate(1.35);
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
   pointer-events: auto;
+}
+
+.bottom-dock__frame::before {
+  position: absolute;
+  inset: -1px 0 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, transparent 0%, rgb(0 168 255 / 0.36) 18%, rgb(138 46 255 / 0.28) 50%, rgb(255 47 175 / 0.36) 82%, transparent 100%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.14), transparent 52%);
+  content: "";
+  opacity: 0.85;
+}
+
+.bottom-dock__frame::after {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(115deg, transparent 0%, rgb(255 255 255 / 0.08) 32%, transparent 58%),
+    radial-gradient(circle at 50% 112%, rgb(255 255 255 / 0.11), transparent 58%);
+  content: "";
+  opacity: 0.7;
+  pointer-events: none;
 }
 
 .bottom-dock__items {
@@ -4882,19 +4911,23 @@ body::-webkit-scrollbar {
   height: 100%;
   border: 0;
   background: transparent;
-  color: rgb(255 255 255 / 0.54);
+  color: rgb(255 255 255 / 0.66);
   text-decoration: none;
   pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
   transition:
     background 160ms ease,
     color 160ms ease,
+    filter 160ms ease,
     transform 120ms ease;
 }
 
 .bottom-dock__item:hover {
-  color: rgb(255 255 255 / 0.82);
-  background: rgb(255 255 255 / 0.035);
+  color: rgb(255 255 255 / 0.92);
+  background:
+    radial-gradient(ellipse 72% 76% at 50% 8%, rgb(255 255 255 / 0.08), transparent 68%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.055), transparent 72%);
+  filter: brightness(1.08);
 }
 
 .bottom-dock__item:active {
@@ -4904,17 +4937,22 @@ body::-webkit-scrollbar {
 
 .bottom-dock__item--active {
   color: #ffffff;
+  text-shadow:
+    0 0 12px rgb(0 168 255 / 0.55),
+    0 0 18px rgb(255 47 175 / 0.38);
 }
 
 .bottom-dock__item--active::before {
   position: absolute;
   left: 50%;
-  top: 3px;
-  width: 1.8rem;
-  height: 2px;
+  top: 4px;
+  width: min(2.25rem, 58%);
+  height: 3px;
   border-radius: 9999px;
-  background: linear-gradient(90deg, #00a8ff, #ff2faf);
-  box-shadow: 0 0 14px rgb(0 168 255 / 0.55);
+  background: linear-gradient(90deg, #00a8ff 0%, #8a2eff 48%, #ff2faf 100%);
+  box-shadow:
+    0 0 16px rgb(0 168 255 / 0.72),
+    0 0 24px rgb(255 47 175 / 0.42);
   content: "";
   transform: translateX(-50%);
 }
@@ -4925,10 +4963,21 @@ body::-webkit-scrollbar {
   height: 25px;
   place-items: center;
   border-radius: 9999px;
+  transition:
+    background 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
 .bottom-dock__item--active .bottom-dock__icon-wrap {
-  background: linear-gradient(135deg, rgb(0 168 255 / 0.22), rgb(255 47 175 / 0.18));
+  background:
+    linear-gradient(135deg, rgb(0 168 255 / 0.34), rgb(138 46 255 / 0.24) 48%, rgb(255 47 175 / 0.28)),
+    rgb(255 255 255 / 0.05);
+  box-shadow:
+    0 0 18px rgb(0 168 255 / 0.4),
+    0 0 22px rgb(255 47 175 / 0.26),
+    inset 0 0 0 1px rgb(255 255 255 / 0.12);
+  transform: translateY(-1px);
 }
 
 .bottom-dock__icon {
@@ -4948,6 +4997,24 @@ body::-webkit-scrollbar {
   white-space: nowrap;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .bottom-dock__frame::after {
+    animation: bottom-dock-ombre-sheen 7s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes bottom-dock-ombre-sheen {
+  from {
+    opacity: 0.45;
+    transform: translateX(-2%);
+  }
+
+  to {
+    opacity: 0.78;
+    transform: translateX(2%);
+  }
+}
+
 .bottom-dock__item:focus-visible {
   outline: 2px solid #00a8ff;
   outline-offset: -3px;
@@ -4960,6 +5027,10 @@ body::-webkit-scrollbar {
 
   .bottom-dock__item:active {
     transform: none;
+  }
+
+  .bottom-dock__frame::after {
+    animation: none;
   }
 }
 
