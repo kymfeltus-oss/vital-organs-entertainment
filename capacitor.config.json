@@ -1,7 +1,7 @@
 {
   "appId": "com.vitalorgansent.iancraigand300",
   "appName": "Awakening",
-  "webDir": "out",
+ "webDir": "out",
   "bundledWebRuntime": false,
   "server": {
     "url": "https://vitalorgansent.com",
