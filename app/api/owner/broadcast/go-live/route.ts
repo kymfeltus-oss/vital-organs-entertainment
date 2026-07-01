@@ -33,7 +33,8 @@ export async function POST(request: Request) {
       result.ok ? 200 : 409,
     );
   } catch (error) {
-    console.error("[owner/broadcast/go-live] POST failed:", error);
+    const detail = error instanceof Error ? error.message : "unknown";
+    console.error("[owner/broadcast/go-live] POST failed:", detail);
     return ownerJsonResponse({ error: "Go-live failed." }, 500);
   }
 }

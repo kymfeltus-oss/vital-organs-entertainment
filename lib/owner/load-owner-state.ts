@@ -9,6 +9,7 @@ export type OwnerStreamStateRow = {
   active_source: string | null;
   primary_playback_url: string | null;
   backup_playback_url: string | null;
+  primary_rtmp_ingest_url: string | null;
   publish_mode: PublishMode | null;
   publish_status: PublishStatus | null;
   playback_status: PlaybackStatus | null;
@@ -24,7 +25,7 @@ export type OwnerStreamStateRow = {
 };
 
 const SELECT_OWNER_WITH_FEEDS =
-  "id, is_live, playback_url, active_source, primary_playback_url, backup_playback_url, publish_mode, publish_status, playback_status, publish_error_message, playback_error_message, publisher_session_id, publisher_channel, concert_title, headliner_name, audio_master_presets, updated_at, updated_by";
+  "id, is_live, playback_url, active_source, primary_playback_url, backup_playback_url, primary_rtmp_ingest_url, publish_mode, publish_status, playback_status, publish_error_message, playback_error_message, publisher_session_id, publisher_channel, concert_title, headliner_name, audio_master_presets, updated_at, updated_by";
 
 const SELECT_OWNER_FULL =
   "id, is_live, playback_url, active_source, publish_mode, publish_status, playback_status, publish_error_message, playback_error_message, publisher_session_id, publisher_channel, updated_at, updated_by";
@@ -85,6 +86,8 @@ function normalizeRow(row: Record<string, unknown>): OwnerStreamStateRow {
       typeof row.primary_playback_url === "string" ? row.primary_playback_url : null,
     backup_playback_url:
       typeof row.backup_playback_url === "string" ? row.backup_playback_url : null,
+    primary_rtmp_ingest_url:
+      typeof row.primary_rtmp_ingest_url === "string" ? row.primary_rtmp_ingest_url : null,
     publish_mode: normalizePublishMode(row.publish_mode),
     publish_status: normalizePublishStatus(row.publish_status, is_live),
     playback_status: normalizePlaybackStatus(row.playback_status, is_live),
@@ -162,6 +165,7 @@ export async function updateOwnerStreamState(
       if ("active_source" in patch) legacyPatch.active_source = patch.active_source;
       if ("primary_playback_url" in patch) legacyPatch.primary_playback_url = patch.primary_playback_url;
       if ("backup_playback_url" in patch) legacyPatch.backup_playback_url = patch.backup_playback_url;
+      if ("primary_rtmp_ingest_url" in patch) legacyPatch.primary_rtmp_ingest_url = patch.primary_rtmp_ingest_url;
       if ("updated_by" in patch) legacyPatch.updated_by = patch.updated_by;
       legacyPatch.updated_at = payload.updated_at;
 

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GoLiveRequestBody, OwnerBroadcastSnapshot, PublishMode, SwitchFeedRequestBody } from "@/lib/owner/contracts";
 import { buildOwnerBroadcastSnapshot } from "@/lib/owner/build-broadcast-snapshot";
 import { emitStreamStateSync } from "@/lib/owner/broadcast-stream-sync";
+import { resolvePrimaryRtmpIngestUrl } from "@/lib/owner/broadcast-engine-fallbacks";
 import {
   resolveActiveFeedPlaybackUrl,
   resolveBackupFeedUrl,
@@ -121,6 +122,8 @@ export async function runOwnerGoLive(
   }
 
   const playbackUrl = body.mode === "browser_camera" ? row?.playback_url : primaryUrl;
+  const existingRtmpIngest = row?.primary_rtmp_ingest_url?.trim() ?? "";
+  const primaryRtmpIngestUrl = existingRtmpIngest || resolvePrimaryRtmpIngestUrl();
 
   await updateOwnerStreamState(admin, {
     publish_status: "publishing",
@@ -130,6 +133,7 @@ export async function runOwnerGoLive(
     primary_playback_url: primaryUrl,
     backup_playback_url: backupUrl,
     playback_url: playbackUrl ?? primaryUrl ?? row?.playback_url,
+    ...(primaryRtmpIngestUrl ? { primary_rtmp_ingest_url: primaryRtmpIngestUrl } : {}),
     updated_by: updatedBy,
   });
 
