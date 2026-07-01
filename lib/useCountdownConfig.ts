@@ -10,12 +10,23 @@ import {
   COUNTDOWN_CONFIG_UPDATED_EVENT,
 } from "@/lib/live/countdown-config-sync";
 import {
+  acquirePlatformChannel,
+  commitPlatformChannelSubscribe,
+  registerPlatformListener,
+  releasePlatformChannel,
+  unregisterPlatformListener,
+} from "@/lib/live/platform-channel";
+import { LIVE_STREAM_STATE_BROADCAST_EVENT } from "@/lib/live/types";
+import {
   loadLastKnownCountdown,
   saveLastKnownCountdown,
 } from "@/lib/parable/last-known-good";
 import { useParableSubsystem } from "@/lib/parable/useParableSubsystem";
 import { parableFetch } from "@/lib/parable/resilient-fetch";
 import { useBroadcastHealth } from "@/lib/parable/BroadcastHealthContext";
+import { getSupabase } from "@/lib/supabase/client";
+
+const COUNTDOWN_STREAM_SYNC_LISTENER_ID = "countdown-config-stream-sync";
 
 type UseCountdownConfigOptions = {
   initialConfig?: EventCountdownConfig;
@@ -103,43 +114,59 @@ export function useCountdownConfig(options: UseCountdownConfigOptions = {}) {
       void load(true);
     };
 
-    const onOpsSave = () => {
+    const refetch = () => {
       abortController.abort();
       abortController = new AbortController();
       void load(false);
     };
 
-    window.addEventListener(COUNTDOWN_CONFIG_UPDATED_EVENT, onOpsSave);
+    window.addEventListener(COUNTDOWN_CONFIG_UPDATED_EVENT, refetch);
+
+    // Cockpit countdown saves call emitStreamStateSync — refetch event_countdown_config immediately.
+    let supabase: ReturnType<typeof getSupabase> | null = null;
+    try {
+      supabase = getSupabase();
+      acquirePlatformChannel(supabase);
+      registerPlatformListener(COUNTDOWN_STREAM_SYNC_LISTENER_ID, (channel) =>
+        channel.on("broadcast", { event: LIVE_STREAM_STATE_BROADCAST_EVENT }, () => {
+          if (cancelled) return;
+          refetch();
+        }),
+      );
+      commitPlatformChannelSubscribe();
+    } catch {
+      // Polling fallback when Supabase client is unavailable.
+    }
 
     if (typeof window.requestIdleCallback === "function") {
       const idleId = window.requestIdleCallback(startLoad, { timeout: 1_000 });
-      const pollId = window.setInterval(() => {
-        abortController.abort();
-        abortController = new AbortController();
-        void load(false);
-      }, COUNTDOWN_CONFIG_SYNC_MS);
+      const pollId = window.setInterval(refetch, COUNTDOWN_CONFIG_SYNC_MS);
 
       return () => {
         cancelled = true;
         abortController.abort();
         window.cancelIdleCallback(idleId);
         window.clearInterval(pollId);
-        window.removeEventListener(COUNTDOWN_CONFIG_UPDATED_EVENT, onOpsSave);
+        window.removeEventListener(COUNTDOWN_CONFIG_UPDATED_EVENT, refetch);
+        if (supabase) {
+          unregisterPlatformListener(COUNTDOWN_STREAM_SYNC_LISTENER_ID);
+          releasePlatformChannel(supabase);
+        }
       };
     }
 
     startLoad();
-    const pollId = window.setInterval(() => {
-      abortController.abort();
-      abortController = new AbortController();
-      void load(false);
-    }, COUNTDOWN_CONFIG_SYNC_MS);
+    const pollId = window.setInterval(refetch, COUNTDOWN_CONFIG_SYNC_MS);
 
     return () => {
       cancelled = true;
       abortController.abort();
       window.clearInterval(pollId);
-      window.removeEventListener(COUNTDOWN_CONFIG_UPDATED_EVENT, onOpsSave);
+      window.removeEventListener(COUNTDOWN_CONFIG_UPDATED_EVENT, refetch);
+      if (supabase) {
+        unregisterPlatformListener(COUNTDOWN_STREAM_SYNC_LISTENER_ID);
+        releasePlatformChannel(supabase);
+      }
     };
   }, [
     options.initialConfig?.end_time,
