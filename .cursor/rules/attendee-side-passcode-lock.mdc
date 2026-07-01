@@ -1,17 +1,50 @@
 ---
-description: Attendee 300 Awakening zone is frozen except the live stream pipeline (passcode 4778 for all other attendee edits)
+description: Attendee zone is frozen for GitHub commits and local edits — passcode 4778 required except live stream pipeline paths
 alwaysApply: true
 ---
 
-# Attendee Side — Passcode Lock (4778) + Live Stream Carve-Out
+# Attendee Side — Git + Edit Lock (Passcode 4778)
 
-The **attendee / 300 Awakening experience is frozen**. Do not modify it unless the operator includes the approval passcode **`4778`** in the **same message** that authorizes the work.
+The **attendee / 300 Awakening experience is locked down on GitHub**. Treat passcode **`4778`** as the operator approval key for **any** attendee-side work outside the live stream carve-out.
 
-Passcode alone is not enough — the prompt must still describe what to change. Passcode + clear instruction = approval.
+Passcode alone is not enough — the prompt must still describe what to change. **Passcode + clear instruction = approval.**
 
-## Live stream carve-out (NO passcode required)
+---
 
-The following paths implement **attendee live stream delivery only** (holding → live handoff, playback, manifest, countdown sync on `/live`). Agents may edit these **without passcode 4778** when the prompt clearly targets live streaming:
+## Primary rule: no GitHub commits without 4778
+
+**Do NOT `git commit`, `git push`, or open a PR** that includes attendee-side file changes unless the operator’s message contains passcode **`4778`** in the **same message** that requests the commit/push.
+
+This applies even if you already edited files locally. **Uncommitted attendee work stays local** until the operator approves with **4778**.
+
+### Before every commit or push, check the diff
+
+1. Run `git status` / review staged paths.
+2. If **any** changed path is in the **protected attendee zone** (below) and **not** in the **live stream carve-out**, **STOP**.
+3. Do not commit or push. Tell the operator: *Attendee side is locked on GitHub. Include passcode **4778** in your message to commit/push these paths.*
+4. **Mixed commits:** If a commit would bundle production/owner changes with protected attendee changes, either **split commits** (production only, without attendee paths) or wait for **4778** before committing attendee paths.
+5. Never sneak attendee files into unrelated commits (“while I’m here”).
+
+### What may ship to GitHub without 4778
+
+- **Production / owner / ops / backend** paths (see “Explicitly NOT attendee” below).
+- **Live stream carve-out** paths only (see below) — ongoing `/live` handoff, playback, manifest, holding countdown on `/live`.
+
+### What requires 4778 before commit or push
+
+Everything in the **protected attendee zone** — auth, intro, dashboard, music, giving, seeds, merch, prayer, contact, artboards, BottomNav, shared layout tokens that affect attendee UI, etc.
+
+---
+
+## Local edit lock (same boundary as Git)
+
+Do not edit, create, delete, or refactor protected attendee files without **4778**, except live stream carve-out paths when the prompt clearly targets live streaming.
+
+---
+
+## Live stream carve-out (no 4778 for edits or commits)
+
+Only these paths may be changed and **committed/pushed without 4778** when the task is clearly live-stream delivery:
 
 ### Routes
 
@@ -19,10 +52,10 @@ The following paths implement **attendee live stream delivery only** (holding �
 - `app/dashboard/live/**`
 - `app/experience/live/**`
 
-### UI (live stream + holding handoff)
+### UI (live stream + holding handoff on `/live`)
 
 - `components/experience/live/**`
-- `components/experience/holding-room/**` — pre-live countdown on `/live` only; do not use this carve-out for unrelated attendee tabs
+- `components/experience/holding-room/**`
 
 ### APIs (attendee live read paths)
 
@@ -30,7 +63,7 @@ The following paths implement **attendee live stream delivery only** (holding �
 - `app/api/stream/manifest/**`
 - `app/api/countdown/route.ts`
 
-### Shared live-stream hooks/libs (narrow — live handoff only)
+### Shared live-stream libs (narrow)
 
 - `lib/useLiveStreamState.ts`
 - `lib/useCountdownConfig.ts`
@@ -40,64 +73,55 @@ The following paths implement **attendee live stream delivery only** (holding �
 - `lib/live/fetch-countdown-config.ts`
 - `lib/live/resolve-manifest-playback.ts`
 - `lib/live/platform-channel.ts`
-- `lib/live/types.ts` — only when change is required for live stream sync (e.g. broadcast event names)
+- `lib/live/types.ts` — only when required for live stream sync
 
-**Carve-out boundary:** Do not expand into chat, seeds, giving, music, auth, dashboard home, intro, or general `components/experience/**` outside the folders above without passcode **4778**.
+**Do not expand** this list into chat, seeds, giving, music, auth, or general `components/experience/**` without **4778**.
 
-## If passcode is missing (protected attendee zone)
+---
 
-1. **STOP** — do not edit, create, delete, or refactor any attendee-scoped file outside the live stream carve-out.
-2. List every file/path the task would touch.
-3. Tell the operator: *Attendee side is locked. Reply with passcode **4778** and confirm the change to proceed.*
-4. No "while I'm here" fixes, no inferred attendee tweaks from production/ops tasks.
+## Protected attendee zone (4778 required for edit + commit + push)
 
-## Attendee zone (protected — requires 4778)
+### Routes
 
-### Routes (attendee-facing)
+`/`, `/intro`, `/attendee-dashboard`, `/experience` (except `/experience/live/**`), `/dashboard`, `/dashboard/vital-seed`, `/dashboard/merch`, `/dashboard/countdown`, `/login`, `/create-account`, `/email-gate`, `/forgot-password`, `/reset-password`, `/auth`, `/music`, `/giving`, `/experience/giving`, `/buy-seeds`, `/prayer`, `/contact-us`, `/seeds`, `/story`, `/exclusive`, `/updates`, `/countdown` (viewer/embed).
 
-`/`, `/intro`, `/attendee-dashboard`, `/experience`, `/dashboard`, `/dashboard/vital-seed`, `/dashboard/merch`, `/dashboard/countdown`, `/login`, `/create-account`, `/email-gate`, `/forgot-password`, `/reset-password`, `/auth`, `/music`, `/giving`, `/experience/giving`, `/buy-seeds`, `/prayer`, `/contact-us`, `/seeds`, `/story`, `/exclusive`, `/updates`, `/countdown` (viewer/embed — not `/countdown-editor`).
-
-**Note:** `/live`, `/dashboard/live`, and `/experience/live/**` are **not** in this list — see live stream carve-out above.
-
-### Directories (attendee code — requires 4778)
+### Directories
 
 | Path | Scope |
 |------|--------|
-| `app/page.tsx`, `app/intro/**`, `app/attendee-dashboard/**`, `app/experience/**` (except `app/experience/live/**`) | Intro, home, tabs, non-live experience |
-| `app/dashboard/page.tsx`, `app/dashboard/vital-seed/**`, `app/dashboard/merch/**`, `app/dashboard/countdown/**` | Attendee dashboard segments |
-| `app/login/**`, `app/create-account/**`, `app/email-gate/**`, `app/forgot-password/**`, `app/reset-password/**`, `app/auth/**` | Auth & gates |
-| `app/music/**`, `app/giving/**`, `app/buy-seeds/**`, `app/prayer/**`, `app/contact-us/**`, `app/seeds/**` | Bottom-nav tab pages |
-| `components/experience/**` (except `live/**` and `holding-room/**`) | Attendee UI |
-| `components/live/**`, `components/vital-seed/**`, `components/buy-seeds/**` | Attendee UI |
-| `components/BottomNav/**`, `components/AppShell/**`, `components/RootLayoutShell.tsx` | Attendee navigation & shells |
-| `lib/experience/**`, `lib/live/**` (except carve-out files listed above), `lib/access.ts`, `lib/vital-seed/**`, `lib/seeds/**`, `lib/design-tokens.ts` | Attendee logic & tokens |
-| `public/images/**` (attendee PNG/video artboards) | Locked artboard assets |
+| `app/page.tsx`, `app/intro/**`, `app/attendee-dashboard/**`, `app/experience/**` (except `live/**`) | Intro, home, tabs |
+| `app/dashboard/page.tsx`, `app/dashboard/vital-seed/**`, `app/dashboard/merch/**`, `app/dashboard/countdown/**` | Dashboard segments |
+| `app/login/**`, `app/create-account/**`, `app/email-gate/**`, `app/forgot-password/**`, `app/reset-password/**`, `app/auth/**` | Auth |
+| `app/music/**`, `app/giving/**`, `app/buy-seeds/**`, `app/prayer/**`, `app/contact-us/**`, `app/seeds/**` | Tab pages |
+| `components/experience/**` (except `live/**`, `holding-room/**`) | Attendee UI |
+| `components/live/**`, `components/vital-seed/**`, `components/buy-seeds/**`, `components/auth/**` | Attendee UI |
+| `components/BottomNav/**`, `components/AppShell/**`, `components/RootLayoutShell.tsx` | Nav & shells |
+| `lib/experience/**`, `lib/live/**` (except carve-out files), `lib/access.ts`, `lib/vital-seed/**`, `lib/seeds/**`, `lib/design-tokens.ts` | Logic & tokens |
+| `public/images/**` (attendee artboards) | Assets |
 
-Also honor existing file-specific locks: `home-dashboard-locked`, `vital-seed-giving-locked`, `music-page-locked`, `mobile-artboard-tabs-locked`, `dashboard-mobile-track-locked`.
+Also honor: `home-dashboard-locked`, `vital-seed-giving-locked`, `music-page-locked`, `mobile-artboard-tabs-locked`, `dashboard-mobile-track-locked`.
 
-## Shared files (extra caution)
-
-These affect attendee **and** other surfaces. Editing them requires passcode **4778** if the change impacts attendee UI, fonts, colors, layout, nav, or artboard sizing — **even if the task mentions live stream**:
+### Shared files (4778 if change affects attendee UI)
 
 - `app/layout.tsx`, `app/globals.css`, `lib/routes.ts`, `lib/responsive.ts`
 
-Prefer production-scoped changes (`lib/parable/**`, `styles/parable-production.css`, `components/parable/**`, `lib/owner/**`, `backend/**`) when the task is production-only.
+---
 
-## Explicitly NOT attendee (no passcode required)
-
-Production / operator / crew tooling:
+## Explicitly NOT attendee (commit/push freely)
 
 - `app/ops/**`, `app/production/**`, `app/production-dashboard/**`, `app/owner/**`
 - `app/dashboard/broadcast/**`, `app/dashboard/todays-service/**`, `app/dashboard/incidents/**`
 - `components/ops/**`, `components/production/**`, `components/owner/**`, `components/todays-service/**`, `components/incidents/**`, `components/broadcast/**`, `components/parable/**`
 - `lib/ops/**`, `lib/production/**`, `lib/todays-service/**`, `lib/incidents/**`, `lib/broadcast/**`, `lib/owner/**`, `backend/**`
 
+---
+
 ## Examples
 
-| Situation | Action |
-|-----------|--------|
-| "Fix LivePageRouterClient dual trigger" | OK — live stream carve-out |
-| "Sync holding countdown with cockpit" | OK — `holding-room/**`, `useCountdownConfig.ts` carve-out |
-| "Update giving page checkout" | **STOP** — need passcode 4778 |
-| "Change root font for Parable production" | Use production-scoped wrapper; do not change attendee fonts without 4778 |
-| User message includes `4778` + "update music page hero" | Proceed on listed music files only |
+| Situation | Commit to GitHub? |
+|-----------|-------------------|
+| LivePageRouterClient / `/live` handoff fix | OK — live stream carve-out |
+| Cockpit-only or `lib/owner/**` change | OK — production scope |
+| CreateAccountClient signup UX | **STOP** until message includes **4778** |
+| “Commit everything” with auth + live mixed | Split or require **4778** for auth paths |
+| User: `4778` + “update music page hero, commit and push” | OK for listed music files only |
