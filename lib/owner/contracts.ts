@@ -93,6 +93,8 @@ export type OwnerPublisherSession = {
 export type GoLiveRequestBody = {
   mode: Exclude<PublishMode, "none">;
   confirm?: boolean;
+  /** Skip hard preflight failures — master override from production cockpit only. */
+  masterOverride?: boolean;
 };
 
 export type SwitchFeedRequestBody = {

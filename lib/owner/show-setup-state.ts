@@ -4,6 +4,11 @@ import {
   validateCountdownConfigInput,
   type EventCountdownConfig,
 } from "@/lib/live/countdown-config";
+import {
+  DEFAULT_SCHEDULE_TIMEZONE,
+  resolveScheduleTimezone,
+  type ScheduleTimezone,
+} from "@/lib/live/schedule-timezone";
 import { loadAdminCountdownConfig, saveCountdownConfig } from "@/lib/live/fetch-countdown-config";
 import { resolveExternalIngestCredentials } from "@/lib/owner/resolve-external-ingest-credentials";
 import { resolveIvsIngestCredentials } from "@/lib/owner/resolve-ivs-config";
@@ -35,6 +40,7 @@ export type ShowSetupState = {
   eventLocation: string;
   livestreamAvailability: string;
   targetDateTime: string;
+  scheduleTimezone: ScheduleTimezone;
   gateControl: "LOCKED" | "EARLY_ACCESS";
   primaryIngestEndpoint: string;
   streamKey: string;
@@ -233,6 +239,7 @@ export async function loadShowSetupState(): Promise<ShowSetupState> {
     eventLocation: "New Orleans, LA",
     livestreamAvailability: "Available worldwide",
     targetDateTime: countdownConfig.start_time,
+    scheduleTimezone: resolveScheduleTimezone(countdownConfig.schedule_timezone),
     gateControl: "EARLY_ACCESS",
     primaryIngestEndpoint: primary.rtmpUrl ?? backup.ingestServer ?? "",
     streamKey: primary.streamKey ?? backup.streamKey ?? "",
@@ -276,6 +283,9 @@ export async function saveShowSetupState(
         100,
       ),
       targetDateTime: cleanTargetDateTime(input.targetDateTime, current.targetDateTime),
+      scheduleTimezone: resolveScheduleTimezone(
+        input.schedule_timezone ?? input.scheduleTimezone ?? current.scheduleTimezone,
+      ),
       gateControl: input.gateControl === "LOCKED" ? "LOCKED" : "EARLY_ACCESS",
     },
     input,
@@ -289,6 +299,7 @@ export async function saveShowSetupState(
     subtitle: next.presenterName,
     start_time: next.targetDateTime,
     end_time: buildEndTime(next.targetDateTime, next.programFlow),
+    schedule_timezone: next.scheduleTimezone ?? DEFAULT_SCHEDULE_TIMEZONE,
     is_active: true,
   };
   const validation = validateCountdownConfigInput(countdownInput);

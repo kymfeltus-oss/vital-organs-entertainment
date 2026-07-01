@@ -1,5 +1,6 @@
 import { requireOwnerUser } from "@/lib/owner/auth";
 import { ownerAuthFailureResponse, ownerJsonResponse, isOwnerAuthed } from "@/lib/owner/api-response";
+import { emitStreamStateSync } from "@/lib/owner/broadcast-stream-sync";
 import { loadShowSetupState, saveShowSetupState } from "@/lib/owner/show-setup-state";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +30,7 @@ export async function PATCH(request: Request) {
 
     const targetDateTime = new Date(currentTime + offsetSeconds * 1_000).toISOString();
     const state = await saveShowSetupState({ ...current, targetDateTime }, auth.email);
+    await emitStreamStateSync();
     const minutes = Math.abs(offsetSeconds / 60);
     const direction = offsetSeconds >= 0 ? "advanced" : "reduced";
     const minuteLabel = Number.isInteger(minutes) ? String(minutes) : minutes.toFixed(1);

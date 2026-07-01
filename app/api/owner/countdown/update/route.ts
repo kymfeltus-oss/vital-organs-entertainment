@@ -1,14 +1,15 @@
 import { NextRequest } from "next/server";
 import { consumeRateLimit, resolveClientIp } from "@/lib/auth/rate-limit";
+import { resolveScheduleTimezone } from "@/lib/live/schedule-timezone";
 import { requireOwnerUser } from "@/lib/owner/auth";
 import { ownerAuthFailureResponse, ownerJsonResponse, isOwnerAuthed } from "@/lib/owner/api-response";
 import { emitStreamStateSync } from "@/lib/owner/broadcast-stream-sync";
-import { saveShowSetupState } from "@/lib/owner/show-setup-state";
+import { loadShowSetupState, saveShowSetupState } from "@/lib/owner/show-setup-state";
 
 export const dynamic = "force-dynamic";
 
-function cleanText(value: unknown, limit = 120): string | null {
-  if (typeof value !== "string" || !value.trim()) return null;
+function cleanText(value: unknown, limit = 120): string | undefined {
+  if (typeof value !== "string" || !value.trim()) return undefined;
   return value.trim().replace(/<[^>]*>/g, "").slice(0, limit);
 }
 
@@ -40,24 +41,31 @@ async function handleCountdownUpdate(request: Request) {
       pastor?: unknown;
       targetDateTime?: unknown;
       datetime?: unknown;
+      schedule_timezone?: unknown;
+      scheduleTimezone?: unknown;
     };
 
-    const showTitle = cleanText(body.title ?? body.eventTitle);
-    const presenterName = cleanText(body.presenterName ?? body.pastor);
     const targetDateTime = parseTargetDateTime(body.targetDateTime ?? body.datetime);
-
-    if (!showTitle || !presenterName || !targetDateTime) {
+    if (!targetDateTime) {
       return ownerJsonResponse(
-        { error: "Invalid body. Expected title, presenterName, and targetDateTime." },
+        { error: "Show date and time are required." },
         400,
       );
     }
 
+    const current = await loadShowSetupState();
+    const showTitle = cleanText(body.title ?? body.eventTitle);
+    const presenterName = cleanText(body.presenterName ?? body.pastor);
+    const scheduleTimezone = resolveScheduleTimezone(
+      body.schedule_timezone ?? body.scheduleTimezone ?? current.scheduleTimezone,
+    );
+
     const state = await saveShowSetupState(
       {
-        showTitle,
-        presenterName,
+        ...(showTitle ? { showTitle } : {}),
+        ...(presenterName ? { presenterName } : {}),
         targetDateTime,
+        schedule_timezone: scheduleTimezone,
       },
       auth.email,
     );
@@ -67,7 +75,7 @@ async function handleCountdownUpdate(request: Request) {
     return ownerJsonResponse({
       ok: true,
       state,
-      message: "Event countdown schedule updated.",
+      message: "Event countdown schedule saved.",
     });
   } catch (error) {
     console.error("[owner/countdown/update] failed:", error);

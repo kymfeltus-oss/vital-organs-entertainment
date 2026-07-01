@@ -289,6 +289,7 @@ export function parseGoLiveBody(body: unknown): GoLiveRequestBody | null {
   return {
     mode,
     confirm: record.confirm === true,
+    masterOverride: record.masterOverride === true,
   };
 }
 
