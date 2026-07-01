@@ -6,6 +6,8 @@ import { AWAKENING_AUTH_SIGNUP_PANELS } from "@/lib/experience/awakening-auth-as
 import { authRectStyle } from "@/lib/experience/auth-layout-slots";
 import {
   applyFullNameInput,
+  CREATE_ACCOUNT_PRIVACY_URL,
+  CREATE_ACCOUNT_TERMS_URL,
   formatFullName,
   type CreateAccountFormValues,
 } from "@/lib/auth/create-account-validation";
@@ -201,7 +203,28 @@ export default function CreateAccountMobileForm({
           required
           className="auth-attendee-checkbox"
         />
-        <span className="sr-only">Accept terms of service and privacy policy</span>
+        <span className="sr-only">Accept Terms of Service ({CREATE_ACCOUNT_TERMS_URL})</span>
+      </label>
+
+      <label
+        className="auth-attendee-hit auth-attendee-remember auth-attendee-interactive"
+        style={authRectStyle({
+          left: panels.termsCheckbox.left,
+          top: panels.termsCheckbox.top + 3.1,
+          width: panels.termsCheckbox.width,
+          height: panels.termsCheckbox.height,
+        })}
+      >
+        <input
+          type="checkbox"
+          checked={values.acceptedPrivacy}
+          disabled={isSubmitting}
+          onChange={(event) => onFieldChange("acceptedPrivacy", event.target.checked)}
+          onBlur={onBlur}
+          required
+          className="auth-attendee-checkbox"
+        />
+        <span className="sr-only">Accept Privacy Policy ({CREATE_ACCOUNT_PRIVACY_URL})</span>
       </label>
 
       <button

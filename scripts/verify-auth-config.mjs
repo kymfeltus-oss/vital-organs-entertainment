@@ -89,6 +89,46 @@ if (!serviceKey || serviceKey.includes("your-service")) {
 
 ok(`App URL: ${appUrl}`);
 
+const turnstileSiteKey = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
+const turnstileSecret = env.TURNSTILE_SECRET_KEY ?? "";
+const upstashUrl = env.UPSTASH_REDIS_REST_URL ?? "";
+const upstashToken = env.UPSTASH_REDIS_REST_TOKEN ?? "";
+const termsUrl = env.NEXT_PUBLIC_TERMS_URL ?? "";
+const privacyUrl = env.NEXT_PUBLIC_PRIVACY_URL ?? "";
+
+console.log("\nCreate Account security (Phase 1):\n");
+
+if (!turnstileSiteKey || !turnstileSecret) {
+  warn("Turnstile keys missing — CAPTCHA skipped locally; required in production");
+} else {
+  ok("Cloudflare Turnstile keys present");
+}
+
+if (!upstashUrl || !upstashToken) {
+  warn("Upstash Redis REST credentials missing — signup rate limits use in-memory fallback");
+} else {
+  ok("Upstash Redis REST credentials present");
+}
+
+if (!termsUrl) {
+  warn("NEXT_PUBLIC_TERMS_URL missing — /contact-us fallback used on signup form");
+} else {
+  ok(`Terms URL: ${termsUrl}`);
+}
+
+if (!privacyUrl) {
+  warn("NEXT_PUBLIC_PRIVACY_URL missing — /contact-us fallback used on signup form");
+} else {
+  ok(`Privacy URL: ${privacyUrl}`);
+}
+
+console.log("\nSupabase → Authentication → Signup security checklist:\n");
+console.log("  [ ] Enable email confirmations for new accounts");
+console.log("  [ ] Minimum password length = 10 with complexity (letters + numbers)");
+console.log("  [ ] Confirmation / OTP expiry = 15–60 minutes");
+console.log("  [ ] Password hashing remains Supabase-managed (do not custom-hash in app code)");
+console.log("\nSignup API: POST /api/auth/signup (legacy POST /api/auth action=signup returns 410)");
+
 const redirectUrls = [
   `${appUrl}/auth/callback`,
   `${appUrl}/auth/callback?next=/attendee-dashboard`,

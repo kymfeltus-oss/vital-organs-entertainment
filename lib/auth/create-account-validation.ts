@@ -1,14 +1,28 @@
 import { isAllowedAvatarMimeType } from "@/lib/profile/avatar-storage";
 import { isValidUsStateCode } from "@/lib/auth/us-states";
 import {
+  evaluatePasswordStrength,
+  PASSWORD_MIN_LENGTH,
+} from "@/lib/auth/password-policy";
+import {
   formatPhoneDisplay,
   isValidEmail,
   isValidPhone,
   normalizePhoneDigits,
 } from "@/lib/auth/validation";
 
-export const CREATE_ACCOUNT_MIN_PASSWORD_LENGTH = 8;
+/** @deprecated Import PASSWORD_MIN_LENGTH from password-policy — kept for compatibility. */
+export const CREATE_ACCOUNT_MIN_PASSWORD_LENGTH = PASSWORD_MIN_LENGTH;
+
+export { PASSWORD_MIN_LENGTH } from "@/lib/auth/password-policy";
+
 export const CREATE_ACCOUNT_AVATAR_MAX_BYTES = 5 * 1024 * 1024;
+
+export const CREATE_ACCOUNT_TERMS_URL =
+  process.env.NEXT_PUBLIC_TERMS_URL?.trim() || "/contact-us";
+
+export const CREATE_ACCOUNT_PRIVACY_URL =
+  process.env.NEXT_PUBLIC_PRIVACY_URL?.trim() || "/contact-us";
 
 export type CreateAccountFormValues = {
   firstName: string;
@@ -20,6 +34,7 @@ export type CreateAccountFormValues = {
   password: string;
   confirmPassword: string;
   acceptedTerms: boolean;
+  acceptedPrivacy: boolean;
   avatarFile: File | null;
 };
 
@@ -34,6 +49,7 @@ export type CreateAccountFieldErrors = Partial<
     | "password"
     | "confirmPassword"
     | "acceptedTerms"
+    | "acceptedPrivacy"
     | "avatarFile"
     | "form",
     string
@@ -79,8 +95,11 @@ export function validateCreateAccountForm(
 
   if (!values.password) {
     errors.password = "Password is required.";
-  } else if (values.password.length < CREATE_ACCOUNT_MIN_PASSWORD_LENGTH) {
-    errors.password = `Password must be at least ${CREATE_ACCOUNT_MIN_PASSWORD_LENGTH} characters.`;
+  } else {
+    const strength = evaluatePasswordStrength(values.password);
+    if (!strength.isValid) {
+      errors.password = strength.message ?? "Password does not meet security requirements.";
+    }
   }
 
   if (!values.confirmPassword) {
@@ -90,7 +109,11 @@ export function validateCreateAccountForm(
   }
 
   if (!values.acceptedTerms) {
-    errors.acceptedTerms = "You must accept the terms to create an account.";
+    errors.acceptedTerms = "You must accept the Terms of Service.";
+  }
+
+  if (!values.acceptedPrivacy) {
+    errors.acceptedPrivacy = "You must accept the Privacy Policy.";
   }
 
   if (values.avatarFile) {
@@ -131,7 +154,6 @@ export function formatCreateAccountPhoneInput(value: string): string {
 
 export function serializeCreateAccountPayload(values: CreateAccountFormValues) {
   return {
-    action: "signup" as const,
     firstName: normalizeName(values.firstName),
     lastName: normalizeName(values.lastName),
     email: values.email.trim().toLowerCase(),
@@ -140,5 +162,7 @@ export function serializeCreateAccountPayload(values: CreateAccountFormValues) {
     state: values.state.trim().toUpperCase(),
     password: values.password,
     confirmPassword: values.confirmPassword,
+    acceptedTerms: values.acceptedTerms,
+    acceptedPrivacy: values.acceptedPrivacy,
   };
 }

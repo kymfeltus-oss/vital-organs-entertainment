@@ -16,7 +16,13 @@ import {
   User,
   X,
 } from "lucide-react";
+import PasswordStrengthMeter from "@/components/auth/PasswordStrengthMeter";
+import TurnstileWidget from "@/components/auth/TurnstileWidget";
 import {
+  CREATE_ACCOUNT_PRIVACY_URL,
+  CREATE_ACCOUNT_TERMS_URL,
+  PASSWORD_MIN_LENGTH,
+  type CreateAccountFieldErrors,
   type CreateAccountFormValues,
 } from "@/lib/auth/create-account-validation";
 import { US_STATES } from "@/lib/auth/us-states";
@@ -30,6 +36,7 @@ type AttendeeAuthCreateAccountPlateProps = {
   showConfirmPassword: boolean;
   isSubmitting: boolean;
   canSubmit: boolean;
+  fieldErrors?: CreateAccountFieldErrors;
   formError?: string | null;
   onFieldChange: <K extends keyof CreateAccountFormValues>(
     key: K,
@@ -39,6 +46,7 @@ type AttendeeAuthCreateAccountPlateProps = {
   onToggleShowPassword: () => void;
   onToggleShowConfirmPassword: () => void;
   onAvatarPick: () => void;
+  onTurnstileTokenChange: (token: string | null) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
 };
 
@@ -56,12 +64,14 @@ export default function AttendeeAuthCreateAccountPlate({
   showConfirmPassword,
   isSubmitting,
   canSubmit,
+  fieldErrors = {},
   formError,
   onFieldChange,
   onBlur,
   onToggleShowPassword,
   onToggleShowConfirmPassword,
   onAvatarPick,
+  onTurnstileTokenChange,
   onSubmit,
 }: AttendeeAuthCreateAccountPlateProps) {
   return (
@@ -286,13 +296,14 @@ export default function AttendeeAuthCreateAccountPlate({
                   type={showPassword ? "text" : "password"}
                   required
                   autoComplete="new-password"
-                  minLength={8}
+                  minLength={PASSWORD_MIN_LENGTH}
                   disabled={isSubmitting}
                   value={values.password}
                   onChange={(event) => onFieldChange("password", event.target.value)}
                   onBlur={onBlur}
-                  placeholder="At least 8 characters"
+                  placeholder={`At least ${PASSWORD_MIN_LENGTH} characters`}
                   className={`${inputClassName} pl-10 pr-11`}
+                  aria-invalid={Boolean(fieldErrors.password)}
                 />
                 <button
                   type="button"
@@ -308,6 +319,7 @@ export default function AttendeeAuthCreateAccountPlate({
                   )}
                 </button>
               </div>
+              <PasswordStrengthMeter password={values.password} showFeedback={values.password.length > 0} />
             </label>
 
             <label className="block">
@@ -353,11 +365,48 @@ export default function AttendeeAuthCreateAccountPlate({
                 onBlur={onBlur}
                 required
                 className="auth-login-page__checkbox mt-0.5 size-4 shrink-0 rounded border-brand-border bg-brand-panel accent-brand-blue"
+                aria-invalid={Boolean(fieldErrors.acceptedTerms)}
               />
               <span className="font-body text-xs leading-relaxed text-brand-muted">
-                I agree to the Terms of Service and Privacy Policy.
+                I agree to the{" "}
+                <Link
+                  href={CREATE_ACCOUNT_TERMS_URL}
+                  className="text-brand-blue underline-offset-2 hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Terms of Service
+                </Link>
+                .
               </span>
             </label>
+
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={values.acceptedPrivacy}
+                disabled={isSubmitting}
+                onChange={(event) => onFieldChange("acceptedPrivacy", event.target.checked)}
+                onBlur={onBlur}
+                required
+                className="auth-login-page__checkbox mt-0.5 size-4 shrink-0 rounded border-brand-border bg-brand-panel accent-brand-blue"
+                aria-invalid={Boolean(fieldErrors.acceptedPrivacy)}
+              />
+              <span className="font-body text-xs leading-relaxed text-brand-muted">
+                I agree to the{" "}
+                <Link
+                  href={CREATE_ACCOUNT_PRIVACY_URL}
+                  className="text-brand-blue underline-offset-2 hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Privacy Policy
+                </Link>
+                .
+              </span>
+            </label>
+
+            <TurnstileWidget onTokenChange={onTurnstileTokenChange} />
 
             {formError ? (
               <p

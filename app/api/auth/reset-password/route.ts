@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { CREATE_ACCOUNT_MIN_PASSWORD_LENGTH } from "@/lib/auth/create-account-validation";
+import { evaluatePasswordStrength } from "@/lib/auth/password-policy";
 import { createRouteHandlerSupabaseClient } from "@/lib/supabase/route-handler-client";
 
 type ResetPasswordBody = {
@@ -12,11 +12,12 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as ResetPasswordBody;
     const password = body.password ?? "";
     const confirmPassword = body.confirmPassword ?? password;
+    const strength = evaluatePasswordStrength(password);
 
-    if (password.length < CREATE_ACCOUNT_MIN_PASSWORD_LENGTH) {
+    if (!strength.isValid) {
       return NextResponse.json(
         {
-          error: `Password must be at least ${CREATE_ACCOUNT_MIN_PASSWORD_LENGTH} characters.`,
+          error: strength.message ?? "Password does not meet security requirements.",
         },
         { status: 400 },
       );

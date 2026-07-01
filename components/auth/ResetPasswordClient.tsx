@@ -4,7 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Eye, EyeOff, Loader2, Lock } from "lucide-react";
 import { useEffect, useState } from "react";
-import { CREATE_ACCOUNT_MIN_PASSWORD_LENGTH } from "@/lib/auth/create-account-validation";
+import PasswordStrengthMeter from "@/components/auth/PasswordStrengthMeter";
+import { evaluatePasswordStrength, PASSWORD_MIN_LENGTH } from "@/lib/auth/password-policy";
 import { AUTH_NEXT_COOKIE } from "@/lib/auth/routing";
 import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
@@ -83,10 +84,9 @@ export default function ResetPasswordClient({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (password.length < CREATE_ACCOUNT_MIN_PASSWORD_LENGTH) {
-      setError(
-        `Password must be at least ${CREATE_ACCOUNT_MIN_PASSWORD_LENGTH} characters.`,
-      );
+    const strength = evaluatePasswordStrength(password);
+    if (!strength.isValid) {
+      setError(strength.message ?? "Password does not meet security requirements.");
       return;
     }
 
@@ -193,12 +193,12 @@ export default function ResetPasswordClient({
                     <input
                       type={showPassword ? "text" : "password"}
                       required
-                      minLength={CREATE_ACCOUNT_MIN_PASSWORD_LENGTH}
+                      minLength={PASSWORD_MIN_LENGTH}
                       autoComplete="new-password"
                       disabled={isSubmitting}
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
-                      placeholder="At least 8 characters"
+                      placeholder={`At least ${PASSWORD_MIN_LENGTH} characters`}
                       className={`${inputClassName} pl-10 pr-11`}
                     />
                     <button
@@ -215,6 +215,7 @@ export default function ResetPasswordClient({
                       )}
                     </button>
                   </div>
+                  <PasswordStrengthMeter password={password} showFeedback={password.length > 0} />
                 </label>
 
                 <label className="block">
@@ -229,7 +230,7 @@ export default function ResetPasswordClient({
                     <input
                       type={showConfirmPassword ? "text" : "password"}
                       required
-                      minLength={CREATE_ACCOUNT_MIN_PASSWORD_LENGTH}
+                      minLength={PASSWORD_MIN_LENGTH}
                       autoComplete="new-password"
                       disabled={isSubmitting}
                       value={confirmPassword}
