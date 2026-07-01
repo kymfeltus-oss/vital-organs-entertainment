@@ -42,18 +42,6 @@ type CountdownResponse = {
   error?: string;
 };
 
-function countdownParts(targetIso: string, nowMs: number) {
-  const remaining = Math.max(0, new Date(targetIso).getTime() - nowMs);
-  const totalSeconds = Math.floor(remaining / 1_000);
-  return {
-    days: Math.floor(totalSeconds / 86_400),
-    hours: Math.floor((totalSeconds % 86_400) / 3600),
-    minutes: Math.floor((totalSeconds % 3600) / 60),
-    seconds: totalSeconds % 60,
-    isComplete: remaining === 0,
-  };
-}
-
 function buildPreviewEndIso(startIso: string): string {
   const startMs = new Date(startIso).getTime();
   if (Number.isNaN(startMs)) return DEFAULT_COUNTDOWN_CONFIG.end_time;
@@ -71,7 +59,6 @@ export default function OwnerCountdownControlClient() {
   const [dateTimeLocal, setDateTimeLocal] = useState(
     isoToScheduleDatetimeLocal(EVENT_START_ISO, EVENT_TIMEZONE),
   );
-  const [nowMs, setNowMs] = useState(() => Date.now());
   const [previewReady] = useState(true);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
@@ -82,7 +69,6 @@ export default function OwnerCountdownControlClient() {
     () => scheduleDatetimeLocalToIso(dateTimeLocal, timezone) ?? EVENT_START_ISO,
     [dateTimeLocal, timezone],
   );
-  const countdown = useMemo(() => countdownParts(targetIso, nowMs), [nowMs, targetIso]);
   const loadSetup = useCallback(async () => {
     setLoading(true);
     try {
@@ -121,11 +107,6 @@ export default function OwnerCountdownControlClient() {
   useEffect(() => {
     queueMicrotask(() => void loadSetup());
   }, [loadSetup]);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setNowMs(Date.now()), 1_000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   const saveSchedule = useCallback(async () => {
     if (!setup || pending) return;
@@ -409,10 +390,7 @@ export default function OwnerCountdownControlClient() {
 
                     <div className="absolute inset-0">
                       {previewReady ? (
-                        <HoldingRoomCountdownOverlay
-                          initialCountdownConfig={simulatedConfig}
-                          initialCountdown={countdown}
-                        />
+                        <HoldingRoomCountdownOverlay initialCountdownConfig={simulatedConfig} />
                       ) : null}
                     </div>
                   </div>

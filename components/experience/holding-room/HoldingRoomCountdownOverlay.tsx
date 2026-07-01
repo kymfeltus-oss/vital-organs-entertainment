@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   COUNTDOWN_STARTING_SHORTLY_LABEL,
   getCountdownAriaLabel,
@@ -88,10 +88,16 @@ export default function HoldingRoomCountdownOverlay({
     [countdown],
   );
 
-  const ariaLabel = useMemo(
-    () => getCountdownAriaLabel(countdown, eventPhase, { isLoading, hasStartTime }),
-    [countdown, eventPhase, hasStartTime, isLoading],
-  );
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const ariaLabel = useMemo(() => {
+    const snapshot = !mounted && initialCountdown ? initialCountdown : countdown;
+    return getCountdownAriaLabel(snapshot, eventPhase, { isLoading, hasStartTime });
+  }, [countdown, eventPhase, hasStartTime, initialCountdown, isLoading, mounted]);
 
   if (!hasStartTime) {
     return null;
@@ -102,6 +108,7 @@ export default function HoldingRoomCountdownOverlay({
       className="holding-room-countdown"
       aria-live="polite"
       aria-label={ariaLabel}
+      suppressHydrationWarning
     >
       {startingShortly ? (
         <div

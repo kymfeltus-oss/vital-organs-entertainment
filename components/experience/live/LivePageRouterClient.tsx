@@ -42,19 +42,23 @@ export default function LivePageRouterClient({
     syncedCountdownConfig.end_time,
   );
 
-  // Trigger B: cockpit go-live (stream-state-sync + /api/access/live)
-  const { isLive } = useLiveStreamState({ enabled: !forceHoldingRoom });
+  // Trigger B: cockpit go-live — only sync broadcast flag after the scheduled window opens
+  const preShowWaiting = schedulePhase === "waiting";
+  const { isLive } = useLiveStreamState({
+    enabled: !forceHoldingRoom && !preShowWaiting,
+  });
 
   useEffect(() => {
     if (forceHoldingRoom) return;
 
-    const shouldShowLiveStream = isLive || schedulePhase === "live";
+    // Keep holding + countdown visible while schedulePhase is "waiting" (ignore stale is_live).
+    const shouldShowLiveStream = schedulePhase === "live" || (isLive && !preShowWaiting);
 
     if (shouldShowLiveStream && currentPhase !== "live") {
       setCurrentPhase("live");
       router.refresh();
     }
-  }, [currentPhase, forceHoldingRoom, isLive, schedulePhase, router]);
+  }, [currentPhase, forceHoldingRoom, isLive, preShowWaiting, schedulePhase, router]);
 
   if (currentPhase === "live") {
     return <LiveDataLoader initialProfile={initialProfile} />;

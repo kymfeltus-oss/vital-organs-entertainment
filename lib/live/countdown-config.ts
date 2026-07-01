@@ -243,6 +243,7 @@ export function mapCountdownConfigRow(row: CountdownConfigRow): EventCountdownCo
 
 export function toPublicCountdownConfig(config: EventCountdownConfig): EventCountdownConfig {
   return {
+    id: config.id,
     event_id: config.event_id,
     headline: config.headline,
     eyebrow: config.eyebrow,

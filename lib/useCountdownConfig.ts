@@ -85,7 +85,10 @@ export function useCountdownConfig(options: UseCountdownConfigOptions = {}) {
         const data = (await response.json()) as EventCountdownConfig;
         if (cancelled) return;
 
-        setConfig(data);
+        setConfig((previous) => ({
+          ...data,
+          id: data.id ?? previous.id ?? initialConfigRef.current?.id,
+        }));
         setUsingLocalFallback(false);
         saveLastKnownCountdown(data);
         persistCountdownConfigRef.current(data);
