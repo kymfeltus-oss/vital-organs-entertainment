@@ -1,4 +1,8 @@
 import type { User } from "@supabase/supabase-js";
+import {
+  DEFAULT_ATTENDEE_UI_PHASE,
+  type AttendeeUiPhase,
+} from "@/lib/live/attendee-ui-phase";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
 export const LIVE_PASS_PRODUCT_ID = "live-pass";
@@ -23,6 +27,7 @@ export type LiveAccessEvaluation = {
   showStreamPaywall: boolean;
   showFullLockdown: boolean;
   streamIsLive: boolean;
+  attendeeUiPhase: AttendeeUiPhase;
   playbackUrl: string;
   publishMode: LivePublishMode;
   publisherChannel: string | null;
@@ -98,6 +103,7 @@ export function evaluateLiveAccessFromFlags(
     showStreamPaywall,
     showFullLockdown,
     streamIsLive: false,
+    attendeeUiPhase: DEFAULT_ATTENDEE_UI_PHASE,
     playbackUrl: "",
     publishMode: "none",
     publisherChannel: null,

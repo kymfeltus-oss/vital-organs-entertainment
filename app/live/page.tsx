@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import LivePageRouterClient from "@/components/experience/live/LivePageRouterClient";
 import { loadTabPageProfile } from "@/lib/experience/load-tab-page-profile";
-import { computeEventCountdownPhase } from "@/lib/live/countdown-config";
+import { loadAttendeeUiPhase } from "@/lib/live/load-attendee-ui-phase";
 import { computeCountdown } from "@/lib/live/event-lobby";
 import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
 
@@ -20,9 +20,7 @@ export default async function LivePage() {
   const isLocalDev = process.env.NODE_ENV !== "production";
   const forceHoldingRoom = isLocalDev && process.env.FORCE_HOLDING_ROOM_TESTING === "true";
 
-  const initialPhase = forceHoldingRoom
-    ? "holding"
-    : computeEventCountdownPhase(countdownConfig.start_time, countdownConfig.end_time);
+  const initialAttendeeUiPhase = forceHoldingRoom ? "pre_show" : await loadAttendeeUiPhase();
 
   const initialCountdown = computeCountdown(countdownConfig.start_time);
   const initialProfile = await loadTabPageProfile();
@@ -30,7 +28,7 @@ export default async function LivePage() {
   return (
     <div className="relative min-h-dvh overflow-hidden bg-brand-black text-brand-blue">
       <LivePageRouterClient
-        initialPhase={initialPhase}
+        initialAttendeeUiPhase={initialAttendeeUiPhase}
         forceHoldingRoom={forceHoldingRoom}
         countdownConfig={countdownConfig}
         initialCountdown={initialCountdown}

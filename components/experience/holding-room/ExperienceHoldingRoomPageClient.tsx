@@ -7,6 +7,7 @@ import {
   HOLDING_ROOM_ART_NATIVE,
   HOLDING_ROOM_ASSETS,
 } from "@/lib/experience/holding-room-assets";
+import type { AttendeeUiPhase } from "@/lib/live/attendee-ui-phase";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import type { CountdownParts } from "@/lib/live/event-lobby";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
@@ -17,20 +18,41 @@ import {
   mobileArtboardStageStyle,
 } from "@/lib/responsive";
 
+/** Band across countdown circles — reused for status messages (ended, connecting). */
+const HOLDING_ROOM_STATUS_BAND: CSSProperties = {
+  position: "absolute",
+  left: "8%",
+  top: "42.5%",
+  width: "84%",
+  height: "14%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
 type ExperienceHoldingRoomPageClientProps = {
   initialCountdownConfig?: EventCountdownConfig;
   initialCountdown?: CountdownParts;
   initialProfile: AttendeeProfileSnapshot;
+  attendeeUiPhase?: AttendeeUiPhase;
+  showClock?: boolean;
+  statusMessage?: string;
 };
 
 function ExperienceHoldingRoomPageContent({
   initialCountdownConfig,
   initialCountdown,
   initialProfile,
+  attendeeUiPhase = "pre_show",
+  showClock = true,
+  statusMessage,
 }: {
   initialCountdownConfig?: EventCountdownConfig;
   initialCountdown?: CountdownParts;
   initialProfile: AttendeeProfileSnapshot;
+  attendeeUiPhase?: AttendeeUiPhase;
+  showClock?: boolean;
+  statusMessage?: string;
 }) {
   const [profile, setProfile] = useState(initialProfile);
 
@@ -52,10 +74,26 @@ function ExperienceHoldingRoomPageContent({
             decoding="async"
             draggable={false}
           />
-          <HoldingRoomCountdownOverlay
-            initialCountdownConfig={initialCountdownConfig}
-            initialCountdown={initialCountdown}
-          />
+          {showClock ? (
+            <HoldingRoomCountdownOverlay
+              initialCountdownConfig={initialCountdownConfig}
+              initialCountdown={initialCountdown}
+              attendeeUiPhase={attendeeUiPhase}
+            />
+          ) : statusMessage ? (
+            <div
+              className="holding-room-countdown"
+              aria-live="polite"
+              aria-label={statusMessage}
+            >
+              <div
+                className="holding-room-countdown__starting-soon"
+                style={HOLDING_ROOM_STATUS_BAND}
+              >
+                <p className="holding-room-countdown__starting-soon-text font-ui">{statusMessage}</p>
+              </div>
+            </div>
+          ) : null}
           <MobileArtboardTabHeader profile={profile} onProfileChange={setProfile} />
         </div>
       </div>
@@ -67,6 +105,9 @@ export default function ExperienceHoldingRoomPageClient({
   initialCountdownConfig,
   initialCountdown,
   initialProfile,
+  attendeeUiPhase,
+  showClock,
+  statusMessage,
 }: ExperienceHoldingRoomPageClientProps) {
   return (
     <Suspense fallback={null}>
@@ -74,6 +115,9 @@ export default function ExperienceHoldingRoomPageClient({
         initialCountdownConfig={initialCountdownConfig}
         initialCountdown={initialCountdown}
         initialProfile={initialProfile}
+        attendeeUiPhase={attendeeUiPhase}
+        showClock={showClock}
+        statusMessage={statusMessage}
       />
     </Suspense>
   );

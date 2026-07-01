@@ -4,17 +4,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
 import LiveDataLoader from "@/components/experience/live/LiveDataLoader";
+import type { AttendeeUiPhase } from "@/lib/live/attendee-ui-phase";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import type { CountdownParts } from "@/lib/live/event-lobby";
-import { useEventPhase } from "@/lib/live/useEventPhase";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { useCountdownConfig } from "@/lib/useCountdownConfig";
 import { useLiveStreamState } from "@/lib/useLiveStreamState";
 
-type LivePageRouterPhase = "holding" | "waiting" | "live" | "ended";
-
 type LivePageRouterClientProps = {
-  initialPhase: LivePageRouterPhase;
+  initialAttendeeUiPhase: AttendeeUiPhase;
   forceHoldingRoom?: boolean;
   countdownConfig: EventCountdownConfig;
   initialCountdown: CountdownParts;
@@ -22,53 +20,58 @@ type LivePageRouterClientProps = {
 };
 
 export default function LivePageRouterClient({
-  initialPhase,
+  initialAttendeeUiPhase,
   forceHoldingRoom = false,
   countdownConfig,
   initialCountdown,
   initialProfile,
 }: LivePageRouterClientProps) {
   const router = useRouter();
-  const [currentPhase, setCurrentPhase] = useState<LivePageRouterPhase>(initialPhase);
+  const [attendeeUiPhase, setAttendeeUiPhase] = useState<AttendeeUiPhase>(initialAttendeeUiPhase);
 
-  // Same source as holding-room clock: cockpit → event_countdown_config → /api/countdown
   const { config: syncedCountdownConfig } = useCountdownConfig({
     initialConfig: countdownConfig,
   });
 
-  // Trigger A: schedule window (local clock vs cockpit-saved start_time / end_time)
-  const schedulePhase = useEventPhase(
-    syncedCountdownConfig.start_time,
-    syncedCountdownConfig.end_time,
-  );
-
-  // Trigger B: cockpit go-live — only sync broadcast flag after the scheduled window opens
-  const preShowWaiting = schedulePhase === "waiting";
-  const { isLive } = useLiveStreamState({
-    enabled: !forceHoldingRoom && !preShowWaiting,
+  const { attendeeUiPhase: syncedAttendeeUiPhase } = useLiveStreamState({
+    enabled: !forceHoldingRoom,
+    initialAttendeeUiPhase,
   });
 
   useEffect(() => {
     if (forceHoldingRoom) return;
+    if (syncedAttendeeUiPhase === attendeeUiPhase) return;
 
-    // Keep holding + countdown visible while schedulePhase is "waiting" (ignore stale is_live).
-    const shouldShowLiveStream = schedulePhase === "live" || (isLive && !preShowWaiting);
-
-    if (shouldShowLiveStream && currentPhase !== "live") {
-      setCurrentPhase("live");
+    setAttendeeUiPhase(syncedAttendeeUiPhase);
+    if (syncedAttendeeUiPhase === "live") {
       router.refresh();
     }
-  }, [currentPhase, forceHoldingRoom, isLive, preShowWaiting, schedulePhase, router]);
+  }, [attendeeUiPhase, forceHoldingRoom, router, syncedAttendeeUiPhase]);
 
-  if (currentPhase === "live") {
-    return <LiveDataLoader initialProfile={initialProfile} />;
+  if (attendeeUiPhase === "live") {
+    return (
+      <LiveDataLoader
+        initialProfile={initialProfile}
+        countdownConfig={syncedCountdownConfig}
+        initialCountdown={initialCountdown}
+      />
+    );
   }
+
+  const ended = attendeeUiPhase === "ended";
 
   return (
     <ExperienceHoldingRoomPageClient
       initialCountdownConfig={syncedCountdownConfig}
       initialCountdown={initialCountdown}
       initialProfile={initialProfile}
+      attendeeUiPhase={attendeeUiPhase}
+      showClock={!ended}
+      statusMessage={
+        ended
+          ? syncedCountdownConfig.outro_headline || "THANK YOU FOR JOINING"
+          : undefined
+      }
     />
   );
 }

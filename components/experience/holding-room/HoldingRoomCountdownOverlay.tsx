@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
-  COUNTDOWN_STARTING_SHORTLY_LABEL,
   getCountdownAriaLabel,
+  HOLDING_ROOM_STARTING_MESSAGE,
   isCountdownStartingShortly,
   parseCountdownStartMs,
 } from "@/lib/experience/countdown-display";
+import type { AttendeeUiPhase } from "@/lib/live/attendee-ui-phase";
 import {
   HOLDING_ROOM_COUNTDOWN_UNITS,
   HOLDING_ROOM_COUNTDOWN_VALUE_CLASS,
@@ -22,6 +23,7 @@ import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
 type HoldingRoomCountdownOverlayProps = {
   initialCountdownConfig?: EventCountdownConfig;
   initialCountdown?: CountdownParts;
+  attendeeUiPhase?: AttendeeUiPhase;
 };
 
 /** Band across all four neon countdown circles on holding-room.png. */
@@ -68,6 +70,7 @@ function resolveUnitValues(
 export default function HoldingRoomCountdownOverlay({
   initialCountdownConfig,
   initialCountdown,
+  attendeeUiPhase,
 }: HoldingRoomCountdownOverlayProps) {
   const { config, countdown, eventPhase, isLoading } = useLobbyCountdown({
     initialConfig: initialCountdownConfig,
@@ -75,7 +78,8 @@ export default function HoldingRoomCountdownOverlay({
   });
 
   const hasStartTime = parseCountdownStartMs(config.start_time) !== null;
-  const startingShortly = isCountdownStartingShortly(countdown, eventPhase);
+  const phaseForStartingShortly = attendeeUiPhase ?? eventPhase;
+  const startingShortly = isCountdownStartingShortly(countdown, phaseForStartingShortly);
 
   const values = useMemo(
     () =>
@@ -96,8 +100,8 @@ export default function HoldingRoomCountdownOverlay({
 
   const ariaLabel = useMemo(() => {
     const snapshot = !mounted && initialCountdown ? initialCountdown : countdown;
-    return getCountdownAriaLabel(snapshot, eventPhase, { isLoading, hasStartTime });
-  }, [countdown, eventPhase, hasStartTime, initialCountdown, isLoading, mounted]);
+    return getCountdownAriaLabel(snapshot, phaseForStartingShortly, { isLoading, hasStartTime });
+  }, [countdown, hasStartTime, initialCountdown, isLoading, mounted, phaseForStartingShortly]);
 
   if (!hasStartTime) {
     return null;
@@ -116,7 +120,7 @@ export default function HoldingRoomCountdownOverlay({
           style={rectStyle(STARTING_SHORTLY_BAND)}
         >
           <p className="holding-room-countdown__starting-soon-text font-ui">
-            {COUNTDOWN_STARTING_SHORTLY_LABEL}
+            {HOLDING_ROOM_STARTING_MESSAGE}
           </p>
         </div>
       ) : (

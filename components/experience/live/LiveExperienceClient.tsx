@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
+import { HOLDING_ROOM_CONNECTING_MESSAGE } from "@/lib/experience/countdown-display";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
 import { fetchLiveAccessEvaluation, type LiveAccessEvaluation } from "@/lib/access";
+import type { EventCountdownConfig } from "@/lib/live/countdown-config";
+import type { CountdownParts } from "@/lib/live/event-lobby";
 import type { ManifestCarrier } from "@/lib/live/resolve-manifest-playback";
 import {
   attachAutoLevelingMatrix,
@@ -39,6 +43,8 @@ const MANIFEST_SYNC_LISTENER_ID = "live-manifest-stream-sync";
 
 type LiveExperienceClientProps = {
   initialProfile: AttendeeProfileSnapshot;
+  countdownConfig: EventCountdownConfig;
+  initialCountdown: CountdownParts;
 };
 
 type ManifestState =
@@ -107,6 +113,8 @@ function resolveManifestMessage(response: ManifestResponse): ManifestState {
 
 export default function LiveExperienceClient({
   initialProfile,
+  countdownConfig,
+  initialCountdown,
 }: LiveExperienceClientProps) {
   const attendeeName = initialProfile.headerDisplayName || initialProfile.email || "Guest";
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -759,6 +767,22 @@ export default function LiveExperienceClient({
   const waitingForAccess = !access && !accessError;
   const showPlayer = Boolean(manifest.playbackUrl) && !useDirectCamera;
   const showDirectPlayer = useDirectCamera && directStatus === "ready";
+  const attendeePhaseLive = access?.attendeeUiPhase === "live";
+  const showConnectingGatekeeper =
+    attendeePhaseLive && !showPlayer && !showDirectPlayer && !locked && !waitingForAccess;
+
+  if (showConnectingGatekeeper) {
+    return (
+      <ExperienceHoldingRoomPageClient
+        initialCountdownConfig={countdownConfig}
+        initialCountdown={initialCountdown}
+        initialProfile={initialProfile}
+        attendeeUiPhase="live"
+        showClock={false}
+        statusMessage={HOLDING_ROOM_CONNECTING_MESSAGE}
+      />
+    );
+  }
 
   return (
     <main className="min-h-dvh bg-brand-black text-white">

@@ -3,6 +3,7 @@ import { evaluateLiveAccessFromFlags, parseAccessContext, type LivePublishMode }
 import { isLiveAccessDevBypassEnabled } from "@/lib/access/live-dev-bypass";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { resolveAttendeeUiPhase } from "@/lib/live/attendee-ui-phase";
 import { loadOwnerStreamState } from "@/lib/owner/load-owner-state";
 
 function normalizePublishMode(raw: unknown): LivePublishMode {
@@ -20,6 +21,7 @@ function buildStreamFlags(streamRow: Awaited<ReturnType<typeof loadOwnerStreamSt
   const streamIsLive = streamRow?.is_live === true;
   return {
     streamIsLive,
+    attendeeUiPhase: resolveAttendeeUiPhase(streamRow),
     publishMode: normalizePublishMode(streamRow?.publish_mode),
     publisherChannel: streamRow?.publisher_channel ?? null,
   };

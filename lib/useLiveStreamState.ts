@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchLiveAccessEvaluation } from "@/lib/access";
+import {
+  DEFAULT_ATTENDEE_UI_PHASE,
+  type AttendeeUiPhase,
+} from "@/lib/live/attendee-ui-phase";
 import { LIVE_STREAM_STATE_BROADCAST_EVENT } from "@/lib/live/types";
 import {
   acquirePlatformChannel,
@@ -17,10 +21,13 @@ const STREAM_STATE_LISTENER_ID = "live-stream-state-broadcast";
 type UseLiveStreamStateOptions = {
   /** When false, skips network/realtime sync until lifecycle allows live routing. */
   enabled?: boolean;
+  /** SSR seed from live_stream_state.attendee_ui_phase. */
+  initialAttendeeUiPhase?: AttendeeUiPhase;
 };
 
 type UseLiveStreamStateResult = {
   isLive: boolean;
+  attendeeUiPhase: AttendeeUiPhase;
   isLoading: boolean;
   error: string | null;
 };
@@ -28,8 +35,9 @@ type UseLiveStreamStateResult = {
 export function useLiveStreamState(
   options: UseLiveStreamStateOptions = {},
 ): UseLiveStreamStateResult {
-  const { enabled = true } = options;
+  const { enabled = true, initialAttendeeUiPhase = DEFAULT_ATTENDEE_UI_PHASE } = options;
   const [isLive, setIsLive] = useState(false);
+  const [attendeeUiPhase, setAttendeeUiPhase] = useState<AttendeeUiPhase>(initialAttendeeUiPhase);
   const [isLoading, setIsLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const syncRef = useRef<() => Promise<void>>(async () => {});
@@ -40,6 +48,7 @@ export function useLiveStreamState(
     try {
       const evaluation = await fetchLiveAccessEvaluation();
       setIsLive(evaluation.streamIsLive);
+      setAttendeeUiPhase(evaluation.attendeeUiPhase);
       setError(null);
     } catch (syncError) {
       console.error("Live stream state sync failed:", syncError);
@@ -101,6 +110,7 @@ export function useLiveStreamState(
 
   return {
     isLive,
+    attendeeUiPhase,
     isLoading: enabled ? isLoading : false,
     error: enabled ? error : null,
   };
