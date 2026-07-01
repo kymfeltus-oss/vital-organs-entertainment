@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fetchLiveAccessEvaluation } from "@/lib/access";
+import { fetchLiveAccessEvaluation, type LivePublishMode } from "@/lib/access";
 import {
   DEFAULT_ATTENDEE_UI_PHASE,
   type AttendeeUiPhase,
@@ -28,6 +28,7 @@ type UseLiveStreamStateOptions = {
 type UseLiveStreamStateResult = {
   isLive: boolean;
   attendeeUiPhase: AttendeeUiPhase;
+  publishMode: LivePublishMode;
   isLoading: boolean;
   error: string | null;
 };
@@ -38,6 +39,7 @@ export function useLiveStreamState(
   const { enabled = true, initialAttendeeUiPhase = DEFAULT_ATTENDEE_UI_PHASE } = options;
   const [isLive, setIsLive] = useState(false);
   const [attendeeUiPhase, setAttendeeUiPhase] = useState<AttendeeUiPhase>(initialAttendeeUiPhase);
+  const [publishMode, setPublishMode] = useState<LivePublishMode>("none");
   const [isLoading, setIsLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const syncRef = useRef<() => Promise<void>>(async () => {});
@@ -49,6 +51,7 @@ export function useLiveStreamState(
       const evaluation = await fetchLiveAccessEvaluation();
       setIsLive(evaluation.streamIsLive);
       setAttendeeUiPhase(evaluation.attendeeUiPhase);
+      setPublishMode(evaluation.publishMode);
       setError(null);
     } catch (syncError) {
       console.error("Live stream state sync failed:", syncError);
@@ -111,6 +114,7 @@ export function useLiveStreamState(
   return {
     isLive,
     attendeeUiPhase,
+    publishMode,
     isLoading: enabled ? isLoading : false,
     error: enabled ? error : null,
   };

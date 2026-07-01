@@ -31,22 +31,21 @@ test.describe("Dress rehearsal - owner to attendee live readiness", () => {
     const cockpit = await cockpitContext.newPage();
     const cockpitErrors = attachConsoleGuard(cockpit);
 
-    await cockpit.goto("/owner/cockpit");
-    await expect(cockpit).toHaveURL(/\/owner\/cockpit/, { timeout: 15_000 });
-    await expect(cockpit.getByTestId("go-live-button")).toBeEnabled({ timeout: 20_000 });
+    await cockpit.goto("/owner/countdown");
+    await expect(cockpit).toHaveURL(/\/owner\/countdown/, { timeout: 15_000 });
 
     const target = new Date(Date.now() + 2 * 60_000);
     const localValue = formatLocalDateTimeInput(target);
 
-    await cockpit.getByRole("button", { name: /edit schedule/i }).click();
-    await cockpit.getByTestId("schedule-timezone").selectOption({ index: 1 });
-    await cockpit.getByTestId("schedule-datetime").fill(localValue);
-    await cockpit.getByTestId("save-countdown").click();
-    await expect(cockpit.getByTestId("success-badge")).toBeVisible({ timeout: 15_000 });
+    await cockpit.locator('input[type="datetime-local"]').fill(localValue);
+    await cockpit.getByRole("button", { name: /save & publish/i }).click();
+    await expect(cockpit.getByText(/countdown schedule/i)).toBeVisible({ timeout: 15_000 });
 
     await cockpit.reload();
-    await cockpit.getByRole("button", { name: /edit schedule/i }).click();
-    await expect(cockpit.getByTestId("schedule-datetime")).toHaveValue(localValue);
+    await expect(cockpit.locator('input[type="datetime-local"]')).toHaveValue(localValue);
+
+    await cockpit.goto("/owner/cockpit");
+    await expect(cockpit.getByTestId("go-live-button")).toBeEnabled({ timeout: 20_000 });
 
     const { context: attendeeContext, page: attendee, consoleErrors: attendeeErrors } =
       await openAttendeeLiveContext(browser);

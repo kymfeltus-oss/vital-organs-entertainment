@@ -77,26 +77,30 @@ export default function HoldingRoomCountdownOverlay({
     initialCountdown,
   });
 
-  const hasStartTime = parseCountdownStartMs(config.start_time) !== null;
+  const hasStartTime =
+    parseCountdownStartMs(config.start_time) !== null ||
+    parseCountdownStartMs(initialCountdownConfig?.start_time) !== null;
   const phaseForStartingShortly = attendeeUiPhase ?? eventPhase;
   const startingShortly = isCountdownStartingShortly(countdown, phaseForStartingShortly);
-
-  const values = useMemo(
-    () =>
-      Object.fromEntries(
-        HOLDING_ROOM_COUNTDOWN_UNITS.map((unit) => [
-          unit.id,
-          resolveUnitValues(unit.id, countdown),
-        ]),
-      ) as Record<HoldingRoomCountdownUnitId, string>,
-    [countdown],
-  );
 
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const displayCountdown = !mounted && initialCountdown ? initialCountdown : countdown;
+
+  const values = useMemo(
+    () =>
+      Object.fromEntries(
+        HOLDING_ROOM_COUNTDOWN_UNITS.map((unit) => [
+          unit.id,
+          resolveUnitValues(unit.id, isLoading && initialCountdown ? initialCountdown : displayCountdown),
+        ]),
+      ) as Record<HoldingRoomCountdownUnitId, string>,
+    [displayCountdown, initialCountdown, isLoading],
+  );
 
   const ariaLabel = useMemo(() => {
     const snapshot = !mounted && initialCountdown ? initialCountdown : countdown;
@@ -134,7 +138,7 @@ export default function HoldingRoomCountdownOverlay({
             </div>
             <div className="holding-room-countdown__unit" style={rectStyle(unit.valueMask)}>
               <HoldingRoomCountdownDigit
-                value={isLoading ? "00" : values[unit.id]}
+                value={values[unit.id]}
                 unitClass={HOLDING_ROOM_COUNTDOWN_VALUE_CLASS[unit.id]}
               />
             </div>

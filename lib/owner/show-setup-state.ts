@@ -226,10 +226,19 @@ function mergeStoredSetup(
 
 export async function loadShowSetupState(): Promise<ShowSetupState> {
   const admin = getSupabaseAdmin();
-  const [{ row }, countdownConfig] = await Promise.all([
+  const [{ row: initialRow }, countdownConfig] = await Promise.all([
     loadOwnerStreamState(admin),
     loadAdminCountdownConfig(),
   ]);
+
+  let row = initialRow;
+  if (row && !row.is_live && row.attendee_ui_phase !== "pre_show") {
+    const { row: resetRow } = await updateOwnerStreamState(admin, {
+      attendee_ui_phase: "pre_show",
+      updated_by: "show_setup_reset",
+    });
+    if (resetRow) row = resetRow;
+  }
   const primary = resolveExternalIngestCredentials();
   const backup = resolveIvsIngestCredentials();
   const base: ShowSetupState = {
@@ -335,6 +344,7 @@ export async function saveShowSetupState(
       ...existingPresets,
       [SETUP_KEY]: setupPayload,
     },
+    ...(!row?.is_live ? { attendee_ui_phase: "pre_show" as const } : {}),
     updated_by: updatedBy,
   });
 

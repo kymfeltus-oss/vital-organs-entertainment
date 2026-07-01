@@ -1,10 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { resolveAttendeeUiPhase, type AttendeeUiPhase } from "@/lib/live/attendee-ui-phase";
 import { LIVE_STREAM_STATE_ID } from "@/lib/live/types";
 import type { PlaybackStatus, PublishMode, PublishStatus } from "@/lib/owner/contracts";
 
 export type OwnerStreamStateRow = {
   id: string;
   is_live: boolean;
+  attendee_ui_phase: AttendeeUiPhase;
   playback_url: string | null;
   active_source: string | null;
   primary_playback_url: string | null;
@@ -25,10 +27,10 @@ export type OwnerStreamStateRow = {
 };
 
 const SELECT_OWNER_WITH_FEEDS =
-  "id, is_live, playback_url, active_source, primary_playback_url, backup_playback_url, primary_rtmp_ingest_url, publish_mode, publish_status, playback_status, publish_error_message, playback_error_message, publisher_session_id, publisher_channel, concert_title, headliner_name, audio_master_presets, updated_at, updated_by";
+  "id, is_live, attendee_ui_phase, playback_url, active_source, primary_playback_url, backup_playback_url, primary_rtmp_ingest_url, publish_mode, publish_status, playback_status, publish_error_message, playback_error_message, publisher_session_id, publisher_channel, concert_title, headliner_name, audio_master_presets, updated_at, updated_by";
 
 const SELECT_OWNER_FULL =
-  "id, is_live, playback_url, active_source, publish_mode, publish_status, playback_status, publish_error_message, playback_error_message, publisher_session_id, publisher_channel, updated_at, updated_by";
+  "id, is_live, attendee_ui_phase, playback_url, active_source, publish_mode, publish_status, playback_status, publish_error_message, playback_error_message, publisher_session_id, publisher_channel, updated_at, updated_by";
 
 const SELECT_OWNER_LEGACY = "id, is_live, playback_url, active_source, updated_at, updated_by";
 
@@ -80,6 +82,7 @@ function normalizeRow(row: Record<string, unknown>): OwnerStreamStateRow {
   return {
     id: typeof row.id === "string" ? row.id : LIVE_STREAM_STATE_ID,
     is_live,
+    attendee_ui_phase: resolveAttendeeUiPhase(row),
     playback_url: typeof row.playback_url === "string" ? row.playback_url : null,
     active_source: typeof row.active_source === "string" ? row.active_source : null,
     primary_playback_url:

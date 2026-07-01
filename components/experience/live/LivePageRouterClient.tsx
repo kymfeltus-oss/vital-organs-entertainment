@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
 import LiveDataLoader from "@/components/experience/live/LiveDataLoader";
 import type { AttendeeUiPhase } from "@/lib/live/attendee-ui-phase";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import type { CountdownParts } from "@/lib/live/event-lobby";
+import { useAttendeePlaybackReady } from "@/lib/live/use-attendee-playback-ready";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { useCountdownConfig } from "@/lib/useCountdownConfig";
 import { useLiveStreamState } from "@/lib/useLiveStreamState";
@@ -26,29 +25,23 @@ export default function LivePageRouterClient({
   initialCountdown,
   initialProfile,
 }: LivePageRouterClientProps) {
-  const router = useRouter();
-  const [attendeeUiPhase, setAttendeeUiPhase] = useState<AttendeeUiPhase>(initialAttendeeUiPhase);
-
   const { config: syncedCountdownConfig } = useCountdownConfig({
     initialConfig: countdownConfig,
   });
 
-  const { attendeeUiPhase: syncedAttendeeUiPhase } = useLiveStreamState({
+  const { attendeeUiPhase, publishMode, isLive, isLoading: streamStateLoading } = useLiveStreamState({
     enabled: !forceHoldingRoom,
     initialAttendeeUiPhase,
   });
 
-  useEffect(() => {
-    if (forceHoldingRoom) return;
-    if (syncedAttendeeUiPhase === attendeeUiPhase) return;
+  const effectivePhase: AttendeeUiPhase = forceHoldingRoom ? "pre_show" : attendeeUiPhase;
+  const broadcastLive = !streamStateLoading && isLive && effectivePhase === "live";
+  const directCameraShell = broadcastLive && publishMode === "browser_camera";
+  const { isReady: playbackReady } = useAttendeePlaybackReady(
+    broadcastLive && publishMode !== "browser_camera",
+  );
 
-    setAttendeeUiPhase(syncedAttendeeUiPhase);
-    if (syncedAttendeeUiPhase === "live") {
-      router.refresh();
-    }
-  }, [attendeeUiPhase, forceHoldingRoom, router, syncedAttendeeUiPhase]);
-
-  if (attendeeUiPhase === "live") {
+  if (broadcastLive && (playbackReady || directCameraShell)) {
     return (
       <LiveDataLoader
         initialProfile={initialProfile}
@@ -58,14 +51,14 @@ export default function LivePageRouterClient({
     );
   }
 
-  const ended = attendeeUiPhase === "ended";
+  const ended = effectivePhase === "ended";
 
   return (
     <ExperienceHoldingRoomPageClient
       initialCountdownConfig={syncedCountdownConfig}
       initialCountdown={initialCountdown}
       initialProfile={initialProfile}
-      attendeeUiPhase={attendeeUiPhase}
+      attendeeUiPhase={effectivePhase === "live" ? "pre_show" : effectivePhase}
       showClock={!ended}
       statusMessage={
         ended

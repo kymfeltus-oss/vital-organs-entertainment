@@ -19,7 +19,7 @@ import {
 } from "@/lib/owner/preflight";
 import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
 import { mapEventPhaseState } from "@/lib/owner/map-event-phase";
-import { loadShowSetupState, saveShowSetupState, type ShowSetupState } from "@/lib/owner/show-setup-state";
+import { loadShowSetupState, type ShowSetupState } from "@/lib/owner/show-setup-state";
 import { fetchVmixSnapshot, startVmixStreaming, stopVmixStreaming } from "@/lib/owner/vmix/client";
 
 export { parseGoLiveBody, parseSwitchFeedBody };
@@ -130,6 +130,7 @@ export async function runOwnerGoLive(
     publish_status: "publishing",
     playback_status: "playback_pending",
     is_live: true,
+    attendee_ui_phase: "live",
     active_source: "primary",
     primary_playback_url: primaryUrl,
     backup_playback_url: backupUrl,
@@ -156,23 +157,13 @@ export type MasterGoLiveResult = {
   previousTargetDateTime: string;
 };
 
-/** Override scheduled countdown to now, then force go-live (production master override). */
+/** Override preflight blockers and force go-live (production master override). */
 export async function runOwnerMasterGoLive(
   admin: SupabaseClient,
   body: GoLiveRequestBody,
   updatedBy: string,
 ): Promise<MasterGoLiveResult> {
   const current = await loadShowSetupState();
-  const previousTargetDateTime = current.targetDateTime;
-  const nowIso = new Date().toISOString();
-
-  const showSetup = await saveShowSetupState(
-    {
-      targetDateTime: nowIso,
-      schedule_timezone: current.scheduleTimezone,
-    },
-    updatedBy,
-  );
 
   const { row } = await loadOwnerStreamState(admin);
   if (row?.is_live) {
@@ -181,9 +172,9 @@ export async function runOwnerMasterGoLive(
     return {
       ok: true,
       snapshot,
-      message: "Master override active — schedule moved to now. Broadcast already live.",
-      showSetup,
-      previousTargetDateTime,
+      message: "Broadcast already live.",
+      showSetup: current,
+      previousTargetDateTime: current.targetDateTime,
     };
   }
 
@@ -193,14 +184,14 @@ export async function runOwnerMasterGoLive(
     updatedBy,
   );
 
+  const showSetup = goLiveResult.ok ? await loadShowSetupState() : current;
+
   return {
     ok: goLiveResult.ok,
     snapshot: goLiveResult.snapshot,
-    message: goLiveResult.ok
-      ? `Master override active — schedule moved to now. ${goLiveResult.message}`
-      : goLiveResult.message,
+    message: goLiveResult.message,
     showSetup,
-    previousTargetDateTime,
+    previousTargetDateTime: current.targetDateTime,
   };
 }
 
@@ -229,6 +220,7 @@ export async function runOwnerEndBroadcast(
 
   const offlineUpdate = await updateOwnerStreamState(admin, {
     is_live: false,
+    attendee_ui_phase: "ended",
     active_source: "offline",
     publish_status: "offline",
     publish_mode: "none",

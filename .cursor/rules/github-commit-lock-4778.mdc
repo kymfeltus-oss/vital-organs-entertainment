@@ -1,0 +1,37 @@
+---
+description: Lock git commits and GitHub pushes unless operator uses passcode 4778 with explicit commit intent
+alwaysApply: true
+---
+
+# GitHub Commit & Push Lock (4778)
+
+**Default: LOCKED.** Do not run `git commit`, `git push`, or open pull requests unless the operator explicitly authorizes it in the **same message** using this exact pattern:
+
+```
+4778 i want to commit <short description> to github
+```
+
+## Required for any git write
+
+| Action | Allowed without 4778 commit phrase? |
+|--------|-------------------------------------|
+| `git status`, `git diff`, `git log` | Yes (read-only) |
+| `git add`, `git commit`, `git push` | **No** |
+| `gh pr create`, force push, amend | **No** |
+
+## Passcode + intent
+
+- Passcode **`4778` alone is not enough** — the message must also state commit/push intent (e.g. "commit … to github" or "push … to github").
+- Without that phrase: implement locally only; tell the operator changes are uncommitted and waiting for authorization.
+
+## Examples
+
+| Operator message | Action |
+|------------------|--------|
+| "fix the live page" | Code only — no commit/push |
+| "push to github" | **Stop** — need 4778 + explicit commit phrase |
+| "4778 i want to commit live countdown fix to github" | Proceed with commit and push if requested |
+
+## Attendee zone
+
+Attendee-side **code** edits still require passcode **4778** per `attendee-side-passcode-lock.mdc`. This rule is separate: it governs **git operations**, not file edit authorization.

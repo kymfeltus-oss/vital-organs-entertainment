@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
-import { HOLDING_ROOM_CONNECTING_MESSAGE } from "@/lib/experience/countdown-display";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
 import { fetchLiveAccessEvaluation, type LiveAccessEvaluation } from "@/lib/access";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
@@ -767,19 +766,16 @@ export default function LiveExperienceClient({
   const waitingForAccess = !access && !accessError;
   const showPlayer = Boolean(manifest.playbackUrl) && !useDirectCamera;
   const showDirectPlayer = useDirectCamera && directStatus === "ready";
-  const attendeePhaseLive = access?.attendeeUiPhase === "live";
-  const showConnectingGatekeeper =
-    attendeePhaseLive && !showPlayer && !showDirectPlayer && !locked && !waitingForAccess;
+  const showLiveShell = showPlayer || showDirectPlayer;
 
-  if (showConnectingGatekeeper) {
+  if (!showLiveShell) {
     return (
       <ExperienceHoldingRoomPageClient
         initialCountdownConfig={countdownConfig}
         initialCountdown={initialCountdown}
         initialProfile={initialProfile}
-        attendeeUiPhase="live"
-        showClock={false}
-        statusMessage={HOLDING_ROOM_CONNECTING_MESSAGE}
+        attendeeUiPhase="pre_show"
+        showClock
       />
     );
   }

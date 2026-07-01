@@ -32,10 +32,6 @@ import type {
 import { defaultEventPhaseState } from "@/lib/owner/map-event-phase";
 import {
   DEFAULT_SCHEDULE_TIMEZONE,
-  SCHEDULE_TIMEZONE_OPTIONS,
-  getScheduleTimezoneLabel,
-  isoToScheduleDatetimeLocal,
-  scheduleDatetimeLocalToIso,
   type ScheduleTimezone,
 } from "@/lib/live/schedule-timezone";
 import {
@@ -90,11 +86,6 @@ type ShowSetupResponse = {
   state?: ShowSetupStatePayload;
   message?: string;
   error?: string;
-};
-
-type CountdownFeedback = {
-  tone: "success" | "error";
-  message: string;
 };
 
 function parseOwnerApiError(
@@ -202,27 +193,6 @@ function mergePreset(current: OwnerGraphicsPreset[], nextPreset: OwnerGraphicsPr
 
 function removePreset(current: OwnerGraphicsPreset[], id: string) {
   return current.filter((preset) => preset.id !== id);
-}
-
-function getCountdownParts(totalSeconds: number) {
-  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
-  const days = Math.floor(safeSeconds / 86_400);
-  const hours = Math.floor((safeSeconds % 86_400) / 3600);
-  const minutes = Math.floor((safeSeconds % 3600) / 60);
-  const seconds = safeSeconds % 60;
-  return {
-    days,
-    hours,
-    minutes,
-    seconds,
-  };
-}
-
-function secondsUntilTarget(targetIso: string | null, nowMs: number) {
-  if (!targetIso) return 0;
-  const targetMs = new Date(targetIso).getTime();
-  if (!Number.isFinite(targetMs)) return 0;
-  return Math.max(0, Math.floor((targetMs - nowMs) / 1000));
 }
 
 function formatCockpitEventDate(targetIso: string | null, timeZone: ScheduleTimezone) {
@@ -409,243 +379,6 @@ function AudioMonitorPanel({
         </div>
       </div>
     </CockpitPanel>
-  );
-}
-
-function CountdownPanel({
-  seconds,
-  eventName,
-  presenterName,
-  targetDateTime,
-  scheduleTimezone,
-  loading,
-  pending,
-  isEditing,
-  isSaving,
-  editTitle,
-  editPresenter,
-  editTargetLocal,
-  editTimezone,
-  feedback,
-  titleAction,
-  onEditTitleChange,
-  onEditPresenterChange,
-  onEditTargetLocalChange,
-  onEditTimezoneChange,
-  onCancelEdit,
-  onSaveEdit,
-  onAdjust,
-}: {
-  seconds: number;
-  eventName: string;
-  presenterName: string;
-  targetDateTime: string | null;
-  scheduleTimezone: ScheduleTimezone;
-  loading: boolean;
-  pending: boolean;
-  isEditing: boolean;
-  isSaving: boolean;
-  editTitle: string;
-  editPresenter: string;
-  editTargetLocal: string;
-  editTimezone: ScheduleTimezone;
-  feedback: CountdownFeedback | null;
-  titleAction?: ReactNode;
-  onEditTitleChange: (value: string) => void;
-  onEditPresenterChange: (value: string) => void;
-  onEditTargetLocalChange: (value: string) => void;
-  onEditTimezoneChange: (value: ScheduleTimezone) => void;
-  onCancelEdit: () => void;
-  onSaveEdit: () => void;
-  onAdjust: (offsetSeconds: number) => void;
-}) {
-  const countdown = getCountdownParts(seconds);
-  const controls = [
-    { label: "[ +1m ]", offset: 60, tone: "bg-emerald-600 hover:bg-emerald-500" },
-    { label: "[ +5m ]", offset: 300, tone: "bg-emerald-600 hover:bg-emerald-500" },
-    { label: "[ -1m ]", offset: -60, tone: "bg-red-700 hover:bg-red-600" },
-    { label: "[ -5m ]", offset: -300, tone: "bg-red-700 hover:bg-red-600" },
-  ];
-  const inputsFrozen = isSaving || pending;
-
-  return (
-    <div data-testid="countdown-editor" className="flex min-h-0 flex-col">
-      <CockpitPanel
-        title="EVENT COUNTDOWN"
-        titleAction={titleAction}
-        className="flex flex-col"
-      >
-      <div className="flex min-h-0 flex-1 flex-col p-2">
-        <div className="flex items-center gap-2">
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-md border border-[#00a8ff]/50 bg-black/55 text-center font-headline text-lg leading-none text-[#00a8ff] shadow-[0_0_18px_rgba(0,168,255,0.28)] sm:h-14 sm:w-14 sm:text-xl">
-            300
-            <span className="font-ui text-[0.45rem] tracking-normal text-white">AWAKENING</span>
-          </div>
-          <div className="min-w-0 flex-1">
-            {isEditing ? (
-              <div className="space-y-2 rounded-md border border-white/10 bg-brand-black p-2">
-                <input
-                  type="text"
-                  value={editTitle}
-                  disabled={inputsFrozen}
-                  onChange={(event) => onEditTitleChange(event.target.value)}
-                  placeholder="Event title (optional)"
-                  className="w-full rounded border border-white/10 bg-brand-black px-2 py-1 font-ui text-[0.58rem] font-black uppercase text-white outline-none focus:border-[#00a8ff]/50 disabled:cursor-not-allowed disabled:opacity-45 sm:text-[0.66rem]"
-                />
-                <input
-                  type="text"
-                  value={editPresenter}
-                  disabled={inputsFrozen}
-                  onChange={(event) => onEditPresenterChange(event.target.value)}
-                  placeholder="Presenter / subtitle (optional)"
-                  className="w-full rounded border border-white/10 bg-brand-black px-2 py-1 font-body text-[0.5rem] text-white/85 outline-none focus:border-[#00a8ff]/50 disabled:cursor-not-allowed disabled:opacity-45 sm:text-[0.58rem]"
-                />
-                <div className="grid gap-2 sm:grid-cols-[1fr_0.9fr]">
-                  <input
-                    data-testid="schedule-datetime"
-                    type="datetime-local"
-                    value={editTargetLocal}
-                    disabled={inputsFrozen}
-                    onChange={(event) => onEditTargetLocalChange(event.target.value)}
-                    aria-label="Show date and time"
-                    className="w-full rounded border border-white/10 bg-brand-black px-2 py-1 font-body text-[0.5rem] text-white outline-none focus:border-[#00a8ff]/50 disabled:cursor-not-allowed disabled:opacity-45 sm:text-[0.58rem]"
-                  />
-                  <label className="block">
-                    <span className="mb-1 block font-ui text-[0.44rem] font-bold uppercase tracking-[0.08em] text-white/45">
-                      Timezone
-                    </span>
-                    <select
-                      data-testid="schedule-timezone"
-                      value={editTimezone}
-                      disabled={inputsFrozen}
-                      onChange={(event) =>
-                        onEditTimezoneChange(event.target.value as ScheduleTimezone)
-                      }
-                      className="w-full rounded border border-white/10 bg-brand-black px-2 py-1 font-body text-[0.5rem] text-white outline-none focus:border-[#00a8ff]/50 disabled:cursor-not-allowed disabled:opacity-45 sm:text-[0.58rem]"
-                    >
-                    
-                      {SCHEDULE_TIMEZONE_OPTIONS.map((option) => (
-                        <option key={option.id} value={option.id}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <button
-                    data-testid="save-countdown"
-                    type="button"
-                    disabled={inputsFrozen}
-                    onClick={onSaveEdit}
-                    className="min-h-8 rounded-md border border-lime-300/35 bg-lime-300/10 px-2 font-ui text-[0.58rem] font-black uppercase text-lime-300 transition hover:bg-lime-300/15 disabled:cursor-not-allowed disabled:opacity-45"
-                  >
-                    {isSaving ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : "[ Save ]"}
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={inputsFrozen}
-                    onClick={onCancelEdit}
-                    className="min-h-8 rounded-md border border-white/10 bg-white/5 px-2 font-ui text-[0.58rem] font-black uppercase text-white/45 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-45"
-                  >
-                    [ Cancel ]
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <p className="truncate font-ui text-[0.58rem] font-black uppercase text-white sm:text-[0.66rem]">
-                  {eventName || "LIVE EVENT WORKSPACE"}
-                </p>
-                <p className="mt-1 font-body text-[0.5rem] leading-snug text-white/68 sm:text-[0.58rem]">
-                  {presenterName || "MAIN SPEAKER"}
-                  <br />
-                  {formatCockpitEventDate(targetDateTime, scheduleTimezone)}
-                  <br />
-                  <span className="text-white/45">{getScheduleTimezoneLabel(scheduleTimezone)}</span>
-                </p>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="my-2 h-px bg-white/10" />
-
-        <p className="font-ui text-[0.56rem] uppercase tracking-[0.1em] text-white/55 sm:text-[0.62rem]">
-          COUNTDOWN TO SHOW
-        </p>
-        <p
-          data-testid="countdown-timer"
-          className="sr-only"
-          aria-live="polite"
-        >
-          {loading
-            ? "--:--:--:--"
-            : `${countdown.days.toString().padStart(2, "0")}:${countdown.hours.toString().padStart(2, "0")}:${countdown.minutes.toString().padStart(2, "0")}:${countdown.seconds.toString().padStart(2, "0")}`}
-        </p>
-        <div className="mt-1 grid grid-cols-4 gap-1">
-          {[
-            { label: "Days", value: countdown.days },
-            { label: "Hrs", value: countdown.hours },
-            { label: "Mins", value: countdown.minutes },
-            { label: "Secs", value: countdown.seconds },
-          ].map((unit) => (
-            <div key={unit.label} className="rounded-md border border-[#00a8ff]/20 bg-black/25 px-1.5 py-1 text-center">
-              <p className="font-headline text-2xl leading-none tracking-[0.03em] text-[#00a8ff] drop-shadow-[0_0_12px_rgba(0,168,255,0.7)] sm:text-3xl">
-                {loading ? "--" : unit.value.toString().padStart(2, "0")}
-              </p>
-              <p className="mt-0.5 font-ui text-[0.44rem] font-bold uppercase tracking-[0.08em] text-white/58">
-                {unit.label}
-              </p>
-            </div>
-          ))}
-        </div>
-        <p className="mt-2 rounded border border-[#00a8ff]/20 bg-[#00a8ff]/8 px-2 py-1 text-center font-ui text-[0.48rem] uppercase leading-snug text-[#00a8ff] sm:text-[0.52rem]">
-          {feedback ? (
-            <span
-              data-testid={feedback.tone === "success" ? "success-badge" : "countdown-error-badge"}
-              className={
-                feedback.tone === "success"
-                  ? "inline-flex items-center justify-center gap-1 text-lime-300"
-                  : "inline-flex items-center justify-center gap-1 text-red-200"
-              }
-              role={feedback.tone === "error" ? "alert" : "status"}
-            >
-              {feedback.tone === "success" ? (
-                <CheckCircle2 className="h-3 w-3 shrink-0" aria-hidden="true" />
-              ) : (
-                <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden="true" />
-              )}
-              {feedback.message}
-            </span>
-          ) : (
-            "Schedule syncs to attendee countdown + live gates"
-          )}
-        </p>
-
-        <div className="mt-auto pt-2">
-          <div className="mb-2 h-px bg-white/10" />
-          <p className="mb-2 text-center font-ui text-[0.62rem] uppercase text-white/55">
-            ADJUST COUNTDOWN
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {controls.map((control) => (
-              <button
-                key={control.label}
-                type="button"
-                disabled={pending}
-                onClick={() => onAdjust(control.offset)}
-                className={`min-h-8 rounded-md px-2 font-ui text-xs font-black text-white transition disabled:cursor-not-allowed disabled:opacity-45 ${control.tone}`}
-              >
-                {pending ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : control.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    </CockpitPanel>
-    </div>
   );
 }
 
@@ -1390,22 +1123,11 @@ export default function ProductionCockpitClient() {
   const [runtimeTimers, setRuntimeTimers] = useState<Record<string, RuntimeTimer>>({});
   const [now, setNow] = useState(() => Date.now());
   const [countdownTargetIso, setCountdownTargetIso] = useState<string | null>(null);
-  const [countdownEventName, setCountdownEventName] = useState("LIVE EVENT WORKSPACE");
-  const [countdownPresenterName, setCountdownPresenterName] = useState("MAIN SPEAKER");
   const [graphicsLoading, setGraphicsLoading] = useState(true);
   const [mutatingId, setMutatingId] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
-  const [countdownPending, setCountdownPending] = useState(false);
-  const [isEditingEvent, setIsEditingEvent] = useState(false);
-  const [isSavingEvent, setIsSavingEvent] = useState(false);
-  const [editEventTitle, setEditEventTitle] = useState("");
-  const [editPresenterName, setEditPresenterName] = useState("");
-  const [editTargetLocal, setEditTargetLocal] = useState("");
-  const [editScheduleTimezone, setEditScheduleTimezone] =
-    useState<ScheduleTimezone>(DEFAULT_SCHEDULE_TIMEZONE);
   const [countdownScheduleTimezone, setCountdownScheduleTimezone] =
     useState<ScheduleTimezone>(DEFAULT_SCHEDULE_TIMEZONE);
-  const [countdownFeedback, setCountdownFeedback] = useState<CountdownFeedback | null>(null);
   const [masterGoLiveModalOpen, setMasterGoLiveModalOpen] = useState(false);
   const [broadcastPending, setBroadcastPending] = useState(false);
   const [destinations, setDestinations] = useState<RestreamDestinations>(DEFAULT_RESTREAM_DESTINATIONS);
@@ -1423,26 +1145,8 @@ export default function ProductionCockpitClient() {
   const [ownerAuthorized, setOwnerAuthorized] = useState<boolean | null>(null);
   const [streamHealthStatus, setStreamHealthStatus] = useState("Stream health pending");
   const autoClearedIds = useRef<Set<string>>(new Set());
-  const countdownFeedbackTimerRef = useRef<number | null>(null);
-
-  const pushCountdownFeedback = useCallback((next: CountdownFeedback) => {
-    if (countdownFeedbackTimerRef.current !== null) {
-      window.clearTimeout(countdownFeedbackTimerRef.current);
-      countdownFeedbackTimerRef.current = null;
-    }
-    setCountdownFeedback(next);
-    console.info(`[cockpit/countdown] ${next.tone}: ${next.message}`);
-    if (next.tone === "success") {
-      countdownFeedbackTimerRef.current = window.setTimeout(() => {
-        setCountdownFeedback(null);
-        countdownFeedbackTimerRef.current = null;
-      }, 6_000);
-    }
-  }, []);
 
   const applyShowSetupState = useCallback((state: ShowSetupStatePayload) => {
-    setCountdownEventName(state.showTitle || "LIVE EVENT WORKSPACE");
-    setCountdownPresenterName(state.presenterName || "MAIN SPEAKER");
     setCountdownTargetIso(state.targetDateTime || null);
     const timezone = state.scheduleTimezone ?? DEFAULT_SCHEDULE_TIMEZONE;
     setCountdownScheduleTimezone(timezone);
@@ -1459,27 +1163,13 @@ export default function ProductionCockpitClient() {
       .then((res) => {
         setOwnerAuthorized(res.ok);
         if (!res.ok) {
-          pushCountdownFeedback({
-            tone: "error",
-            message: "Owner session not authorized — check ADMIN_EMAILS.",
-          });
+          setBroadcastError("Owner session not authorized — check ADMIN_EMAILS.");
         }
       })
       .catch(() => {
         setOwnerAuthorized(false);
-        pushCountdownFeedback({
-          tone: "error",
-          message: "Unable to verify owner session.",
-        });
+        setBroadcastError("Unable to verify owner session.");
       });
-  }, [pushCountdownFeedback]);
-
-  useEffect(() => {
-    return () => {
-      if (countdownFeedbackTimerRef.current !== null) {
-        window.clearTimeout(countdownFeedbackTimerRef.current);
-      }
-    };
   }, []);
 
   const loadBroadcastSnapshot = useCallback(async (_silent = false) => {
@@ -1571,11 +1261,6 @@ export default function ProductionCockpitClient() {
       if (!silent) setAudioLoading(false);
     }
   }, []);
-  const countdownSeconds = useMemo(
-    () => secondsUntilTarget(countdownTargetIso, now),
-    [countdownTargetIso, now],
-  );
-
   const loadShowSetup = useCallback(async () => {
     setDestinationsLoading(true);
 
@@ -1597,16 +1282,16 @@ export default function ProductionCockpitClient() {
 
       setOwnerAuthorized(true);
       applyShowSetupState(json.state);
-      console.info("[cockpit/countdown] Show setup loaded.");
+      console.info("[cockpit] Show setup loaded.");
     } catch (setupError) {
       const message =
         setupError instanceof Error ? setupError.message : "Unable to load show setup.";
-      pushCountdownFeedback({ tone: "error", message });
-      console.error("[cockpit/countdown] load failed:", message);
+      setBroadcastError(message);
+      console.error("[cockpit] show setup load failed:", message);
     } finally {
       setDestinationsLoading(false);
     }
-  }, [applyShowSetupState, pushCountdownFeedback]);
+  }, [applyShowSetupState]);
 
   const loadGraphics = useCallback(async () => {
     setGraphicsLoading(true);
@@ -1800,129 +1485,6 @@ export default function ProductionCockpitClient() {
     }
   }, []);
 
-  const adjustCountdown = useCallback(async (offsetSeconds: number) => {
-    setCountdownPending(true);
-    setGraphicsError(null);
-
-    try {
-      const response = await fetch("/api/owner/countdown", {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ offsetSeconds }),
-      });
-      const json = (await response.json()) as ShowSetupResponse & { ok?: boolean };
-
-      if (!response.ok || json.ok === false) {
-        throw new Error(parseOwnerApiError(response, json, "Countdown adjustment failed."));
-      }
-
-      if (json.state) {
-        applyShowSetupState(json.state);
-      } else {
-        await loadShowSetup();
-      }
-
-      pushCountdownFeedback({
-        tone: "success",
-        message: json.message || "Countdown adjusted.",
-      });
-    } catch (countdownError) {
-      const message =
-        countdownError instanceof Error ? countdownError.message : "Countdown adjustment failed.";
-      pushCountdownFeedback({ tone: "error", message });
-      console.error("[cockpit/countdown] adjust failed:", message);
-    } finally {
-      setCountdownPending(false);
-    }
-  }, [applyShowSetupState, loadShowSetup, pushCountdownFeedback]);
-
-  const beginEditEvent = useCallback(() => {
-    setEditEventTitle(countdownEventName);
-    setEditPresenterName(countdownPresenterName);
-    setEditScheduleTimezone(countdownScheduleTimezone);
-    setEditTargetLocal(isoToScheduleDatetimeLocal(countdownTargetIso ?? "", countdownScheduleTimezone));
-    setCountdownFeedback(null);
-    setGraphicsError(null);
-    setIsEditingEvent(true);
-  }, [
-    countdownEventName,
-    countdownPresenterName,
-    countdownScheduleTimezone,
-    countdownTargetIso,
-  ]);
-
-  const cancelEditEvent = useCallback(() => {
-    if (isSavingEvent) return;
-    setIsEditingEvent(false);
-  }, [isSavingEvent]);
-
-  const saveEditEvent = useCallback(async () => {
-    const targetIso = scheduleDatetimeLocalToIso(editTargetLocal, editScheduleTimezone);
-    if (!targetIso) {
-      pushCountdownFeedback({
-        tone: "error",
-        message: "Choose a valid show date and time.",
-      });
-      return;
-    }
-
-    setIsSavingEvent(true);
-    setGraphicsError(null);
-    setCountdownFeedback(null);
-    console.info("[cockpit/countdown] Saving schedule...");
-
-    try {
-      const payload: Record<string, string> = {
-        targetDateTime: targetIso,
-        schedule_timezone: editScheduleTimezone,
-      };
-      const trimmedTitle = editEventTitle.trim();
-      const trimmedPresenter = editPresenterName.trim();
-      if (trimmedTitle) payload.title = trimmedTitle;
-      if (trimmedPresenter) payload.presenterName = trimmedPresenter;
-
-      const response = await fetch("/api/owner/countdown/update", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const json = (await response.json()) as ShowSetupResponse & { ok?: boolean };
-
-      if (!response.ok || json.ok === false) {
-        throw new Error(parseOwnerApiError(response, json, "Unable to save event schedule."));
-      }
-
-      if (json.state) {
-        applyShowSetupState(json.state);
-      } else {
-        await loadShowSetup();
-      }
-
-      setIsEditingEvent(false);
-      pushCountdownFeedback({
-        tone: "success",
-        message: json.message || "Event schedule saved.",
-      });
-    } catch (saveError) {
-      const message =
-        saveError instanceof Error ? saveError.message : "Unable to save event schedule.";
-      pushCountdownFeedback({ tone: "error", message });
-      console.error("[cockpit/countdown] save failed:", message);
-    } finally {
-      setIsSavingEvent(false);
-    }
-  }, [
-    applyShowSetupState,
-    editEventTitle,
-    editPresenterName,
-    editScheduleTimezone,
-    editTargetLocal,
-    loadShowSetup,
-    pushCountdownFeedback,
-  ]);
-
   const sendBroadcastCommand = useCallback(async (endpoint: string, body?: unknown) => {
     setBroadcastPending(true);
     setBroadcastError(null);
@@ -1956,7 +1518,7 @@ export default function ProductionCockpitClient() {
   const confirmMasterGoLive = useCallback(async () => {
     setBroadcastPending(true);
     setBroadcastError(null);
-    setBroadcastMessage("Master override — updating schedule and forcing live...");
+    setBroadcastMessage("Master override — forcing live broadcast...");
 
     try {
       const response = await fetch("/api/owner/broadcast/master-go-live", {
@@ -1988,10 +1550,6 @@ export default function ProductionCockpitClient() {
 
       setMasterGoLiveModalOpen(false);
       setBroadcastMessage(json.message || "Master go-live confirmed.");
-      pushCountdownFeedback({
-        tone: "success",
-        message: "Schedule overridden to now — broadcast live.",
-      });
       console.info("[cockpit/master-go-live] success", {
         previousTargetDateTime: json.previousTargetDateTime,
       });
@@ -1999,12 +1557,11 @@ export default function ProductionCockpitClient() {
       const message = goLiveError instanceof Error ? goLiveError.message : "Master go-live failed.";
       setBroadcastError(message);
       setBroadcastMessage(null);
-      pushCountdownFeedback({ tone: "error", message });
       console.error("[cockpit/master-go-live] failed:", message);
     } finally {
       setBroadcastPending(false);
     }
-  }, [applyShowSetupState, loadBroadcastSnapshot, loadShowSetup, pushCountdownFeedback]);
+  }, [applyShowSetupState, loadBroadcastSnapshot, loadShowSetup]);
 
   const handleDestinationChange = useCallback(
     async (destination: DestinationKey, enabled: boolean) => {
@@ -2166,47 +1723,12 @@ export default function ProductionCockpitClient() {
             />
           </aside>
 
-          <aside className="order-3 grid min-h-0 gap-2 md:grid-cols-2 xl:order-1 xl:grid-cols-1 xl:grid-rows-[minmax(0,1fr)_minmax(0,0.88fr)]">
+          <aside className="order-3 min-h-[24rem] xl:order-1 xl:min-h-0">
             <AudioMonitorPanel
               telemetry={audioTelemetry}
               loading={audioLoading}
               error={audioError}
               onRefresh={() => void loadAudioTelemetry()}
-            />
-            <CountdownPanel
-              seconds={countdownSeconds}
-              eventName={countdownEventName}
-              presenterName={countdownPresenterName}
-              targetDateTime={countdownTargetIso}
-              scheduleTimezone={countdownScheduleTimezone}
-              loading={destinationsLoading}
-              pending={countdownPending}
-              isEditing={isEditingEvent}
-              isSaving={isSavingEvent}
-              editTitle={editEventTitle}
-              editPresenter={editPresenterName}
-              editTargetLocal={editTargetLocal}
-              editTimezone={editScheduleTimezone}
-              feedback={countdownFeedback}
-              titleAction={
-                !isEditingEvent ? (
-                  <button
-                    type="button"
-                    disabled={destinationsLoading || countdownPending || isSavingEvent || ownerAuthorized === false}
-                    onClick={beginEditEvent}
-                    className="shrink-0 font-ui text-[0.5rem] font-black uppercase tracking-[0.06em] text-[#00a8ff] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-45 sm:text-[0.54rem]"
-                  >
-                    [ Edit Schedule ]
-                  </button>
-                ) : null
-              }
-              onEditTitleChange={setEditEventTitle}
-              onEditPresenterChange={setEditPresenterName}
-              onEditTargetLocalChange={setEditTargetLocal}
-              onEditTimezoneChange={setEditScheduleTimezone}
-              onCancelEdit={cancelEditEvent}
-              onSaveEdit={() => void saveEditEvent()}
-              onAdjust={(offset) => void adjustCountdown(offset)}
             />
           </aside>
         </div>

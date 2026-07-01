@@ -47,19 +47,19 @@ export async function resolveLiveManifestPlayback(): Promise<ResolvedManifestPla
         fromDatabase: true,
       };
     }
+
+    const envPrimary =
+      resolvePrimaryAttendeePlaybackFromEnv() ?? resolveAttendeePlaybackFromEnv();
+    if (envPrimary && isValidHlsUrl(envPrimary)) {
+      return {
+        playbackUrl: envPrimary,
+        activeSource: "primary",
+        fromDatabase: false,
+      };
+    }
   }
 
-  const envPrimary =
-    resolvePrimaryAttendeePlaybackFromEnv() ?? resolveAttendeePlaybackFromEnv();
-  if (envPrimary && isValidHlsUrl(envPrimary)) {
-    return {
-      playbackUrl: envPrimary,
-      activeSource: "primary",
-      fromDatabase: false,
-    };
-  }
-
-  if (config) {
+  if (config?.is_live) {
     const primaryOnly = resolvePrimaryFeedUrl({
       primary_playback_url: config.primary_playback_url,
       playback_url: config.playback_url,
