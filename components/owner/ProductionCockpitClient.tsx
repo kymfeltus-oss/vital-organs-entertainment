@@ -1421,6 +1421,7 @@ export default function ProductionCockpitClient() {
   const [broadcastSnapshot, setBroadcastSnapshot] = useState<OwnerBroadcastSnapshot>(EMPTY_BROADCAST_SNAPSHOT);
   const [systemSynced, setSystemSynced] = useState(false);
   const [ownerAuthorized, setOwnerAuthorized] = useState<boolean | null>(null);
+  const [streamHealthStatus, setStreamHealthStatus] = useState("Stream health pending");
   const autoClearedIds = useRef<Set<string>>(new Set());
   const countdownFeedbackTimerRef = useRef<number | null>(null);
 
@@ -1519,6 +1520,29 @@ export default function ProductionCockpitClient() {
     const interval = window.setInterval(() => void loadBroadcastSnapshot(true), BROADCAST_SNAPSHOT_POLL_MS);
     return () => window.clearInterval(interval);
   }, [loadBroadcastSnapshot]);
+
+  useEffect(() => {
+    const loadStreamHealth = async () => {
+      try {
+        const response = await fetch("/api/owner/stream-health", {
+          credentials: "include",
+          cache: "no-store",
+        });
+        const json = (await response.json()) as { statusMessage?: string; error?: string };
+        if (!response.ok) {
+          setStreamHealthStatus(json.error ?? "Stream health unavailable.");
+          return;
+        }
+        setStreamHealthStatus(json.statusMessage ?? "Stream health checked.");
+      } catch {
+        setStreamHealthStatus("Stream health unavailable.");
+      }
+    };
+
+    void loadStreamHealth();
+    const interval = window.setInterval(() => void loadStreamHealth(), 15_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   const livePreset = useMemo(
     () => presets.find((preset) => preset.is_active_on_stream) ?? null,
@@ -2039,6 +2063,9 @@ export default function ProductionCockpitClient() {
         }}
         onConfirm={() => void confirmMasterGoLive()}
       />
+      <span data-testid="stream-health-status" className="sr-only" aria-live="polite">
+        {streamHealthStatus}
+      </span>
       <div className="mx-auto grid min-h-[calc(100dvh-2.5rem)] w-full max-w-[112rem] gap-2 xl:grid-cols-[12rem_minmax(0,1fr)]">
         <OwnerProductionSideMenu active="cockpit" showEncoderProfile />
 

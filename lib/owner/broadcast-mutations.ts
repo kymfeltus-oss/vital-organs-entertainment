@@ -220,10 +220,14 @@ export async function runOwnerEndBroadcast(
   });
 
   if (row.publish_mode === "rtmp_encoder") {
-    await stopVmixStreaming();
+    try {
+      await stopVmixStreaming();
+    } catch (error) {
+      console.warn("[owner/end] vMix stop failed; continuing offline transition:", error);
+    }
   }
 
-  await updateOwnerStreamState(admin, {
+  const offlineUpdate = await updateOwnerStreamState(admin, {
     is_live: false,
     active_source: "offline",
     publish_status: "offline",
@@ -235,6 +239,15 @@ export async function runOwnerEndBroadcast(
     publisher_channel: null,
     updated_by: updatedBy,
   });
+
+  if (offlineUpdate.error || offlineUpdate.row?.is_live === true) {
+    const { snapshot } = await buildOwnerBroadcastSnapshot();
+    return {
+      ok: false,
+      snapshot,
+      message: offlineUpdate.error ?? "Unable to mark broadcast offline.",
+    };
+  }
 
   await emitStreamStateSync();
 

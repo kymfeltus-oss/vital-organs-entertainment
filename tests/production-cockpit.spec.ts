@@ -1,35 +1,53 @@
 import { test, expect } from "@playwright/test";
+import {
+  attachConsoleGuard,
+  expectJsonRoute,
+  formatLocalDateTimeInput,
+  tryEndBroadcast,
+} from "./helpers/e2e-api";
 
 test.describe("Production Cockpit - Countdown & Go Live Flow", () => {
   test.beforeEach(async ({ page }) => {
     page.on("pageerror", (error) => console.error("❌ CLIENT CRASH:", error.message));
 
     await page.goto("/owner/cockpit");
-    await expect(page).toHaveURL(/\/owner\/cockpit/, { timeout: 15000 });
+    await expect(page).toHaveURL(/\/owner\/cockpit/, { timeout: 15_000 });
   });
 
-  test("Task 1: Should successfully update countdown with date/time and timezone only", async ({
-    page,
-  }) => {
+  test("cockpit loads with countdown editor and stream health status", async ({ page }) => {
+    await expect(page.getByTestId("go-live-button")).toBeEnabled({ timeout: 20_000 });
+    await expect(page.getByTestId("countdown-editor")).toBeVisible();
+    await expect(page.getByTestId("stream-health-status")).toContainText(/.+/, {
+      timeout: 20_000,
+    });
+  });
+
+  test("countdown datetime and timezone save and persist after reload", async ({ page, request }) => {
     await expect(page.getByTestId("go-live-button")).toBeEnabled({ timeout: 20_000 });
 
+    const target = new Date(Date.now() + 12 * 60_000);
+    const localValue = formatLocalDateTimeInput(target);
+
     await page.getByRole("button", { name: /edit schedule/i }).click();
-    await expect(page.getByTestId("countdown-editor")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("countdown-editor")).toBeVisible({ timeout: 10_000 });
 
     await page.getByTestId("schedule-timezone").selectOption({ index: 1 });
-    await page.getByTestId("schedule-datetime").fill("2026-12-31T20:00");
-
+    await page.getByTestId("schedule-datetime").fill(localValue);
     await page.getByTestId("save-countdown").click();
+    await expect(page.getByTestId("success-badge")).toBeVisible({ timeout: 15_000 });
 
-    await expect(page.getByTestId("success-badge")).toBeVisible({ timeout: 15000 });
+    await page.reload();
+    await expect(page).toHaveURL(/\/owner\/cockpit/, { timeout: 15_000 });
+
+    const showSetup = await expectJsonRoute(request, "/api/owner/show-setup");
+    expect(showSetup.state).toBeTruthy();
+
+    await page.getByRole("button", { name: /edit schedule/i }).click();
+    await expect(page.getByTestId("schedule-datetime")).toHaveValue(localValue);
   });
 
-  test("Task 2: Should execute master Go Live override, trigger modal, and update state immediately", async ({
-    page,
-    request,
-  }) => {
-    await request.post("/api/owner/broadcast/end");
-
+  test("Go Live opens modal, confirms API, and updates countdown state", async ({ page, request }) => {
+    await tryEndBroadcast(request);
     await page.reload();
     await expect(page).toHaveURL(/\/owner\/cockpit/, { timeout: 15_000 });
 
@@ -43,19 +61,15 @@ test.describe("Production Cockpit - Countdown & Go Live Flow", () => {
     );
 
     await goLiveButton.click();
+    await expect(page.getByTestId("override-modal")).toBeVisible();
 
-    const confirmationModal = page.getByTestId("override-modal");
-    await expect(confirmationModal).toBeVisible();
-
-    await confirmationModal
-      .locator('button:has-text("Confirm Go Live"), button:has-text("Confirm")')
-      .first()
+    await page
+      .getByTestId("override-modal")
+      .locator('button:has-text("Confirm Go Live")')
       .click();
 
     await masterGoLivePromise;
 
-    const countdownDisplay = page.getByTestId("countdown-timer");
-    await expect(countdownDisplay).toBeVisible();
-    await expect(countdownDisplay).toHaveText(/^00:00:00:\d{2}$/);
+    await expect(page.getByTestId("countdown-timer")).toHaveText(/^00:00:00:\d{2}$/);
   });
 });
