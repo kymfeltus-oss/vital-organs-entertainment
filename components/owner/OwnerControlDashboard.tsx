@@ -159,9 +159,9 @@ export default function OwnerControlDashboard({
       <div className="mx-auto flex min-h-dvh max-w-5xl flex-col gap-6 p-4 sm:p-6">
         <header className="border-b border-white/10 pb-4">
           <p className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.22em] text-brand-blue">
-            Owner Control
+            Owner Cockpit
           </p>
-          <h1 className="font-headline text-2xl uppercase tracking-[0.08em]">Broadcast Console</h1>
+          <h1 className="font-headline text-2xl uppercase tracking-[0.08em]">Broadcast Cockpit</h1>
           <p className="mt-2 font-body text-sm text-white/55">
             Event phase, publish pipeline, and playback are shown separately — never one combined live flag.
           </p>

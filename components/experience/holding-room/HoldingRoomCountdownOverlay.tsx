@@ -119,11 +119,9 @@ export default function HoldingRoomCountdownOverlay({
               className="holding-room-countdown__label-unit"
               style={rectStyle(unit.labelMask)}
             >
-              <div className="holding-room-countdown__label-mask" />
               <div className="holding-room-countdown__label font-ui">{unit.label}</div>
             </div>
             <div className="holding-room-countdown__unit" style={rectStyle(unit.valueMask)}>
-              <div className="holding-room-countdown__value-mask" aria-hidden="true" />
               <HoldingRoomCountdownDigit
                 value={isLoading ? "00" : values[unit.id]}
                 unitClass={HOLDING_ROOM_COUNTDOWN_VALUE_CLASS[unit.id]}

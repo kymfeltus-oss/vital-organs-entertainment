@@ -31,6 +31,7 @@ export default function ExperienceDashboardMobileView({
 
       <div className="relative z-10 flex min-h-0 w-full flex-1 overflow-y-auto overscroll-contain">
         <ExperienceDashboardContent
+          profile={profile}
           initialCountdownConfig={initialCountdownConfig}
           initialCountdown={initialCountdown}
         />

@@ -13,20 +13,24 @@ import {
 } from "@/lib/experience/awakening-dashboard-assets";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import type { CountdownParts } from "@/lib/live/event-lobby";
+import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
 import { useAttendeeLiveNavTarget } from "@/lib/experience/useAttendeeLiveNavTarget";
 import { MOBILE_ARTBOARD_REF, mobileArtboardStageStyle } from "@/lib/responsive";
 
 type ExperienceDashboardInterfaceLayerProps = {
+  profile: AttendeeProfileSnapshot;
   initialCountdownConfig?: EventCountdownConfig;
   initialCountdown?: CountdownParts;
 };
 
 export default function ExperienceDashboardInterfaceLayer({
+  profile,
   initialCountdownConfig,
   initialCountdown,
 }: ExperienceDashboardInterfaceLayerProps) {
   const backgroundRef = useRef<HTMLVideoElement>(null);
+  const welcomeFirstName = !profile.isGuest ? profile.firstName.trim() : "";
 
   const { config, countdown, eventPhase, isLoading, showTimer } = useLobbyCountdown({
     initialConfig: initialCountdownConfig,
@@ -98,6 +102,16 @@ export default function ExperienceDashboardInterfaceLayer({
         />
 
         <div className="experience-dashboard-artboard__overlay">
+          {welcomeFirstName ? (
+            <div className="experience-dashboard-top-zone" aria-label="Welcome back">
+              <div className="experience-dashboard-header-zone">
+                <div className="experience-dashboard-welcome-stack">
+                  <p className="experience-dashboard-welcome-name">{welcomeFirstName}</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           {(showTimer || isLoading) && eventPhase === "waiting" ? (
             <div className="experience-dashboard-countdown-slot">
               <LobbyCountdownTimer
@@ -118,6 +132,7 @@ export default function ExperienceDashboardInterfaceLayer({
                 className="experience-dashboard-overlay__story touch-target"
                 aria-label="Watch Ian Craig's healing journey"
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={AWAKENING_ASSETS.ianCraigStoryPoster}
                   alt=""

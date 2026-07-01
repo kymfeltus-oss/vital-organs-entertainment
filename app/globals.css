@@ -1872,7 +1872,7 @@ body::-webkit-scrollbar {
   width: 100%;
   padding-bottom: max(
     calc(var(--dash-safe-bottom, 52) / var(--dash-artboard-w, 1080) * 100cqw),
-    calc(var(--bottom-dock-display-h, 76px) + env(safe-area-inset-bottom, 0px))
+    calc(var(--bottom-dock-display-h, 52px) + env(safe-area-inset-bottom, 0px))
   );
   box-sizing: border-box;
   display: flex;
@@ -2062,11 +2062,14 @@ body::-webkit-scrollbar {
 }
 
 .experience-dashboard-top-zone {
+  position: absolute;
+  top: calc(820 / var(--dash-artboard-w, 1080) * 100cqw);
+  left: calc(72 / var(--dash-artboard-w, 1080) * 100cqw);
+  z-index: 12;
   display: flex;
-  width: 100%;
+  width: calc(390 / var(--dash-artboard-w, 1080) * 100cqw);
   align-items: flex-start;
-  justify-content: center;
-  padding-top: clamp(9.5rem, 25vh, 12rem);
+  justify-content: flex-start;
   pointer-events: none;
 }
 
@@ -2080,7 +2083,7 @@ body::-webkit-scrollbar {
 
 .experience-dashboard-welcome-stack {
   display: flex;
-  width: min(52%, 20rem);
+  width: 100%;
   flex-direction: column;
   align-items: flex-start;
   gap: clamp(0.1rem, 0.6vh, 0.25rem);
@@ -2102,19 +2105,20 @@ body::-webkit-scrollbar {
   margin: 0;
   width: 100%;
   overflow: hidden;
-  font-size: clamp(2.35rem, 7.5vw, 3.5rem);
+  font-size: clamp(1.75rem, 11cqw, 4.5rem);
+  font-weight: 800;
   line-height: 0.92;
-  letter-spacing: 0.06em;
+  letter-spacing: -0.02em;
   text-transform: uppercase;
   white-space: nowrap;
   text-overflow: ellipsis;
   background: linear-gradient(
-    180deg,
-    #f4fbff 0%,
-    #9fd4ff 28%,
-    #6b9fe8 52%,
-    #b89cff 78%,
-    #ffb8e8 100%
+    115deg,
+    #19d7ff 0%,
+    #2688ff 28%,
+    #7465ff 50%,
+    #d646f5 73%,
+    #ff3ca6 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
@@ -2404,7 +2408,8 @@ body::-webkit-scrollbar {
   left: var(--mobile-tab-content-inset-left);
   top: var(--vital-giving-form-top, 60%);
   bottom: calc(
-    var(--bottom-dock-display-h, 76px) + env(safe-area-inset-bottom, 0px) + 0.35rem
+    var(--bottom-dock-display-h, 52px) + env(safe-area-inset-bottom, 0px) +
+      clamp(0.75rem, 2.8cqw, 1rem)
   );
   z-index: 10;
   display: flex;
@@ -2420,10 +2425,21 @@ body::-webkit-scrollbar {
 
 .vital-giving-form {
   width: 100%;
+  min-height: 100%;
+  gap: clamp(0.45rem, 2.2cqw, 0.65rem);
+}
+
+.vital-giving-action-stack {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: clamp(0.65rem, 2.6cqw, 0.85rem);
+  margin-top: auto;
 }
 
 .vital-giving-form__section-title {
-  margin: 0 0 clamp(0.5rem, 3cqw, 0.75rem);
+  margin: 0 0 clamp(0.7rem, 3.4cqw, 0.95rem);
   text-align: center;
   font-size: clamp(0.72rem, 3.4cqw, 0.92rem);
   font-weight: 600;
@@ -2435,7 +2451,7 @@ body::-webkit-scrollbar {
 .vital-giving-preset-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(0.35rem, 2.4cqw, 0.6rem);
+  gap: clamp(0.45rem, 2.2cqw, 0.65rem);
 }
 
 .vital-giving-preset-btn {
@@ -2444,12 +2460,12 @@ body::-webkit-scrollbar {
   isolation: isolate;
   box-sizing: border-box;
   display: flex;
-  min-height: clamp(2.65rem, 11.5cqw, 3.25rem);
+  min-height: clamp(3.05rem, 12.5cqw, 3.5rem);
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.1rem;
-  padding: clamp(0.35rem, 1.8cqw, 0.5rem);
+  padding: clamp(0.3rem, 1.4cqw, 0.45rem);
   border: none;
   border-radius: clamp(0.55rem, 2.5cqw, 0.8rem);
   background-color: #000000;
@@ -2565,7 +2581,7 @@ body::-webkit-scrollbar {
   position: relative;
   isolation: isolate;
   display: flex;
-  min-height: clamp(2.5rem, 10.5cqw, 3rem);
+  min-height: clamp(2.75rem, 10.8cqw, 3.1rem);
   align-items: center;
   border-radius: clamp(0.55rem, 2.5cqw, 0.8rem);
   background-color: #000000;
@@ -2639,7 +2655,7 @@ body::-webkit-scrollbar {
   isolation: isolate;
   box-sizing: border-box;
   display: flex;
-  min-height: clamp(2.75rem, 11.5cqw, 3.35rem);
+  min-height: clamp(2.85rem, 11cqw, 3.2rem);
   width: 100%;
   align-items: center;
   justify-content: center;
@@ -3153,19 +3169,14 @@ body::-webkit-scrollbar {
   position: absolute;
   box-sizing: border-box;
   z-index: 2;
+  pointer-events: none;
 }
 
 .holding-room-countdown__unit {
   position: absolute;
   box-sizing: border-box;
   z-index: 1;
-}
-
-.holding-room-countdown__label-mask {
-  position: absolute;
-  inset: 0;
-  box-sizing: border-box;
-  background-color: #000000;
+  pointer-events: none;
 }
 
 .holding-room-countdown__label {
@@ -3176,21 +3187,14 @@ body::-webkit-scrollbar {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(0.62rem, 2.7cqw, 1.2rem);
+  font-size: clamp(0.56rem, 2.35cqw, 1rem);
   font-weight: 700;
   line-height: 1;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
   text-align: center;
   white-space: nowrap;
-  color: rgb(255 255 255 / 0.72);
-}
-
-.holding-room-countdown__value-mask {
-  position: absolute;
-  inset: 0;
-  box-sizing: border-box;
-  border-radius: 9999px;
-  background-color: #000000;
+  color: rgb(255 255 255 / 0.78);
+  text-shadow: 0 0 12px rgb(255 255 255 / 0.32);
 }
 
 .holding-room-countdown__value {
@@ -3200,7 +3204,7 @@ body::-webkit-scrollbar {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(1.35rem, 6.4cqw, 3.25rem);
+  font-size: clamp(1.45rem, 7.2cqw, 3.65rem);
   font-weight: 400;
   line-height: 1;
   letter-spacing: 0.02em;
@@ -4810,15 +4814,15 @@ body::-webkit-scrollbar {
   font-size: calc(100cqw * 11 / 941);
 }
 
-/* Bottom dock - native-style app tab bar + phone safe area */
+/* Bottom dock - mobile-first app tab bar + phone safe area */
 :root {
-  --bottom-dock-display-h: 64px;
+  --bottom-dock-display-h: 52px; /* Structural lock: standard mobile tab bar height. */
   /* Tab pages - same locked track; height subtracts bottom dock in shell CSS. */
   --mobile-tab-track-w: min(
     100vw,
     calc(
       (
-          100dvh - var(--bottom-dock-display-h, 76px) - env(safe-area-inset-top, 0px) -
+          100dvh - var(--bottom-dock-display-h, 52px) - env(safe-area-inset-top, 0px) -
             env(safe-area-inset-bottom, 0px)
         ) * 1080 / 1920
     )
@@ -4847,17 +4851,15 @@ body::-webkit-scrollbar {
   height: var(--bottom-dock-display-h);
   margin: 0 auto;
   overflow: visible;
-  border-top: 1px solid rgb(255 255 255 / 0.18);
+  border-top: 1px solid rgb(255 255 255 / 0.2);
   background:
-    linear-gradient(92deg, rgb(0 168 255 / 0.22) 0%, rgb(138 46 255 / 0.18) 48%, rgb(255 47 175 / 0.22) 100%),
-    radial-gradient(ellipse 48% 135% at 14% 0%, rgb(0 168 255 / 0.36), transparent 62%),
-    radial-gradient(ellipse 54% 145% at 86% 0%, rgb(255 47 175 / 0.34), transparent 62%),
-    linear-gradient(180deg, rgb(21 18 28 / 0.96), rgb(5 5 9 / 0.98));
+    linear-gradient(90deg, rgb(0 168 255 / 0.14), rgb(255 47 175 / 0.16)),
+    linear-gradient(180deg, rgb(20 22 30 / 0.94), rgb(4 5 10 / 0.98));
   box-shadow:
     0 -1px 0 rgb(255 255 255 / 0.08) inset,
-    0 -18px 38px rgb(0 0 0 / 0.5),
-    0 -10px 34px rgb(0 168 255 / 0.18),
-    0 -8px 32px rgb(255 47 175 / 0.14);
+    0 -14px 30px rgb(0 0 0 / 0.42),
+    0 -8px 28px rgb(0 168 255 / 0.12),
+    0 -8px 26px rgb(255 47 175 / 0.1);
   backdrop-filter: blur(20px) saturate(1.35);
   -webkit-backdrop-filter: blur(20px) saturate(1.35);
   pointer-events: auto;
@@ -4868,10 +4870,10 @@ body::-webkit-scrollbar {
   inset: -1px 0 0;
   z-index: -1;
   background:
-    linear-gradient(90deg, transparent 0%, rgb(0 168 255 / 0.36) 18%, rgb(138 46 255 / 0.28) 50%, rgb(255 47 175 / 0.36) 82%, transparent 100%),
-    linear-gradient(180deg, rgb(255 255 255 / 0.14), transparent 52%);
+    linear-gradient(90deg, transparent 0%, rgb(0 168 255 / 0.42) 20%, rgb(255 255 255 / 0.16) 50%, rgb(255 47 175 / 0.42) 80%, transparent 100%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.11), transparent 56%);
   content: "";
-  opacity: 0.85;
+  opacity: 0.72;
 }
 
 .bottom-dock__frame::after {
@@ -4879,10 +4881,10 @@ body::-webkit-scrollbar {
   inset: 0;
   z-index: -1;
   background:
-    linear-gradient(115deg, transparent 0%, rgb(255 255 255 / 0.08) 32%, transparent 58%),
-    radial-gradient(circle at 50% 112%, rgb(255 255 255 / 0.11), transparent 58%);
+    linear-gradient(115deg, transparent 0%, rgb(255 255 255 / 0.075) 34%, transparent 60%),
+    radial-gradient(circle at 50% 112%, rgb(255 255 255 / 0.09), transparent 58%);
   content: "";
-  opacity: 0.7;
+  opacity: 0.64;
   pointer-events: none;
 }
 
@@ -4893,6 +4895,7 @@ body::-webkit-scrollbar {
   flex-direction: row;
   align-items: stretch;
   justify-content: space-between;
+  gap: 8px; /* Structural lock: button spacing remains at least 8px. */
   width: 100%;
   height: 100%;
   pointer-events: none;
@@ -4905,13 +4908,14 @@ body::-webkit-scrollbar {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.14rem;
-  min-width: 0;
-  min-height: 44px;
+  gap: 0.1rem;
+  min-width: 32px; /* Structural lock: button minimum width remains 32px. */
+  min-height: 48px; /* Structural lock: button minimum height remains 48px. */
   height: 100%;
   border: 0;
   background: transparent;
-  color: rgb(255 255 255 / 0.66);
+  border-radius: 8px;
+  color: rgb(255 255 255 / 0.68);
   text-decoration: none;
   pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
@@ -4923,16 +4927,16 @@ body::-webkit-scrollbar {
 }
 
 .bottom-dock__item:hover {
-  color: rgb(255 255 255 / 0.92);
+  color: rgb(255 255 255 / 0.95);
   background:
-    radial-gradient(ellipse 72% 76% at 50% 8%, rgb(255 255 255 / 0.08), transparent 68%),
-    linear-gradient(180deg, rgb(255 255 255 / 0.055), transparent 72%);
-  filter: brightness(1.08);
+    radial-gradient(ellipse 72% 76% at 50% 8%, rgb(255 255 255 / 0.1), transparent 68%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0.025));
+  filter: brightness(1.06);
 }
 
 .bottom-dock__item:active {
   transform: scale(0.97);
-  background: rgb(255 255 255 / 0.06);
+  background: rgb(255 255 255 / 0.08);
 }
 
 .bottom-dock__item--active {
@@ -4945,9 +4949,9 @@ body::-webkit-scrollbar {
 .bottom-dock__item--active::before {
   position: absolute;
   left: 50%;
-  top: 4px;
+  top: 2px;
   width: min(2.25rem, 58%);
-  height: 3px;
+  height: 2px;
   border-radius: 9999px;
   background: linear-gradient(90deg, #00a8ff 0%, #8a2eff 48%, #ff2faf 100%);
   box-shadow:
@@ -4959,8 +4963,8 @@ body::-webkit-scrollbar {
 
 .bottom-dock__icon-wrap {
   display: grid;
-  width: 25px;
-  height: 25px;
+  width: 23px;
+  height: 23px;
   place-items: center;
   border-radius: 9999px;
   transition:
@@ -4971,7 +4975,7 @@ body::-webkit-scrollbar {
 
 .bottom-dock__item--active .bottom-dock__icon-wrap {
   background:
-    linear-gradient(135deg, rgb(0 168 255 / 0.34), rgb(138 46 255 / 0.24) 48%, rgb(255 47 175 / 0.28)),
+    linear-gradient(135deg, rgb(0 168 255 / 0.38), rgb(138 46 255 / 0.25) 48%, rgb(255 47 175 / 0.32)),
     rgb(255 255 255 / 0.05);
   box-shadow:
     0 0 18px rgb(0 168 255 / 0.4),
@@ -4981,15 +4985,15 @@ body::-webkit-scrollbar {
 }
 
 .bottom-dock__icon {
-  width: 19px;
-  height: 19px;
+  width: 18px;
+  height: 18px;
 }
 
 .bottom-dock__label {
   max-width: 100%;
   overflow: hidden;
   font-family: var(--font-ui), system-ui, sans-serif;
-  font-size: 0.56rem;
+  font-size: 0.54rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 1;

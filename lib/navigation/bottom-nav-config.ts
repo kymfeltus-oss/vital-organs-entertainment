@@ -25,7 +25,7 @@ function matchesPrefix(path: string) {
 }
 
 /** Native-style tab bar height; phone safe area is added separately in CSS. */
-export const BOTTOM_NAV_BAR_HEIGHT_PX = 64;
+export const BOTTOM_NAV_BAR_HEIGHT_PX = 52;
 
 export const BOTTOM_NAV_HOTSPOTS: readonly BottomNavHotspot[] = [
   {

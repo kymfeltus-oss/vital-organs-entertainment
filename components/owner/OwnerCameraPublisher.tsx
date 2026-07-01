@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import OwnerProductionSideMenu from "@/components/owner/OwnerProductionSideMenu";
 import { getSupabase } from "@/lib/supabase/client";
 import {
   clearDirectCameraChannelSignals,
@@ -207,8 +208,11 @@ export default function OwnerCameraPublisher({
   }, [stopPublishing]);
 
   return (
-    <main className="min-h-dvh bg-black text-white">
-      <div className="flex min-h-dvh flex-col">
+    <main className="min-h-dvh overflow-x-hidden overflow-y-auto bg-[#020203] bg-[radial-gradient(circle_at_22%_0%,rgba(0,168,255,0.13),transparent_28%),radial-gradient(circle_at_78%_4%,rgba(255,47,175,0.15),transparent_30%),linear-gradient(180deg,#050507_0%,#020203_54%,#010102_100%)] px-2 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-2 text-white">
+      <div className="mx-auto grid min-h-[calc(100dvh-2.5rem)] w-full max-w-[112rem] gap-2 xl:grid-cols-[12rem_minmax(0,1fr)]">
+        <OwnerProductionSideMenu active="camera" />
+
+        <div className="flex min-h-0 min-w-0 flex-col rounded-[6px] border border-white/10 bg-black/80 shadow-[0_0_28px_rgba(0,168,255,0.08)]">
         <header className="flex items-center justify-between border-b border-white/10 px-4 py-3">
           <div>
             <p className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.22em] text-brand-blue">
@@ -217,10 +221,10 @@ export default function OwnerCameraPublisher({
             <h1 className="font-headline text-xl uppercase tracking-[0.08em]">Browser Publisher</h1>
           </div>
           <Link
-            href="/owner/control"
+            href="/owner/cockpit"
             className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-white/60"
           >
-            Control Room
+            Cockpit
           </Link>
         </header>
 
@@ -258,6 +262,7 @@ export default function OwnerCameraPublisher({
             </div>
           </div>
         </section>
+        </div>
       </div>
     </main>
   );

@@ -1,9 +1,32 @@
 {
   "expo": {
+    "name": "vital-organs-ent",
+    "slug": "vital-organs-ent",
+    "version": "1.0.0",
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ],
+      "expo-router"
+    ],
     "extra": {
       "eas": {
         "projectId": "efa51ac3-5d54-490a-b094-c10536c9e855"
       }
+    },
+    "ios": {
+      "bundleIdentifier": "com.kymfeltus.vitalorgansent",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.kymfeltus.vitalorgansent"
     }
   }
 }
