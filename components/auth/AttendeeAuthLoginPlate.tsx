@@ -26,7 +26,6 @@ type AttendeeAuthLoginPlateProps = {
   onToggleShowPassword: () => void;
   onRememberMeChange: (checked: boolean) => void;
   onSubmit: (event: React.FormEvent) => void;
-  onGuest: () => void;
   onOAuthSignIn: (provider: OAuthProviderId) => void;
 };
 
@@ -71,7 +70,6 @@ export default function AttendeeAuthLoginPlate({
   onToggleShowPassword,
   onRememberMeChange,
   onSubmit,
-  onGuest,
   onOAuthSignIn,
 }: AttendeeAuthLoginPlateProps) {
   const displayMessage = formError ?? formNotice;
@@ -257,25 +255,12 @@ export default function AttendeeAuthLoginPlate({
             </Link>
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-            <Link
-              href="/experience/join-movement"
-              className="font-ui text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-brand-muted transition hover:text-brand-blue"
-            >
-              Join the movement
-            </Link>
-            <span className="text-brand-border" aria-hidden="true">
-              ·
-            </span>
-            <button
-              type="button"
-              onClick={onGuest}
-              disabled={isSubmitting}
-              className="font-ui text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-brand-muted transition hover:text-brand-blue"
-            >
-              Continue as guest
-            </button>
-          </div>
+          <Link
+            href="/experience/join-movement"
+            className="font-ui text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-brand-muted transition hover:text-brand-blue"
+          >
+            Join the movement
+          </Link>
         </div>
         </div>
       </div>

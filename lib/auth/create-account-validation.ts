@@ -1,22 +1,13 @@
-import { isAllowedAvatarMimeType } from "@/lib/profile/avatar-storage";
-import { isValidUsStateCode } from "@/lib/auth/us-states";
 import {
   evaluatePasswordStrength,
   PASSWORD_MIN_LENGTH,
 } from "@/lib/auth/password-policy";
-import {
-  formatPhoneDisplay,
-  isValidEmail,
-  isValidPhone,
-  normalizePhoneDigits,
-} from "@/lib/auth/validation";
+import { isValidEmail } from "@/lib/auth/validation";
 
 /** @deprecated Import PASSWORD_MIN_LENGTH from password-policy — kept for compatibility. */
 export const CREATE_ACCOUNT_MIN_PASSWORD_LENGTH = PASSWORD_MIN_LENGTH;
 
 export { PASSWORD_MIN_LENGTH } from "@/lib/auth/password-policy";
-
-export const CREATE_ACCOUNT_AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 
 export const CREATE_ACCOUNT_TERMS_URL =
   process.env.NEXT_PUBLIC_TERMS_URL?.trim() || "/contact-us";
@@ -28,14 +19,10 @@ export type CreateAccountFormValues = {
   firstName: string;
   lastName: string;
   email: string;
-  phone: string;
-  city: string;
-  state: string;
   password: string;
   confirmPassword: string;
   acceptedTerms: boolean;
   acceptedPrivacy: boolean;
-  avatarFile: File | null;
 };
 
 export type CreateAccountFieldErrors = Partial<
@@ -43,15 +30,10 @@ export type CreateAccountFieldErrors = Partial<
     | "firstName"
     | "lastName"
     | "email"
-    | "phone"
-    | "city"
-    | "state"
     | "password"
     | "confirmPassword"
     | "acceptedTerms"
-    | "acceptedPrivacy"
-    | "avatarFile"
-    | "form",
+    | "acceptedPrivacy",
     string
   >
 >;
@@ -73,24 +55,12 @@ export function validateCreateAccountForm(
     errors.lastName = "Last name is required.";
   }
 
-  if (!values.email.trim()) {
+  const normalizedEmail = values.email.trim().toLowerCase();
+
+  if (!normalizedEmail) {
     errors.email = "Email address is required.";
-  } else if (!isValidEmail(values.email)) {
+  } else if (!isValidEmail(normalizedEmail)) {
     errors.email = "Enter a valid email address.";
-  }
-
-  if (values.phone.trim() && !isValidPhone(values.phone)) {
-    errors.phone = "Enter a valid 10-digit US phone number.";
-  }
-
-  if (!values.city.trim()) {
-    errors.city = "City is required.";
-  }
-
-  if (!values.state.trim()) {
-    errors.state = "State is required.";
-  } else if (!isValidUsStateCode(values.state)) {
-    errors.state = "Select a valid US state.";
   }
 
   if (!values.password) {
@@ -116,14 +86,6 @@ export function validateCreateAccountForm(
     errors.acceptedPrivacy = "You must accept the Privacy Policy.";
   }
 
-  if (values.avatarFile) {
-    if (!isAllowedAvatarMimeType(values.avatarFile.type)) {
-      errors.avatarFile = "Use a JPG, PNG, or WebP image.";
-    } else if (values.avatarFile.size > CREATE_ACCOUNT_AVATAR_MAX_BYTES) {
-      errors.avatarFile = "Profile photo must be 5 MB or smaller.";
-    }
-  }
-
   return errors;
 }
 
@@ -145,21 +107,36 @@ export function applyFullNameInput(
   return { firstName: parts[0], lastName: parts.slice(1).join(" ") };
 }
 
-export function formatCreateAccountPhoneInput(value: string): string {
-  const digits = normalizePhoneDigits(value);
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  return formatPhoneDisplay(digits);
+export function resolveCreateAccountProfileInitial(
+  firstName: string,
+  lastName = "",
+): string {
+  const firstInitial = normalizeName(firstName).charAt(0).toUpperCase();
+  const lastInitial = normalizeName(lastName).charAt(0).toUpperCase();
+
+  if (firstInitial && lastInitial) {
+    return `${firstInitial}${lastInitial}`;
+  }
+
+  if (firstInitial) {
+    return firstInitial;
+  }
+
+  if (lastInitial) {
+    return lastInitial;
+  }
+
+  return "?";
 }
 
 export function serializeCreateAccountPayload(values: CreateAccountFormValues) {
+  const firstName = normalizeName(values.firstName);
+  const lastName = normalizeName(values.lastName);
+
   return {
-    firstName: normalizeName(values.firstName),
-    lastName: normalizeName(values.lastName),
+    firstName,
+    lastName,
     email: values.email.trim().toLowerCase(),
-    phone: normalizePhoneDigits(values.phone),
-    city: values.city.trim(),
-    state: values.state.trim().toUpperCase(),
     password: values.password,
     confirmPassword: values.confirmPassword,
     acceptedTerms: values.acceptedTerms,

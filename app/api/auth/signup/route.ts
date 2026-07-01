@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     const signupNext = resolveAttendeeDestination(payload.next ?? DEFAULT_ATTENDEE_NEXT);
+    const fullName = `${payload.firstName} ${payload.lastName}`.trim();
 
     const { supabase, getResponse } = createRouteHandlerSupabaseClient(request, () =>
       jsonResponse(buildSignupSuccessResponse(false), 200),
@@ -70,11 +71,7 @@ export async function POST(request: NextRequest) {
           is_guest: false,
           first_name: payload.firstName,
           last_name: payload.lastName,
-          phone: payload.phone,
-          city: payload.city,
-          state: payload.state,
-          accepted_terms_at: new Date().toISOString(),
-          accepted_privacy_at: new Date().toISOString(),
+          full_name: fullName,
         },
         emailRedirectTo: buildAuthCallbackUrl(signupNext, request),
       },

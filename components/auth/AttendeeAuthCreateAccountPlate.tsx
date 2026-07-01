@@ -4,34 +4,55 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   ArrowRight,
-  Camera,
-  ChevronDown,
   Eye,
   EyeOff,
   Loader2,
   Lock,
   Mail,
-  MapPin,
-  Phone,
   User,
-  X,
 } from "lucide-react";
 import PasswordStrengthMeter from "@/components/auth/PasswordStrengthMeter";
 import TurnstileWidget from "@/components/auth/TurnstileWidget";
+import type { OAuthProviderId } from "@/lib/auth/oauth-sign-in";
 import {
   CREATE_ACCOUNT_PRIVACY_URL,
   CREATE_ACCOUNT_TERMS_URL,
   PASSWORD_MIN_LENGTH,
+  resolveCreateAccountProfileInitial,
   type CreateAccountFieldErrors,
   type CreateAccountFormValues,
 } from "@/lib/auth/create-account-validation";
-import { US_STATES } from "@/lib/auth/us-states";
+import {
+  AWAKENING_AUTH_LOGIN_COMPONENTS,
+  awakeningAuthAssetUrl,
+} from "@/lib/experience/awakening-auth-assets";
 import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
+
+const SOCIAL_BUTTONS: ReadonlyArray<{
+  provider: OAuthProviderId;
+  label: string;
+  asset: (typeof AWAKENING_AUTH_LOGIN_COMPONENTS)[keyof typeof AWAKENING_AUTH_LOGIN_COMPONENTS];
+}> = [
+  {
+    provider: "apple",
+    label: "Apple",
+    asset: AWAKENING_AUTH_LOGIN_COMPONENTS.appleButton,
+  },
+  {
+    provider: "google",
+    label: "Google",
+    asset: AWAKENING_AUTH_LOGIN_COMPONENTS.googleButton,
+  },
+  {
+    provider: "facebook",
+    label: "Facebook",
+    asset: AWAKENING_AUTH_LOGIN_COMPONENTS.facebookButton,
+  },
+];
 
 type AttendeeAuthCreateAccountPlateProps = {
   loginHref: string;
   values: CreateAccountFormValues;
-  avatarPreviewUrl?: string | null;
   showPassword: boolean;
   showConfirmPassword: boolean;
   isSubmitting: boolean;
@@ -45,8 +66,8 @@ type AttendeeAuthCreateAccountPlateProps = {
   onBlur: () => void;
   onToggleShowPassword: () => void;
   onToggleShowConfirmPassword: () => void;
-  onAvatarPick: () => void;
   onTurnstileTokenChange: (token: string | null) => void;
+  onOAuthSignIn: (provider: OAuthProviderId) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
 };
 
@@ -59,7 +80,6 @@ const labelClassName =
 export default function AttendeeAuthCreateAccountPlate({
   loginHref,
   values,
-  avatarPreviewUrl,
   showPassword,
   showConfirmPassword,
   isSubmitting,
@@ -70,10 +90,15 @@ export default function AttendeeAuthCreateAccountPlate({
   onBlur,
   onToggleShowPassword,
   onToggleShowConfirmPassword,
-  onAvatarPick,
   onTurnstileTokenChange,
+  onOAuthSignIn,
   onSubmit,
 }: AttendeeAuthCreateAccountPlateProps) {
+  const profileInitial = resolveCreateAccountProfileInitial(
+    values.firstName,
+    values.lastName,
+  );
+
   return (
     <div className="auth-login-page flex min-h-0 w-full flex-1 flex-col items-center overflow-y-auto py-8 pt-safe pb-safe sm:py-12">
       <div className="auth-login-page__glow pointer-events-none" aria-hidden="true" />
@@ -107,43 +132,28 @@ export default function AttendeeAuthCreateAccountPlate({
             className="space-y-4"
           >
             <div className="flex items-center gap-4 rounded-xl border border-brand-border/80 bg-brand-black/30 p-3">
-              <button
-                type="button"
-                aria-label="Upload profile photo"
-                disabled={isSubmitting}
-                onClick={onAvatarPick}
-                className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-brand-blue/35 bg-brand-panel/80 transition hover:border-brand-blue/60"
+              <div
+                className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-brand-blue/35 bg-brand-panel/80"
+                aria-hidden="true"
               >
-                {avatarPreviewUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={avatarPreviewUrl}
-                    alt=""
-                    className="size-full object-cover"
-                  />
+                {profileInitial === "?" ? (
+                  <User className="size-6 text-brand-blue" />
                 ) : (
-                  <Camera className="size-6 text-brand-blue" aria-hidden="true" />
+                  <span className="font-headline text-2xl uppercase tracking-[0.08em] text-brand-blue">
+                    {profileInitial}
+                  </span>
                 )}
-              </button>
+              </div>
 
               <div className="min-w-0 flex-1">
                 <p className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.16em] text-white">
-                  Profile photo
+                  Your profile
                 </p>
                 <p className="mt-0.5 font-body text-xs text-brand-muted">
-                  Optional · JPG, PNG, or WebP up to 5 MB
+                  {values.firstName.trim()
+                    ? `Welcome, ${values.firstName.trim()}`
+                    : "Enter your name to personalize your profile."}
                 </p>
-                {values.avatarFile ? (
-                  <button
-                    type="button"
-                    disabled={isSubmitting}
-                    onClick={() => onFieldChange("avatarFile", null)}
-                    className="mt-1.5 inline-flex items-center gap-1 font-ui text-[0.58rem] font-semibold uppercase tracking-[0.1em] text-brand-pink transition hover:opacity-80"
-                  >
-                    <X className="size-3" aria-hidden="true" />
-                    Remove
-                  </button>
-                ) : null}
               </div>
             </div>
 
@@ -165,6 +175,7 @@ export default function AttendeeAuthCreateAccountPlate({
                     onBlur={onBlur}
                     placeholder="First name"
                     className={`${inputClassName} pl-10`}
+                    aria-invalid={Boolean(fieldErrors.firstName)}
                   />
                 </div>
               </label>
@@ -186,6 +197,7 @@ export default function AttendeeAuthCreateAccountPlate({
                     onBlur={onBlur}
                     placeholder="Last name"
                     className={`${inputClassName} pl-10`}
+                    aria-invalid={Boolean(fieldErrors.lastName)}
                   />
                 </div>
               </label>
@@ -209,81 +221,10 @@ export default function AttendeeAuthCreateAccountPlate({
                   onBlur={onBlur}
                   placeholder="you@example.com"
                   className={`${inputClassName} pl-10`}
+                  aria-invalid={Boolean(fieldErrors.email)}
                 />
               </div>
             </label>
-
-            <label className="block">
-              <span className={labelClassName}>Phone</span>
-              <div className="relative">
-                <Phone
-                  className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-brand-pink"
-                  aria-hidden="true"
-                />
-                <input
-                  type="tel"
-                  autoComplete="tel"
-                  inputMode="tel"
-                  disabled={isSubmitting}
-                  value={values.phone}
-                  onChange={(event) => onFieldChange("phone", event.target.value)}
-                  onBlur={onBlur}
-                  placeholder="(555) 555-5555"
-                  className={`${inputClassName} pl-10`}
-                />
-              </div>
-            </label>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1.2fr_0.8fr]">
-              <label className="block">
-                <span className={labelClassName}>City</span>
-                <div className="relative">
-                  <MapPin
-                    className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-brand-blue"
-                    aria-hidden="true"
-                  />
-                  <input
-                    type="text"
-                    required
-                    autoComplete="address-level2"
-                    disabled={isSubmitting}
-                    value={values.city}
-                    onChange={(event) => onFieldChange("city", event.target.value)}
-                    onBlur={onBlur}
-                    placeholder="Your city"
-                    className={`${inputClassName} pl-10`}
-                  />
-                </div>
-              </label>
-
-              <label className="block">
-                <span className={labelClassName}>State</span>
-                <div className="relative">
-                  <select
-                    required
-                    disabled={isSubmitting}
-                    value={values.state}
-                    onChange={(event) => onFieldChange("state", event.target.value)}
-                    onBlur={onBlur}
-                    aria-label="State"
-                    className={`${inputClassName} appearance-none px-4 pr-10 ${!values.state ? "text-brand-muted/45" : ""}`}
-                  >
-                    <option value="" disabled>
-                      State
-                    </option>
-                    {US_STATES.map((state) => (
-                      <option key={state.code} value={state.code} className="text-white">
-                        {state.name}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    className="pointer-events-none absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-brand-muted"
-                    aria-hidden="true"
-                  />
-                </div>
-              </label>
-            </div>
 
             <label className="block">
               <span className={labelClassName}>Password</span>
@@ -339,6 +280,7 @@ export default function AttendeeAuthCreateAccountPlate({
                   onBlur={onBlur}
                   placeholder="Re-enter your password"
                   className={`${inputClassName} pl-10 pr-11`}
+                  aria-invalid={Boolean(fieldErrors.confirmPassword)}
                 />
                 <button
                   type="button"
@@ -435,6 +377,33 @@ export default function AttendeeAuthCreateAccountPlate({
               )}
             </button>
           </form>
+
+          <div className="auth-login-page__divider my-6">
+            <span>Or continue with</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2.5">
+            {SOCIAL_BUTTONS.map(({ provider, label, asset }) => (
+              <button
+                key={provider}
+                type="button"
+                disabled={isSubmitting}
+                aria-label={`Continue with ${label}`}
+                onClick={() => onOAuthSignIn(provider)}
+                className="touch-target overflow-hidden rounded-xl transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Image
+                  src={awakeningAuthAssetUrl(asset.src)}
+                  alt=""
+                  width={asset.width}
+                  height={asset.height}
+                  sizes="(max-width: 640px) 28vw, 120px"
+                  className="h-auto w-full object-contain"
+                />
+                <span className="sr-only">Continue with {label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         <p className="mt-6 text-center font-body text-sm text-brand-muted">

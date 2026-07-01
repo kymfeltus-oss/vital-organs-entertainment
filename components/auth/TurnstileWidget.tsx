@@ -1,6 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import {
+  getTurnstileSiteKey,
+  isTurnstileWidgetEnabled,
+  TURNSTILE_BYPASS_TOKEN,
+} from "@/lib/auth/turnstile-config";
 
 declare global {
   interface Window {
@@ -65,18 +70,26 @@ function loadTurnstileScript(): Promise<void> {
 export default function TurnstileWidget({ onTokenChange, onError }: TurnstileWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
-  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
+  const onTokenChangeRef = useRef(onTokenChange);
+  const onErrorRef = useRef(onError);
+  const siteKey = getTurnstileSiteKey();
+  const widgetEnabled = isTurnstileWidgetEnabled();
 
   useEffect(() => {
-    onTokenChange(null);
+    onTokenChangeRef.current = onTokenChange;
+  }, [onTokenChange]);
 
-    if (!siteKey) {
-      if (process.env.NODE_ENV !== "production") {
-        onTokenChange("dev-turnstile-bypass");
-      }
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
+  useEffect(() => {
+    if (!widgetEnabled) {
+      onTokenChangeRef.current(TURNSTILE_BYPASS_TOKEN);
       return;
     }
 
+    onTokenChangeRef.current(null);
     let cancelled = false;
 
     void loadTurnstileScript()
@@ -87,17 +100,17 @@ export default function TurnstileWidget({ onTokenChange, onError }: TurnstileWid
           sitekey: siteKey,
           theme: "dark",
           size: "flexible",
-          callback: (token) => onTokenChange(token),
-          "expired-callback": () => onTokenChange(null),
+          callback: (token) => onTokenChangeRef.current(token),
+          "expired-callback": () => onTokenChangeRef.current(null),
           "error-callback": () => {
-            onTokenChange(null);
-            onError?.();
+            onTokenChangeRef.current(null);
+            onErrorRef.current?.();
           },
         });
       })
       .catch(() => {
-        onTokenChange(null);
-        onError?.();
+        onTokenChangeRef.current(null);
+        onErrorRef.current?.();
       });
 
     return () => {
@@ -107,17 +120,9 @@ export default function TurnstileWidget({ onTokenChange, onError }: TurnstileWid
         widgetIdRef.current = null;
       }
     };
-  }, [onError, onTokenChange, siteKey]);
+  }, [siteKey, widgetEnabled]);
 
-  if (!siteKey) {
-    if (process.env.NODE_ENV === "production") {
-      return (
-        <p className="rounded-lg border border-brand-pink/30 bg-brand-pink/10 px-3 py-2 font-body text-xs text-brand-pink">
-          Security verification is temporarily unavailable. Please try again later.
-        </p>
-      );
-    }
-
+  if (!widgetEnabled) {
     return null;
   }
 

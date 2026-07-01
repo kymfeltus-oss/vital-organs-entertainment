@@ -95,6 +95,8 @@ export type ManifestSuccessPayload = {
   playbackUrl: string;
   activeExperience: ManifestExperienceKey;
   activeSource: "primary" | "backup";
+  /** UI alias — primary lane Restream, backup lane Amazon IVS. */
+  carrier?: "restream" | "ivs";
   /** Explicit false when serving configured production/env HLS (not Mux demo). */
   fallback?: boolean;
   fallbackReason?: string;

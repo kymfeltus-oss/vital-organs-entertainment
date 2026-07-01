@@ -1,5 +1,5 @@
-import { isValidEmail, isValidPhone, normalizePhoneDigits } from "@/lib/auth/validation";
-import { isValidUsStateCode } from "@/lib/auth/us-states";
+import { evaluatePasswordStrength } from "@/lib/auth/password-policy";
+import { isValidEmail } from "@/lib/auth/validation";
 
 const CONTROL_CHARS = /[\u0000-\u001F\u007F]/g;
 const HTML_TAG = /<[^>]*>/g;
@@ -8,9 +8,6 @@ export const SIGNUP_FIELD_LIMITS = {
   firstName: 80,
   lastName: 80,
   email: 254,
-  phone: 32,
-  city: 120,
-  state: 2,
   password: 128,
 } as const;
 
@@ -18,9 +15,6 @@ export type SanitizedSignupPayload = {
   firstName: string;
   lastName: string;
   email: string;
-  phone: string;
-  city: string;
-  state: string;
   password: string;
   confirmPassword: string;
   acceptedTerms: boolean;
@@ -56,10 +50,8 @@ export function sanitizeSignupRequestBody(body: unknown): SignupSanitizeResult {
   const firstName = normalizeName(stripUnsafeText(record.firstName, SIGNUP_FIELD_LIMITS.firstName));
   const lastName = normalizeName(stripUnsafeText(record.lastName, SIGNUP_FIELD_LIMITS.lastName));
   const email = stripUnsafeText(record.email, SIGNUP_FIELD_LIMITS.email).toLowerCase();
-  const phone = normalizePhoneDigits(stripUnsafeText(record.phone, SIGNUP_FIELD_LIMITS.phone));
-  const city = stripUnsafeText(record.city, SIGNUP_FIELD_LIMITS.city);
-  const state = stripUnsafeText(record.state, SIGNUP_FIELD_LIMITS.state).toUpperCase();
-  const password = typeof record.password === "string" ? record.password.slice(0, SIGNUP_FIELD_LIMITS.password) : "";
+  const password =
+    typeof record.password === "string" ? record.password.slice(0, SIGNUP_FIELD_LIMITS.password) : "";
   const confirmPassword =
     typeof record.confirmPassword === "string"
       ? record.confirmPassword.slice(0, SIGNUP_FIELD_LIMITS.password)
@@ -75,20 +67,16 @@ export function sanitizeSignupRequestBody(body: unknown): SignupSanitizeResult {
     return { ok: false, error: "Enter a valid email address." };
   }
 
-  if (phone && !isValidPhone(phone)) {
-    return { ok: false, error: "Enter a valid 10-digit US phone number." };
-  }
-
-  if (!city) {
-    return { ok: false, error: "City is required." };
-  }
-
-  if (!state || !isValidUsStateCode(state)) {
-    return { ok: false, error: "A valid US state is required." };
-  }
-
   if (!password) {
     return { ok: false, error: "Password is required." };
+  }
+
+  const strength = evaluatePasswordStrength(password);
+  if (!strength.isValid) {
+    return {
+      ok: false,
+      error: strength.message ?? "Password does not meet security requirements.",
+    };
   }
 
   if (password !== confirmPassword) {
@@ -109,9 +97,6 @@ export function sanitizeSignupRequestBody(body: unknown): SignupSanitizeResult {
       firstName,
       lastName,
       email,
-      phone,
-      city,
-      state,
       password,
       confirmPassword,
       acceptedTerms: true,

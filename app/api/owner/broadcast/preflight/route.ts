@@ -2,6 +2,7 @@ import { requireOwnerUser } from "@/lib/owner/auth";
 import { runOwnerPreflight } from "@/lib/owner/broadcast-mutations";
 import { ownerAuthFailureResponse, ownerJsonResponse, isOwnerAuthed } from "@/lib/owner/api-response";
 import type { PublishMode } from "@/lib/owner/contracts";
+import { BROADCAST_HARDWARE_DEFAULTS } from "@/lib/owner/preflight";
 
 export const dynamic = "force-dynamic";
 
@@ -30,9 +31,10 @@ export async function POST(request: Request) {
     }
 
     const { snapshot, blocked } = await runOwnerPreflight(mode);
-    return ownerJsonResponse({ snapshot, blocked });
+    return ownerJsonResponse({ snapshot, blocked, hardwareDefaults: BROADCAST_HARDWARE_DEFAULTS });
   } catch (error) {
-    console.error("[owner/broadcast/preflight] POST failed:", error);
+    const detail = error instanceof Error ? error.message : "unknown";
+    console.error("[owner/broadcast/preflight] POST failed:", detail);
     return ownerJsonResponse({ error: "Preflight failed." }, 500);
   }
 }

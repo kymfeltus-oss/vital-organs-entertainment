@@ -1,3 +1,9 @@
+import {
+  getTurnstileSecretKey,
+  isTurnstileBypassToken,
+  isTurnstileEnforced,
+} from "@/lib/auth/turnstile-config";
+
 type TurnstileVerifyResponse = {
   success: boolean;
   "error-codes"?: string[];
@@ -11,36 +17,21 @@ export type TurnstileVerifyResult = {
   errorCodes: string[];
 };
 
-function isProduction(): boolean {
-  return process.env.NODE_ENV === "production";
-}
-
-function getTurnstileSecret(): string | null {
-  const secret = process.env.TURNSTILE_SECRET_KEY?.trim();
-  return secret || null;
-}
-
-/** Verify Cloudflare Turnstile token server-side. Skips only in non-production when secret unset. */
+/** Verify Cloudflare Turnstile token server-side. Skips when keys are not fully configured. */
 export async function verifyTurnstileToken(
   token: string | null | undefined,
   remoteIp?: string | null,
 ): Promise<TurnstileVerifyResult> {
-  const secret = getTurnstileSecret();
-
-  if (!secret) {
-    if (isProduction()) {
-      console.error("[AUTH_TURNSTILE_ERR]: TURNSTILE_SECRET_KEY missing in production.");
-      return { ok: false, skipped: false, errorCodes: ["missing-secret"] };
-    }
-
+  if (!isTurnstileEnforced()) {
     return { ok: true, skipped: true, errorCodes: [] };
   }
 
   const trimmed = token?.trim() ?? "";
-  if (!trimmed) {
+  if (!trimmed || isTurnstileBypassToken(trimmed)) {
     return { ok: false, skipped: false, errorCodes: ["missing-token"] };
   }
 
+  const secret = getTurnstileSecretKey();
   const form = new URLSearchParams();
   form.set("secret", secret);
   form.set("response", trimmed);

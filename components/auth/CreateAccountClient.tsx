@@ -1,16 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import AttendeeAuthCreateAccountPlate from "@/components/auth/AttendeeAuthCreateAccountPlate";
 import {
-  formatCreateAccountPhoneInput,
   isCreateAccountFormValid,
   serializeCreateAccountPayload,
   validateCreateAccountForm,
   type CreateAccountFormValues,
 } from "@/lib/auth/create-account-validation";
-import { SIGNUP_SUCCESS_MESSAGE } from "@/lib/auth/signup-messages";
+import { handleSocialLogin, type OAuthProviderId } from "@/lib/auth/oauth-sign-in";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
+import { SIGNUP_SUCCESS_MESSAGE } from "@/lib/auth/signup-messages";
+import { isTurnstileWidgetEnabled } from "@/lib/auth/turnstile-config";
 
 type CreateAccountClientProps = {
   nextPath: string;
@@ -20,19 +21,13 @@ const INITIAL_VALUES: CreateAccountFormValues = {
   firstName: "",
   lastName: "",
   email: "",
-  phone: "",
-  city: "",
-  state: "",
   password: "",
   confirmPassword: "",
   acceptedTerms: false,
   acceptedPrivacy: false,
-  avatarFile: null,
 };
 
 export default function CreateAccountClient({ nextPath }: CreateAccountClientProps) {
-  const formId = useId();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [values, setValues] = useState<CreateAccountFormValues>(INITIAL_VALUES);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -43,16 +38,6 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
   const [confirmationSent, setConfirmationSent] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
-  const avatarPreviewUrl = useMemo(() => {
-    if (!values.avatarFile) return null;
-    return URL.createObjectURL(values.avatarFile);
-  }, [values.avatarFile]);
-
-  useEffect(() => {
-    if (!avatarPreviewUrl) return;
-    return () => URL.revokeObjectURL(avatarPreviewUrl);
-  }, [avatarPreviewUrl]);
-
   const fieldErrors = useMemo(
     () => (touched ? validateCreateAccountForm(values) : {}),
     [touched, values],
@@ -62,8 +47,26 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
     setTurnstileToken(token);
   }, []);
 
+  const handleOAuthSignIn = async (provider: OAuthProviderId) => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setFormError(null);
+
+    const result = await handleSocialLogin(provider, nextPath);
+
+    if (result.error) {
+      setFormError(result.error);
+      setIsSubmitting(false);
+    }
+  };
+
+  const turnstileRequired = isTurnstileWidgetEnabled();
+
   const canSubmit =
-    isCreateAccountFormValid(values) && Boolean(turnstileToken) && !isSubmitting;
+    isCreateAccountFormValid(values) &&
+    (!turnstileRequired || Boolean(turnstileToken)) &&
+    !isSubmitting;
   const loginHref = buildAttendeeGateUrl(nextPath);
 
   const setField = <K extends keyof CreateAccountFormValues>(
@@ -73,24 +76,6 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
     setValues((current) => ({ ...current, [key]: value }));
   };
 
-  const uploadAvatar = async () => {
-    if (!values.avatarFile) return;
-
-    const formData = new FormData();
-    formData.append("avatar", values.avatarFile);
-
-    const response = await fetch("/api/profile/avatar", {
-      method: "POST",
-      body: formData,
-      credentials: "include",
-    });
-
-    const result = (await response.json()) as { success?: boolean; error?: string };
-    if (!response.ok || !result.success) {
-      throw new Error(result.error ?? "Unable to upload profile photo.");
-    }
-  };
-
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setTouched(true);
@@ -98,24 +83,19 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
     const errors = validateCreateAccountForm(values);
     if (Object.keys(errors).length > 0) {
       const firstError =
-        errors.form ??
         errors.firstName ??
         errors.lastName ??
         errors.email ??
-        errors.phone ??
-        errors.city ??
-        errors.state ??
         errors.password ??
         errors.confirmPassword ??
         errors.acceptedTerms ??
         errors.acceptedPrivacy ??
-        errors.avatarFile ??
         "Fix the highlighted fields to continue.";
       setFormError(firstError);
       return;
     }
 
-    if (!turnstileToken) {
+    if (turnstileRequired && !turnstileToken) {
       setFormError("Complete the security verification before submitting.");
       return;
     }
@@ -133,7 +113,7 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
         credentials: "include",
         body: JSON.stringify({
           ...payload,
-          turnstileToken,
+          turnstileToken: turnstileToken ?? undefined,
           next: nextPath,
         }),
       });
@@ -159,10 +139,6 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
         method: "POST",
         credentials: "include",
       });
-
-      if (values.avatarFile) {
-        await uploadAvatar();
-      }
 
       window.location.assign(nextPath);
     } catch (error) {
@@ -234,7 +210,6 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
         <AttendeeAuthCreateAccountPlate
           loginHref={loginHref}
           values={values}
-          avatarPreviewUrl={avatarPreviewUrl}
           showPassword={showPassword}
           showConfirmPassword={showConfirmPassword}
           isSubmitting={isSubmitting}
@@ -246,45 +221,22 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
               ? fieldErrors.firstName ??
                 fieldErrors.lastName ??
                 fieldErrors.email ??
-                fieldErrors.phone ??
-                fieldErrors.city ??
-                fieldErrors.state ??
                 fieldErrors.password ??
                 fieldErrors.confirmPassword ??
                 fieldErrors.acceptedTerms ??
                 fieldErrors.acceptedPrivacy ??
-                fieldErrors.avatarFile ??
                 "Fix the highlighted fields to continue."
               : null)
           }
-          onFieldChange={(key, value) => {
-            if (key === "phone") {
-              setField("phone", formatCreateAccountPhoneInput(String(value)));
-              return;
-            }
-            setField(key, value);
-          }}
+          onFieldChange={setField}
           onBlur={() => setTouched(true)}
           onToggleShowPassword={() => setShowPassword((current) => !current)}
           onToggleShowConfirmPassword={() => setShowConfirmPassword((current) => !current)}
-          onAvatarPick={() => fileInputRef.current?.click()}
           onTurnstileTokenChange={handleTurnstileTokenChange}
+          onOAuthSignIn={(provider) => void handleOAuthSignIn(provider)}
           onSubmit={(event) => void handleSubmit(event)}
         />
       )}
-
-      <input
-        ref={fileInputRef}
-        id={`${formId}-avatar`}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        className="sr-only"
-        onChange={(event) => {
-          const file = event.target.files?.[0] ?? null;
-          setField("avatarFile", file);
-        }}
-        aria-label="Upload profile photo"
-      />
     </>
   );
 }

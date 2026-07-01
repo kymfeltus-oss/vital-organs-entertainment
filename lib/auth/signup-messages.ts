@@ -1,7 +1,7 @@
 /** Anti-enumeration messaging for signup and verification resend flows. */
 
 export const SIGNUP_SUCCESS_MESSAGE =
-  "If this email is eligible, check your inbox to continue.";
+  "If this email is eligible, a confirmation link has been sent to your inbox.";
 
 export const SIGNUP_GENERIC_ERROR_MESSAGE =
   "Unable to complete registration. Please try again later.";

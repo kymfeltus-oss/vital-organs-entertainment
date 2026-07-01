@@ -12,6 +12,36 @@ import type { OwnerStreamStateRow } from "@/lib/owner/load-owner-state";
 
 import type { VmixSnapshot } from "@/lib/owner/vmix/client";
 
+export const BROADCAST_HARDWARE_DEFAULTS = {
+  video: {
+    rateControl: "CBR",
+    keyframeIntervalSeconds: 2.0,
+    profile: "High",
+    defaultResolutionWidth: 1920,
+    defaultResolutionHeight: 1080,
+    fps: 30,
+  },
+  audio: {
+    codec: "AAC-LC",
+    sampleRateHz: 48000,
+    channels: "Stereo",
+    targetLoudnessLufs: -16,
+    brickwallPeakDbfs: -2.0,
+  },
+} as const;
+
+export type BroadcastHardwareDefaults = typeof BROADCAST_HARDWARE_DEFAULTS;
+
+export function formatBroadcastVideoDefaultLabel(): string {
+  const video = BROADCAST_HARDWARE_DEFAULTS.video;
+  return `${video.defaultResolutionWidth}x${video.defaultResolutionHeight} @ ${video.fps}fps · ${video.profile} · ${video.rateControl} · KF ${video.keyframeIntervalSeconds}s`;
+}
+
+export function formatBroadcastAudioDefaultLabel(): string {
+  const audio = BROADCAST_HARDWARE_DEFAULTS.audio;
+  return `${audio.codec} · ${audio.sampleRateHz / 1000}kHz · ${audio.channels} · ${audio.targetLoudnessLufs} LUFS · peak ${audio.brickwallPeakDbfs} dBFS`;
+}
+
 type BuildPreflightInput = {
   eventPhase: EventPhaseState;
   countdownConfig: EventCountdownConfig;

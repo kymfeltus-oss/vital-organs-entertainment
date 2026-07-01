@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import CreateAccountClient from "@/components/auth/CreateAccountClient";
+import CreateAccountErrorBoundary from "@/components/auth/CreateAccountErrorBoundary";
 import {
   AUTH_NEXT_COOKIE,
   DEFAULT_ATTENDEE_NEXT,
@@ -32,7 +33,9 @@ export default async function CreateAccountPage({ searchParams }: CreateAccountP
       className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-brand-black"
       aria-label="Create account"
     >
-      <CreateAccountClient nextPath={nextPath} />
+      <CreateAccountErrorBoundary>
+        <CreateAccountClient nextPath={nextPath} />
+      </CreateAccountErrorBoundary>
     </main>
   );
 }

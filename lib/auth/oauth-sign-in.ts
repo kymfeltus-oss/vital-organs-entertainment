@@ -35,13 +35,21 @@ function mapOAuthStartError(message: string, provider: OAuthProviderId): string 
   return message;
 }
 
+/** Post-login destination preserved for `app/auth/callback` (AuthCallbackClient). */
 export function buildClientAuthCallbackUrl(nextPath: string): string {
   const url = new URL("/auth/callback", window.location.origin);
   url.searchParams.set("next", nextPath);
   return url.toString();
 }
 
-export async function startOAuthSignIn(
+/**
+ * Starts Supabase OAuth for Apple, Google, or Facebook.
+ * Redirect lands on `/auth/callback` where the session is exchanged, profile
+ * identity is synced, and the user is routed to their destination. Supabase
+ * creates the auth.users row on first OAuth sign-in; `handle_new_user()` runs
+ * natively — this helper does not insert users or bypass that trigger.
+ */
+export async function handleSocialLogin(
   provider: OAuthProviderId,
   nextPath?: string | null,
 ): Promise<{ error?: string }> {
@@ -62,15 +70,19 @@ export async function startOAuthSignIn(
   });
 
   if (error) {
+    console.error(`${provider} login failed:`, error.message);
     return { error: mapOAuthStartError(error.message, provider) };
   }
 
   if (!data.url) {
-    return {
-      error: `Unable to start ${PROVIDER_LABELS[provider]} sign-in. Confirm the provider is enabled in Supabase.`,
-    };
+    const message = `Unable to start ${PROVIDER_LABELS[provider]} sign-in. Confirm the provider is enabled in Supabase.`;
+    console.error(`${provider} login failed:`, message);
+    return { error: message };
   }
 
   window.location.assign(data.url);
   return {};
 }
+
+/** @deprecated Prefer `handleSocialLogin` — kept for existing imports. */
+export const startOAuthSignIn = handleSocialLogin;

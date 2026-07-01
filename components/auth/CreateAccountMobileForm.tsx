@@ -11,7 +11,6 @@ import {
   formatFullName,
   type CreateAccountFormValues,
 } from "@/lib/auth/create-account-validation";
-import { US_STATES } from "@/lib/auth/us-states";
 
 type CreateAccountMobileFormProps = {
   loginHref: string;
@@ -28,7 +27,6 @@ type CreateAccountMobileFormProps = {
   onBlur: () => void;
   onToggleShowPassword: () => void;
   onToggleShowConfirmPassword: () => void;
-  onAvatarPick: () => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
 };
 
@@ -44,7 +42,6 @@ export default function CreateAccountMobileForm({
   onBlur,
   onToggleShowPassword,
   onToggleShowConfirmPassword,
-  onAvatarPick,
   onSubmit,
 }: CreateAccountMobileFormProps) {
   const panels = AWAKENING_AUTH_SIGNUP_PANELS;
@@ -58,15 +55,6 @@ export default function CreateAccountMobileForm({
       autoComplete="on"
       noValidate
     >
-      <button
-        type="button"
-        aria-label="Upload profile photo"
-        disabled={isSubmitting}
-        className="auth-attendee-hit auth-attendee-link-hit auth-attendee-interactive"
-        style={authRectStyle(panels.avatarUpload)}
-        onClick={onAvatarPick}
-      />
-
       <input
         type="text"
         required
@@ -99,40 +87,6 @@ export default function CreateAccountMobileForm({
         className="auth-attendee-field auth-attendee-interactive"
         style={authRectStyle(panels.email)}
       />
-
-      <input
-        type="text"
-        required
-        autoComplete="address-level2"
-        disabled={isSubmitting}
-        value={values.city}
-        onChange={(event) => onFieldChange("city", event.target.value)}
-        onBlur={onBlur}
-        placeholder=" "
-        aria-label="City"
-        className="auth-attendee-field auth-attendee-interactive"
-        style={authRectStyle(panels.city)}
-      />
-
-      <select
-        required
-        disabled={isSubmitting}
-        value={values.state}
-        onChange={(event) => onFieldChange("state", event.target.value)}
-        onBlur={onBlur}
-        aria-label="State"
-        className="auth-attendee-field auth-attendee-field--select auth-attendee-interactive"
-        style={authRectStyle(panels.state)}
-      >
-        <option value="" disabled>
-          State
-        </option>
-        {US_STATES.map((state) => (
-          <option key={state.code} value={state.code}>
-            {state.name}
-          </option>
-        ))}
-      </select>
 
       <input
         type={showPassword ? "text" : "password"}

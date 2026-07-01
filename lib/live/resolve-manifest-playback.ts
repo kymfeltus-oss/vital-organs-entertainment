@@ -10,11 +10,18 @@ import {
 } from "@/lib/owner/feed-urls";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
+export type ManifestCarrier = "restream" | "ivs";
+
 export type ResolvedManifestPlayback = {
   playbackUrl: string | null;
   activeSource: "primary" | "backup";
   fromDatabase: boolean;
 };
+
+/** Display alias for attendee UI — maps DB lane to carrier without touching active_source. */
+export function resolveManifestCarrier(activeSource: "primary" | "backup"): ManifestCarrier {
+  return activeSource === "backup" ? "ivs" : "restream";
+}
 
 /**
  * Resolve attendee HLS manifest for /api/stream/manifest.

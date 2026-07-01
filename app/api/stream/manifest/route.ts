@@ -7,7 +7,10 @@ import {
   buildDevManifestFallbackPayload,
   type ManifestExperienceKey,
 } from "@/lib/live/manifest-dev-fallback";
-import { resolveLiveManifestPlayback } from "@/lib/live/resolve-manifest-playback";
+import {
+  resolveLiveManifestPlayback,
+  resolveManifestCarrier,
+} from "@/lib/live/resolve-manifest-playback";
 
 const EXPERIENCE_KEYS: readonly ManifestExperienceKey[] = [
   "main_stage",
@@ -57,6 +60,7 @@ export async function GET(request: NextRequest) {
       success: true,
       activeExperience: experience,
       activeSource: resolved.activeSource,
+      carrier: resolveManifestCarrier(resolved.activeSource),
       fallback: false,
       playbackUrl: resolveClientPlaybackUrl(request, resolved.playbackUrl),
     });
@@ -71,6 +75,7 @@ export async function GET(request: NextRequest) {
   if (fallbackPayload) {
     return jsonResponse(request, {
       ...fallbackPayload,
+      carrier: resolveManifestCarrier(fallbackPayload.activeSource),
       playbackUrl: resolveClientPlaybackUrl(request, fallbackPayload.playbackUrl),
     });
   }

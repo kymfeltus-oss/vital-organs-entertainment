@@ -28,8 +28,27 @@ export function parseNameFieldsFromMetadata(
     return { firstName: "", lastName: "" };
   }
 
-  const firstName = normalizeNamePart(metadata.first_name ?? metadata.firstName);
-  const lastName = normalizeNamePart(metadata.last_name ?? metadata.lastName);
+  let firstName = normalizeNamePart(metadata.first_name ?? metadata.firstName);
+  let lastName = normalizeNamePart(metadata.last_name ?? metadata.lastName);
+
+  if (!firstName && !lastName) {
+    const fullName = normalizeNamePart(
+      metadata.full_name ?? metadata.fullName ?? metadata.name,
+    );
+    if (fullName) {
+      const parts = fullName.split(" ").filter(Boolean);
+      firstName = parts[0] ?? "";
+      lastName = parts.slice(1).join(" ");
+    }
+  }
+
+  if (!firstName) {
+    firstName = normalizeNamePart(metadata.given_name ?? metadata.givenName);
+  }
+
+  if (!lastName) {
+    lastName = normalizeNamePart(metadata.family_name ?? metadata.familyName);
+  }
 
   return { firstName, lastName };
 }
