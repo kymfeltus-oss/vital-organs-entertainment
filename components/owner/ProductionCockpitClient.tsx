@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -212,6 +212,22 @@ function formatCockpitEventDate(targetIso: string | null) {
   }).format(date);
 }
 
+function isoToDatetimeLocalValue(targetIso: string | null): string {
+  if (!targetIso) return "";
+  const date = new Date(targetIso);
+  if (Number.isNaN(date.getTime())) return "";
+
+  const pad = (value: number) => value.toString().padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function datetimeLocalToIso(value: string): string | null {
+  if (!value.trim()) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString();
+}
+
 function formatDuration(totalSeconds: number) {
   const safeSeconds = Math.max(0, Math.floor(totalSeconds));
   const minutes = Math.floor(safeSeconds / 60);
@@ -229,11 +245,13 @@ function getTypeAccent(type: OwnerGraphicsPreset["type"]) {
 
 function CockpitPanel({
   title,
+  titleAction,
   children,
   className = "",
 }: {
   title?: string;
-  children: React.ReactNode;
+  titleAction?: ReactNode;
+  children: ReactNode;
   className?: string;
 }) {
   return (
@@ -241,8 +259,11 @@ function CockpitPanel({
       className={`min-h-0 overflow-hidden rounded-[6px] border border-white/10 bg-[#050814]/94 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_0_28px_rgba(0,168,255,0.08)] ${className}`}
     >
       {title ? (
-        <div className="border-b border-white/10 px-2 py-1.5 font-ui text-[0.58rem] font-bold uppercase tracking-[0.1em] text-white/72 sm:text-[0.64rem]">
-          {title}
+        <div className="flex items-center justify-between gap-2 border-b border-white/10 px-2 py-1.5">
+          <span className="font-ui text-[0.58rem] font-bold uppercase tracking-[0.1em] text-white/72 sm:text-[0.64rem]">
+            {title}
+          </span>
+          {titleAction}
         </div>
       ) : null}
       {children}
@@ -384,6 +405,17 @@ function CountdownPanel({
   targetDateTime,
   loading,
   pending,
+  isEditing,
+  isSaving,
+  editTitle,
+  editPresenter,
+  editTargetLocal,
+  titleAction,
+  onEditTitleChange,
+  onEditPresenterChange,
+  onEditTargetLocalChange,
+  onCancelEdit,
+  onSaveEdit,
   onAdjust,
 }: {
   seconds: number;
@@ -392,6 +424,17 @@ function CountdownPanel({
   targetDateTime: string | null;
   loading: boolean;
   pending: boolean;
+  isEditing: boolean;
+  isSaving: boolean;
+  editTitle: string;
+  editPresenter: string;
+  editTargetLocal: string;
+  titleAction?: ReactNode;
+  onEditTitleChange: (value: string) => void;
+  onEditPresenterChange: (value: string) => void;
+  onEditTargetLocalChange: (value: string) => void;
+  onCancelEdit: () => void;
+  onSaveEdit: () => void;
   onAdjust: (offsetSeconds: number) => void;
 }) {
   const countdown = getCountdownParts(seconds);
@@ -401,24 +444,73 @@ function CountdownPanel({
     { label: "[ -1m ]", offset: -60, tone: "bg-red-700 hover:bg-red-600" },
     { label: "[ -5m ]", offset: -300, tone: "bg-red-700 hover:bg-red-600" },
   ];
+  const inputsFrozen = isSaving || pending;
 
   return (
-    <CockpitPanel title="EVENT COUNTDOWN" className="flex flex-col">
+    <CockpitPanel title="EVENT COUNTDOWN" titleAction={titleAction} className="flex flex-col">
       <div className="flex min-h-0 flex-1 flex-col p-2">
         <div className="flex items-center gap-2">
           <div className="grid h-12 w-12 shrink-0 place-items-center rounded-md border border-[#00a8ff]/50 bg-black/55 text-center font-headline text-lg leading-none text-[#00a8ff] shadow-[0_0_18px_rgba(0,168,255,0.28)] sm:h-14 sm:w-14 sm:text-xl">
             300
             <span className="font-ui text-[0.45rem] tracking-normal text-white">AWAKENING</span>
           </div>
-          <div className="min-w-0">
-            <p className="truncate font-ui text-[0.58rem] font-black uppercase text-white sm:text-[0.66rem]">
-              {eventName || "LIVE EVENT WORKSPACE"}
-            </p>
-            <p className="mt-1 font-body text-[0.5rem] leading-snug text-white/68 sm:text-[0.58rem]">
-              {presenterName || "MAIN SPEAKER"}
-              <br />
-              {formatCockpitEventDate(targetDateTime)}
-            </p>
+          <div className="min-w-0 flex-1">
+            {isEditing ? (
+              <div className="space-y-2 rounded-md border border-white/10 bg-brand-black p-2">
+                <input
+                  type="text"
+                  value={editTitle}
+                  disabled={inputsFrozen}
+                  onChange={(event) => onEditTitleChange(event.target.value)}
+                  placeholder="Event title"
+                  className="w-full rounded border border-white/10 bg-brand-black px-2 py-1 font-ui text-[0.58rem] font-black uppercase text-white outline-none focus:border-[#00a8ff]/50 disabled:cursor-not-allowed disabled:opacity-45 sm:text-[0.66rem]"
+                />
+                <input
+                  type="text"
+                  value={editPresenter}
+                  disabled={inputsFrozen}
+                  onChange={(event) => onEditPresenterChange(event.target.value)}
+                  placeholder="Presenter / subtitle"
+                  className="w-full rounded border border-white/10 bg-brand-black px-2 py-1 font-body text-[0.5rem] text-white/85 outline-none focus:border-[#00a8ff]/50 disabled:cursor-not-allowed disabled:opacity-45 sm:text-[0.58rem]"
+                />
+                <input
+                  type="datetime-local"
+                  value={editTargetLocal}
+                  disabled={inputsFrozen}
+                  onChange={(event) => onEditTargetLocalChange(event.target.value)}
+                  className="w-full rounded border border-white/10 bg-brand-black px-2 py-1 font-body text-[0.5rem] text-white outline-none focus:border-[#00a8ff]/50 disabled:cursor-not-allowed disabled:opacity-45 sm:text-[0.58rem]"
+                />
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <button
+                    type="button"
+                    disabled={inputsFrozen}
+                    onClick={onSaveEdit}
+                    className="min-h-8 rounded-md border border-lime-300/35 bg-lime-300/10 px-2 font-ui text-[0.58rem] font-black uppercase text-lime-300 transition hover:bg-lime-300/15 disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    {isSaving ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : "[ Save ]"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={inputsFrozen}
+                    onClick={onCancelEdit}
+                    className="min-h-8 rounded-md border border-white/10 bg-white/5 px-2 font-ui text-[0.58rem] font-black uppercase text-white/45 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    [ Cancel ]
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <p className="truncate font-ui text-[0.58rem] font-black uppercase text-white sm:text-[0.66rem]">
+                  {eventName || "LIVE EVENT WORKSPACE"}
+                </p>
+                <p className="mt-1 font-body text-[0.5rem] leading-snug text-white/68 sm:text-[0.58rem]">
+                  {presenterName || "MAIN SPEAKER"}
+                  <br />
+                  {formatCockpitEventDate(targetDateTime)}
+                </p>
+              </>
+            )}
           </div>
         </div>
 
@@ -1137,6 +1229,11 @@ export default function ProductionCockpitClient() {
   const [mutatingId, setMutatingId] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
   const [countdownPending, setCountdownPending] = useState(false);
+  const [isEditingEvent, setIsEditingEvent] = useState(false);
+  const [isSavingEvent, setIsSavingEvent] = useState(false);
+  const [editEventTitle, setEditEventTitle] = useState("");
+  const [editPresenterName, setEditPresenterName] = useState("");
+  const [editTargetLocal, setEditTargetLocal] = useState("");
   const [broadcastPending, setBroadcastPending] = useState(false);
   const [destinations, setDestinations] = useState<RestreamDestinations>(DEFAULT_RESTREAM_DESTINATIONS);
   const [destinationsLoading, setDestinationsLoading] = useState(true);
@@ -1165,9 +1262,25 @@ export default function ProductionCockpitClient() {
         credentials: "include",
         cache: "no-store",
       });
+
+      if (response.status === 401 || response.status === 403) {
+        return;
+      }
+
       if (!response.ok) return;
-      const data = (await response.json()) as { snapshot?: OwnerBroadcastSnapshot };
-      if (data.snapshot) setBroadcastSnapshot(data.snapshot);
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.warn("[cockpit/snapshot-poll] Received non-JSON HTML response. Session may be unauthenticated.");
+        return;
+      }
+
+      try {
+        const data = (await response.json()) as { snapshot?: OwnerBroadcastSnapshot };
+        if (data.snapshot) setBroadcastSnapshot(data.snapshot);
+      } catch (parseError) {
+        console.error("[cockpit/snapshot-parse] Failed to parse snapshot JSON payload:", parseError);
+      }
     } catch (err) {
       console.error(
         "[cockpit/snapshot-poll] Fetch failed:",
@@ -1462,6 +1575,63 @@ export default function ProductionCockpitClient() {
     }
   }, [loadShowSetup]);
 
+  const beginEditEvent = useCallback(() => {
+    setEditEventTitle(countdownEventName);
+    setEditPresenterName(countdownPresenterName);
+    setEditTargetLocal(isoToDatetimeLocalValue(countdownTargetIso));
+    setGraphicsError(null);
+    setIsEditingEvent(true);
+  }, [countdownEventName, countdownPresenterName, countdownTargetIso]);
+
+  const cancelEditEvent = useCallback(() => {
+    if (isSavingEvent) return;
+    setIsEditingEvent(false);
+  }, [isSavingEvent]);
+
+  const saveEditEvent = useCallback(async () => {
+    const targetIso = datetimeLocalToIso(editTargetLocal);
+    if (!editEventTitle.trim() || !editPresenterName.trim() || !targetIso) {
+      setGraphicsError("Event title, presenter, and showtime are required.");
+      return;
+    }
+
+    setIsSavingEvent(true);
+    setGraphicsError(null);
+
+    try {
+      const response = await fetch("/api/owner/countdown/update", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editEventTitle.trim(),
+          presenterName: editPresenterName.trim(),
+          targetDateTime: targetIso,
+        }),
+      });
+      const json = (await response.json()) as ShowSetupResponse & { ok?: boolean };
+
+      if (!response.ok || json.ok === false) {
+        throw new Error(json.error || "Unable to save event schedule.");
+      }
+
+      if (json.state) {
+        setCountdownEventName(json.state.showTitle || editEventTitle.trim());
+        setCountdownPresenterName(json.state.presenterName || editPresenterName.trim());
+        setCountdownTargetIso(json.state.targetDateTime || targetIso);
+      } else {
+        await loadShowSetup();
+      }
+
+      setIsEditingEvent(false);
+      setGraphicsSuccess(json.message || "Event schedule saved.");
+    } catch (saveError) {
+      setGraphicsError(saveError instanceof Error ? saveError.message : "Unable to save event schedule.");
+    } finally {
+      setIsSavingEvent(false);
+    }
+  }, [editEventTitle, editPresenterName, editTargetLocal, loadShowSetup]);
+
   const sendBroadcastCommand = useCallback(async (endpoint: string, body?: unknown) => {
     setBroadcastPending(true);
     setBroadcastError(null);
@@ -1707,6 +1877,28 @@ export default function ProductionCockpitClient() {
               targetDateTime={countdownTargetIso}
               loading={destinationsLoading}
               pending={countdownPending}
+              isEditing={isEditingEvent}
+              isSaving={isSavingEvent}
+              editTitle={editEventTitle}
+              editPresenter={editPresenterName}
+              editTargetLocal={editTargetLocal}
+              titleAction={
+                !isEditingEvent ? (
+                  <button
+                    type="button"
+                    disabled={destinationsLoading || countdownPending || isSavingEvent}
+                    onClick={beginEditEvent}
+                    className="shrink-0 font-ui text-[0.5rem] font-black uppercase tracking-[0.06em] text-[#00a8ff] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-45 sm:text-[0.54rem]"
+                  >
+                    [ Edit Schedule ]
+                  </button>
+                ) : null
+              }
+              onEditTitleChange={setEditEventTitle}
+              onEditPresenterChange={setEditPresenterName}
+              onEditTargetLocalChange={setEditTargetLocal}
+              onCancelEdit={cancelEditEvent}
+              onSaveEdit={() => void saveEditEvent()}
               onAdjust={(offset) => void adjustCountdown(offset)}
             />
           </aside>

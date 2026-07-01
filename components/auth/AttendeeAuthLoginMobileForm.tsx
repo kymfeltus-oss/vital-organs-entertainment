@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Check, Loader2, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
-import type { OAuthProviderId } from "@/lib/auth/oauth-sign-in";
 import {
   AWAKENING_AUTH_LOGIN_COMPONENTS,
   AWAKENING_AUTH_LOGIN_FORM,
@@ -26,7 +25,6 @@ type AttendeeAuthLoginMobileFormProps = {
   onToggleShowPassword: () => void;
   onRememberMeChange: (checked: boolean) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
-  onOAuthSignIn: (provider: OAuthProviderId) => void;
 };
 
 type LoginPlateProps = {
@@ -69,7 +67,6 @@ export default function AttendeeAuthLoginMobileForm({
   onToggleShowPassword,
   onRememberMeChange,
   onSubmit,
-  onOAuthSignIn,
 }: AttendeeAuthLoginMobileFormProps) {
   const formAnchor = AWAKENING_AUTH_LOGIN_FORM;
   const components = AWAKENING_AUTH_LOGIN_COMPONENTS;
@@ -224,36 +221,6 @@ export default function AttendeeAuthLoginMobileForm({
           className="auth-attendee-login-form__asset-link auth-attendee-interactive touch-target"
         />
       </LoginPlate>
-
-      <div className="auth-attendee-login-form__social" aria-label="Social sign-in">
-        <LoginPlate component={components.appleButton} className="auth-attendee-login-form__plate--social">
-          <button
-            type="button"
-            disabled={isSubmitting}
-            aria-label="Continue with Apple"
-            className="auth-attendee-login-form__asset-btn auth-attendee-interactive touch-target"
-            onClick={() => onOAuthSignIn("apple")}
-          />
-        </LoginPlate>
-        <LoginPlate component={components.googleButton} className="auth-attendee-login-form__plate--social">
-          <button
-            type="button"
-            disabled={isSubmitting}
-            aria-label="Continue with Google"
-            className="auth-attendee-login-form__asset-btn auth-attendee-interactive touch-target"
-            onClick={() => onOAuthSignIn("google")}
-          />
-        </LoginPlate>
-        <LoginPlate component={components.facebookButton} className="auth-attendee-login-form__plate--social">
-          <button
-            type="button"
-            disabled={isSubmitting}
-            aria-label="Continue with Facebook"
-            className="auth-attendee-login-form__asset-btn auth-attendee-interactive touch-target"
-            onClick={() => onOAuthSignIn("facebook")}
-          />
-        </LoginPlate>
-      </div>
 
       <LoginPlate component={components.signUpFooter}>
         <Link

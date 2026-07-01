@@ -3,12 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
+import AttendeeAuthAwakeningCallout from "@/components/auth/AttendeeAuthAwakeningCallout";
 import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
-import type { OAuthProviderId } from "@/lib/auth/oauth-sign-in";
-import {
-  AWAKENING_AUTH_LOGIN_COMPONENTS,
-  awakeningAuthAssetUrl,
-} from "@/lib/experience/awakening-auth-assets";
 
 type AttendeeAuthLoginPlateProps = {
   createAccountHref: string;
@@ -26,30 +22,7 @@ type AttendeeAuthLoginPlateProps = {
   onToggleShowPassword: () => void;
   onRememberMeChange: (checked: boolean) => void;
   onSubmit: (event: React.FormEvent) => void;
-  onOAuthSignIn: (provider: OAuthProviderId) => void;
 };
-
-const SOCIAL_BUTTONS: ReadonlyArray<{
-  provider: OAuthProviderId;
-  label: string;
-  asset: (typeof AWAKENING_AUTH_LOGIN_COMPONENTS)[keyof typeof AWAKENING_AUTH_LOGIN_COMPONENTS];
-}> = [
-  {
-    provider: "apple",
-    label: "Apple",
-    asset: AWAKENING_AUTH_LOGIN_COMPONENTS.appleButton,
-  },
-  {
-    provider: "google",
-    label: "Google",
-    asset: AWAKENING_AUTH_LOGIN_COMPONENTS.googleButton,
-  },
-  {
-    provider: "facebook",
-    label: "Facebook",
-    asset: AWAKENING_AUTH_LOGIN_COMPONENTS.facebookButton,
-  },
-];
 
 const inputClassName =
   "w-full rounded-xl border border-brand-border bg-brand-panel/80 py-3 font-body text-sm text-white outline-none transition placeholder:text-brand-muted/45 focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/25 disabled:opacity-60";
@@ -70,7 +43,6 @@ export default function AttendeeAuthLoginPlate({
   onToggleShowPassword,
   onRememberMeChange,
   onSubmit,
-  onOAuthSignIn,
 }: AttendeeAuthLoginPlateProps) {
   const displayMessage = formError ?? formNotice;
   const messageIsError = Boolean(formError);
@@ -216,32 +188,7 @@ export default function AttendeeAuthLoginPlate({
             </button>
           </form>
 
-          <div className="auth-login-page__divider my-6">
-            <span>Or continue with</span>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2.5">
-            {SOCIAL_BUTTONS.map(({ provider, label, asset }) => (
-              <button
-                key={provider}
-                type="button"
-                disabled={isSubmitting}
-                aria-label={`Continue with ${label}`}
-                onClick={() => onOAuthSignIn(provider)}
-                className="touch-target overflow-hidden rounded-xl transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <Image
-                  src={awakeningAuthAssetUrl(asset.src)}
-                  alt=""
-                  width={asset.width}
-                  height={asset.height}
-                  sizes="(max-width: 640px) 28vw, 120px"
-                  className="h-auto w-full object-contain"
-                />
-                <span className="sr-only">Continue with {label}</span>
-              </button>
-            ))}
-          </div>
+          <AttendeeAuthAwakeningCallout variant="login" />
         </div>
 
         <div className="mt-6 space-y-3 text-center">

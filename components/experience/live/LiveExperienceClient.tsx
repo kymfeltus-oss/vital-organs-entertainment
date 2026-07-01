@@ -6,7 +6,7 @@ import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
 import { fetchLiveAccessEvaluation, type LiveAccessEvaluation } from "@/lib/access";
-import { attachHlsPlayback } from "@/lib/live/attach-hls-playback";
+import type { ManifestCarrier } from "@/lib/live/resolve-manifest-playback";
 import {
   attachAutoLevelingMatrix,
   type AutoLevelingMatrix,
@@ -42,20 +42,38 @@ type LiveExperienceClientProps = {
 };
 
 type ManifestState =
-  | { status: "idle"; playbackUrl: null; message: string }
-  | { status: "loading"; playbackUrl: null; message: string }
-  | { status: "ready"; playbackUrl: string; message: string }
-  | { status: "waiting"; playbackUrl: null; message: string }
-  | { status: "error"; playbackUrl: null; message: string };
+  | { status: "idle"; playbackUrl: null; message: string; carrier: null; activeSource: null }
+  | { status: "loading"; playbackUrl: null; message: string; carrier: null; activeSource: null }
+  | {
+      status: "ready";
+      playbackUrl: string;
+      message: string;
+      carrier: ManifestCarrier;
+      activeSource: "primary" | "backup";
+    }
+  | { status: "waiting"; playbackUrl: null; message: string; carrier: null; activeSource: null }
+  | { status: "error"; playbackUrl: null; message: string; carrier: null; activeSource: null };
 
 type ManifestResponse = {
   success?: boolean;
   playbackUrl?: string;
   activeSource?: "primary" | "backup";
+  carrier?: ManifestCarrier;
   fallback?: boolean;
   fallbackReason?: string;
   error?: string;
 };
+
+function resolveManifestCarrier(response: ManifestResponse): ManifestCarrier {
+  if (response.carrier === "ivs" || response.carrier === "restream") {
+    return response.carrier;
+  }
+  return response.activeSource === "backup" ? "ivs" : "restream";
+}
+
+function resolveManifestActiveSource(response: ManifestResponse): "primary" | "backup" {
+  return response.activeSource === "backup" ? "backup" : "primary";
+}
 
 function resolveManifestMessage(response: ManifestResponse): ManifestState {
   const playbackUrl = response.playbackUrl?.trim() ?? "";
@@ -65,17 +83,25 @@ function resolveManifestMessage(response: ManifestResponse): ManifestState {
       status: "waiting",
       playbackUrl: null,
       message: response.error ?? "Waiting for the live playback URL.",
+      carrier: null,
+      activeSource: null,
     };
   }
 
+  const carrier = resolveManifestCarrier(response);
+  const activeSource = resolveManifestActiveSource(response);
   const isDevStream = response.fallback === true || isDemoManifestPlaybackUrl(playbackUrl);
   const routeLabel =
-    response.activeSource === "backup" ? "Backup feed connected." : "Live stream connected.";
+    carrier === "ivs" || activeSource === "backup"
+      ? "Backup feed connected."
+      : "Live stream connected.";
 
   return {
     status: "ready",
     playbackUrl,
     message: isDevStream ? "Playing development test stream." : routeLabel,
+    carrier,
+    activeSource,
   };
 }
 
@@ -86,6 +112,8 @@ export default function LiveExperienceClient({
   const videoRef = useRef<HTMLVideoElement>(null);
   const directVideoRef = useRef<HTMLVideoElement>(null);
   const hlsCleanupRef = useRef<(() => void) | null>(null);
+  const hlsInstanceRef = useRef<import("hls.js").default | null>(null);
+  const activePlaybackUrlRef = useRef<string | null>(null);
   const autoLevelingMatrixRef = useRef<AutoLevelingMatrix | null>(null);
   const audioUnlockedRef = useRef(false);
   const directPeerRef = useRef<RTCPeerConnection | null>(null);
@@ -111,6 +139,8 @@ export default function LiveExperienceClient({
     status: "idle",
     playbackUrl: null,
     message: "Checking live broadcast.",
+    carrier: null,
+    activeSource: null,
   });
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [autoLevelingActive, setAutoLevelingActive] = useState(false);
@@ -438,6 +468,8 @@ export default function LiveExperienceClient({
             status: "loading",
             playbackUrl: null,
             message: "Looking for the live playback URL.",
+            carrier: null,
+            activeSource: null,
           },
     );
 
@@ -458,6 +490,8 @@ export default function LiveExperienceClient({
             response.status === 404
               ? "The broadcast is not live yet."
               : `Live playback is unavailable (${response.status}).`,
+          carrier: null,
+          activeSource: null,
         });
         return;
       }
@@ -471,6 +505,8 @@ export default function LiveExperienceClient({
         status: "error",
         playbackUrl: null,
         message: "Could not load the live playback URL.",
+        carrier: null,
+        activeSource: null,
       });
     } finally {
       manifestInFlightRef.current = false;
@@ -517,6 +553,8 @@ export default function LiveExperienceClient({
           status: "idle",
           playbackUrl: null,
           message: "Connecting to owner camera feed.",
+          carrier: null,
+          activeSource: null,
         });
       });
       return;
@@ -528,6 +566,8 @@ export default function LiveExperienceClient({
           status: "idle",
           playbackUrl: null,
           message: "Waiting for the broadcast to begin.",
+          carrier: null,
+          activeSource: null,
         });
       });
       return;
@@ -559,6 +599,96 @@ export default function LiveExperienceClient({
     }
   }, [clearAutoLevelingMatrix]);
 
+  const destroyHlsPlayback = useCallback(() => {
+    hlsCleanupRef.current?.();
+    hlsCleanupRef.current = null;
+    hlsInstanceRef.current = null;
+    activePlaybackUrlRef.current = null;
+  }, []);
+
+  const hotSwapHlsSource = useCallback((nextUrl: string) => {
+    const hls = hlsInstanceRef.current;
+    const video = videoRef.current;
+    if (!hls || !video || activePlaybackUrlRef.current === nextUrl) return false;
+
+    hls.loadSource(nextUrl);
+    hls.startLoad();
+    activePlaybackUrlRef.current = nextUrl;
+    video.muted = !audioUnlockedRef.current;
+    void video.play().catch(() => undefined);
+    return true;
+  }, []);
+
+  const attachHlsEngine = useCallback(
+    async (video: HTMLVideoElement, streamUrl: string, cancelled: () => boolean) => {
+      const HlsModule = (await import("hls.js")).default;
+
+      if (HlsModule.isSupported()) {
+        destroyHlsPlayback();
+
+        const hls = new HlsModule({
+          enableWorker: true,
+          xhrSetup: (xhr) => {
+            xhr.withCredentials = false;
+          },
+        });
+
+        hlsInstanceRef.current = hls;
+        activePlaybackUrlRef.current = streamUrl;
+        hls.loadSource(streamUrl);
+        hls.attachMedia(video);
+
+        hls.on(HlsModule.Events.MANIFEST_PARSED, () => {
+          if (cancelled()) return;
+          installAutoLevelingMatrix(video);
+          void video.play().catch(() => undefined);
+        });
+
+        hls.on(HlsModule.Events.ERROR, (_, data) => {
+          if (!data.fatal || cancelled()) return;
+          setManifest({
+            status: "error",
+            playbackUrl: null,
+            message: `Live playback failed: ${data.details || data.type || "HLS error"}.`,
+            carrier: null,
+            activeSource: null,
+          });
+        });
+
+        hlsCleanupRef.current = () => {
+          hls.destroy();
+          hlsInstanceRef.current = null;
+          activePlaybackUrlRef.current = null;
+        };
+        return;
+      }
+
+      if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        destroyHlsPlayback();
+        activePlaybackUrlRef.current = streamUrl;
+        video.src = streamUrl;
+        video.load();
+        installAutoLevelingMatrix(video);
+        void video.play().catch(() => undefined);
+        hlsCleanupRef.current = () => {
+          video.removeAttribute("src");
+          video.load();
+          activePlaybackUrlRef.current = null;
+        };
+        return;
+      }
+
+      setManifest({
+        status: "error",
+        playbackUrl: null,
+        message: "This browser cannot play the live HLS stream.",
+        carrier: null,
+        activeSource: null,
+      });
+    },
+    [destroyHlsPlayback, installAutoLevelingMatrix],
+  );
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -566,10 +696,16 @@ export default function LiveExperienceClient({
   }, [audioUnlocked]);
 
   useEffect(() => {
+    return () => {
+      destroyHlsPlayback();
+      clearAutoLevelingMatrix();
+    };
+  }, [clearAutoLevelingMatrix, destroyHlsPlayback]);
+
+  useEffect(() => {
     const video = videoRef.current;
     if (!video || !streamUrl) {
-      hlsCleanupRef.current?.();
-      hlsCleanupRef.current = null;
+      destroyHlsPlayback();
       clearAutoLevelingMatrix();
       if (video) {
         video.removeAttribute("src");
@@ -578,38 +714,28 @@ export default function LiveExperienceClient({
       return;
     }
 
+    if (
+      hlsInstanceRef.current &&
+      activePlaybackUrlRef.current &&
+      activePlaybackUrlRef.current !== streamUrl
+    ) {
+      hotSwapHlsSource(streamUrl);
+      return;
+    }
+
+    if (activePlaybackUrlRef.current === streamUrl && hlsInstanceRef.current) {
+      return;
+    }
+
     video.muted = !audioUnlockedRef.current;
     let cancelled = false;
 
-    void attachHlsPlayback(video, streamUrl, {
-      onManifestParsed: () => {
-        if (cancelled) return;
-        installAutoLevelingMatrix(video);
-      },
-      onFatalError: (details) => {
-        if (cancelled) return;
-        setManifest({
-          status: "error",
-          playbackUrl: null,
-          message: `Live playback failed: ${details}.`,
-        });
-      },
-    }).then((cleanup) => {
-      if (cancelled) {
-        cleanup();
-        return;
-      }
-      hlsCleanupRef.current?.();
-      hlsCleanupRef.current = cleanup;
-    });
+    void attachHlsEngine(video, streamUrl, () => cancelled);
 
     return () => {
       cancelled = true;
-      hlsCleanupRef.current?.();
-      hlsCleanupRef.current = null;
-      clearAutoLevelingMatrix();
     };
-  }, [clearAutoLevelingMatrix, installAutoLevelingMatrix, streamUrl]);
+  }, [attachHlsEngine, clearAutoLevelingMatrix, destroyHlsPlayback, hotSwapHlsSource, streamUrl]);
 
   const enableAudio = useCallback(() => {
     const video = videoRef.current;
@@ -635,7 +761,7 @@ export default function LiveExperienceClient({
   const showDirectPlayer = useDirectCamera && directStatus === "ready";
 
   return (
-    <main className="min-h-dvh bg-black text-white">
+    <main className="min-h-dvh bg-brand-black text-white">
       <div className="flex min-h-dvh flex-col">
         <header className="flex items-center justify-between border-b border-white/10 px-4 py-3 sm:px-6">
           <div>
@@ -650,7 +776,7 @@ export default function LiveExperienceClient({
             {autoLevelingActive ? (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-lime-300/35 bg-lime-300/10 px-3 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.12em] text-lime-300">
                 <span className="h-1.5 w-1.5 rounded-full bg-lime-300 shadow-[0_0_8px_rgba(132,255,75,0.8)]" />
-                Auto-Leveling Matrix: ACTIVE
+                ⚡ Auto-Leveling Matrix: ACTIVE
               </span>
             ) : null}
             <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-white/70">
@@ -698,9 +824,9 @@ export default function LiveExperienceClient({
                 <button
                   type="button"
                   onClick={enableAudio}
-                  className="absolute bottom-5 left-1/2 z-10 min-h-11 -translate-x-1/2 rounded-full border border-brand-blue/50 bg-black/75 px-5 font-ui text-[0.68rem] font-bold uppercase tracking-[0.14em] text-brand-blue backdrop-blur"
+                  className="absolute bottom-5 left-1/2 z-10 min-h-11 -translate-x-1/2 rounded border border-brand-border bg-black/55 px-6 py-4 text-center font-ui text-[0.68rem] font-bold uppercase tracking-[0.14em] text-brand-blue backdrop-blur"
                 >
-                  Tap for audio
+                  TAP FOR AUDIO / UNMUTE
                 </button>
               ) : null}
             </>

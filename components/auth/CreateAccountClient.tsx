@@ -8,7 +8,6 @@ import {
   validateCreateAccountForm,
   type CreateAccountFormValues,
 } from "@/lib/auth/create-account-validation";
-import { handleSocialLogin, type OAuthProviderId } from "@/lib/auth/oauth-sign-in";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
 import { SIGNUP_SUCCESS_MESSAGE } from "@/lib/auth/signup-messages";
 import { isTurnstileWidgetEnabled } from "@/lib/auth/turnstile-config";
@@ -46,20 +45,6 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
   const handleTurnstileTokenChange = useCallback((token: string | null) => {
     setTurnstileToken(token);
   }, []);
-
-  const handleOAuthSignIn = async (provider: OAuthProviderId) => {
-    if (isSubmitting) return;
-
-    setIsSubmitting(true);
-    setFormError(null);
-
-    const result = await handleSocialLogin(provider, nextPath);
-
-    if (result.error) {
-      setFormError(result.error);
-      setIsSubmitting(false);
-    }
-  };
 
   const turnstileRequired = isTurnstileWidgetEnabled();
 
@@ -233,7 +218,6 @@ export default function CreateAccountClient({ nextPath }: CreateAccountClientPro
           onToggleShowPassword={() => setShowPassword((current) => !current)}
           onToggleShowConfirmPassword={() => setShowConfirmPassword((current) => !current)}
           onTurnstileTokenChange={handleTurnstileTokenChange}
-          onOAuthSignIn={(provider) => void handleOAuthSignIn(provider)}
           onSubmit={(event) => void handleSubmit(event)}
         />
       )}
