@@ -23,6 +23,13 @@ import {
   OWNER_GRAPHICS_EVENT_ID,
 } from "@/lib/owner/graphics-data-plane";
 import type { OwnerAudioTelemetry } from "@/lib/owner/audio-contracts";
+import type {
+  ActiveFeedSource,
+  EventPhase,
+  OwnerBroadcastSnapshot,
+  PublishStatus,
+} from "@/lib/owner/contracts";
+import { defaultEventPhaseState } from "@/lib/owner/map-event-phase";
 import {
   BROADCAST_HARDWARE_DEFAULTS,
   formatBroadcastAudioDefaultLabel,
@@ -55,6 +62,7 @@ type BroadcastResponse = {
   ok?: boolean;
   message?: string;
   error?: string;
+  snapshot?: OwnerBroadcastSnapshot;
 };
 
 type DestinationKey = "youtube" | "facebook" | "twitch";
@@ -85,6 +93,70 @@ const DEFAULT_RESTREAM_DESTINATIONS: RestreamDestinations = {
   facebook: true,
   twitch: true,
 };
+
+const BROADCAST_SNAPSHOT_POLL_MS = 4_000;
+
+const EMPTY_BROADCAST_SNAPSHOT: OwnerBroadcastSnapshot = {
+  capturedAt: "",
+  eventPhase: defaultEventPhaseState(),
+  publish: { mode: "none", status: "offline", errorMessage: null },
+  playback: {
+    status: "unconfigured",
+    hlsUrl: null,
+    manifestReachable: false,
+    errorMessage: null,
+  },
+  feed: {
+    activeSource: "offline",
+    primary: { hlsUrl: null, manifestReachable: false, detail: null },
+    backup: { hlsUrl: null, manifestReachable: false, detail: null },
+  },
+  preflight: [],
+  publisherSessionId: null,
+  publisherChannel: null,
+  vmix: null,
+};
+
+function streamEngineLabel(status: PublishStatus): string {
+  if (status === "publishing") return "STREAM ENGINE: ACTIVE (PUBLISHING)";
+  if (status === "offline") return "STREAM COMMANDS READY (OFFLINE)";
+  if (status === "starting" || status === "preflight") return "STREAM ENGINE: INITIALIZING";
+  if (status === "error") return "STREAM ENGINE: ERROR";
+  return "STREAM ENGINE: STANDBY";
+}
+
+function sourceLaneLabel(source: ActiveFeedSource): string {
+  if (source === "primary") return "SOURCE: RESTREAM PRIMARY CDN";
+  if (source === "backup") return "SOURCE: AMAZON IVS FALLBACK LANE";
+  return "SOURCE: STANDBY";
+}
+
+function publishBadgeTone(status: PublishStatus): string {
+  if (status === "publishing") return "border-lime-300/35 bg-lime-300/10 text-lime-300";
+  if (status === "error") return "border-red-400/35 bg-red-400/10 text-red-400";
+  if (status === "starting" || status === "preflight" || status === "ending") {
+    return "border-amber-300/35 bg-amber-300/10 text-amber-300";
+  }
+  return "border-white/10 bg-white/5 text-white/45";
+}
+
+function sourceBadgeTone(source: ActiveFeedSource): string {
+  if (source === "primary") return "border-lime-300/35 bg-lime-300/10 text-lime-300";
+  if (source === "backup") return "border-amber-300/35 bg-amber-300/10 text-amber-300";
+  return "border-white/10 bg-white/5 text-white/45";
+}
+
+function eventPhaseBadgeTone(phase: EventPhase): string {
+  if (phase === "live") return "border-lime-300/35 bg-lime-300/10 text-lime-300";
+  if (phase === "preshow") return "border-amber-300/35 bg-amber-300/10 text-amber-300";
+  if (phase === "scheduled") return "border-[#00a8ff]/35 bg-[#00a8ff]/10 text-[#00a8ff]";
+  if (phase === "ended") return "border-white/10 bg-white/5 text-white/45";
+  return "border-purple-500/40 bg-purple-500/10 text-purple-400";
+}
+
+function formatEventPhaseHeader(phase: EventPhase): string {
+  return `Event Phase: ${phase.replace(/_/g, " ")}`;
+}
 
 const DB_STEPS = [0, -6, -12, -18, -24, -30, -36, -42, -48, -54, -60];
 
@@ -460,7 +532,7 @@ function ProgramReturnPanel({
   const isLiveMedia = Boolean(metadata?.builderKind === "SANCTUARY_VIDEO" && metadata.mediaUrl);
 
   return (
-    <CockpitPanel className="flex min-h-0 flex-col p-2">
+    <CockpitPanel className="pointer-events-none flex min-h-0 flex-col p-2">
       <div className="mb-1.5 font-ui text-[0.58rem] font-bold uppercase tracking-[0.08em] text-white/72 sm:text-[0.64rem]">
         LIVE PROGRAM RETURN (16:9) - TITLE-SAFE LOCKED (5% INSET)
       </div>
@@ -499,9 +571,11 @@ function StreamMatrixPanel({
   broadcastPending,
   broadcastMessage,
   broadcastError,
+  broadcastSnapshot,
   destinations,
   destinationsLoading,
   destinationSaving,
+  ownerAuthorized,
   onGoLive,
   onStop,
   onDestinationChange,
@@ -509,9 +583,11 @@ function StreamMatrixPanel({
   broadcastPending: boolean;
   broadcastMessage: string | null;
   broadcastError: string | null;
+  broadcastSnapshot: OwnerBroadcastSnapshot;
   destinations: RestreamDestinations;
   destinationsLoading: boolean;
   destinationSaving: DestinationKey | null;
+  ownerAuthorized: boolean | null;
   onGoLive: () => void;
   onStop: () => void;
   onDestinationChange: (destination: DestinationKey, enabled: boolean) => void;
@@ -523,8 +599,13 @@ function StreamMatrixPanel({
     { key: "instagram", name: "Instagram", on: true, disabled: true },
   ];
 
+  const telemetryLine = [
+    streamEngineLabel(broadcastSnapshot.publish.status),
+    sourceLaneLabel(broadcastSnapshot.feed.activeSource),
+  ].join(" · ");
+
   return (
-    <div className="grid min-h-0 gap-2 sm:grid-cols-[0.48fr_0.52fr]">
+    <div className="relative z-50 pointer-events-auto isolate grid min-h-0 gap-2 sm:grid-cols-[0.48fr_0.52fr]">
       <CockpitPanel title="STREAM STATUS" className="p-2">
         <div className="grid h-full grid-rows-[1fr_auto] gap-2">
           <div className="grid grid-cols-1 gap-2">
@@ -532,11 +613,20 @@ function StreamMatrixPanel({
               type="button"
               disabled={broadcastPending}
               onClick={onGoLive}
-              className="flex min-h-16 items-center justify-center gap-2 rounded-md bg-gradient-to-br from-lime-400 to-green-700 px-3 font-ui text-xl font-black uppercase text-black shadow-[0_0_22px_rgba(85,255,75,0.28)] disabled:cursor-not-allowed disabled:opacity-45 xl:min-h-20 xl:text-2xl"
+              className="relative z-50 pointer-events-auto cursor-pointer flex min-h-16 items-center justify-center gap-2 rounded-md bg-gradient-to-br from-lime-400 to-green-700 px-3 font-ui text-xl font-black uppercase text-black shadow-[0_0_22px_rgba(85,255,75,0.28)] disabled:cursor-not-allowed disabled:opacity-45 xl:min-h-20 xl:text-2xl"
             >
-              {broadcastPending ? <Loader2 className="h-6 w-6 animate-spin" /> : <Play className="h-7 w-7 fill-black" />}
-              GO LIVE
+              {broadcastPending ? (
+                <Loader2 className="h-6 w-6 animate-spin" aria-hidden="true" />
+              ) : (
+                <Play className="h-7 w-7 fill-black" aria-hidden="true" />
+              )}
+              {broadcastPending ? "INITIALIZING SIGNAL..." : "GO LIVE"}
             </button>
+            {ownerAuthorized === false ? (
+              <span className="mt-2 block font-body text-xs text-red-400">
+                Error: Current session email is not authorized in ADMIN_EMAILS configuration.
+              </span>
+            ) : null}
             <button
               type="button"
               disabled={broadcastPending}
@@ -578,7 +668,9 @@ function StreamMatrixPanel({
             </div>
           </div>
           <div className="min-h-7 rounded-md border border-white/10 bg-black/25 px-2 py-1.5 font-body text-[0.58rem] text-white/65">
-            {broadcastError ? <span className="text-red-200">{broadcastError}</span> : broadcastMessage || "Stream commands ready."}
+            <span className={broadcastError ? "text-red-200" : undefined}>
+              {broadcastError ?? telemetryLine ?? broadcastMessage ?? "Stream commands ready."}
+            </span>
           </div>
         </div>
       </CockpitPanel>
@@ -1056,8 +1148,39 @@ export default function ProductionCockpitClient() {
   const [graphicsSuccess, setGraphicsSuccess] = useState<string | null>(null);
   const [broadcastError, setBroadcastError] = useState<string | null>(null);
   const [broadcastMessage, setBroadcastMessage] = useState<string | null>(null);
+  const [broadcastSnapshot, setBroadcastSnapshot] = useState<OwnerBroadcastSnapshot>(EMPTY_BROADCAST_SNAPSHOT);
   const [systemSynced, setSystemSynced] = useState(false);
+  const [ownerAuthorized, setOwnerAuthorized] = useState<boolean | null>(null);
   const autoClearedIds = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    void fetch("/api/owner/show-setup", { credentials: "include" })
+      .then((res) => setOwnerAuthorized(res.ok))
+      .catch(() => setOwnerAuthorized(false));
+  }, []);
+
+  const loadBroadcastSnapshot = useCallback(async (_silent = false) => {
+    try {
+      const response = await fetch("/api/owner/broadcast", {
+        credentials: "include",
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      const data = (await response.json()) as { snapshot?: OwnerBroadcastSnapshot };
+      if (data.snapshot) setBroadcastSnapshot(data.snapshot);
+    } catch (err) {
+      console.error(
+        "[cockpit/snapshot-poll] Fetch failed:",
+        err instanceof Error ? err.message : "unknown",
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadBroadcastSnapshot();
+    const interval = window.setInterval(() => void loadBroadcastSnapshot(true), BROADCAST_SNAPSHOT_POLL_MS);
+    return () => window.clearInterval(interval);
+  }, [loadBroadcastSnapshot]);
 
   const livePreset = useMemo(
     () => presets.find((preset) => preset.is_active_on_stream) ?? null,
@@ -1357,6 +1480,9 @@ export default function ProductionCockpitClient() {
         throw new Error(json.message || json.error || `Broadcast command failed with HTTP ${response.status}.`);
       }
 
+      if (json.snapshot) setBroadcastSnapshot(json.snapshot);
+      else void loadBroadcastSnapshot(true);
+
       setBroadcastMessage(json.message || "Broadcast command confirmed.");
     } catch (commandError) {
       setBroadcastError(commandError instanceof Error ? commandError.message : "Broadcast command failed.");
@@ -1364,7 +1490,7 @@ export default function ProductionCockpitClient() {
     } finally {
       setBroadcastPending(false);
     }
-  }, []);
+  }, [loadBroadcastSnapshot]);
 
   const runGoLiveWithPreflight = useCallback(async () => {
     setBroadcastPending(true);
@@ -1388,6 +1514,8 @@ export default function ProductionCockpitClient() {
         );
       }
 
+      if (preflightJson.snapshot) setBroadcastSnapshot(preflightJson.snapshot);
+
       setBroadcastMessage("Preflight passed. Sending go-live command...");
 
       const goLiveResponse = await fetch("/api/owner/broadcast/go-live", {
@@ -1406,6 +1534,9 @@ export default function ProductionCockpitClient() {
         );
       }
 
+      if (goLiveJson.snapshot) setBroadcastSnapshot(goLiveJson.snapshot);
+      else void loadBroadcastSnapshot(true);
+
       setBroadcastMessage(goLiveJson.message || "Go-live command confirmed.");
     } catch (goLiveError) {
       setBroadcastError(goLiveError instanceof Error ? goLiveError.message : "Go-live command failed.");
@@ -1413,7 +1544,7 @@ export default function ProductionCockpitClient() {
     } finally {
       setBroadcastPending(false);
     }
-  }, []);
+  }, [loadBroadcastSnapshot]);
 
   const handleDestinationChange = useCallback(
     async (destination: DestinationKey, enabled: boolean) => {
@@ -1479,17 +1610,33 @@ export default function ProductionCockpitClient() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 md:justify-end">
-              <span className="inline-flex items-center gap-1.5 rounded border border-purple-500/40 bg-purple-500/10 px-2 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.08em] text-purple-400 sm:text-[0.6rem]">
+              <span
+                className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.08em] sm:text-[0.6rem] ${eventPhaseBadgeTone(broadcastSnapshot.eventPhase.phase)}`}
+              >
                 <Timer className="h-3 w-3" />
-                Event Phase: Pre-Show
+                {formatEventPhaseHeader(broadcastSnapshot.eventPhase.phase)}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded border border-lime-300/35 bg-lime-300/10 px-2 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.08em] text-lime-300 sm:text-[0.6rem]">
                 <span className="h-2 w-2 rounded-full bg-lime-300 shadow-[0_0_10px_rgba(132,255,75,0.8)]" />
                 Auto-Leveling Matrix: ACTIVE
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded border border-lime-300/35 bg-lime-300/10 px-2 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.08em] text-lime-300 sm:text-[0.6rem]">
-                <span className="h-2 w-2 rounded-full bg-lime-300 shadow-[0_0_10px_rgba(132,255,75,0.8)]" />
-                Publish: Encoder Ready
+              <span
+                className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.08em] sm:text-[0.6rem] ${publishBadgeTone(broadcastSnapshot.publish.status)}`}
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    broadcastSnapshot.publish.status === "publishing"
+                      ? "bg-lime-300 shadow-[0_0_10px_rgba(132,255,75,0.8)]"
+                      : "bg-white/40"
+                  }`}
+                />
+                {streamEngineLabel(broadcastSnapshot.publish.status)}
+              </span>
+              <span
+                className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.08em] sm:text-[0.6rem] ${sourceBadgeTone(broadcastSnapshot.feed.activeSource)}`}
+              >
+                <Radio className="h-3 w-3" />
+                {sourceLaneLabel(broadcastSnapshot.feed.activeSource)}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded border border-[#00a8ff]/35 bg-[#00a8ff]/10 px-2 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.08em] text-[#00a8ff] sm:text-[0.6rem]">
                 <Database className="h-3 w-3" />
@@ -1509,19 +1656,25 @@ export default function ProductionCockpitClient() {
         </header>
 
         <div className="grid min-h-0 flex-1 gap-2 xl:grid-cols-[17rem_minmax(0,1fr)_26rem]">
-          <section className="order-1 grid min-h-0 gap-2 xl:order-2 xl:grid-rows-[minmax(0,1fr)_12.5rem]">
-            <ProgramReturnPanel livePreset={livePreset} />
-            <StreamMatrixPanel
-              broadcastPending={broadcastPending}
-              broadcastMessage={broadcastMessage}
-              broadcastError={broadcastError}
-              destinations={destinations}
-              destinationsLoading={destinationsLoading}
-              destinationSaving={destinationSaving}
-              onGoLive={() => void runGoLiveWithPreflight()}
-              onStop={() => void sendBroadcastCommand("/api/owner/broadcast/end")}
-              onDestinationChange={(destination, enabled) => void handleDestinationChange(destination, enabled)}
-            />
+          <section className="relative order-1 grid min-h-0 gap-2 xl:order-2 xl:grid-rows-[minmax(0,1fr)_12.5rem]">
+            <div className="pointer-events-none min-h-0 overflow-hidden">
+              <ProgramReturnPanel livePreset={livePreset} />
+            </div>
+            <div className="relative z-50 pointer-events-auto min-h-0">
+              <StreamMatrixPanel
+                broadcastPending={broadcastPending}
+                broadcastMessage={broadcastMessage}
+                broadcastError={broadcastError}
+                broadcastSnapshot={broadcastSnapshot}
+                destinations={destinations}
+                destinationsLoading={destinationsLoading}
+                destinationSaving={destinationSaving}
+                ownerAuthorized={ownerAuthorized}
+                onGoLive={() => void runGoLiveWithPreflight()}
+                onStop={() => void sendBroadcastCommand("/api/owner/broadcast/end")}
+                onDestinationChange={(destination, enabled) => void handleDestinationChange(destination, enabled)}
+              />
+            </div>
           </section>
 
           <aside className="order-2 min-h-[24rem] xl:order-3 xl:min-h-0">
