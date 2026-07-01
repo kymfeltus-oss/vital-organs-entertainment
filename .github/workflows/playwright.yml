@@ -1,0 +1,36 @@
+name: Playwright E2E Stability Controls
+
+on:
+  push:
+    branches: [main, master, dev]
+  pull_request:
+    branches: [main, master, dev]
+
+jobs:
+  test:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set Up Node.js Runtime Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install Local Repo Dependencies
+        run: npm install
+
+      - name: Download Isolated Playwright Testing Engine Browsers
+        run: npx playwright install --with-deps
+
+      - name: Execute Automated E2E Stability Validation Tests
+        env:
+          NEXT_PUBLIC_E2E_BYPASS: "true"
+          OPS_ADMIN_DEV_BYPASS: "true"
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+        run: npm run test:e2e

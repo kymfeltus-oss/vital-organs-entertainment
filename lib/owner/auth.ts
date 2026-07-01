@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
+import { isE2EBypassEnabled } from "@/lib/access/e2e-bypass";
 import { isAdminPrepAccessOverrideEmail } from "@/lib/access/admin-prep-override";
 
 export type OwnerAuthSuccess = {
@@ -17,6 +18,15 @@ export type OwnerAuthResult = OwnerAuthSuccess | OwnerAuthFailure;
 
 /** Server-only — gates /api/owner/* and /owner/* surfaces. */
 export async function requireOwnerUser(): Promise<OwnerAuthResult> {
+  if (isE2EBypassEnabled()) {
+    console.info("⚡ [E2E BYPASS] Injecting synthetic owner session matching core type contracts.");
+    return {
+      ok: true,
+      userId: "e2e-test-synthetic-owner-uuid",
+      email: process.env.E2E_ADMIN_EMAIL?.trim().toLowerCase() || "info@vitalorgansent.com",
+    };
+  }
+
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },

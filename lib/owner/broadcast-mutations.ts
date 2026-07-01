@@ -19,6 +19,7 @@ import {
 } from "@/lib/owner/preflight";
 import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
 import { mapEventPhaseState } from "@/lib/owner/map-event-phase";
+import { loadShowSetupState, saveShowSetupState, type ShowSetupState } from "@/lib/owner/show-setup-state";
 import { fetchVmixSnapshot, startVmixStreaming, stopVmixStreaming } from "@/lib/owner/vmix/client";
 
 export { parseGoLiveBody, parseSwitchFeedBody };
@@ -90,7 +91,7 @@ export async function runOwnerGoLive(
   }
 
   const fails = preflight.filter((c) => c.status === "fail");
-  if (fails.length > 0) {
+  if (fails.length > 0 && !body.masterOverride) {
     const { snapshot } = await buildOwnerBroadcastSnapshot(body.mode);
     return {
       ok: false,
@@ -144,6 +145,62 @@ export async function runOwnerGoLive(
     ok: true,
     snapshot,
     message: "Go-live requested. Playback may remain pending until the manifest is ready.",
+  };
+}
+
+export type MasterGoLiveResult = {
+  ok: boolean;
+  snapshot: OwnerBroadcastSnapshot;
+  message: string;
+  showSetup: ShowSetupState;
+  previousTargetDateTime: string;
+};
+
+/** Override scheduled countdown to now, then force go-live (production master override). */
+export async function runOwnerMasterGoLive(
+  admin: SupabaseClient,
+  body: GoLiveRequestBody,
+  updatedBy: string,
+): Promise<MasterGoLiveResult> {
+  const current = await loadShowSetupState();
+  const previousTargetDateTime = current.targetDateTime;
+  const nowIso = new Date().toISOString();
+
+  const showSetup = await saveShowSetupState(
+    {
+      targetDateTime: nowIso,
+      schedule_timezone: current.scheduleTimezone,
+    },
+    updatedBy,
+  );
+
+  const { row } = await loadOwnerStreamState(admin);
+  if (row?.is_live) {
+    await emitStreamStateSync();
+    const { snapshot } = await buildOwnerBroadcastSnapshot(body.mode);
+    return {
+      ok: true,
+      snapshot,
+      message: "Master override active — schedule moved to now. Broadcast already live.",
+      showSetup,
+      previousTargetDateTime,
+    };
+  }
+
+  const goLiveResult = await runOwnerGoLive(
+    admin,
+    { ...body, confirm: true, masterOverride: true },
+    updatedBy,
+  );
+
+  return {
+    ok: goLiveResult.ok,
+    snapshot: goLiveResult.snapshot,
+    message: goLiveResult.ok
+      ? `Master override active — schedule moved to now. ${goLiveResult.message}`
+      : goLiveResult.message,
+    showSetup,
+    previousTargetDateTime,
   };
 }
 

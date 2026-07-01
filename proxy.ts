@@ -8,6 +8,7 @@ import {
   isAttendeeProtectedPath,
   isTeamProtectedPath,
 } from "@/lib/auth/routing";
+import { isE2EBypassEnabled } from "@/lib/access/e2e-bypass";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 /** Fail fast when Supabase is slow/unreachable — avoids 10s hangs on client navigation. */
@@ -80,6 +81,11 @@ export async function proxy(request: NextRequest) {
 
   const isAttendeeRoute = isAttendeeProtectedPath(pathname);
   const isTeamRoute = isTeamProtectedPath(pathname);
+
+  if (isE2EBypassEnabled() && isTeamRoute) {
+    console.info("⚡ [E2E BYPASS] Allowing team route without browser session:", pathname);
+    return NextResponse.next();
+  }
 
   if (!isAttendeeRoute && !isTeamRoute) {
     return NextResponse.next();

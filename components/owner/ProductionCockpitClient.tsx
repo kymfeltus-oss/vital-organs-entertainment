@@ -31,6 +31,14 @@ import type {
 } from "@/lib/owner/contracts";
 import { defaultEventPhaseState } from "@/lib/owner/map-event-phase";
 import {
+  DEFAULT_SCHEDULE_TIMEZONE,
+  SCHEDULE_TIMEZONE_OPTIONS,
+  getScheduleTimezoneLabel,
+  isoToScheduleDatetimeLocal,
+  scheduleDatetimeLocalToIso,
+  type ScheduleTimezone,
+} from "@/lib/live/schedule-timezone";
+import {
   BROADCAST_HARDWARE_DEFAULTS,
   formatBroadcastAudioDefaultLabel,
   formatBroadcastVideoDefaultLabel,
@@ -69,17 +77,39 @@ type DestinationKey = "youtube" | "facebook" | "twitch";
 
 type RestreamDestinations = Record<DestinationKey, boolean>;
 
+type ShowSetupStatePayload = {
+  showTitle?: string;
+  presenterName?: string;
+  targetDateTime?: string;
+  scheduleTimezone?: ScheduleTimezone;
+  restreamDestinations?: Partial<RestreamDestinations>;
+};
+
 type ShowSetupResponse = {
   ok?: boolean;
-  state?: {
-    showTitle?: string;
-    presenterName?: string;
-    targetDateTime?: string;
-    restreamDestinations?: Partial<RestreamDestinations>;
-  };
+  state?: ShowSetupStatePayload;
   message?: string;
   error?: string;
 };
+
+type CountdownFeedback = {
+  tone: "success" | "error";
+  message: string;
+};
+
+function parseOwnerApiError(
+  response: Response,
+  json: { error?: string; message?: string },
+  fallback: string,
+): string {
+  if (response.status === 401) {
+    return "Sign in required. Use team login (/email-gate/team) before saving.";
+  }
+  if (response.status === 403) {
+    return "Owner access denied. Sign in with an email listed in ADMIN_EMAILS.";
+  }
+  return json.error || json.message || fallback;
+}
 
 type AudioMixStateResponse = {
   ok?: boolean;
@@ -195,13 +225,13 @@ function secondsUntilTarget(targetIso: string | null, nowMs: number) {
   return Math.max(0, Math.floor((targetMs - nowMs) / 1000));
 }
 
-function formatCockpitEventDate(targetIso: string | null) {
+function formatCockpitEventDate(targetIso: string | null, timeZone: ScheduleTimezone) {
   if (!targetIso) return "Countdown schedule not loaded";
   const date = new Date(targetIso);
   if (Number.isNaN(date.getTime())) return "Countdown schedule unavailable";
 
   return new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Chicago",
+    timeZone,
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -210,22 +240,6 @@ function formatCockpitEventDate(targetIso: string | null) {
     minute: "2-digit",
     timeZoneName: "short",
   }).format(date);
-}
-
-function isoToDatetimeLocalValue(targetIso: string | null): string {
-  if (!targetIso) return "";
-  const date = new Date(targetIso);
-  if (Number.isNaN(date.getTime())) return "";
-
-  const pad = (value: number) => value.toString().padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-function datetimeLocalToIso(value: string): string | null {
-  if (!value.trim()) return null;
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return null;
-  return parsed.toISOString();
 }
 
 function formatDuration(totalSeconds: number) {
@@ -394,7 +408,8 @@ function AudioMonitorPanel({
           CONTROLS LOCKED
         </div>
       </div>
-    </CockpitPanel>
+     </CockpitPanel>
+  </div>
   );
 }
 
@@ -403,6 +418,7 @@ function CountdownPanel({
   eventName,
   presenterName,
   targetDateTime,
+  scheduleTimezone,
   loading,
   pending,
   isEditing,
@@ -410,10 +426,13 @@ function CountdownPanel({
   editTitle,
   editPresenter,
   editTargetLocal,
+  editTimezone,
+  feedback,
   titleAction,
   onEditTitleChange,
   onEditPresenterChange,
   onEditTargetLocalChange,
+  onEditTimezoneChange,
   onCancelEdit,
   onSaveEdit,
   onAdjust,
@@ -422,6 +441,7 @@ function CountdownPanel({
   eventName: string;
   presenterName: string;
   targetDateTime: string | null;
+  scheduleTimezone: ScheduleTimezone;
   loading: boolean;
   pending: boolean;
   isEditing: boolean;
@@ -429,10 +449,13 @@ function CountdownPanel({
   editTitle: string;
   editPresenter: string;
   editTargetLocal: string;
+  editTimezone: ScheduleTimezone;
+  feedback: CountdownFeedback | null;
   titleAction?: ReactNode;
   onEditTitleChange: (value: string) => void;
   onEditPresenterChange: (value: string) => void;
   onEditTargetLocalChange: (value: string) => void;
+  onEditTimezoneChange: (value: ScheduleTimezone) => void;
   onCancelEdit: () => void;
   onSaveEdit: () => void;
   onAdjust: (offsetSeconds: number) => void;
@@ -447,7 +470,12 @@ function CountdownPanel({
   const inputsFrozen = isSaving || pending;
 
   return (
-    <CockpitPanel title="EVENT COUNTDOWN" titleAction={titleAction} className="flex flex-col">
+    <div data-testid="countdown-editor" className="flex min-h-0 flex-col">
+      <CockpitPanel
+        title="EVENT COUNTDOWN"
+        titleAction={titleAction}
+        className="flex flex-col"
+      >
       <div className="flex min-h-0 flex-1 flex-col p-2">
         <div className="flex items-center gap-2">
           <div className="grid h-12 w-12 shrink-0 place-items-center rounded-md border border-[#00a8ff]/50 bg-black/55 text-center font-headline text-lg leading-none text-[#00a8ff] shadow-[0_0_18px_rgba(0,168,255,0.28)] sm:h-14 sm:w-14 sm:text-xl">
@@ -462,7 +490,7 @@ function CountdownPanel({
                   value={editTitle}
                   disabled={inputsFrozen}
                   onChange={(event) => onEditTitleChange(event.target.value)}
-                  placeholder="Event title"
+                  placeholder="Event title (optional)"
                   className="w-full rounded border border-white/10 bg-brand-black px-2 py-1 font-ui text-[0.58rem] font-black uppercase text-white outline-none focus:border-[#00a8ff]/50 disabled:cursor-not-allowed disabled:opacity-45 sm:text-[0.66rem]"
                 />
                 <input
@@ -470,18 +498,44 @@ function CountdownPanel({
                   value={editPresenter}
                   disabled={inputsFrozen}
                   onChange={(event) => onEditPresenterChange(event.target.value)}
-                  placeholder="Presenter / subtitle"
+                  placeholder="Presenter / subtitle (optional)"
                   className="w-full rounded border border-white/10 bg-brand-black px-2 py-1 font-body text-[0.5rem] text-white/85 outline-none focus:border-[#00a8ff]/50 disabled:cursor-not-allowed disabled:opacity-45 sm:text-[0.58rem]"
                 />
-                <input
-                  type="datetime-local"
-                  value={editTargetLocal}
-                  disabled={inputsFrozen}
-                  onChange={(event) => onEditTargetLocalChange(event.target.value)}
-                  className="w-full rounded border border-white/10 bg-brand-black px-2 py-1 font-body text-[0.5rem] text-white outline-none focus:border-[#00a8ff]/50 disabled:cursor-not-allowed disabled:opacity-45 sm:text-[0.58rem]"
-                />
+                <div className="grid gap-2 sm:grid-cols-[1fr_0.9fr]">
+                  <input
+                    data-testid="schedule-datetime"
+                    type="datetime-local"
+                    value={editTargetLocal}
+                    disabled={inputsFrozen}
+                    onChange={(event) => onEditTargetLocalChange(event.target.value)}
+                    aria-label="Show date and time"
+                    className="w-full rounded border border-white/10 bg-brand-black px-2 py-1 font-body text-[0.5rem] text-white outline-none focus:border-[#00a8ff]/50 disabled:cursor-not-allowed disabled:opacity-45 sm:text-[0.58rem]"
+                  />
+                  <label className="block">
+                    <span className="mb-1 block font-ui text-[0.44rem] font-bold uppercase tracking-[0.08em] text-white/45">
+                      Timezone
+                    </span>
+                    <select
+                      data-testid="schedule-timezone"
+                      value={editTimezone}
+                      disabled={inputsFrozen}
+                      onChange={(event) =>
+                        onEditTimezoneChange(event.target.value as ScheduleTimezone)
+                      }
+                      className="w-full rounded border border-white/10 bg-brand-black px-2 py-1 font-body text-[0.5rem] text-white outline-none focus:border-[#00a8ff]/50 disabled:cursor-not-allowed disabled:opacity-45 sm:text-[0.58rem]"
+                    >
+                    
+                      {SCHEDULE_TIMEZONE_OPTIONS.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
                 <div className="flex flex-wrap gap-2 pt-1">
                   <button
+                    data-testid="save-countdown"
                     type="button"
                     disabled={inputsFrozen}
                     onClick={onSaveEdit}
@@ -489,6 +543,7 @@ function CountdownPanel({
                   >
                     {isSaving ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : "[ Save ]"}
                   </button>
+
                   <button
                     type="button"
                     disabled={inputsFrozen}
@@ -507,7 +562,9 @@ function CountdownPanel({
                 <p className="mt-1 font-body text-[0.5rem] leading-snug text-white/68 sm:text-[0.58rem]">
                   {presenterName || "MAIN SPEAKER"}
                   <br />
-                  {formatCockpitEventDate(targetDateTime)}
+                  {formatCockpitEventDate(targetDateTime, scheduleTimezone)}
+                  <br />
+                  <span className="text-white/45">{getScheduleTimezoneLabel(scheduleTimezone)}</span>
                 </p>
               </>
             )}
@@ -518,6 +575,15 @@ function CountdownPanel({
 
         <p className="font-ui text-[0.56rem] uppercase tracking-[0.1em] text-white/55 sm:text-[0.62rem]">
           COUNTDOWN TO SHOW
+        </p>
+        <p
+          data-testid="countdown-timer"
+          className="sr-only"
+          aria-live="polite"
+        >
+          {loading
+            ? "--:--:--:--"
+            : `${countdown.days.toString().padStart(2, "0")}:${countdown.hours.toString().padStart(2, "0")}:${countdown.minutes.toString().padStart(2, "0")}:${countdown.seconds.toString().padStart(2, "0")}`}
         </p>
         <div className="mt-1 grid grid-cols-4 gap-1">
           {[
@@ -537,7 +603,26 @@ function CountdownPanel({
           ))}
         </div>
         <p className="mt-2 rounded border border-[#00a8ff]/20 bg-[#00a8ff]/8 px-2 py-1 text-center font-ui text-[0.48rem] uppercase leading-snug text-[#00a8ff] sm:text-[0.52rem]">
-          Synced from /owner/countdown
+          {feedback ? (
+            <span
+              data-testid={feedback.tone === "success" ? "success-badge" : "countdown-error-badge"}
+              className={
+                feedback.tone === "success"
+                  ? "inline-flex items-center justify-center gap-1 text-lime-300"
+                  : "inline-flex items-center justify-center gap-1 text-red-200"
+              }
+              role={feedback.tone === "error" ? "alert" : "status"}
+            >
+              {feedback.tone === "success" ? (
+                <CheckCircle2 className="h-3 w-3 shrink-0" aria-hidden="true" />
+              ) : (
+                <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden="true" />
+              )}
+              {feedback.message}
+            </span>
+          ) : (
+            "Schedule syncs to attendee countdown + live gates"
+          )}
         </p>
 
         <div className="mt-auto pt-2">
@@ -561,6 +646,7 @@ function CountdownPanel({
         </div>
       </div>
     </CockpitPanel>
+    </div>
   );
 }
 
@@ -659,6 +745,84 @@ function ProgramReturnPanel({
   );
 }
 
+function GoLiveMasterOverrideModal({
+  open,
+  pending,
+  scheduledLabel,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  pending: boolean;
+  scheduledLabel: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <div
+      data-testid="override-modal"
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/75 px-4 py-8 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="master-go-live-title"
+    >
+      <div className="w-full max-w-md rounded-xl border border-amber-300/35 bg-[#050814] p-5 shadow-[0_0_40px_rgba(255,193,7,0.12)]">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="mt-0.5 h-6 w-6 shrink-0 text-amber-300" aria-hidden="true" />
+          <div className="min-w-0">
+            <h2
+              id="master-go-live-title"
+              className="font-headline text-xl uppercase tracking-[0.06em] text-white"
+            >
+              Master Go Live Override
+            </h2>
+            <p className="mt-3 font-body text-sm leading-relaxed text-white/72">
+              This will permanently override the scheduled event date and time, move the countdown to{" "}
+              <strong className="text-white">right now</strong>, and force the broadcast live for
+              attendees.
+            </p>
+            <p className="mt-2 rounded-md border border-white/10 bg-black/35 px-3 py-2 font-body text-xs text-white/55">
+              Current schedule: {scheduledLabel}
+            </p>
+            <p className="mt-2 font-body text-xs text-amber-200/90">
+              This action cannot undo the previous scheduled go-live time. Adjust the schedule manually
+              if you need to revert.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            disabled={pending}
+            onClick={onCancel}
+            className="min-h-11 rounded-md border border-white/15 bg-white/5 px-4 font-ui text-xs font-bold uppercase tracking-[0.1em] text-white/70 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-45"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={onConfirm}
+            className="min-h-11 rounded-md bg-gradient-to-br from-lime-400 to-green-700 px-4 font-ui text-xs font-black uppercase tracking-[0.1em] text-black shadow-[0_0_18px_rgba(85,255,75,0.28)] disabled:cursor-not-allowed disabled:opacity-45"
+          >
+            {pending ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                Confirming...
+              </span>
+            ) : (
+              "Confirm Go Live"
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StreamMatrixPanel({
   broadcastPending,
   broadcastMessage,
@@ -668,7 +832,7 @@ function StreamMatrixPanel({
   destinationsLoading,
   destinationSaving,
   ownerAuthorized,
-  onGoLive,
+  onRequestGoLive,
   onStop,
   onDestinationChange,
 }: {
@@ -680,7 +844,7 @@ function StreamMatrixPanel({
   destinationsLoading: boolean;
   destinationSaving: DestinationKey | null;
   ownerAuthorized: boolean | null;
-  onGoLive: () => void;
+  onRequestGoLive: () => void;
   onStop: () => void;
   onDestinationChange: (destination: DestinationKey, enabled: boolean) => void;
 }) {
@@ -703,8 +867,9 @@ function StreamMatrixPanel({
           <div className="grid grid-cols-1 gap-2">
             <button
               type="button"
-              disabled={broadcastPending}
-              onClick={onGoLive}
+              data-testid="go-live-button"
+              disabled={broadcastPending || ownerAuthorized === false}
+              onClick={onRequestGoLive}
               className="relative z-50 pointer-events-auto cursor-pointer flex min-h-16 items-center justify-center gap-2 rounded-md bg-gradient-to-br from-lime-400 to-green-700 px-3 font-ui text-xl font-black uppercase text-black shadow-[0_0_22px_rgba(85,255,75,0.28)] disabled:cursor-not-allowed disabled:opacity-45 xl:min-h-20 xl:text-2xl"
             >
               {broadcastPending ? (
@@ -714,6 +879,9 @@ function StreamMatrixPanel({
               )}
               {broadcastPending ? "INITIALIZING SIGNAL..." : "GO LIVE"}
             </button>
+            <p className="text-center font-ui text-[0.44rem] uppercase tracking-[0.08em] text-white/40">
+              Master override — confirms before forcing live
+            </p>
             {ownerAuthorized === false ? (
               <span className="mt-2 block font-body text-xs text-red-400">
                 Error: Current session email is not authorized in ADMIN_EMAILS configuration.
@@ -1234,6 +1402,12 @@ export default function ProductionCockpitClient() {
   const [editEventTitle, setEditEventTitle] = useState("");
   const [editPresenterName, setEditPresenterName] = useState("");
   const [editTargetLocal, setEditTargetLocal] = useState("");
+  const [editScheduleTimezone, setEditScheduleTimezone] =
+    useState<ScheduleTimezone>(DEFAULT_SCHEDULE_TIMEZONE);
+  const [countdownScheduleTimezone, setCountdownScheduleTimezone] =
+    useState<ScheduleTimezone>(DEFAULT_SCHEDULE_TIMEZONE);
+  const [countdownFeedback, setCountdownFeedback] = useState<CountdownFeedback | null>(null);
+  const [masterGoLiveModalOpen, setMasterGoLiveModalOpen] = useState(false);
   const [broadcastPending, setBroadcastPending] = useState(false);
   const [destinations, setDestinations] = useState<RestreamDestinations>(DEFAULT_RESTREAM_DESTINATIONS);
   const [destinationsLoading, setDestinationsLoading] = useState(true);
@@ -1249,11 +1423,63 @@ export default function ProductionCockpitClient() {
   const [systemSynced, setSystemSynced] = useState(false);
   const [ownerAuthorized, setOwnerAuthorized] = useState<boolean | null>(null);
   const autoClearedIds = useRef<Set<string>>(new Set());
+  const countdownFeedbackTimerRef = useRef<number | null>(null);
+
+  const pushCountdownFeedback = useCallback((next: CountdownFeedback) => {
+    if (countdownFeedbackTimerRef.current !== null) {
+      window.clearTimeout(countdownFeedbackTimerRef.current);
+      countdownFeedbackTimerRef.current = null;
+    }
+    setCountdownFeedback(next);
+    console.info(`[cockpit/countdown] ${next.tone}: ${next.message}`);
+    if (next.tone === "success") {
+      countdownFeedbackTimerRef.current = window.setTimeout(() => {
+        setCountdownFeedback(null);
+        countdownFeedbackTimerRef.current = null;
+      }, 6_000);
+    }
+  }, []);
+
+  const applyShowSetupState = useCallback((state: ShowSetupStatePayload) => {
+    setCountdownEventName(state.showTitle || "LIVE EVENT WORKSPACE");
+    setCountdownPresenterName(state.presenterName || "MAIN SPEAKER");
+    setCountdownTargetIso(state.targetDateTime || null);
+    const timezone = state.scheduleTimezone ?? DEFAULT_SCHEDULE_TIMEZONE;
+    setCountdownScheduleTimezone(timezone);
+    setDestinations({
+      youtube: state.restreamDestinations?.youtube ?? DEFAULT_RESTREAM_DESTINATIONS.youtube,
+      facebook: state.restreamDestinations?.facebook ?? DEFAULT_RESTREAM_DESTINATIONS.facebook,
+      twitch: state.restreamDestinations?.twitch ?? DEFAULT_RESTREAM_DESTINATIONS.twitch,
+    });
+    setNow(Date.now());
+  }, []);
 
   useEffect(() => {
     void fetch("/api/owner/show-setup", { credentials: "include" })
-      .then((res) => setOwnerAuthorized(res.ok))
-      .catch(() => setOwnerAuthorized(false));
+      .then((res) => {
+        setOwnerAuthorized(res.ok);
+        if (!res.ok) {
+          pushCountdownFeedback({
+            tone: "error",
+            message: "Owner session not authorized — check ADMIN_EMAILS.",
+          });
+        }
+      })
+      .catch(() => {
+        setOwnerAuthorized(false);
+        pushCountdownFeedback({
+          tone: "error",
+          message: "Unable to verify owner session.",
+        });
+      });
+  }, [pushCountdownFeedback]);
+
+  useEffect(() => {
+    return () => {
+      if (countdownFeedbackTimerRef.current !== null) {
+        window.clearTimeout(countdownFeedbackTimerRef.current);
+      }
+    };
   }, []);
 
   const loadBroadcastSnapshot = useCallback(async (_silent = false) => {
@@ -1337,25 +1563,27 @@ export default function ProductionCockpitClient() {
       });
       const json = (await response.json()) as ShowSetupResponse;
 
-      if (!response.ok || !json.state) {
-        throw new Error(json.error || "Unable to load show setup.");
+      if (response.status === 401 || response.status === 403) {
+        setOwnerAuthorized(false);
+        throw new Error(parseOwnerApiError(response, json, "Owner access denied."));
       }
 
-      setCountdownEventName(json.state.showTitle || "LIVE EVENT WORKSPACE");
-      setCountdownPresenterName(json.state.presenterName || "MAIN SPEAKER");
-      setCountdownTargetIso(json.state.targetDateTime || null);
-      setDestinations({
-        youtube: json.state.restreamDestinations?.youtube ?? DEFAULT_RESTREAM_DESTINATIONS.youtube,
-        facebook: json.state.restreamDestinations?.facebook ?? DEFAULT_RESTREAM_DESTINATIONS.facebook,
-        twitch: json.state.restreamDestinations?.twitch ?? DEFAULT_RESTREAM_DESTINATIONS.twitch,
-      });
-      setBroadcastMessage(json.message || "Show setup loaded.");
+      if (!response.ok || !json.state) {
+        throw new Error(parseOwnerApiError(response, json, "Unable to load show setup."));
+      }
+
+      setOwnerAuthorized(true);
+      applyShowSetupState(json.state);
+      console.info("[cockpit/countdown] Show setup loaded.");
     } catch (setupError) {
-      setBroadcastError(setupError instanceof Error ? setupError.message : "Unable to load show setup.");
+      const message =
+        setupError instanceof Error ? setupError.message : "Unable to load show setup.";
+      pushCountdownFeedback({ tone: "error", message });
+      console.error("[cockpit/countdown] load failed:", message);
     } finally {
       setDestinationsLoading(false);
     }
-  }, []);
+  }, [applyShowSetupState, pushCountdownFeedback]);
 
   const loadGraphics = useCallback(async () => {
     setGraphicsLoading(true);
@@ -1560,28 +1788,46 @@ export default function ProductionCockpitClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ offsetSeconds }),
       });
-      const json = (await response.json()) as { ok?: boolean; error?: string; message?: string };
+      const json = (await response.json()) as ShowSetupResponse & { ok?: boolean };
 
-      if (!response.ok) {
-        throw new Error(json.error || "Countdown adjustment failed.");
+      if (!response.ok || json.ok === false) {
+        throw new Error(parseOwnerApiError(response, json, "Countdown adjustment failed."));
       }
 
-      await loadShowSetup();
-      setGraphicsSuccess(json.message || "Countdown adjusted.");
+      if (json.state) {
+        applyShowSetupState(json.state);
+      } else {
+        await loadShowSetup();
+      }
+
+      pushCountdownFeedback({
+        tone: "success",
+        message: json.message || "Countdown adjusted.",
+      });
     } catch (countdownError) {
-      setGraphicsError(countdownError instanceof Error ? countdownError.message : "Countdown adjustment failed.");
+      const message =
+        countdownError instanceof Error ? countdownError.message : "Countdown adjustment failed.";
+      pushCountdownFeedback({ tone: "error", message });
+      console.error("[cockpit/countdown] adjust failed:", message);
     } finally {
       setCountdownPending(false);
     }
-  }, [loadShowSetup]);
+  }, [applyShowSetupState, loadShowSetup, pushCountdownFeedback]);
 
   const beginEditEvent = useCallback(() => {
     setEditEventTitle(countdownEventName);
     setEditPresenterName(countdownPresenterName);
-    setEditTargetLocal(isoToDatetimeLocalValue(countdownTargetIso));
+    setEditScheduleTimezone(countdownScheduleTimezone);
+    setEditTargetLocal(isoToScheduleDatetimeLocal(countdownTargetIso ?? "", countdownScheduleTimezone));
+    setCountdownFeedback(null);
     setGraphicsError(null);
     setIsEditingEvent(true);
-  }, [countdownEventName, countdownPresenterName, countdownTargetIso]);
+  }, [
+    countdownEventName,
+    countdownPresenterName,
+    countdownScheduleTimezone,
+    countdownTargetIso,
+  ]);
 
   const cancelEditEvent = useCallback(() => {
     if (isSavingEvent) return;
@@ -1589,48 +1835,70 @@ export default function ProductionCockpitClient() {
   }, [isSavingEvent]);
 
   const saveEditEvent = useCallback(async () => {
-    const targetIso = datetimeLocalToIso(editTargetLocal);
-    if (!editEventTitle.trim() || !editPresenterName.trim() || !targetIso) {
-      setGraphicsError("Event title, presenter, and showtime are required.");
+    const targetIso = scheduleDatetimeLocalToIso(editTargetLocal, editScheduleTimezone);
+    if (!targetIso) {
+      pushCountdownFeedback({
+        tone: "error",
+        message: "Choose a valid show date and time.",
+      });
       return;
     }
 
     setIsSavingEvent(true);
     setGraphicsError(null);
+    setCountdownFeedback(null);
+    console.info("[cockpit/countdown] Saving schedule...");
 
     try {
+      const payload: Record<string, string> = {
+        targetDateTime: targetIso,
+        schedule_timezone: editScheduleTimezone,
+      };
+      const trimmedTitle = editEventTitle.trim();
+      const trimmedPresenter = editPresenterName.trim();
+      if (trimmedTitle) payload.title = trimmedTitle;
+      if (trimmedPresenter) payload.presenterName = trimmedPresenter;
+
       const response = await fetch("/api/owner/countdown/update", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: editEventTitle.trim(),
-          presenterName: editPresenterName.trim(),
-          targetDateTime: targetIso,
-        }),
+        body: JSON.stringify(payload),
       });
       const json = (await response.json()) as ShowSetupResponse & { ok?: boolean };
 
       if (!response.ok || json.ok === false) {
-        throw new Error(json.error || "Unable to save event schedule.");
+        throw new Error(parseOwnerApiError(response, json, "Unable to save event schedule."));
       }
 
       if (json.state) {
-        setCountdownEventName(json.state.showTitle || editEventTitle.trim());
-        setCountdownPresenterName(json.state.presenterName || editPresenterName.trim());
-        setCountdownTargetIso(json.state.targetDateTime || targetIso);
+        applyShowSetupState(json.state);
       } else {
         await loadShowSetup();
       }
 
       setIsEditingEvent(false);
-      setGraphicsSuccess(json.message || "Event schedule saved.");
+      pushCountdownFeedback({
+        tone: "success",
+        message: json.message || "Event schedule saved.",
+      });
     } catch (saveError) {
-      setGraphicsError(saveError instanceof Error ? saveError.message : "Unable to save event schedule.");
+      const message =
+        saveError instanceof Error ? saveError.message : "Unable to save event schedule.";
+      pushCountdownFeedback({ tone: "error", message });
+      console.error("[cockpit/countdown] save failed:", message);
     } finally {
       setIsSavingEvent(false);
     }
-  }, [editEventTitle, editPresenterName, editTargetLocal, loadShowSetup]);
+  }, [
+    applyShowSetupState,
+    editEventTitle,
+    editPresenterName,
+    editScheduleTimezone,
+    editTargetLocal,
+    loadShowSetup,
+    pushCountdownFeedback,
+  ]);
 
   const sendBroadcastCommand = useCallback(async (endpoint: string, body?: unknown) => {
     setBroadcastPending(true);
@@ -1662,59 +1930,58 @@ export default function ProductionCockpitClient() {
     }
   }, [loadBroadcastSnapshot]);
 
-  const runGoLiveWithPreflight = useCallback(async () => {
+  const confirmMasterGoLive = useCallback(async () => {
     setBroadcastPending(true);
     setBroadcastError(null);
-    setBroadcastMessage("Running broadcast preflight...");
+    setBroadcastMessage("Master override — updating schedule and forcing live...");
 
     try {
-      const preflightResponse = await fetch("/api/owner/broadcast/preflight", {
+      const response = await fetch("/api/owner/broadcast/master-go-live", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "rtmp_encoder" }),
+        body: JSON.stringify({ mode: "rtmp_encoder", confirm: true, masterOverride: true }),
       });
-      const preflightJson = (await preflightResponse.json()) as BroadcastResponse;
+      const json = (await response.json()) as BroadcastResponse & {
+        state?: ShowSetupStatePayload;
+        previousTargetDateTime?: string;
+      };
 
-      if (!preflightResponse.ok || preflightJson.blocked || preflightJson.ok === false) {
-        throw new Error(
-          preflightJson.message ||
-            preflightJson.error ||
-            `Broadcast preflight failed with HTTP ${preflightResponse.status}.`,
-        );
+      if (!response.ok || json.ok === false) {
+        throw new Error(parseOwnerApiError(response, json, "Master go-live failed."));
       }
 
-      if (preflightJson.snapshot) setBroadcastSnapshot(preflightJson.snapshot);
-
-      setBroadcastMessage("Preflight passed. Sending go-live command...");
-
-      const goLiveResponse = await fetch("/api/owner/broadcast/go-live", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "rtmp_encoder", confirm: true }),
-      });
-      const goLiveJson = (await goLiveResponse.json()) as BroadcastResponse;
-
-      if (!goLiveResponse.ok || goLiveJson.ok === false) {
-        throw new Error(
-          goLiveJson.message ||
-            goLiveJson.error ||
-            `Go-live command failed with HTTP ${goLiveResponse.status}.`,
-        );
+      if (json.state) {
+        applyShowSetupState(json.state);
+      } else {
+        await loadShowSetup();
       }
 
-      if (goLiveJson.snapshot) setBroadcastSnapshot(goLiveJson.snapshot);
-      else void loadBroadcastSnapshot(true);
+      if (json.snapshot) {
+        setBroadcastSnapshot(json.snapshot);
+      } else {
+        await loadBroadcastSnapshot(true);
+      }
 
-      setBroadcastMessage(goLiveJson.message || "Go-live command confirmed.");
+      setMasterGoLiveModalOpen(false);
+      setBroadcastMessage(json.message || "Master go-live confirmed.");
+      pushCountdownFeedback({
+        tone: "success",
+        message: "Schedule overridden to now — broadcast live.",
+      });
+      console.info("[cockpit/master-go-live] success", {
+        previousTargetDateTime: json.previousTargetDateTime,
+      });
     } catch (goLiveError) {
-      setBroadcastError(goLiveError instanceof Error ? goLiveError.message : "Go-live command failed.");
+      const message = goLiveError instanceof Error ? goLiveError.message : "Master go-live failed.";
+      setBroadcastError(message);
       setBroadcastMessage(null);
+      pushCountdownFeedback({ tone: "error", message });
+      console.error("[cockpit/master-go-live] failed:", message);
     } finally {
       setBroadcastPending(false);
     }
-  }, [loadBroadcastSnapshot]);
+  }, [applyShowSetupState, loadBroadcastSnapshot, loadShowSetup, pushCountdownFeedback]);
 
   const handleDestinationChange = useCallback(
     async (destination: DestinationKey, enabled: boolean) => {
@@ -1763,6 +2030,16 @@ export default function ProductionCockpitClient() {
 
   return (
     <main className="min-h-dvh overflow-x-hidden overflow-y-auto bg-[#020203] bg-[radial-gradient(circle_at_22%_0%,rgba(0,168,255,0.13),transparent_28%),radial-gradient(circle_at_78%_4%,rgba(255,47,175,0.15),transparent_30%),linear-gradient(180deg,#050507_0%,#020203_54%,#010102_100%)] px-2 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-2 text-white">
+      <GoLiveMasterOverrideModal
+        open={masterGoLiveModalOpen}
+        pending={broadcastPending}
+        scheduledLabel={formatCockpitEventDate(countdownTargetIso, countdownScheduleTimezone)}
+        onCancel={() => {
+          if (broadcastPending) return;
+          setMasterGoLiveModalOpen(false);
+        }}
+        onConfirm={() => void confirmMasterGoLive()}
+      />
       <div className="mx-auto grid min-h-[calc(100dvh-2.5rem)] w-full max-w-[112rem] gap-2 xl:grid-cols-[12rem_minmax(0,1fr)]">
         <OwnerProductionSideMenu active="cockpit" showEncoderProfile />
 
@@ -1840,7 +2117,7 @@ export default function ProductionCockpitClient() {
                 destinationsLoading={destinationsLoading}
                 destinationSaving={destinationSaving}
                 ownerAuthorized={ownerAuthorized}
-                onGoLive={() => void runGoLiveWithPreflight()}
+                onRequestGoLive={() => setMasterGoLiveModalOpen(true)}
                 onStop={() => void sendBroadcastCommand("/api/owner/broadcast/end")}
                 onDestinationChange={(destination, enabled) => void handleDestinationChange(destination, enabled)}
               />
@@ -1875,6 +2152,7 @@ export default function ProductionCockpitClient() {
               eventName={countdownEventName}
               presenterName={countdownPresenterName}
               targetDateTime={countdownTargetIso}
+              scheduleTimezone={countdownScheduleTimezone}
               loading={destinationsLoading}
               pending={countdownPending}
               isEditing={isEditingEvent}
@@ -1882,11 +2160,13 @@ export default function ProductionCockpitClient() {
               editTitle={editEventTitle}
               editPresenter={editPresenterName}
               editTargetLocal={editTargetLocal}
+              editTimezone={editScheduleTimezone}
+              feedback={countdownFeedback}
               titleAction={
                 !isEditingEvent ? (
                   <button
                     type="button"
-                    disabled={destinationsLoading || countdownPending || isSavingEvent}
+                    disabled={destinationsLoading || countdownPending || isSavingEvent || ownerAuthorized === false}
                     onClick={beginEditEvent}
                     className="shrink-0 font-ui text-[0.5rem] font-black uppercase tracking-[0.06em] text-[#00a8ff] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-45 sm:text-[0.54rem]"
                   >
@@ -1897,6 +2177,7 @@ export default function ProductionCockpitClient() {
               onEditTitleChange={setEditEventTitle}
               onEditPresenterChange={setEditPresenterName}
               onEditTargetLocalChange={setEditTargetLocal}
+              onEditTimezoneChange={setEditScheduleTimezone}
               onCancelEdit={cancelEditEvent}
               onSaveEdit={() => void saveEditEvent()}
               onAdjust={(offset) => void adjustCountdown(offset)}
