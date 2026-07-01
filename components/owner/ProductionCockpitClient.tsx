@@ -23,6 +23,11 @@ import {
   OWNER_GRAPHICS_EVENT_ID,
 } from "@/lib/owner/graphics-data-plane";
 import type { OwnerAudioTelemetry } from "@/lib/owner/audio-contracts";
+import {
+  BROADCAST_HARDWARE_DEFAULTS,
+  formatBroadcastAudioDefaultLabel,
+  formatBroadcastVideoDefaultLabel,
+} from "@/lib/owner/preflight";
 import { getSupabase } from "@/lib/supabase/client";
 import OwnerProductionSideMenu from "@/components/owner/OwnerProductionSideMenu";
 import {
@@ -541,6 +546,36 @@ function StreamMatrixPanel({
               {broadcastPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
               STOP STREAMING
             </button>
+          </div>
+          <div className="grid gap-1.5">
+            <div
+              className="flex items-start gap-1.5 rounded-md border border-[#00a8ff]/25 bg-[#00a8ff]/8 px-2 py-1.5"
+              title="Locked encoder contract"
+            >
+              <Lock className="mt-0.5 h-3 w-3 shrink-0 text-[#00a8ff]/70" aria-hidden />
+              <div className="min-w-0">
+                <p className="font-ui text-[0.48rem] font-black uppercase tracking-[0.1em] text-[#00a8ff]/85">
+                  Video · Locked
+                </p>
+                <p className="font-body text-[0.52rem] leading-snug text-white/78">
+                  {formatBroadcastVideoDefaultLabel()}
+                </p>
+              </div>
+            </div>
+            <div
+              className="flex items-start gap-1.5 rounded-md border border-[#8a2eff]/25 bg-[#8a2eff]/8 px-2 py-1.5"
+              title="Locked encoder contract"
+            >
+              <Lock className="mt-0.5 h-3 w-3 shrink-0 text-[#8a2eff]/70" aria-hidden />
+              <div className="min-w-0">
+                <p className="font-ui text-[0.48rem] font-black uppercase tracking-[0.1em] text-[#8a2eff]/85">
+                  Audio · Locked · {BROADCAST_HARDWARE_DEFAULTS.audio.targetLoudnessLufs} LUFS
+                </p>
+                <p className="font-body text-[0.52rem] leading-snug text-white/78">
+                  {formatBroadcastAudioDefaultLabel()}
+                </p>
+              </div>
+            </div>
           </div>
           <div className="min-h-7 rounded-md border border-white/10 bg-black/25 px-2 py-1.5 font-body text-[0.58rem] text-white/65">
             {broadcastError ? <span className="text-red-200">{broadcastError}</span> : broadcastMessage || "Stream commands ready."}
@@ -1428,7 +1463,7 @@ export default function ProductionCockpitClient() {
   return (
     <main className="min-h-dvh overflow-x-hidden overflow-y-auto bg-[#020203] bg-[radial-gradient(circle_at_22%_0%,rgba(0,168,255,0.13),transparent_28%),radial-gradient(circle_at_78%_4%,rgba(255,47,175,0.15),transparent_30%),linear-gradient(180deg,#050507_0%,#020203_54%,#010102_100%)] px-2 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-2 text-white">
       <div className="mx-auto grid min-h-[calc(100dvh-2.5rem)] w-full max-w-[112rem] gap-2 xl:grid-cols-[12rem_minmax(0,1fr)]">
-        <OwnerProductionSideMenu active="cockpit" />
+        <OwnerProductionSideMenu active="cockpit" showEncoderProfile />
 
         <div className="flex min-w-0 flex-col gap-2">
         <header className="shrink-0 rounded-[6px] border border-white/10 bg-[#050814]/94 px-3 py-2 shadow-[0_0_28px_rgba(0,168,255,0.08)] sm:px-4">
@@ -1447,6 +1482,10 @@ export default function ProductionCockpitClient() {
               <span className="inline-flex items-center gap-1.5 rounded border border-purple-500/40 bg-purple-500/10 px-2 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.08em] text-purple-400 sm:text-[0.6rem]">
                 <Timer className="h-3 w-3" />
                 Event Phase: Pre-Show
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded border border-lime-300/35 bg-lime-300/10 px-2 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.08em] text-lime-300 sm:text-[0.6rem]">
+                <span className="h-2 w-2 rounded-full bg-lime-300 shadow-[0_0_10px_rgba(132,255,75,0.8)]" />
+                Auto-Leveling Matrix: ACTIVE
               </span>
               <span className="inline-flex items-center gap-1.5 rounded border border-lime-300/35 bg-lime-300/10 px-2 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.08em] text-lime-300 sm:text-[0.6rem]">
                 <span className="h-2 w-2 rounded-full bg-lime-300 shadow-[0_0_10px_rgba(132,255,75,0.8)]" />

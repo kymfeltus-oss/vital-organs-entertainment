@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useRef, type CSSProperties } from "react";
 import ExperienceDashboardGridCard from "@/components/experience/dashboard/ExperienceDashboardGridCard";
-import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
 import {
   AWAKENING_ASSETS,
   AWAKENING_CONCERT_BACKDROP_ART,
@@ -32,7 +31,7 @@ export default function ExperienceDashboardInterfaceLayer({
   const backgroundRef = useRef<HTMLVideoElement>(null);
   const welcomeFirstName = !profile.isGuest ? profile.firstName.trim() : "";
 
-  const { config, countdown, eventPhase, isLoading, showTimer } = useLobbyCountdown({
+  useLobbyCountdown({
     initialConfig: initialCountdownConfig,
     initialCountdown,
   });
@@ -109,19 +108,6 @@ export default function ExperienceDashboardInterfaceLayer({
                   <p className="experience-dashboard-welcome-name">{welcomeFirstName}</p>
                 </div>
               </div>
-            </div>
-          ) : null}
-
-          {(showTimer || isLoading) && eventPhase === "waiting" ? (
-            <div className="experience-dashboard-countdown-slot">
-              <LobbyCountdownTimer
-                config={config}
-                countdown={countdown}
-                eventPhase={eventPhase}
-                showTimer={showTimer}
-                isLoading={isLoading}
-                variant="segmented"
-              />
             </div>
           ) : null}
 

@@ -37,9 +37,38 @@ const PRODUCTION_NAV_ITEMS = [
 
 type OwnerProductionSideMenuProps = {
   active: (typeof PRODUCTION_NAV_ITEMS)[number]["id"];
+  showEncoderProfile?: boolean;
 };
 
-export default function OwnerProductionSideMenu({ active }: OwnerProductionSideMenuProps) {
+function EncoderProfileSidebarNote() {
+  return (
+    <div className="mt-auto space-y-2 border-t border-white/10 pt-3">
+      <span className="inline-flex w-full items-center justify-center gap-1.5 rounded border border-lime-300/35 bg-lime-300/10 px-2 py-1 font-ui text-[0.48rem] font-black uppercase tracking-[0.08em] text-lime-300">
+        <span className="h-1.5 w-1.5 rounded-full bg-lime-300 shadow-[0_0_8px_rgba(132,255,75,0.8)]" />
+        Auto-Leveling Matrix: ACTIVE
+      </span>
+      <label className="flex cursor-default items-start gap-2 rounded-md border border-white/10 bg-black/24 px-2 py-2">
+        <input
+          type="checkbox"
+          checked
+          readOnly
+          disabled
+          aria-label="Gospel profile enabled"
+          className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-[#00a8ff]"
+        />
+        <span className="font-body text-[0.56rem] leading-snug text-white/72">
+          Gospel Profile Enabled: Target master output to -16 LUFS (-14dBFS on surges). Keep hardware
+          brick-wall limiter engaged at -2dBFS.
+        </span>
+      </label>
+    </div>
+  );
+}
+
+export default function OwnerProductionSideMenu({
+  active,
+  showEncoderProfile = false,
+}: OwnerProductionSideMenuProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const activeItem = PRODUCTION_NAV_ITEMS.find((item) => item.id === active) ?? PRODUCTION_NAV_ITEMS[0];
   const ActiveIcon = activeItem.icon;
@@ -116,6 +145,11 @@ export default function OwnerProductionSideMenu({ active }: OwnerProductionSideM
                 </Link>
               );
             })}
+            {showEncoderProfile ? (
+              <div className="sm:col-span-2">
+                <EncoderProfileSidebarNote />
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className="mt-2 flex gap-2 overflow-x-auto pb-0.5">
@@ -192,6 +226,7 @@ export default function OwnerProductionSideMenu({ active }: OwnerProductionSideM
             );
           })}
         </div>
+        {showEncoderProfile ? <EncoderProfileSidebarNote /> : null}
       </nav>
     </>
   );

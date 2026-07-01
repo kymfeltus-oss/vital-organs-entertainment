@@ -7,6 +7,10 @@ import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
 import { fetchLiveAccessEvaluation, type LiveAccessEvaluation } from "@/lib/access";
 import { attachHlsPlayback } from "@/lib/live/attach-hls-playback";
+import {
+  attachAutoLevelingMatrix,
+  type AutoLevelingMatrix,
+} from "@/lib/live/audio-auto-leveling";
 import { requestLiveSeedWalletRefresh } from "@/lib/live/seed-wallet-events";
 import { isDemoManifestPlaybackUrl } from "@/lib/live/manifest-dev-fallback";
 import { getSupabase } from "@/lib/supabase/client";
@@ -82,6 +86,8 @@ export default function LiveExperienceClient({
   const videoRef = useRef<HTMLVideoElement>(null);
   const directVideoRef = useRef<HTMLVideoElement>(null);
   const hlsCleanupRef = useRef<(() => void) | null>(null);
+  const autoLevelingMatrixRef = useRef<AutoLevelingMatrix | null>(null);
+  const audioUnlockedRef = useRef(false);
   const directPeerRef = useRef<RTCPeerConnection | null>(null);
   const directChannelRef = useRef<ReturnType<ReturnType<typeof getSupabase>["channel"]> | null>(null);
   const directBrowserChannelRef = useRef<BroadcastChannel | null>(null);
@@ -107,6 +113,7 @@ export default function LiveExperienceClient({
     message: "Checking live broadcast.",
   });
   const [audioUnlocked, setAudioUnlocked] = useState(false);
+  const [autoLevelingActive, setAutoLevelingActive] = useState(false);
   const [directAudioUnlocked, setDirectAudioUnlocked] = useState(false);
   const [directStatus, setDirectStatus] = useState<"idle" | "connecting" | "ready">("idle");
   const [directMessage, setDirectMessage] = useState("Waiting for direct camera publisher.");
@@ -123,6 +130,20 @@ export default function LiveExperienceClient({
   useEffect(() => {
     directAudioUnlockedRef.current = directAudioUnlocked;
   }, [directAudioUnlocked]);
+
+  useEffect(() => {
+    audioUnlockedRef.current = audioUnlocked;
+  }, [audioUnlocked]);
+
+  useEffect(() => {
+    const matrix = autoLevelingMatrixRef.current;
+    if (!matrix) return;
+    if (audioUnlocked) {
+      void matrix.resume();
+    } else {
+      void matrix.suspend();
+    }
+  }, [audioUnlocked]);
 
   useEffect(() => {
     directStatusRef.current = directStatus;
@@ -519,11 +540,37 @@ export default function LiveExperienceClient({
 
   const streamUrl = manifest.playbackUrl;
 
+  const clearAutoLevelingMatrix = useCallback(() => {
+    autoLevelingMatrixRef.current?.cleanup();
+    autoLevelingMatrixRef.current = null;
+    setAutoLevelingActive(false);
+  }, []);
+
+  const installAutoLevelingMatrix = useCallback((video: HTMLVideoElement) => {
+    clearAutoLevelingMatrix();
+    const matrix = attachAutoLevelingMatrix(video);
+    if (!matrix) return;
+    autoLevelingMatrixRef.current = matrix;
+    setAutoLevelingActive(true);
+    if (audioUnlockedRef.current) {
+      void matrix.resume();
+    } else {
+      void matrix.suspend();
+    }
+  }, [clearAutoLevelingMatrix]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !audioUnlocked;
+  }, [audioUnlocked]);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !streamUrl) {
       hlsCleanupRef.current?.();
       hlsCleanupRef.current = null;
+      clearAutoLevelingMatrix();
       if (video) {
         video.removeAttribute("src");
         video.load();
@@ -531,10 +578,14 @@ export default function LiveExperienceClient({
       return;
     }
 
-    video.muted = !audioUnlocked;
+    video.muted = !audioUnlockedRef.current;
     let cancelled = false;
 
     void attachHlsPlayback(video, streamUrl, {
+      onManifestParsed: () => {
+        if (cancelled) return;
+        installAutoLevelingMatrix(video);
+      },
       onFatalError: (details) => {
         if (cancelled) return;
         setManifest({
@@ -556,8 +607,9 @@ export default function LiveExperienceClient({
       cancelled = true;
       hlsCleanupRef.current?.();
       hlsCleanupRef.current = null;
+      clearAutoLevelingMatrix();
     };
-  }, [audioUnlocked, streamUrl]);
+  }, [clearAutoLevelingMatrix, installAutoLevelingMatrix, streamUrl]);
 
   const enableAudio = useCallback(() => {
     const video = videoRef.current;
@@ -565,6 +617,7 @@ export default function LiveExperienceClient({
     if (!video) return;
     video.muted = false;
     video.volume = 1;
+    void autoLevelingMatrixRef.current?.resume();
     void video.play().catch(() => undefined);
   }, []);
 
@@ -593,8 +646,16 @@ export default function LiveExperienceClient({
               Live
             </h1>
           </div>
-          <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-white/70">
-            {showDirectPlayer ? "Direct Live" : access?.streamIsLive ? "On Air" : "Standby"}
+          <div className="flex flex-col items-end gap-1.5">
+            {autoLevelingActive ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-lime-300/35 bg-lime-300/10 px-3 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.12em] text-lime-300">
+                <span className="h-1.5 w-1.5 rounded-full bg-lime-300 shadow-[0_0_8px_rgba(132,255,75,0.8)]" />
+                Auto-Leveling Matrix: ACTIVE
+              </span>
+            ) : null}
+            <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-white/70">
+              {showDirectPlayer ? "Direct Live" : access?.streamIsLive ? "On Air" : "Standby"}
+            </div>
           </div>
         </header>
 

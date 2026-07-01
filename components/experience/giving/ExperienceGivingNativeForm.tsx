@@ -38,7 +38,7 @@ export default function ExperienceGivingNativeForm({
   const isCustomSelected = !hasPresetSelection && customAmount.trim().length > 0;
 
   return (
-    <div className="vital-giving-form flex min-h-0 flex-1 flex-col gap-[clamp(0.35rem,2cqw,0.55rem)]">
+    <div className="vital-giving-form flex min-h-0 flex-1 flex-col !gap-4">
       <section aria-label="Choose a gift amount" className="shrink-0">
         <h2 className="vital-giving-form__section-title font-ui text-brand-gradient">
           Select Amount
@@ -79,32 +79,32 @@ export default function ExperienceGivingNativeForm({
         </div>
       </section>
 
-      <div className="vital-giving-action-stack shrink-0">
-        <label
-          className={[
-            "vital-giving-custom-field shrink-0",
-            isCustomSelected ? "vital-giving-custom-field--selected" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-        >
-          <span className="sr-only">Custom amount</span>
-          <Pencil className="vital-giving-custom-field__icon" aria-hidden="true" />
-          <input
-            type="text"
-            inputMode="decimal"
-            autoComplete="off"
-            aria-label="Enter custom gift amount"
-            placeholder="Custom Amount"
-            disabled={isLoading}
-            value={customAmount}
-            onFocus={onCustomAmountFocus}
-            onClick={onCustomAmountFocus}
-            onChange={(event) => onCustomAmountChange(event.target.value)}
-            className="vital-giving-custom-field__input font-body"
-          />
-        </label>
+      <label
+        className={[
+          "vital-giving-custom-field w-full shrink-0",
+          isCustomSelected ? "vital-giving-custom-field--selected" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        <span className="sr-only">Custom amount</span>
+        <Pencil className="vital-giving-custom-field__icon" aria-hidden="true" />
+        <input
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          aria-label="Enter custom gift amount"
+          placeholder="Custom Amount"
+          disabled={isLoading}
+          value={customAmount}
+          onFocus={onCustomAmountFocus}
+          onClick={onCustomAmountFocus}
+          onChange={(event) => onCustomAmountChange(event.target.value)}
+          className="vital-giving-custom-field__input font-body"
+        />
+      </label>
 
+      <div className="vital-giving-action-stack shrink-0 !mt-0 !gap-4">
         {error ? (
           <p role="alert" className="vital-giving-inline-error shrink-0 font-body">
             {error}

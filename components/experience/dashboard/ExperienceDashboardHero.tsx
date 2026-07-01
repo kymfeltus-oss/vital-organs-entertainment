@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRef } from "react";
 import ExperienceDashboardCardRow from "@/components/experience/dashboard/ExperienceDashboardCardRow";
 import ExperienceDashboardMobileHeroLayout from "@/components/experience/dashboard/ExperienceDashboardMobileHeroLayout";
-import LobbyCountdownTimer from "@/components/lobby/LobbyCountdownTimer";
 import { AWAKENING_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import { useLobbyCountdown } from "@/lib/live/useLobbyCountdown";
@@ -15,7 +14,7 @@ type ExperienceDashboardHeroProps = {
 export default function ExperienceDashboardHero({
   initialCountdownConfig,
 }: ExperienceDashboardHeroProps) {
-  const { config, countdown, eventPhase, isLoading, showTimer } = useLobbyCountdown({
+  useLobbyCountdown({
     initialConfig: initialCountdownConfig,
   });
   const headlineBlockRef = useRef<HTMLDivElement>(null);
@@ -32,24 +31,6 @@ export default function ExperienceDashboardHero({
         className="dashboard-hero-headline-block dashboard-hero-headline-block--mobile-fixed pointer-events-none text-center"
       >
         <div className="dashboard-hero-copy-stack pointer-events-auto flex flex-col items-center gap-2">
-          {(showTimer || isLoading) && eventPhase === "waiting" && (
-            <div className="mx-auto w-full max-w-[min(100%,16rem)] px-2">
-              <LobbyCountdownTimer
-                config={config}
-                countdown={countdown}
-                eventPhase={eventPhase}
-                showTimer={showTimer}
-                isLoading={isLoading}
-                variant="segmented"
-              />
-              {eventPhase === "waiting" && showTimer ? (
-                <p className="mt-1 font-ui text-[0.5rem] font-bold uppercase tracking-[0.18em] text-brand-muted">
-                  {config.status_label}
-                </p>
-              ) : null}
-            </div>
-          )}
-
           <div className="dashboard-hero-cta-images mx-auto flex w-full flex-row items-center justify-center gap-2 px-2">
             <Link
               href={AWAKENING_ASSETS.routes.enterExperience}
