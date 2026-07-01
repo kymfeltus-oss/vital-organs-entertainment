@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import LivePageRouterClient from "@/components/experience/live/LivePageRouterClient";
+import { loadTabPageProfile } from "@/lib/experience/load-tab-page-profile";
 import { computeEventCountdownPhase } from "@/lib/live/countdown-config";
 import { computeCountdown } from "@/lib/live/event-lobby";
 import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
-import { buildAttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
 /** Dynamic — countdown schedule and live phase resolve per request. */
 export const dynamic = "force-dynamic";
@@ -25,7 +25,7 @@ export default async function LivePage() {
     : computeEventCountdownPhase(countdownConfig.start_time, countdownConfig.end_time);
 
   const initialCountdown = computeCountdown(countdownConfig.start_time);
-  const initialProfile = buildAttendeeProfileSnapshot(null, null);
+  const initialProfile = await loadTabPageProfile();
 
   return (
     <div className="relative min-h-dvh overflow-hidden bg-brand-black text-brand-blue">

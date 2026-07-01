@@ -57,7 +57,7 @@ export default function LivePageRouterClient({
   }, [currentPhase, forceHoldingRoom, isLive, schedulePhase, router]);
 
   if (currentPhase === "live") {
-    return <LiveDataLoader />;
+    return <LiveDataLoader initialProfile={initialProfile} />;
   }
 
   return (
