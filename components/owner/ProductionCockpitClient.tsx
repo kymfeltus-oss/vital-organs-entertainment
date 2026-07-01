@@ -408,8 +408,7 @@ function AudioMonitorPanel({
           CONTROLS LOCKED
         </div>
       </div>
-     </CockpitPanel>
-  </div>
+    </CockpitPanel>
   );
 }
 
