@@ -66,7 +66,7 @@ function normalizePublishStatus(raw: unknown, isLive: boolean): PublishStatus {
     raw === "ending" ||
     raw === "error"
   ) {
-    if (isLive && (raw === "offline" || raw === "preflight")) {
+    if (isLive && raw === "preflight") {
       return "publishing";
     }
     return raw;

@@ -64,7 +64,9 @@ test.describe("Production Cockpit - Broadcast Flow", () => {
 
     await masterGoLivePromise;
 
-    const broadcast = await expectJsonRoute(request, "/api/owner/broadcast");
+    const broadcast = (await expectJsonRoute(request, "/api/owner/broadcast")) as {
+      snapshot?: { publish?: { status?: string } };
+    };
     expect(broadcast.snapshot?.publish?.status).toBeTruthy();
   });
 });
