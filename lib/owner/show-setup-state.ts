@@ -13,8 +13,10 @@ import { loadAdminCountdownConfig, saveCountdownConfig } from "@/lib/live/fetch-
 import {
   mergeEncoderConfigFields,
   resolveDefaultEncoderConfigFromEnv,
+  buildRtmpIngestUrlFromEncoderConfig,
 } from "@/lib/owner/resolve-show-encoder-config";
 import { isValidHlsUrl } from "@/lib/live/hls";
+import { normalizeRtmpUrl } from "@/lib/live/rtmp";
 import { loadOwnerStreamState, updateOwnerStreamState } from "@/lib/owner/load-owner-state";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
@@ -341,6 +343,19 @@ export async function saveShowSetupState(
   const validation = validateCountdownConfigInput(countdownInput);
   if (validation.ok === false) throw new Error(validation.error);
 
+  const normalizedRtmp = normalizeRtmpUrl(next.primaryIngestEndpoint);
+  if (next.primaryIngestEndpoint.trim() && !normalizedRtmp) {
+    throw new Error("RTMP server must be a valid rtmp:// or rtmps:// URL (for example rtmp://live.restream.io/live).");
+  }
+  if (normalizedRtmp) {
+    next.primaryIngestEndpoint = normalizedRtmp;
+  }
+
+  const streamKeyTrimmed = next.streamKey.trim();
+  if (normalizedRtmp && !streamKeyTrimmed) {
+    throw new Error("Add your Restream stream key before saving RTMP credentials.");
+  }
+
   const admin = getSupabaseAdmin();
   const { row } = await loadOwnerStreamState(admin);
   const existingPresets = asRecord(row?.audio_master_presets);
@@ -383,6 +398,15 @@ export async function saveShowSetupState(
   if (savedHls && isValidHlsUrl(savedHls) && !row?.is_live) {
     streamPatch.primary_playback_url = savedHls;
     streamPatch.playback_url = savedHls;
+  }
+
+  const combinedRtmpIngest = buildRtmpIngestUrlFromEncoderConfig({
+    rtmpServer: next.primaryIngestEndpoint,
+    streamKey: next.streamKey,
+    hlsPlaybackUrl: next.attendeePlaybackHlsUrl || null,
+  });
+  if (combinedRtmpIngest) {
+    streamPatch.primary_rtmp_ingest_url = combinedRtmpIngest;
   }
 
   const { error } = await updateOwnerStreamState(admin, streamPatch);

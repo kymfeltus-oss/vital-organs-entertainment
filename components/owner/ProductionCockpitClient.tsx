@@ -92,6 +92,7 @@ type ShowSetupStatePayload = {
   streamKey?: string;
   attendeePlaybackHlsUrl?: string;
   restreamDestinations?: Partial<RestreamDestinations>;
+  updatedAt?: string | null;
 };
 
 type ShowSetupResponse = {
@@ -1194,6 +1195,9 @@ export default function ProductionCockpitClient() {
   const [encoderHealth, setEncoderHealth] = useState<EncoderHealthStatus | "checking">("checking");
   const [encoderHealthDetail, setEncoderHealthDetail] = useState<string | null>(null);
   const [encoderSaving, setEncoderSaving] = useState(false);
+  const [encoderSaveMessage, setEncoderSaveMessage] = useState<string | null>(null);
+  const [encoderSaveError, setEncoderSaveError] = useState<string | null>(null);
+  const [encoderLastSavedAt, setEncoderLastSavedAt] = useState<string | null>(null);
   const autoClearedIds = useRef<Set<string>>(new Set());
 
   const applyShowSetupState = useCallback((state: ShowSetupStatePayload) => {
@@ -1210,6 +1214,7 @@ export default function ProductionCockpitClient() {
       streamKey: state.streamKey ?? "",
       attendeePlaybackHlsUrl: state.attendeePlaybackHlsUrl ?? "",
     });
+    setEncoderLastSavedAt(state.updatedAt ?? null);
     setNow(Date.now());
   }, []);
 
@@ -1775,8 +1780,10 @@ export default function ProductionCockpitClient() {
     if (encoderSaving) return;
 
     setEncoderSaving(true);
+    setEncoderSaveError(null);
+    setEncoderSaveMessage(null);
     setBroadcastError(null);
-    setBroadcastMessage("Saving Restream encoder settings...");
+    setBroadcastMessage("Saving Restream credentials...");
 
     try {
       const response = await fetch("/api/owner/show-setup", {
@@ -1788,16 +1795,19 @@ export default function ProductionCockpitClient() {
       const json = (await response.json()) as ShowSetupResponse;
 
       if (!response.ok || !json.state) {
-        throw new Error(json.error || "Unable to save encoder settings.");
+        throw new Error(json.error || "Unable to save Restream credentials.");
       }
 
       applyShowSetupState(json.state);
-      setBroadcastMessage(json.message || "Encoder settings saved.");
+      const savedLabel = "Restream RTMP and stream key saved to the production database.";
+      setEncoderSaveMessage(savedLabel);
+      setBroadcastMessage(json.message || savedLabel);
       await loadBroadcastSnapshot();
     } catch (encoderError) {
-      setBroadcastError(
-        encoderError instanceof Error ? encoderError.message : "Unable to save encoder settings.",
-      );
+      const message =
+        encoderError instanceof Error ? encoderError.message : "Unable to save Restream credentials.";
+      setEncoderSaveError(message);
+      setBroadcastError(message);
       setBroadcastMessage(null);
     } finally {
       setEncoderSaving(false);
@@ -1889,24 +1899,40 @@ export default function ProductionCockpitClient() {
         </header>
 
         <div className="grid min-h-0 flex-1 gap-2 xl:grid-cols-[17rem_minmax(0,1fr)_26rem]">
-          <section className="relative order-1 grid min-h-0 gap-2 xl:order-2 xl:grid-rows-[minmax(0,1fr)_auto_auto]">
-            <div className="pointer-events-none min-h-0 overflow-hidden">
-              <ProgramReturnPanel
-                livePreset={livePreset}
-                playbackHlsUrl={broadcastSnapshot.playback.hlsUrl}
-                publishStatus={broadcastSnapshot.publish.status}
-                playbackReachable={broadcastSnapshot.playback.manifestReachable}
-              />
-            </div>
+          <section className="relative order-1 grid min-h-0 gap-2 xl:order-2 xl:grid-rows-[auto_minmax(0,1fr)_auto]">
             <div className="relative z-50 pointer-events-auto min-h-0">
               <RestreamEncoderPanel
                 fields={encoderFields}
                 health={encoderHealth}
                 healthDetail={encoderHealthDetail}
                 saving={encoderSaving}
-                disabled={!ownerAuthorized || isBroadcastLive}
-                onChange={setEncoderFields}
+                disabled={ownerAuthorized !== true}
+                saveMessage={encoderSaveMessage}
+                saveError={encoderSaveError}
+                lastSavedLabel={
+                  encoderLastSavedAt
+                    ? `Last saved ${new Date(encoderLastSavedAt).toLocaleString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}`
+                    : null
+                }
+                onChange={(nextFields) => {
+                  setEncoderFields(nextFields);
+                  setEncoderSaveMessage(null);
+                  setEncoderSaveError(null);
+                }}
                 onSave={() => void handleSaveEncoder()}
+              />
+            </div>
+            <div className="pointer-events-none min-h-0 overflow-hidden">
+              <ProgramReturnPanel
+                livePreset={livePreset}
+                playbackHlsUrl={broadcastSnapshot.playback.hlsUrl}
+                publishStatus={broadcastSnapshot.publish.status}
+                playbackReachable={broadcastSnapshot.playback.manifestReachable}
               />
             </div>
             <div className="relative z-50 pointer-events-auto min-h-0">
