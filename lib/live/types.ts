@@ -22,6 +22,7 @@ export type HarvestProgressRow = {
 export const LIVE_ROOM_CHAT_CHANNEL = "live-room-platform";
 export const LIVE_ROOM_PLATFORM_CHANNEL = LIVE_ROOM_CHAT_CHANNEL;
 export const LIVE_STREAM_STATE_BROADCAST_EVENT = "stream-state-sync";
+export const STREAM_GRAPHICS_SYNC_EVENT = "stream-graphics-sync";
 export const HARVEST_METRICS_CHANNEL = LIVE_ROOM_PLATFORM_CHANNEL;
 export const STREAM_STATE_SYNC_CHANNEL = LIVE_ROOM_PLATFORM_CHANNEL;
 export const LIVE_STREAM_STATE_ID = "current_event";

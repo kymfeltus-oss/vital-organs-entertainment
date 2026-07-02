@@ -20,6 +20,7 @@ import {
   type OwnerGraphicsPreset,
   type UpdateGraphicsPresetPayload,
 } from "@/lib/owner/graphics-data-plane";
+import { emitStreamGraphicsSync } from "@/lib/owner/emit-stream-graphics-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -135,7 +136,20 @@ export async function PATCH(request: Request) {
     }
 
     if (typeof body.isActiveOnStream === "boolean") {
-      const { data, error } = await getSupabaseAdmin()
+      const admin = getSupabaseAdmin();
+
+      if (body.isActiveOnStream) {
+        const { error: clearError } = await admin
+          .from("owner_graphics_presets")
+          .update({ is_active_on_stream: false })
+          .eq("event_id", OWNER_GRAPHICS_EVENT_ID)
+          .eq("is_active_on_stream", true)
+          .neq("id", id);
+
+        if (clearError) throw new Error(clearError.message);
+      }
+
+      const { data, error } = await admin
         .from("owner_graphics_presets")
         .update({ is_active_on_stream: body.isActiveOnStream })
         .eq("id", id)
@@ -144,6 +158,7 @@ export async function PATCH(request: Request) {
         .single();
 
       if (error) throw new Error(error.message);
+      await emitStreamGraphicsSync();
       return ownerJsonResponse({ success: true, preset: data as OwnerGraphicsPreset });
     }
 
@@ -187,6 +202,7 @@ export async function DELETE(request: Request) {
         .single();
 
       if (error) throw new Error(error.message);
+      await emitStreamGraphicsSync();
       return ownerJsonResponse({ success: true, deletedId: data.id });
     }
 
@@ -198,6 +214,7 @@ export async function DELETE(request: Request) {
       .select("id");
 
     if (error) throw new Error(error.message);
+    await emitStreamGraphicsSync();
     return ownerJsonResponse({ success: true, clearedCount: data?.length ?? 0 });
   } catch (error) {
     console.error("[owner/graphics/presets] DELETE failed:", error);

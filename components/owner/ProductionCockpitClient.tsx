@@ -1562,7 +1562,7 @@ export default function ProductionCockpitClient() {
         if (!triggeredByTimer) {
           setGraphicsSuccess(
             nextActive
-              ? `${preset.content_primary} is now live on stream.`
+              ? `${preset.content_primary} is now live for app viewers.`
               : `${preset.content_primary} removed from stream.`,
           );
         }
