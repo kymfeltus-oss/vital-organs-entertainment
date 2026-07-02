@@ -6,12 +6,40 @@ import {
   type FellowshipChatMessageRow,
   type FellowshipChatSession,
 } from "@/lib/experience/fellowship-chat";
+import { resolveChatAuthorFromLookup, buildAttendeeNameLookup, type AttendeeNameRecord } from "@/lib/live/chat";
 import {
   FELLOWSHIP_MESSAGE_SELECT_FULL,
   FELLOWSHIP_MESSAGE_SELECT_LEGACY,
   isFellowshipSchemaMismatchError,
 } from "@/lib/experience/fellowship-chat-db";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+
+async function loadAttendeeNameLookup(
+  admin: SupabaseClient,
+  userIds: string[],
+): Promise<Map<string, AttendeeNameRecord>> {
+  const uniqueIds = [...new Set(userIds.filter(Boolean))];
+  if (uniqueIds.length === 0) return new Map();
+
+  const { data, error } = await admin
+    .from("attendees")
+    .select("id, first_name, last_name")
+    .in("id", uniqueIds);
+
+  if (error) {
+    console.warn("Fellowship chat attendee name lookup failed:", error.message);
+    return new Map();
+  }
+
+  return buildAttendeeNameLookup(data ?? []);
+}
+
+function mapFeedRows(
+  rows: FellowshipChatMessageRow[],
+  lookup: Map<string, AttendeeNameRecord>,
+): FellowshipChatMessage[] {
+  return rows.map((row) => mapFellowshipChatRow(row, lookup));
+}
 
 export async function loadActiveMuteUntil(
   admin: SupabaseClient,
@@ -82,9 +110,12 @@ async function loadFellowshipChatFeedLegacy(admin: SupabaseClient): Promise<{
     return { messages: [], pinned: null };
   }
 
-  const messages = [...(messageRows ?? [])]
-    .reverse()
-    .map((row) => mapFellowshipChatRow(row as FellowshipChatMessageRow));
+  const rows = [...(messageRows ?? [])].reverse() as FellowshipChatMessageRow[];
+  const lookup = await loadAttendeeNameLookup(
+    admin,
+    rows.map((row) => row.user_id),
+  );
+  const messages = mapFeedRows(rows, lookup);
 
   return { messages, pinned: null };
 }
@@ -129,12 +160,15 @@ export async function loadFellowshipChatFeed(admin: SupabaseClient): Promise<{
     console.error("Fellowship chat feed load failed:", messagesResult.error.message);
   }
 
-  const messages = [...(messagesResult.data ?? [])]
-    .reverse()
-    .map((row) => mapFellowshipChatRow(row as FellowshipChatMessageRow));
+  const messageRows = [...(messagesResult.data ?? [])].reverse() as FellowshipChatMessageRow[];
+  const lookup = await loadAttendeeNameLookup(
+    admin,
+    messageRows.map((row) => row.user_id),
+  );
+  const messages = mapFeedRows(messageRows, lookup);
 
   const pinned = pinnedResult.data
-    ? mapFellowshipChatRow(pinnedResult.data as FellowshipChatMessageRow)
+    ? mapFellowshipChatRow(pinnedResult.data as FellowshipChatMessageRow, lookup)
     : null;
 
   return { messages, pinned };
@@ -227,4 +261,12 @@ export async function insertFellowshipChatMessage(
     error: insertResult.error?.message ?? null,
     usedLegacy: false,
   };
+}
+
+export async function resolveFellowshipMessageAuthor(
+  admin: SupabaseClient,
+  row: FellowshipChatMessageRow,
+): Promise<string> {
+  const lookup = await loadAttendeeNameLookup(admin, [row.user_id]);
+  return resolveChatAuthorFromLookup(row, lookup);
 }

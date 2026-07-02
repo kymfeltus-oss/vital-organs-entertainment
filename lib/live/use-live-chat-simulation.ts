@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  createInitialSimulatedChatBatch,
-  createSimulatedChatMessage,
+  LiveChatSimulationScheduler,
   nextLiveChatSimulationDelayMs,
   trimSimulatedChatMessages,
   type SimulatedChatMessage,
@@ -21,14 +20,18 @@ export function useLiveChatSimulation({
   enabled = true,
 }: UseLiveChatSimulationOptions = {}): UseLiveChatSimulationResult {
   const [messages, setMessages] = useState<SimulatedChatMessage[]>([]);
+  const schedulerRef = useRef<LiveChatSimulationScheduler | null>(null);
 
   useEffect(() => {
     if (!enabled) {
       setMessages([]);
+      schedulerRef.current = null;
       return;
     }
 
-    setMessages(createInitialSimulatedChatBatch(2));
+    const scheduler = new LiveChatSimulationScheduler();
+    schedulerRef.current = scheduler;
+    setMessages(scheduler.createInitialBatch(2));
 
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -38,7 +41,10 @@ export function useLiveChatSimulation({
         if (cancelled) return;
 
         setMessages((current) =>
-          trimSimulatedChatMessages([...current, createSimulatedChatMessage()]),
+          trimSimulatedChatMessages([
+            ...current,
+            schedulerRef.current?.nextMessage() ?? scheduler.nextMessage(),
+          ]),
         );
         scheduleNext();
       }, nextLiveChatSimulationDelayMs());

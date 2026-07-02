@@ -60,6 +60,23 @@ export function useFellowshipChat(): UseFellowshipChatResult {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [usePollingFallback, setUsePollingFallback] = useState(false);
+  const authorLabelByUserIdRef = useRef<Map<string, string>>(new Map());
+
+  const rememberAuthors = useCallback((nextMessages: FellowshipChatMessage[]) => {
+    for (const message of nextMessages) {
+      if (message.userId) {
+        authorLabelByUserIdRef.current.set(message.userId, message.author);
+      }
+    }
+  }, []);
+
+  const mapIncomingRow = useCallback(
+    (row: FellowshipChatMessageRow, authorOverride?: string) => {
+      const cachedAuthor = authorOverride ?? authorLabelByUserIdRef.current.get(row.user_id);
+      return mapFellowshipChatRow(row, undefined, cachedAuthor);
+    },
+    [],
+  );
 
   const syncFeed = useCallback(async () => {
     if (!shouldFetchRef.current()) {
@@ -90,6 +107,10 @@ export function useFellowshipChat(): UseFellowshipChatResult {
 
       setMessages(payload.messages);
       setPinned(payload.pinned);
+      rememberAuthors(payload.messages);
+      if (payload.pinned) {
+        authorLabelByUserIdRef.current.set(payload.pinned.userId, payload.pinned.author);
+      }
       setSession(payload.session);
       setUsePollingFallback(false);
       setError(null);
@@ -110,7 +131,7 @@ export function useFellowshipChat(): UseFellowshipChatResult {
         setIsLoading(false);
       }
     }
-  }, []);
+  }, [rememberAuthors]);
 
   useEffect(() => {
     shouldFetchRef.current = fellowship.shouldFetch;
@@ -169,10 +190,10 @@ export function useFellowshipChat(): UseFellowshipChatResult {
                 setMessages((current) =>
                   row.is_pinned
                     ? current
-                    : mergeFellowshipMessages(current, mapFellowshipChatRow(row)),
+                    : mergeFellowshipMessages(current, mapIncomingRow(row)),
                 );
                 if (row.is_pinned) {
-                  setPinned(mapFellowshipChatRow(row));
+                  setPinned(mapIncomingRow(row));
                 }
               },
             },
@@ -208,7 +229,7 @@ export function useFellowshipChat(): UseFellowshipChatResult {
         await teardownRealtimeChannel(supabase, channel);
       })();
     };
-  }, [fellowship.isIsolated, fellowship.safeMode, instanceId, syncFeed]);
+  }, [fellowship.isIsolated, fellowship.safeMode, instanceId, mapIncomingRow, syncFeed]);
 
   const sendMessage = useCallback(
     async (rawContent: string): Promise<boolean> => {
@@ -243,6 +264,7 @@ export function useFellowshipChat(): UseFellowshipChatResult {
 
         const data = (await response.json()) as {
           message?: FellowshipChatMessageRow;
+          author?: string;
           error?: string;
         };
 
@@ -256,7 +278,8 @@ export function useFellowshipChat(): UseFellowshipChatResult {
           return false;
         }
 
-        const mapped = mapFellowshipChatRow(data.message);
+        const mapped = mapIncomingRow(data.message, data.author);
+        authorLabelByUserIdRef.current.set(mapped.userId, mapped.author);
         if (!mapped.isPinned) {
           setMessages((current) => mergeFellowshipMessages(current, mapped));
         }
@@ -269,7 +292,7 @@ export function useFellowshipChat(): UseFellowshipChatResult {
         setIsSending(false);
       }
     },
-    [session.authenticated, session.canSend],
+    [mapIncomingRow, session.authenticated, session.canSend],
   );
 
   const moderate = useCallback(

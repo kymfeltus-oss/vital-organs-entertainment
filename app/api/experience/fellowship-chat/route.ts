@@ -6,6 +6,7 @@ import {
   insertFellowshipChatMessage,
   loadActiveMuteUntil,
   loadFellowshipChatFeed,
+  resolveFellowshipMessageAuthor,
 } from "@/lib/experience/fellowship-chat-server";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
@@ -105,6 +106,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const author = await resolveFellowshipMessageAuthor(admin, insertResult.data);
+
     const { broadcastAttendeeChatMessage } = await import(
       "@/lib/experience/broadcast-attendee-chat-message"
     );
@@ -118,7 +121,7 @@ export async function POST(request: NextRequest) {
       console.error("Attendee chat broadcast failed:", broadcastError);
     });
 
-    return NextResponse.json({ message: insertResult.data });
+    return NextResponse.json({ message: insertResult.data, author });
   } catch (error) {
     console.error("Fellowship chat POST failed:", error);
     return NextResponse.json({ error: "Unable to send message." }, { status: 500 });

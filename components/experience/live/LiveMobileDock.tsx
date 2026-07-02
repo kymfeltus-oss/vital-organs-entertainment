@@ -1,37 +1,130 @@
 "use client";
 
+import { FormEvent, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import LiveReactionTray from "@/components/experience/live/LiveReactionTray";
+import { useIgLiveChat } from "@/components/experience/live/ig/IgLiveChatContext";
+import { buildAttendeeGateUrl } from "@/lib/auth/routing";
+import { FELLOWSHIP_MAX_CONTENT_LENGTH } from "@/lib/experience/fellowship-chat";
 
 type LiveMobileDockProps = {
   chatOpen: boolean;
   onJoinConversation: () => void;
   onReaction: (assetId: string) => void;
+  signInHref?: string;
 };
 
-/** Mobile action dock — join conversation + free praise reactions. */
+/** Mobile action dock — inline conversation input + free praise reactions. */
 export default function LiveMobileDock({
   chatOpen,
   onJoinConversation,
   onReaction,
+  signInHref = "/live",
 }: LiveMobileDockProps) {
-  return (
-    <footer className="live-sanctuary-mobile-dock pointer-events-auto absolute inset-x-0 bottom-0 z-40 border-t border-white/10 bg-black/75 backdrop-blur-xl lg:hidden">
-      <div className="flex items-center gap-2 px-3 py-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+  const { session, isSending, error, sendMessage, clearError } = useIgLiveChat();
+  const [draft, setDraft] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!chatOpen) return;
+    const timer = window.setTimeout(() => {
+      inputRef.current?.focus({ preventScroll: true });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [chatOpen]);
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmed = draft.trim();
+    if (!trimmed) return;
+    void sendMessage(trimmed).then((ok) => {
+      if (ok) setDraft("");
+    });
+  };
+
+  const conversationSlot = (() => {
+    if (!chatOpen) {
+      return (
         <button
           type="button"
           onClick={onJoinConversation}
-          aria-pressed={chatOpen}
-          className={`touch-target flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-full border px-4 font-ui text-[0.62rem] font-bold uppercase tracking-[0.12em] transition ${
-            chatOpen
-              ? "border-brand-blue/50 bg-brand-blue/15 text-brand-blue"
-              : "border-white/15 bg-white/5 text-white hover:border-brand-blue/35 hover:bg-brand-blue/10"
-          }`}
+          className="touch-target flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 font-ui text-[0.62rem] font-bold uppercase tracking-[0.12em] text-white transition hover:border-brand-blue/35 hover:bg-brand-blue/10"
         >
           <MessageCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span>Join Conversation</span>
         </button>
+      );
+    }
 
+    if (!session.authenticated) {
+      return (
+        <Link
+          href={buildAttendeeGateUrl(signInHref)}
+          className="touch-target flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-full border border-brand-blue/40 bg-brand-blue/10 px-4 font-ui text-[0.62rem] font-bold uppercase tracking-[0.12em] text-brand-blue"
+        >
+          <MessageCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>Sign in to join chat</span>
+        </Link>
+      );
+    }
+
+    if (!session.canSend) {
+      return (
+        <p
+          className="flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 text-center font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-muted"
+          role="status"
+        >
+          Muted
+        </p>
+      );
+    }
+
+    return (
+      <form
+        onSubmit={handleSubmit}
+        className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-brand-blue/40 bg-brand-blue/10 px-3"
+      >
+        <label className="sr-only" htmlFor="live-mobile-dock-chat-input">
+          Join the conversation
+        </label>
+        <input
+          ref={inputRef}
+          id="live-mobile-dock-chat-input"
+          type="text"
+          enterKeyHint="send"
+          autoComplete="off"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          placeholder="Join the conversation..."
+          disabled={isSending}
+          maxLength={FELLOWSHIP_MAX_CONTENT_LENGTH}
+          className="min-w-0 flex-1 bg-transparent font-body text-sm text-white placeholder:text-white/50 focus:outline-none"
+        />
+        <button
+          type="submit"
+          disabled={isSending || !draft.trim()}
+          className="touch-target shrink-0 rounded-full px-2 py-1 font-ui text-[0.58rem] font-bold uppercase tracking-[0.1em] text-brand-blue disabled:opacity-40"
+        >
+          Send
+        </button>
+      </form>
+    );
+  })();
+
+  return (
+    <footer className="live-sanctuary-mobile-dock pointer-events-auto absolute inset-x-0 bottom-0 z-40 border-t border-white/10 bg-black/75 backdrop-blur-xl lg:hidden">
+      {error && chatOpen ? (
+        <button
+          type="button"
+          onClick={clearError}
+          className="block w-full truncate px-3 pt-2 text-left font-body text-xs text-brand-pink"
+        >
+          {error}
+        </button>
+      ) : null}
+      <div className="flex items-center gap-2 px-3 py-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        {conversationSlot}
         <LiveReactionTray variant="mobile-dock" onReaction={onReaction} />
       </div>
     </footer>

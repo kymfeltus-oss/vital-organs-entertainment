@@ -1,10 +1,7 @@
 "use client";
 
 import React, {
-  forwardRef,
-  useCallback,
   useEffect,
-  useImperativeHandle,
   useMemo,
   useRef,
   useState,
@@ -17,18 +14,12 @@ import { buildAttendeeGateUrl } from "@/lib/auth/routing";
 import { chatAuthorColorClass } from "@/lib/experience/chat-author-color";
 import {
   FELLOWSHIP_MAX_CONTENT_LENGTH,
-  type FellowshipChatMessage,
 } from "@/lib/experience/fellowship-chat";
-import { useFellowshipChat } from "@/lib/experience/useFellowshipChat";
+import { useIgLiveChat } from "@/components/experience/live/ig/IgLiveChatContext";
+import { formatChatDisplayName } from "@/lib/live/chat";
 import type { SimulatedChatMessage } from "@/lib/live/live-simulation";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
-export type LiveStreamChatHandle = {
-  /** Force-append a notice line into the feed (best-effort persist via Fellowship Chat). */
-  postNotice: (text: string) => void;
-  /** Scroll chat into view and focus the composer input when available. */
-  openComposer: () => void;
-};
 
 type LiveStreamChatLayout = "sidebar" | "responsive";
 
@@ -41,27 +32,7 @@ type LiveStreamChatProps = {
   layout?: LiveStreamChatLayout;
   /** Ambient simulated comments merged into the overlay feed (never persisted). */
   simulatedMessages?: SimulatedChatMessage[];
-  /** Hide the floating mobile composer — overlay thread only. */
-  hideMobileComposer?: boolean;
-  /** When true, show the mobile composer sheet above the dock. */
-  mobileComposerOpen?: boolean;
 };
-
-type LocalNoticeLine = FellowshipChatMessage & {
-  isSystemNotice: true;
-};
-
-function buildLocalNotice(text: string): LocalNoticeLine {
-  return {
-    id: `notice-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
-    userId: "system",
-    author: "System Notice",
-    body: text,
-    createdAt: new Date().toISOString(),
-    isPinned: false,
-    isSystemNotice: true,
-  };
-}
 
 function ScrollToBottom({
   containerRef,
@@ -81,81 +52,40 @@ function ScrollToBottom({
 
 /**
  * YouTube-style live chat panel for the attendee `/live` sidebar.
- * Backed by Fellowship Chat (`chat_messages` + Supabase Realtime via useFellowshipChat).
+ * Mobile typing lives in the dock bar; desktop composer stays in this panel.
  */
-const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
-  function LiveStreamChat(
-    {
-      profile,
-      seedBalance,
-      className,
-      signInHref = "/live",
-      layout = "responsive",
-      simulatedMessages = [],
-      hideMobileComposer = false,
-      mobileComposerOpen = false,
-    },
-    ref,
-  ) {
-    const isResponsive = layout === "responsive";
-    const mobileComposerVisible = isResponsive && (!hideMobileComposer || mobileComposerOpen);
-    const { messages, session, isSending, error, sendMessage, clearError } = useFellowshipChat();
-    const [draft, setDraft] = useState("");
-    const [localNotices, setLocalNotices] = useState<LocalNoticeLine[]>([]);
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const rootRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
+export default function LiveStreamChat({
+  profile,
+  seedBalance,
+  className,
+  signInHref = "/live",
+  layout = "responsive",
+  simulatedMessages = [],
+}: LiveStreamChatProps) {
+  const isResponsive = layout === "responsive";
+  const { messages, session, isSending, error, sendMessage, clearError } = useIgLiveChat();
+  const [draft, setDraft] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
     const profileUserId = profile?.userId ?? null;
 
-    const postNotice = useCallback(
-      (text: string) => {
-        const trimmed = text.trim();
-        if (!trimmed) return;
-
-        const notice = buildLocalNotice(trimmed);
-        setLocalNotices((current) => [...current, notice]);
-
-        // Best-effort persist — never blocks parent emoji rendering; slow-mode failures are ignored.
-        if (session.canSend) {
-          void sendMessage(trimmed);
-        }
-      },
-      [sendMessage, session.canSend],
-    );
-
-    useImperativeHandle(
-      ref,
-      () => ({
-        postNotice,
-        openComposer: () => {
-          rootRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-          window.setTimeout(() => {
-            inputRef.current?.focus({ preventScroll: true });
-          }, 180);
-        },
-      }),
-      [postNotice],
-    );
+    const ownChatLabel = useMemo(() => {
+      if (!profile?.userId) return null;
+      return formatChatDisplayName({
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        email: profile.email,
+      });
+    }, [profile]);
 
     const feedLines = useMemo(() => {
-      const persistedIds = new Set(messages.map((message) => message.id));
-      const pendingNotices = localNotices.filter((notice) => {
-        if (persistedIds.has(notice.id)) return false;
-        return !messages.some(
-          (message) =>
-            message.body === notice.body &&
-            Math.abs(
-              new Date(message.createdAt).getTime() - new Date(notice.createdAt).getTime(),
-            ) < 15_000,
-        );
-      });
-      const merged = [...messages, ...pendingNotices, ...simulatedMessages];
+      const merged = [...messages, ...simulatedMessages];
       return merged.sort(
         (left, right) =>
           new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
       );
-    }, [localNotices, messages, simulatedMessages]);
+    }, [messages, simulatedMessages]);
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -172,16 +102,15 @@ const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
 
     const headerClass = isResponsive ? "hidden lg:flex" : "flex";
     const feedClass = isResponsive
-      ? "viewer-pov-chat-mask pointer-events-none absolute left-3 z-20 max-h-[28%] max-w-[min(78%,18rem)] overflow-hidden max-lg:bottom-[calc(var(--live-mobile-dock-h)+var(--live-mobile-composer-h)+0.75rem)] min-h-0 flex-1 overflow-y-auto px-1 py-2 sm:left-4 lg:relative lg:inset-auto lg:max-h-none lg:max-w-none lg:flex-1 lg:space-y-2 lg:px-4 lg:py-3 sm:px-5"
+      ? "viewer-pov-chat-mask pointer-events-none absolute left-3 z-20 max-h-[28%] max-w-[min(78%,18rem)] overflow-hidden max-lg:bottom-[calc(var(--live-mobile-dock-h)+0.75rem)] min-h-0 flex-1 overflow-y-auto px-1 py-2 sm:left-4 lg:relative lg:inset-auto lg:max-h-none lg:max-w-none lg:flex-1 lg:space-y-2 lg:px-4 lg:py-3 sm:px-5"
       : "min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3 sm:px-5";
 
     const composerShellClass = isResponsive
-      ? `${mobileComposerVisible ? "live-sanctuary-mobile-composer max-lg:absolute max-lg:inset-x-3 max-lg:bottom-[var(--live-mobile-dock-h)] max-lg:z-[35] max-lg:rounded-2xl max-lg:border max-lg:border-white/10 max-lg:bg-black/80 max-lg:p-3 max-lg:shadow-[0_-8px_32px_rgba(0,0,0,0.45)] max-lg:backdrop-blur-xl max-lg:pointer-events-auto" : "max-lg:hidden"} shrink-0 border-t border-white/10 px-4 py-3 sm:px-5 lg:relative lg:!flex lg:inset-auto lg:flex-col lg:border-t lg:border-white/10`
+      ? "max-lg:hidden shrink-0 border-t border-white/10 px-4 py-3 sm:px-5 lg:relative lg:flex lg:flex-col lg:border-t lg:border-white/10"
       : "shrink-0 border-t border-white/10 px-4 py-3 sm:px-5";
 
     return (
       <div
-        ref={rootRef}
         id="live-stream-chat-panel"
         className={`${rootClass} ${className ?? ""}`}
       >
@@ -215,9 +144,9 @@ const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
               feedLines.slice(-8).map((message) => {
                 const isSimulated = "isSimulated" in message && message.isSimulated;
                 const isOwn =
-                  Boolean(profileUserId) &&
-                  message.userId === profileUserId &&
-                  !("isSystemNotice" in message && message.isSystemNotice);
+                  Boolean(profileUserId) && message.userId === profileUserId;
+                const authorLabel =
+                  isOwn && ownChatLabel ? ownChatLabel : message.author;
                 return (
                   <p
                     key={message.id}
@@ -226,7 +155,7 @@ const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
                     <span
                       className={`font-ui text-xs font-bold ${chatAuthorColorClass(message.userId)}`}
                     >
-                      {message.author}
+                      {authorLabel}
                       {isOwn ? " (you)" : ""}
                     </span>{" "}
                     <span className="text-white/90">{message.body}</span>
@@ -274,7 +203,7 @@ const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
                 autoComplete="off"
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
-                placeholder={mobileComposerVisible ? "Join the conversation..." : "Say something..."}
+                placeholder="Say something..."
                 disabled={isSending}
                 maxLength={FELLOWSHIP_MAX_CONTENT_LENGTH}
                 className="h-11 min-w-0 flex-1 rounded-full border border-white/10 bg-black/45 px-4 font-body text-sm text-white placeholder:text-white/45 focus:outline-none focus:ring-2 focus:ring-brand-blue/35 max-lg:bg-black/55"
@@ -291,7 +220,4 @@ const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
         </div>
       </div>
     );
-  },
-);
-
-export default LiveStreamChat;
+}

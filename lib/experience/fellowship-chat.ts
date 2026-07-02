@@ -1,4 +1,9 @@
-import { mapChatRow, sortChatMessages } from "@/lib/live/chat";
+import {
+  mapChatRow,
+  sortChatMessages,
+  resolveChatAuthorFromLookup,
+  type AttendeeNameRecord,
+} from "@/lib/live/chat";
 import type { ChatMessage } from "@/lib/live/types";
 
 export const FELLOWSHIP_CHAT_HISTORY_LIMIT = 100;
@@ -35,8 +40,15 @@ export type FellowshipChatPayload = {
   session: FellowshipChatSession;
 };
 
-export function mapFellowshipChatRow(row: FellowshipChatMessageRow): FellowshipChatMessage {
-  const base = mapChatRow(row);
+export function mapFellowshipChatRow(
+  row: FellowshipChatMessageRow,
+  nameLookup?: Map<string, AttendeeNameRecord>,
+  authorOverride?: string,
+): FellowshipChatMessage {
+  const author =
+    authorOverride ?? resolveChatAuthorFromLookup(row, nameLookup ?? new Map());
+
+  const base = mapChatRow(row, author);
   return {
     ...base,
     userId: row.user_id,

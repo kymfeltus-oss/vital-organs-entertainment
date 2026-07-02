@@ -3,10 +3,9 @@
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import CustomEmojiAnimator from "@/components/experience/live/CustomEmojiAnimator";
-import LiveStreamChat, {
-  type LiveStreamChatHandle,
-} from "@/components/experience/live/LiveStreamChat";
+import LiveStreamChat from "@/components/experience/live/LiveStreamChat";
 import LiveMobileDock from "@/components/experience/live/LiveMobileDock";
+import { IgLiveChatProvider } from "@/components/experience/live/ig/IgLiveChatContext";
 import LiveExperienceHeader from "@/components/experience/live/LiveExperienceHeader";
 import LiveFeatureErrorBoundary from "@/components/experience/live/LiveFeatureErrorBoundary";
 import LiveReactionTray from "@/components/experience/live/LiveReactionTray";
@@ -190,7 +189,6 @@ export default function LiveExperienceClient({
   const attendeeName = initialProfile.headerDisplayName || initialProfile.email || "Guest";
   const videoRef = useRef<HTMLVideoElement>(null);
   const directVideoRef = useRef<HTMLVideoElement>(null);
-  const liveChatRef = useRef<LiveStreamChatHandle>(null);
   const hlsCleanupRef = useRef<(() => void) | null>(null);
   const hlsInstanceRef = useRef<import("hls.js").default | null>(null);
   const hlsRetryCountRef = useRef(0);
@@ -264,15 +262,11 @@ export default function LiveExperienceClient({
 
     const syncMobileOffsets = () => {
       const dock = root.querySelector(".live-sanctuary-mobile-dock");
-      const composer = root.querySelector(".live-sanctuary-mobile-composer");
 
       const dockHeight =
         dock instanceof HTMLElement ? Math.ceil(dock.getBoundingClientRect().height) : 0;
-      const composerHeight =
-        composer instanceof HTMLElement ? Math.ceil(composer.getBoundingClientRect().height) : 0;
 
       root.style.setProperty("--live-mobile-dock-h", `${dockHeight}px`);
-      root.style.setProperty("--live-mobile-composer-h", `${composerHeight}px`);
     };
 
     syncMobileOffsets();
@@ -280,9 +274,7 @@ export default function LiveExperienceClient({
     const observer = new ResizeObserver(syncMobileOffsets);
     observer.observe(root);
     const dock = root.querySelector(".live-sanctuary-mobile-dock");
-    const composer = root.querySelector(".live-sanctuary-mobile-composer");
     if (dock instanceof HTMLElement) observer.observe(dock);
-    if (composer instanceof HTMLElement) observer.observe(composer);
 
     return () => observer.disconnect();
   }, [mobileChatOpen]);
@@ -1282,7 +1274,6 @@ export default function LiveExperienceClient({
     (assetId: string) => {
       const reaction = getLiveReactionDefinition(assetId);
 
-      liveChatRef.current?.postNotice(reaction.chatNotice);
       pushLocalEmojiBurst(reaction.assetId, `Sent ${reaction.label} reaction`);
 
       void broadcastLivePlatformEvent(EMOJI_BURST_EVENT, {
@@ -1303,9 +1294,6 @@ export default function LiveExperienceClient({
 
   const handleJoinConversation = useCallback(() => {
     setMobileChatOpen(true);
-    window.requestAnimationFrame(() => {
-      liveChatRef.current?.openComposer();
-    });
   }, []);
 
   const handleQuickSow = useCallback(() => {
@@ -1345,7 +1333,7 @@ export default function LiveExperienceClient({
   return (
     <main
       ref={mainRef}
-      className="live-sanctuary-experience min-h-dvh bg-brand-black text-white [--live-mobile-composer-h:0px] [--live-mobile-dock-h:4.5rem]"
+      className="live-sanctuary-experience min-h-dvh bg-brand-black text-white [--live-mobile-dock-h:4.5rem]"
     >
       <div className="relative min-h-dvh lg:grid lg:min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
         <section className="relative min-h-dvh w-full bg-[#050505]">
@@ -1467,27 +1455,27 @@ export default function LiveExperienceClient({
           </div>
 
           <LiveFeatureErrorBoundary featureLabel="Chat">
-            <LiveStreamChat
-              ref={liveChatRef}
-              profile={initialProfile?.userId ? initialProfile : null}
-              seedBalance={seedBalance}
-              signInHref={EXPERIENCE_LIVE_PATH}
-              layout="responsive"
-              simulatedMessages={simulatedChatMessages}
-              hideMobileComposer
-              mobileComposerOpen={mobileChatOpen}
-              className="min-h-0 flex-1 lg:border-t lg:border-white/10"
-            />
-          </LiveFeatureErrorBoundary>
+            <IgLiveChatProvider>
+              <LiveStreamChat
+                profile={initialProfile?.userId ? initialProfile : null}
+                seedBalance={seedBalance}
+                signInHref={EXPERIENCE_LIVE_PATH}
+                layout="responsive"
+                simulatedMessages={simulatedChatMessages}
+                className="min-h-0 flex-1 lg:border-t lg:border-white/10"
+              />
 
-          <LiveFeatureErrorBoundary featureLabel="Actions">
-            <LiveMobileDock
-              chatOpen={mobileChatOpen}
-              onJoinConversation={handleJoinConversation}
-              onReaction={(assetId) => {
-                handleCustomEmojiReaction(assetId);
-              }}
-            />
+              <LiveFeatureErrorBoundary featureLabel="Actions">
+                <LiveMobileDock
+                  chatOpen={mobileChatOpen}
+                  onJoinConversation={handleJoinConversation}
+                  signInHref={EXPERIENCE_LIVE_PATH}
+                  onReaction={(assetId) => {
+                    handleCustomEmojiReaction(assetId);
+                  }}
+                />
+              </LiveFeatureErrorBoundary>
+            </IgLiveChatProvider>
           </LiveFeatureErrorBoundary>
 
           <footer className="hidden border-t border-white/10 px-5 py-3 font-body text-xs text-white/55 lg:flex lg:items-center lg:justify-between">
