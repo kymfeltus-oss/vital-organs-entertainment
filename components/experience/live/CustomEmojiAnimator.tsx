@@ -8,9 +8,12 @@ type CustomEmojiAnimatorProps = {
   onComplete: () => void;
 };
 
+const FLOAT_DURATION_MS = 2600;
+
 export default function CustomEmojiAnimator({ assetId, onComplete }: CustomEmojiAnimatorProps) {
-  const [randomX] = useState(() => Math.floor(Math.random() * 56) + 22);
-  const [driftX] = useState(() => (Math.random() > 0.5 ? 1 : -1) * (8 + Math.floor(Math.random() * 18)));
+  /** Narrow band along the right edge so bursts don't stack on one pixel. */
+  const [rightInset] = useState(() => 10 + Math.floor(Math.random() * 36));
+  const [driftLeft] = useState(() => 6 + Math.floor(Math.random() * 18));
   const [useFallback, setUseFallback] = useState(false);
   const reaction = getLiveReactionDefinition(assetId);
   const isFullBodySticker =
@@ -19,14 +22,13 @@ export default function CustomEmojiAnimator({ assetId, onComplete }: CustomEmoji
   const animationStyle = useMemo(
     () =>
       ({
-        "--emoji-start-x": `${randomX}%`,
-        "--emoji-drift-x": `${driftX}px`,
+        "--emoji-drift-left": `${driftLeft}px`,
       }) as CSSProperties,
-    [driftX, randomX],
+    [driftLeft],
   );
 
   useEffect(() => {
-    const timer = window.setTimeout(onComplete, 2200);
+    const timer = window.setTimeout(onComplete, FLOAT_DURATION_MS);
     return () => window.clearTimeout(timer);
   }, [onComplete]);
 
@@ -36,18 +38,25 @@ export default function CustomEmojiAnimator({ assetId, onComplete }: CustomEmoji
         @keyframes live-emoji-float-up {
           0% {
             opacity: 0;
-            transform: translate3d(calc(-50% + var(--emoji-drift-x, 0px)), 0, 0) scale(0.82);
+            transform: translate3d(0, 0, 0) scale(0.82);
           }
-          12% {
+          10% {
+            opacity: 1;
+          }
+          70% {
             opacity: 1;
           }
           100% {
             opacity: 0;
-            transform: translate3d(calc(-50% + var(--emoji-drift-x, 0px)), -min(72vh, 34rem), 0) scale(1.12);
+            transform: translate3d(
+              calc(-1 * var(--emoji-drift-left, 0px)),
+              calc(-100vh + var(--live-mobile-dock-h, 4.5rem) + 5rem),
+              0
+            ) scale(1.06);
           }
         }
         .live-emoji-float-up {
-          animation: live-emoji-float-up 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          animation: live-emoji-float-up 2.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
           will-change: transform, opacity;
         }
         @media (prefers-reduced-motion: reduce) {
@@ -61,7 +70,8 @@ export default function CustomEmojiAnimator({ assetId, onComplete }: CustomEmoji
         className="live-emoji-float-up pointer-events-none absolute z-[1] select-none"
         style={{
           ...animationStyle,
-          left: `${randomX}%`,
+          right: `calc(${rightInset}px + env(safe-area-inset-right, 0px))`,
+          left: "auto",
           bottom: "calc(var(--live-mobile-dock-h, 4.5rem) + 0.5rem)",
         }}
         aria-hidden="true"

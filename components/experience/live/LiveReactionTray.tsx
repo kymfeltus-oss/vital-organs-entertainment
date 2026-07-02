@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   LIVE_REACTION_TRAY,
   type LiveReactionDefinition,
@@ -17,27 +18,29 @@ function ReactionVisual({
   reaction: LiveReactionDefinition;
   size: "mobile" | "desktop";
 }) {
-  const isPraiseSticker =
-    reaction.assetId === "praise_break" || reaction.assetId === "praise_break_man";
+  const [useFallback, setUseFallback] = useState(false);
   const imageClass =
     size === "mobile" ? "h-9 w-9 object-contain" : "h-11 w-11 object-contain";
+  const emojiClass =
+    size === "mobile" ? "text-base leading-none" : "text-lg leading-none";
 
-  if (reaction.imageSrc) {
+  if (useFallback || !reaction.imageSrc) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={reaction.imageSrc}
-        alt=""
-        className={`${imageClass}${isPraiseSticker ? " mix-blend-multiply" : ""}`}
-        aria-hidden="true"
-      />
+      <span className={emojiClass} aria-hidden="true">
+        {reaction.emoji}
+      </span>
     );
   }
 
   return (
-    <span className={size === "mobile" ? "text-base leading-none" : "text-lg leading-none"} aria-hidden="true">
-      {reaction.emoji}
-    </span>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={reaction.imageSrc}
+      alt=""
+      className={imageClass}
+      aria-hidden="true"
+      onError={() => setUseFallback(true)}
+    />
   );
 }
 
