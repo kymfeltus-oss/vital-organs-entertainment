@@ -4,7 +4,10 @@ import type { FellowshipChatMessage } from "@/lib/experience/fellowship-chat";
 export const LIVE_VIEWER_SIMULATION_BUFFER = 400;
 
 /** Max simulated chat lines kept in the overlay feed. */
-export const LIVE_CHAT_SIMULATION_MAX_VISIBLE = 10;
+export const LIVE_CHAT_SIMULATION_MAX_VISIBLE = 14;
+
+/** How many recent authors must pass before the same name can appear again. */
+export const LIVE_CHAT_SIMULATION_AUTHOR_COOLDOWN = 12;
 
 /** Target ~40 ambient comments spread across a ~3 hour service window. */
 export const LIVE_CHAT_SIMULATION_TARGET_DURATION_MS = 3 * 60 * 60 * 1000;
@@ -18,7 +21,7 @@ export type SimulationTemplate = {
   body: string;
 };
 
-/** 40 distinct First Last names for the ambient live chat feed. */
+/** 90+ distinct First Last names for the ambient live chat feed. */
 export const LIVE_CHAT_SIMULATED_AUTHORS = [
   "Sarah Miller",
   "Marcus Thomas",
@@ -34,7 +37,6 @@ export const LIVE_CHAT_SIMULATED_AUTHORS = [
   "James Carter",
   "Ruth Brooks",
   "Anthony Washington",
-  "Tanya Mitchell",
   "DeAndre Foster",
   "Latoya Bennett",
   "Michael Jenkins",
@@ -60,6 +62,96 @@ export const LIVE_CHAT_SIMULATED_AUTHORS = [
   "Curtis Hayes",
   "Tamika Russell",
   "Gregory Shaw",
+  "Elena Rivera",
+  "Tyler Simmons",
+  "Vanessa Ortiz",
+  "Corey Jackson",
+  "Imani Wright",
+  "Donovan Reed",
+  "Aaliyah Freeman",
+  "Reginald Scott",
+  "Octavia Dunn",
+  "Hector Alvarez",
+  "Simone Banks",
+  "Lamar Pierce",
+  "Destiny Hughes",
+  "Trevor Coleman",
+  "Renee Flores",
+  "Jamal Owens",
+  "Kiara Mitchell",
+  "Clarence Boyd",
+  "Yolanda Graves",
+  "Derrick Watts",
+  "Monique Ellis",
+  "Ralph Henderson",
+  "Shanice Porter",
+  "Warren Gill",
+  "Latrice Spencer",
+  "Otis Wheeler",
+  "Cherelle Dixon",
+  "Marlon Tate",
+  "Arielle Nash",
+  "Vernon Curry",
+  "Tiffany Boone",
+  "Lionel Marsh",
+  "Keon Barber",
+  "Savannah Holt",
+  "Rodney Vaughn",
+  "Anika Fields",
+  "Cedric Payne",
+  "Janelle Rhodes",
+  "Maurice Ingram",
+  "Brittney Logan",
+  "Harold Quinn",
+  "Lena Copeland",
+  "Dwayne Avery",
+  "Rochelle Mays",
+  "Alvin Briggs",
+  "Tanisha Glenn",
+  "Percy Dalton",
+  "Marisa Holloway",
+  "Gerald Underwood",
+  "Nadia Whitfield",
+  "Clayton Bowman",
+  "Serena McKnight",
+  "Franklin Joyce",
+  "Aisha Dunlap",
+  "Ruben Castillo",
+  "Dominique Avery",
+  "Willie Hammond",
+  "Gabrielle Sutton",
+  "Ernest Phelps",
+  "Valerie Cross",
+  "Norman Briggs",
+  "Carmen Delgado",
+  "Philip Gaines",
+  "Trina Holloway",
+  "Leonard Frost",
+  "Melissa Crane",
+  "Roderick Hale",
+  "Janice Booker",
+  "Samuel Whitaker",
+  "Paula Navarro",
+  "Victor Lang",
+  "Danielle Kemp",
+  "Harvey Sloan",
+  "Renita Osborne",
+  "Gordon Pierce",
+  "Stacey Dalton",
+  "Clifford Nash",
+  "Belinda Frye",
+  "Marshall Boone",
+  "Loretta Vaughn",
+  "Darnell Joyce",
+  "Gwendolyn Tate",
+  "Alton Spencer",
+  "Marcella Ingram",
+] as const;
+
+/** Host / operator names — never used for ambient simulation. */
+export const LIVE_CHAT_SIMULATION_BLOCKED_NAMES = [
+  "Ian Craig",
+  "Kym Feltus",
 ] as const;
 
 /**
@@ -176,8 +268,21 @@ export const LIVE_CHAT_SIMULATED_BODIES = [
 ] as const;
 
 const RECENT_BODY_WINDOW = 3;
-const AUTHOR_POOL_SIZE = LIVE_CHAT_SIMULATED_AUTHORS.length;
-const BODY_POOL_SIZE = LIVE_CHAT_SIMULATED_BODIES.length;
+
+function normalizeAuthorKey(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+export function buildSimulationAuthorPool(excludedNames: readonly string[] = []): string[] {
+  const blocked = new Set<string>([
+    ...LIVE_CHAT_SIMULATION_BLOCKED_NAMES.map(normalizeAuthorKey),
+    ...excludedNames.map(normalizeAuthorKey).filter(Boolean),
+  ]);
+
+  return LIVE_CHAT_SIMULATED_AUTHORS.filter(
+    (author) => !blocked.has(normalizeAuthorKey(author)),
+  );
+}
 
 let simulationCounter = 0;
 
@@ -203,10 +308,10 @@ export function createSimulatedChatMessage(template: SimulationTemplate): Simula
   };
 }
 
-/** ~4.5 min average — paced for a ~3 hour service with 40+ voices in rotation. */
+/** ~3 min average — enough variety visible while still paced for long services. */
 export function nextLiveChatSimulationDelayMs(): number {
-  const minMs = 3 * 60 * 1000;
-  const maxMs = 6 * 60 * 1000;
+  const minMs = 2 * 60 * 1000;
+  const maxMs = 4 * 60 * 1000;
   return minMs + Math.floor(Math.random() * (maxMs - minMs + 1));
 }
 
@@ -244,13 +349,18 @@ function pickBodyForAuthor(
 }
 
 export class LiveChatSimulationScheduler {
+  private authorPool: string[];
   private authorQueue: string[];
   private usedByAuthor = new Map<string, Set<string>>();
   private recentBodies: string[] = [];
   private recentAuthors: string[] = [];
 
-  constructor() {
-    this.authorQueue = shuffleInPlace([...LIVE_CHAT_SIMULATED_AUTHORS]);
+  constructor(excludedNames: readonly string[] = []) {
+    this.authorPool = buildSimulationAuthorPool(excludedNames);
+    if (this.authorPool.length === 0) {
+      this.authorPool = [...LIVE_CHAT_SIMULATED_AUTHORS];
+    }
+    this.authorQueue = shuffleInPlace([...this.authorPool]);
   }
 
   private remember(template: SimulationTemplate): void {
@@ -259,11 +369,13 @@ export class LiveChatSimulationScheduler {
     this.usedByAuthor.set(template.author, used);
 
     this.recentBodies = [...this.recentBodies, template.body].slice(-RECENT_BODY_WINDOW);
-    this.recentAuthors = [...this.recentAuthors, template.author].slice(-4);
+    this.recentAuthors = [...this.recentAuthors, template.author].slice(
+      -LIVE_CHAT_SIMULATION_AUTHOR_COOLDOWN,
+    );
   }
 
   private refillAuthorQueue(): void {
-    const leastRecent = [...LIVE_CHAT_SIMULATED_AUTHORS].sort((left, right) => {
+    const leastRecent = [...this.authorPool].sort((left, right) => {
       const leftIndex = this.recentAuthors.lastIndexOf(left);
       const rightIndex = this.recentAuthors.lastIndexOf(right);
       return leftIndex - rightIndex;
@@ -272,13 +384,14 @@ export class LiveChatSimulationScheduler {
   }
 
   nextTemplate(): SimulationTemplate {
-    for (let attempt = 0; attempt < 240; attempt += 1) {
+    for (let attempt = 0; attempt < 360; attempt += 1) {
       if (this.authorQueue.length === 0) {
         this.refillAuthorQueue();
       }
 
       const author = this.authorQueue.shift();
       if (!author) continue;
+      if (this.recentAuthors.includes(author)) continue;
 
       const body = pickBodyForAuthor(author, this.usedByAuthor, this.recentBodies);
       if (!body) continue;
@@ -289,9 +402,7 @@ export class LiveChatSimulationScheduler {
     }
 
     const fallbackAuthor =
-      LIVE_CHAT_SIMULATED_AUTHORS[
-        Math.floor(Math.random() * LIVE_CHAT_SIMULATED_AUTHORS.length)
-      ]!;
+      this.authorPool[Math.floor(Math.random() * this.authorPool.length)]!;
     const fallbackBody =
       LIVE_CHAT_SIMULATED_BODIES[Math.floor(Math.random() * LIVE_CHAT_SIMULATED_BODIES.length)]!;
     const template = { author: fallbackAuthor, body: fallbackBody };
@@ -303,7 +414,7 @@ export class LiveChatSimulationScheduler {
     return createSimulatedChatMessage(this.nextTemplate());
   }
 
-  createInitialBatch(count = 2): SimulatedChatMessage[] {
+  createInitialBatch(count = 6): SimulatedChatMessage[] {
     const batch: SimulatedChatMessage[] = [];
     for (let index = 0; index < count; index += 1) {
       batch.push(this.nextMessage());
@@ -311,13 +422,16 @@ export class LiveChatSimulationScheduler {
 
     return batch.map((message, index) => ({
       ...message,
-      createdAt: new Date(Date.now() - (count - index) * nextLiveChatSimulationDelayMs()).toISOString(),
+      createdAt: new Date(Date.now() - (count - index) * 45_000).toISOString(),
     }));
   }
 }
 
-export function createInitialSimulatedChatBatch(count = 2): SimulatedChatMessage[] {
-  return new LiveChatSimulationScheduler().createInitialBatch(count);
+export function createInitialSimulatedChatBatch(
+  count = 6,
+  excludedNames: readonly string[] = [],
+): SimulatedChatMessage[] {
+  return new LiveChatSimulationScheduler(excludedNames).createInitialBatch(count);
 }
 
 export function trimSimulatedChatMessages(
@@ -327,8 +441,9 @@ export function trimSimulatedChatMessages(
 }
 
 export const LIVE_CHAT_SIMULATION_STATS = {
-  authorCount: AUTHOR_POOL_SIZE,
-  bodyCount: BODY_POOL_SIZE,
-  minDelayMinutes: 3,
-  maxDelayMinutes: 6,
+  authorCount: LIVE_CHAT_SIMULATED_AUTHORS.length,
+  bodyCount: LIVE_CHAT_SIMULATED_BODIES.length,
+  minDelayMinutes: 2,
+  maxDelayMinutes: 4,
+  authorCooldown: LIVE_CHAT_SIMULATION_AUTHOR_COOLDOWN,
 };

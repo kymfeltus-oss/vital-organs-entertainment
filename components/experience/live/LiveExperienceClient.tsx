@@ -1,23 +1,26 @@
 "use client";
 
 
-import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";
-import CustomEmojiAnimator from "@/components/experience/live/CustomEmojiAnimator";
+import LiveBuySeedsSheet from "@/components/experience/live/LiveBuySeedsSheet";
+import LiveFloatingEmojiLayer from "@/components/experience/live/LiveFloatingEmojiLayer";
 import LiveMonetizationReminderBanner from "@/components/experience/live/LiveMonetizationReminderBanner";
+import LiveStreamGraphicsOverlay from "@/components/experience/live/LiveStreamGraphicsOverlay";
 import LiveStreamChat from "@/components/experience/live/LiveStreamChat";
 import LiveMobileDock from "@/components/experience/live/LiveMobileDock";
 import { IgLiveChatProvider } from "@/components/experience/live/ig/IgLiveChatContext";
 import LiveExperienceHeader from "@/components/experience/live/LiveExperienceHeader";
 import LiveFeatureErrorBoundary from "@/components/experience/live/LiveFeatureErrorBoundary";
 import LiveReactionTray from "@/components/experience/live/LiveReactionTray";
-import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { useIanCraigLiveSeedActions } from "@/lib/experience/useIanCraigLiveSeedActions";
 import { useLiveMonetizationReminder } from "@/lib/experience/useLiveMonetizationReminder";
+import { useLiveStreamGraphics } from "@/lib/experience/useLiveStreamGraphics";
 import { useLiveChatSimulation } from "@/lib/live/use-live-chat-simulation";
 import { useLiveViewerCount } from "@/lib/experience/useLiveViewerCount";
+import { formatChatDisplayName } from "@/lib/live/chat";
 import { fetchLiveAccessEvaluation, type LiveAccessEvaluation } from "@/lib/access";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import type { CountdownParts } from "@/lib/live/event-lobby";
@@ -189,10 +192,30 @@ function HlsVideoPlayer({
   );
 }
 
+function LiveStreamConnectingOverlay({ message }: { message: string }) {
+  return (
+    <div className="absolute inset-0 z-[2] flex flex-col items-center justify-center bg-black px-6 text-center">
+      <div className="flex h-8 items-end justify-center gap-1" aria-hidden="true">
+        <span
+          className="live-waveform-bar h-3 w-1 rounded-full bg-brand-blue/70"
+          style={{ animationDelay: "0ms" }}
+        />
+        <span
+          className="live-waveform-bar h-5 w-1 rounded-full bg-brand-blue/70"
+          style={{ animationDelay: "150ms" }}
+        />
+        <span
+          className="live-waveform-bar h-4 w-1 rounded-full bg-brand-blue/70"
+          style={{ animationDelay: "300ms" }}
+        />
+      </div>
+      <p className="mt-4 max-w-sm font-body text-sm text-white/70">{message}</p>
+    </div>
+  );
+}
+
 export default function LiveExperienceClient({
   initialProfile,
-  countdownConfig,
-  initialCountdown,
 }: LiveExperienceClientProps) {
   const router = useRouter();
   const attendeeName = initialProfile.headerDisplayName || initialProfile.email || "Guest";
@@ -247,13 +270,13 @@ export default function LiveExperienceClient({
   const [isPlaybackBuffering, setIsPlaybackBuffering] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
+  const [buySeedsOpen, setBuySeedsOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
 
   const { playbackUrl } = useLiveManifestPoller(manifest);
   const {
     balance: walletSeedBalance,
     isLoading: seedBalanceLoading,
-    handleAddSeeds,
   } = useIanCraigLiveSeedActions();
   const [optimisticSeedBalance, setSeedBalance] = useState<number | null>(null);
   const [isDeductingSeeds, setIsDeductingSeeds] = useState(false);
@@ -263,11 +286,43 @@ export default function LiveExperienceClient({
     enabled: true,
     userId: initialProfile.userId ?? null,
   });
-  const { messages: simulatedChatMessages } = useLiveChatSimulation({ enabled: true });
+  const simulationExcludedNames = useMemo(() => {
+    const names = [
+      formatChatDisplayName({
+        firstName: initialProfile.firstName,
+        lastName: initialProfile.lastName,
+        email: initialProfile.email,
+      }),
+      initialProfile.headerDisplayName,
+      attendeeName,
+    ];
+    return names.filter((name): name is string => Boolean(name?.trim()));
+  }, [attendeeName, initialProfile]);
+  const { messages: simulatedChatMessages } = useLiveChatSimulation({
+    enabled: true,
+    excludedNames: simulationExcludedNames,
+  });
   const streamIsLive = access?.streamIsLive === true;
   const { activeReminder, dismissActive } = useLiveMonetizationReminder({
     enabled: streamIsLive,
   });
+  const { activeGraphic } = useLiveStreamGraphics({
+    enabled: streamIsLive,
+  });
+
+  const openBuySeedsSheet = useCallback(() => {
+    setBuySeedsOpen(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("success") !== "true") return;
+
+    requestLiveSeedWalletRefresh();
+    setBuySeedsOpen(false);
+    window.history.replaceState({}, "", EXPERIENCE_LIVE_PATH);
+  }, []);
 
   useEffect(() => {
     const root = mainRef.current;
@@ -1319,6 +1374,12 @@ export default function LiveExperienceClient({
 
   const handleMonetizationReminderCta = useCallback(
     (ctaKind: MonetizationReminderCtaKind) => {
+      if (ctaKind === "buy_seeds") {
+        openBuySeedsSheet();
+        dismissActive();
+        return;
+      }
+
       if (monetizationReminderUsesInLiveAction(ctaKind)) {
         handleQuickSow();
         dismissActive();
@@ -1330,31 +1391,17 @@ export default function LiveExperienceClient({
         router.push(href);
       }
     },
-    [dismissActive, handleQuickSow, router],
+    [dismissActive, handleQuickSow, openBuySeedsSheet, router],
   );
 
   const isPublishMode = useDirectCamera;
-  const showConnectingShroud =
-    !isPublishMode &&
-    !playbackUrl &&
-    (manifest.status === "idle" ||
-      manifest.status === "loading" ||
-      manifest.status === "waiting" ||
-      manifest.status === "error");
-
-  if (showConnectingShroud) {
-    return (
-      <ExperienceHoldingRoomPageClient
-        initialProfile={initialProfile}
-        initialCountdownConfig={countdownConfig}
-        initialCountdown={initialCountdown}
-        showClock
-      />
-    );
-  }
-
   const resolvedPlaybackUrl = playbackUrl ?? "";
   const showDirectPlayer = isPublishMode && !playbackUrl;
+  const showHlsConnecting =
+    !isPublishMode && !resolvedPlaybackUrl && access?.streamIsLive !== false;
+  const connectingMessage =
+    manifest.message?.trim() || "Connecting to the live broadcast...";
+
   const walletLabel = seedBalanceLoading ? "..." : seedBalance.toLocaleString("en-US");
   const showAudioUnlock = showDirectPlayer ? !directAudioUnlocked : !audioUnlocked;
   const handleHeaderEnableAudio = showDirectPlayer ? enableDirectAudio : enableAudio;
@@ -1405,23 +1452,25 @@ export default function LiveExperienceClient({
                     </div>
                   ) : null}
                 </>
-              ) : (
+              ) : resolvedPlaybackUrl ? (
                 <HlsVideoPlayer
                   url={resolvedPlaybackUrl}
                   videoRef={videoRef}
                   audioUnlocked={audioUnlocked}
                 />
+              ) : (
+                <>
+                  <div className="absolute inset-0 bg-black" aria-hidden="true" />
+                  {showHlsConnecting ? (
+                    <LiveStreamConnectingOverlay message={connectingMessage} />
+                  ) : null}
+                </>
               )}
-
-              <LiveFeatureErrorBoundary featureLabel="Reactions">
-                {floatingEmojis.map((burst) => (
-                  <CustomEmojiAnimator
-                    key={burst.id}
-                    assetId={burst.assetId}
-                    onComplete={() => dismissFloatingEmoji(burst.id)}
-                  />
-                ))}
-              </LiveFeatureErrorBoundary>
+              {activeGraphic ? (
+                <LiveFeatureErrorBoundary featureLabel="Stream graphics">
+                  <LiveStreamGraphicsOverlay graphic={activeGraphic} />
+                </LiveFeatureErrorBoundary>
+              ) : null}
             </div>
           </div>
         </section>
@@ -1443,7 +1492,7 @@ export default function LiveExperienceClient({
               </span>
               <button
                 type="button"
-                onClick={handleAddSeeds}
+                onClick={openBuySeedsSheet}
                 className="touch-target inline-flex min-h-11 items-center justify-center rounded-full border border-brand-pink/45 bg-brand-pink/10 px-4 font-ui text-[0.68rem] font-bold uppercase tracking-[0.12em] text-brand-pink"
               >
                 Buy Seeds
@@ -1509,6 +1558,8 @@ export default function LiveExperienceClient({
                   chatOpen={mobileChatOpen}
                   onJoinConversation={handleJoinConversation}
                   signInHref={EXPERIENCE_LIVE_PATH}
+                  seedBalance={seedBalance}
+                  onBuySeeds={openBuySeedsSheet}
                   onReaction={(assetId) => {
                     handleCustomEmojiReaction(assetId);
                   }}
@@ -1523,6 +1574,27 @@ export default function LiveExperienceClient({
           </footer>
         </aside>
       </div>
+
+      <LiveFeatureErrorBoundary featureLabel="Reactions">
+        <LiveFloatingEmojiLayer
+          variant="mobile"
+          bursts={floatingEmojis}
+          onComplete={dismissFloatingEmoji}
+        />
+        <LiveFloatingEmojiLayer
+          variant="desktop"
+          bursts={floatingEmojis}
+          onComplete={dismissFloatingEmoji}
+        />
+      </LiveFeatureErrorBoundary>
+
+      <LiveBuySeedsSheet
+        open={buySeedsOpen}
+        onClose={() => setBuySeedsOpen(false)}
+        profile={initialProfile}
+        seedBalance={seedBalance}
+        signInHref={EXPERIENCE_LIVE_PATH}
+      />
     </main>
   );
 }

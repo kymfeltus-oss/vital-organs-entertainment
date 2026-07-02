@@ -141,7 +141,7 @@ export default function LiveStreamChat({
                 The room is gathering...
               </p>
             ) : (
-              feedLines.slice(-8).map((message) => {
+              feedLines.slice(-10).map((message) => {
                 const isSimulated = "isSimulated" in message && message.isSimulated;
                 const isOwn =
                   Boolean(profileUserId) && message.userId === profileUserId;

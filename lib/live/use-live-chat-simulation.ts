@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   LiveChatSimulationScheduler,
   nextLiveChatSimulationDelayMs,
@@ -10,6 +10,8 @@ import {
 
 type UseLiveChatSimulationOptions = {
   enabled?: boolean;
+  /** Profile / host names that must never appear in ambient simulation. */
+  excludedNames?: readonly string[];
 };
 
 type UseLiveChatSimulationResult = {
@@ -18,9 +20,14 @@ type UseLiveChatSimulationResult = {
 
 export function useLiveChatSimulation({
   enabled = true,
+  excludedNames = [],
 }: UseLiveChatSimulationOptions = {}): UseLiveChatSimulationResult {
   const [messages, setMessages] = useState<SimulatedChatMessage[]>([]);
   const schedulerRef = useRef<LiveChatSimulationScheduler | null>(null);
+  const excludedKey = useMemo(
+    () => excludedNames.map((name) => name.trim().toLowerCase()).join("|"),
+    [excludedNames],
+  );
 
   useEffect(() => {
     if (!enabled) {
@@ -29,9 +36,9 @@ export function useLiveChatSimulation({
       return;
     }
 
-    const scheduler = new LiveChatSimulationScheduler();
+    const scheduler = new LiveChatSimulationScheduler(excludedNames);
     schedulerRef.current = scheduler;
-    setMessages(scheduler.createInitialBatch(2));
+    setMessages(scheduler.createInitialBatch(6));
 
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -56,7 +63,7 @@ export function useLiveChatSimulation({
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [enabled]);
+  }, [enabled, excludedKey, excludedNames]);
 
   return { messages };
 }
