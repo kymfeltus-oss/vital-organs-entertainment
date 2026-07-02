@@ -26,6 +26,8 @@ import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 export type LiveStreamChatHandle = {
   /** Force-append a notice line into the feed (best-effort persist via Fellowship Chat). */
   postNotice: (text: string) => void;
+  /** Scroll chat into view and focus the composer input when available. */
+  openComposer: () => void;
 };
 
 type LiveStreamChatLayout = "sidebar" | "responsive";
@@ -101,6 +103,8 @@ const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
     const [draft, setDraft] = useState("");
     const [localNotices, setLocalNotices] = useState<LocalNoticeLine[]>([]);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const rootRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     const profileUserId = profile?.userId ?? null;
 
@@ -120,7 +124,19 @@ const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
       [sendMessage, session.canSend],
     );
 
-    useImperativeHandle(ref, () => ({ postNotice }), [postNotice]);
+    useImperativeHandle(
+      ref,
+      () => ({
+        postNotice,
+        openComposer: () => {
+          rootRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          window.setTimeout(() => {
+            inputRef.current?.focus({ preventScroll: true });
+          }, 180);
+        },
+      }),
+      [postNotice],
+    );
 
     const feedLines = useMemo(() => {
       const persistedIds = new Set(messages.map((message) => message.id));
@@ -164,7 +180,11 @@ const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
       : "shrink-0 border-t border-white/10 px-4 py-3 sm:px-5";
 
     return (
-      <div className={`${rootClass} ${className ?? ""}`}>
+      <div
+        ref={rootRef}
+        id="live-stream-chat-panel"
+        className={`${rootClass} ${className ?? ""}`}
+      >
         <div
           className={`${headerClass} shrink-0 items-center justify-between border-b border-white/10 px-4 py-2.5 sm:px-5`}
         >
@@ -247,6 +267,7 @@ const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
                 Join the conversation
               </label>
               <input
+                ref={inputRef}
                 id="live-stream-chat-input"
                 type="text"
                 enterKeyHint="send"

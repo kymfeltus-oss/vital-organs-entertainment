@@ -4,7 +4,8 @@ export const LIVE_VIEWER_DISPLAY_BUFFER = 400;
 export const LIVE_VIEWER_PRESENCE_CHANNEL = "live-viewer-presence";
 
 export function applyLiveViewerDisplayBuffer(actualCount: number): number {
-  return Math.max(0, actualCount) + LIVE_VIEWER_DISPLAY_BUFFER;
+  const safeActual = Number.isFinite(actualCount) ? Math.max(0, actualCount) : 0;
+  return Math.max(LIVE_VIEWER_DISPLAY_BUFFER, safeActual + LIVE_VIEWER_DISPLAY_BUFFER);
 }
 
 export function formatLiveViewerCount(count: number): string {

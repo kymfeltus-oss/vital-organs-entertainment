@@ -1,20 +1,21 @@
 "use client";
 
-import Link from "next/link";
+
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
-import { VolumeX, X } from "lucide-react";
 import CustomEmojiAnimator from "@/components/experience/live/CustomEmojiAnimator";
 import LiveStreamChat, {
   type LiveStreamChatHandle,
 } from "@/components/experience/live/LiveStreamChat";
 import LiveMobileDock from "@/components/experience/live/LiveMobileDock";
+import LiveExperienceHeader from "@/components/experience/live/LiveExperienceHeader";
+import LiveFeatureErrorBoundary from "@/components/experience/live/LiveFeatureErrorBoundary";
+import LiveReactionTray from "@/components/experience/live/LiveReactionTray";
 import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { useIanCraigLiveSeedActions } from "@/lib/experience/useIanCraigLiveSeedActions";
 import { useLiveChatSimulation } from "@/lib/live/use-live-chat-simulation";
 import { useLiveViewerCount } from "@/lib/experience/useLiveViewerCount";
-import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 import { fetchLiveAccessEvaluation, type LiveAccessEvaluation } from "@/lib/access";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import type { CountdownParts } from "@/lib/live/event-lobby";
@@ -44,6 +45,10 @@ import {
   unregisterPlatformListener,
 } from "@/lib/live/platform-channel";
 import { LIVE_ROOM_PLATFORM_CHANNEL, LIVE_STREAM_STATE_BROADCAST_EVENT } from "@/lib/live/types";
+import {
+  getLiveReactionDefinition,
+  parseEmojiBurstPayload,
+} from "@/lib/live/live-reactions";
 
 const LIVE_ACCESS_POLL_MS = 5_000;
 const MANIFEST_RETRY_FAST_MS = 2_500;
@@ -54,19 +59,7 @@ const HLS_MAX_RECOVERY_ATTEMPTS = 3;
 const HLS_RECOVERY_BASE_MS = 1_500;
 const EMOJI_BURST_EVENT = "emoji_burst";
 const GLOBAL_OFFERING_ALERT_EVENT = "global_offering_alert";
-const EMOJI_REACTION_COST = 5;
 const QUICK_SOW_COST = 100;
-
-const CUSTOM_REACTIONS = [
-  { assetId: "seed_fire", label: "Fire Seed", emoji: "🔥" },
-  { assetId: "awakening_glow", label: "Awakening Glow", emoji: "✨" },
-] as const;
-
-const MOBILE_DOCK_REACTIONS = CUSTOM_REACTIONS.map(({ assetId, label, emoji }) => ({
-  assetId,
-  label,
-  emoji,
-}));
 
 type FloatingEmojiBurst = {
   id: string;
@@ -80,11 +73,7 @@ type LedgerEntry = {
   at: number;
 };
 
-type SeedDeductionType = "emoji_burst" | "offering_sow";
-
-type SeedDeductionExtraPayload = {
-  emojiId?: string;
-};
+type SeedDeductionType = "offering_sow";
 
 type SeedDeductionResponse = {
   success?: boolean;
@@ -167,85 +156,29 @@ function useLiveManifestPoller(manifest: ManifestState) {
   };
 }
 
-type HlsVideoPlayerProps = {
-  url: string;
-  videoRef: RefObject<HTMLVideoElement | null>;
-  audioUnlocked: boolean;
-  showRecoveryOverlay: boolean;
-  recoveryMessage: string;
-};
-
-/** Compact audio unlock — header icon on mobile, corner chip on desktop. */
-function LiveAudioUnlockChip({
-  onClick,
-  placement = "corner",
-}: {
-  onClick: () => void;
-  placement?: "header" | "corner";
-}) {
-  if (placement === "header") {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        aria-label="Turn on live stream sound"
-        className="touch-target grid h-10 w-10 place-items-center rounded-full border border-brand-blue/45 bg-black/60 text-brand-blue shadow-[0_4px_20px_rgba(0,0,0,0.35)] backdrop-blur-md transition hover:border-brand-blue/70 hover:bg-black/75"
-      >
-        <VolumeX className="h-4 w-4" aria-hidden="true" />
-      </button>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="Turn on live stream sound"
-      className="touch-target absolute z-20 hidden items-center gap-2 rounded-full border border-brand-blue/45 bg-black/65 px-3 py-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-blue shadow-[0_4px_24px_rgba(0,0,0,0.45)] backdrop-blur-md transition hover:border-brand-blue/70 hover:bg-black/80 lg:flex lg:right-5 lg:bottom-5"
-    >
-      <span className="grid h-8 w-8 place-items-center rounded-full border border-brand-blue/35 bg-brand-blue/15">
-        <VolumeX className="h-4 w-4" aria-hidden="true" />
-      </span>
-      <span className="pr-1">Sound on</span>
-    </button>
-  );
-}
-
 function HlsVideoPlayer({
   url,
   videoRef,
   audioUnlocked,
-  showRecoveryOverlay,
-  recoveryMessage,
-}: HlsVideoPlayerProps) {
+}: {
+  url: string;
+  videoRef: RefObject<HTMLVideoElement | null>;
+  audioUnlocked: boolean;
+}) {
   return (
-    <>
-      <video
-        ref={videoRef}
-        className="absolute inset-0 h-full w-full bg-black object-cover lg:object-contain"
-        controls
-        controlsList="nodownload noremoteplayback"
-        disablePictureInPicture
-        playsInline
-        preload="none"
-        autoPlay
-        muted={!audioUnlocked}
-        crossOrigin="anonymous"
-        data-playback-url={url}
-      />
-      {showRecoveryOverlay ? (
-        <div className="absolute inset-0 z-[5] grid place-items-center bg-black/72 px-6 text-center">
-          <div className="flex h-8 items-end justify-center gap-1" aria-hidden="true">
-            <span className="live-waveform-bar h-6 w-1 rounded-full bg-brand-blue/70" style={{ animationDelay: "0ms" }} />
-            <span className="live-waveform-bar h-6 w-1 rounded-full bg-brand-blue/70" style={{ animationDelay: "150ms" }} />
-            <span className="live-waveform-bar h-6 w-1 rounded-full bg-brand-blue/70" style={{ animationDelay: "300ms" }} />
-          </div>
-          <p className="mt-4 max-w-sm font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-white/75">
-            {recoveryMessage}
-          </p>
-        </div>
-      ) : null}
-    </>
+    <video
+      ref={videoRef}
+      className="absolute inset-0 h-full w-full bg-black object-cover lg:object-contain"
+      controls
+      controlsList="nodownload noremoteplayback"
+      disablePictureInPicture
+      playsInline
+      preload="none"
+      autoPlay
+      muted={!audioUnlocked}
+      crossOrigin="anonymous"
+      data-playback-url={url}
+    />
   );
 }
 
@@ -306,9 +239,6 @@ export default function LiveExperienceClient({
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
   const [isPlaybackBuffering, setIsPlaybackBuffering] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [playbackRecoveryMessage, setPlaybackRecoveryMessage] = useState(
-    "Waiting for the first live frame...",
-  );
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
 
@@ -719,7 +649,6 @@ export default function LiveExperienceClient({
       if (nextManifest.status === "ready" && nextManifest.playbackUrl) {
         manifestHasUrlRef.current = true;
         setIsPlaybackBuffering(true);
-        setPlaybackRecoveryMessage("Waiting for the first live frame...");
       }
     } catch {
       if (componentIsUnmountingRef.current) return;
@@ -782,29 +711,24 @@ export default function LiveExperienceClient({
       channel.on("broadcast", { event: EMOJI_BURST_EVENT }, ({ payload }) => {
         if (cancelled) return;
 
-        const record =
-          typeof payload === "object" && payload !== null
-            ? (payload as { assetId?: string; userId?: string | null })
-            : null;
+        const { assetId, userId } = parseEmojiBurstPayload(payload);
 
-        if (record?.userId && record.userId === initialProfile.userId) {
+        if (userId && userId === initialProfile.userId) {
           return;
         }
 
-        const assetId =
-          typeof record?.assetId === "string" ? record.assetId : "seed_fire";
-
+        const reaction = getLiveReactionDefinition(assetId);
         const burstId =
           typeof crypto !== "undefined" && "randomUUID" in crypto
             ? crypto.randomUUID()
             : `${Date.now()}-${Math.random()}`;
 
-        setFloatingEmojis((current) => [...current, { id: burstId, assetId }]);
+        setFloatingEmojis((current) => [...current, { id: burstId, assetId: reaction.assetId }]);
         setLedgerEntries((current) =>
           [
             {
               id: burstId,
-              label: assetId === "awakening_glow" ? "Awakening Glow" : "Fire Seed",
+              label: reaction.ledgerLabel,
               detail: "Emoji burst on stage",
               at: Date.now(),
             },
@@ -953,9 +877,6 @@ export default function LiveExperienceClient({
       const delayMs = HLS_RECOVERY_BASE_MS * 2 ** (hlsRetryCountRef.current - 1);
       setIsPlaybackBuffering(true);
       setIsVideoPlaying(false);
-      setPlaybackRecoveryMessage(
-        `Reconnecting to live stream (${hlsRetryCountRef.current}/${HLS_MAX_RECOVERY_ATTEMPTS})...`,
-      );
 
       if (hlsRecoveryTimerRef.current !== null) {
         window.clearTimeout(hlsRecoveryTimerRef.current);
@@ -985,7 +906,6 @@ export default function LiveExperienceClient({
     video.muted = !audioUnlockedRef.current;
     setIsPlaybackBuffering(true);
     setIsVideoPlaying(false);
-    setPlaybackRecoveryMessage("Switching live feed...");
     void video.play().catch(() => undefined);
     return true;
   }, []);
@@ -1027,7 +947,6 @@ export default function LiveExperienceClient({
           if (cancelled()) return;
           installAutoLevelingMatrix(video);
           setIsPlaybackBuffering(true);
-          setPlaybackRecoveryMessage("Waiting for the first live frame...");
           video.muted = !audioUnlockedRef.current;
           void video.play().catch(() => undefined);
         });
@@ -1076,7 +995,6 @@ export default function LiveExperienceClient({
         video.load();
         installAutoLevelingMatrix(video);
         setIsPlaybackBuffering(true);
-        setPlaybackRecoveryMessage("Waiting for the first live frame...");
         void video.play().catch(() => undefined);
         hlsCleanupRef.current = () => {
           video.removeAttribute("src");
@@ -1103,12 +1021,10 @@ export default function LiveExperienceClient({
       hlsRetryCountRef.current = 0;
       setIsVideoPlaying(true);
       setIsPlaybackBuffering(false);
-      setPlaybackRecoveryMessage("Waiting for the first live frame...");
     };
     const onWaiting = () => {
       setIsVideoPlaying(false);
       setIsPlaybackBuffering(true);
-      setPlaybackRecoveryMessage("Live video is buffering...");
     };
     const onError = () => {
       if (hlsInstanceRef.current) return;
@@ -1266,17 +1182,18 @@ export default function LiveExperienceClient({
   );
 
   const pushLocalEmojiBurst = useCallback((assetId: string, detail: string) => {
+    const reaction = getLiveReactionDefinition(assetId);
     const burstId =
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random()}`;
 
-    setFloatingEmojis((current) => [...current, { id: burstId, assetId }]);
+    setFloatingEmojis((current) => [...current, { id: burstId, assetId: reaction.assetId }]);
     setLedgerEntries((current) =>
       [
         {
           id: burstId,
-          label: assetId === "awakening_glow" ? "Awakening Glow" : "Fire Seed",
+          label: reaction.ledgerLabel,
           detail,
           at: Date.now(),
         },
@@ -1305,12 +1222,7 @@ export default function LiveExperienceClient({
   }, []);
 
   const executeSeedDeduction = useCallback(
-    async (
-      cost: number,
-      type: SeedDeductionType,
-      detail: string,
-      extraPayload?: SeedDeductionExtraPayload,
-    ) => {
+    async (cost: number, type: SeedDeductionType, detail: string) => {
       if (isDeductingSeeds) return;
 
       setIsDeductingSeeds(true);
@@ -1338,19 +1250,6 @@ export default function LiveExperienceClient({
           setSeedBalance(result.newBalance);
         }
 
-        if (type === "emoji_burst") {
-          const assetId = extraPayload?.emojiId ?? "seed_fire";
-
-          pushLocalEmojiBurst(assetId, detail);
-          await broadcastLivePlatformEvent(EMOJI_BURST_EVENT, {
-            assetId,
-            emojiId: assetId,
-            senderName: attendeeName,
-            at: new Date().toISOString(),
-            userId: initialProfile.userId ?? null,
-          });
-        }
-
         if (type === "offering_sow") {
           pushOfferingLedgerEntry(detail);
 
@@ -1375,29 +1274,39 @@ export default function LiveExperienceClient({
       broadcastLivePlatformEvent,
       initialProfile.userId,
       isDeductingSeeds,
-      pushLocalEmojiBurst,
       pushOfferingLedgerEntry,
     ],
   );
 
   const handleCustomEmojiReaction = useCallback(
     (assetId: string) => {
-      const label = assetId === "awakening_glow" ? "Awakening Glow" : "Fire Seed";
-      const chatNotice =
-        assetId === "awakening_glow" ? "\u2728 Awakening Glow" : "\uD83D\uDD25 sent a Fire Seed";
+      const reaction = getLiveReactionDefinition(assetId);
 
-      // Chat notice fires immediately — independent of seed deduct / slow-mode.
-      liveChatRef.current?.postNotice(chatNotice);
+      liveChatRef.current?.postNotice(reaction.chatNotice);
+      pushLocalEmojiBurst(reaction.assetId, `Sent ${reaction.label} reaction`);
 
-      void executeSeedDeduction(
-        EMOJI_REACTION_COST,
-        "emoji_burst",
-        `Sent ${label} Reaction`,
-        { emojiId: assetId },
-      );
+      void broadcastLivePlatformEvent(EMOJI_BURST_EVENT, {
+        assetId: reaction.assetId,
+        emojiId: reaction.assetId,
+        senderName: attendeeName,
+        at: new Date().toISOString(),
+        userId: initialProfile.userId ?? null,
+      });
     },
-    [executeSeedDeduction],
+    [
+      attendeeName,
+      broadcastLivePlatformEvent,
+      initialProfile.userId,
+      pushLocalEmojiBurst,
+    ],
   );
+
+  const handleJoinConversation = useCallback(() => {
+    setMobileChatOpen(true);
+    window.requestAnimationFrame(() => {
+      liveChatRef.current?.openComposer();
+    });
+  }, []);
 
   const handleQuickSow = useCallback(() => {
     void executeSeedDeduction(
@@ -1415,8 +1324,6 @@ export default function LiveExperienceClient({
       manifest.status === "loading" ||
       manifest.status === "waiting" ||
       manifest.status === "error");
-  const showPlaybackRecoveryOverlay =
-    !isPublishMode && Boolean(playbackUrl) && (isPlaybackBuffering || !isVideoPlaying);
 
   if (showConnectingShroud) {
     return (
@@ -1432,6 +1339,13 @@ export default function LiveExperienceClient({
   const resolvedPlaybackUrl = playbackUrl ?? "";
   const showDirectPlayer = isPublishMode && !playbackUrl;
   const walletLabel = seedBalanceLoading ? "..." : seedBalance.toLocaleString("en-US");
+  const streamStatusLabel = showDirectPlayer
+    ? "Direct Live"
+    : access?.streamIsLive
+      ? "On Air"
+      : "Connected";
+  const showAudioUnlock = showDirectPlayer ? !directAudioUnlocked : !audioUnlocked;
+  const handleHeaderEnableAudio = showDirectPlayer ? enableDirectAudio : enableAudio;
 
   return (
     <main
@@ -1440,61 +1354,13 @@ export default function LiveExperienceClient({
     >
       <div className="relative min-h-dvh lg:grid lg:min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
         <section className="relative min-h-dvh w-full bg-[#050505]">
-          <header className="absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-3 border-b border-white/10 bg-gradient-to-b from-black/90 via-black/60 to-transparent px-4 py-3 pr-[4.75rem] sm:px-6 sm:pr-24 lg:relative lg:items-center lg:bg-[#050505] lg:from-transparent lg:via-transparent lg:to-transparent lg:pr-20">
-            <div className="min-w-0">
-              <p className="font-ui text-[0.58rem] font-bold uppercase tracking-[0.22em] text-brand-blue sm:text-[0.62rem]">
-                300 Awakening
-              </p>
-              <h1 className="hidden font-headline text-lg uppercase tracking-[0.08em] sm:block sm:text-2xl lg:block">
-                Live Sanctuary Feed
-              </h1>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5 lg:hidden">
-                <div className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 font-ui text-[0.52rem] font-bold uppercase tracking-[0.12em] text-white/70">
-                  {showDirectPlayer ? "Direct" : access?.streamIsLive ? "On Air" : "Live"}
-                </div>
-                <div
-                  className="rounded-full border border-brand-blue/30 bg-brand-blue/10 px-2.5 py-0.5 font-ui text-[0.52rem] font-bold uppercase tracking-[0.12em] text-brand-blue"
-                  aria-label={`${viewerCountLabel} watching`}
-                >
-                  {viewerCountLabel} watching
-                </div>
-              </div>
-            </div>
-            <div className="hidden flex-col items-end gap-1.5 lg:flex">
-              {autoLevelingActive ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-lime-300/35 bg-lime-300/10 px-3 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.12em] text-lime-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-lime-300 shadow-[0_0_8px_rgba(132,255,75,0.8)]" />
-                  Auto-Leveling Active
-                </span>
-              ) : null}
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-white/70">
-                  {showDirectPlayer ? "Direct Live" : access?.streamIsLive ? "On Air" : "Connected"}
-                </div>
-                <div
-                  className="rounded-full border border-brand-blue/30 bg-brand-blue/10 px-3 py-1 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-brand-blue"
-                  aria-label={`${viewerCountLabel} watching`}
-                >
-                  {viewerCountLabel} watching
-                </div>
-              </div>
-            </div>
-            <div className="absolute right-14 top-3 z-50 flex items-center gap-2 lg:hidden">
-              {!showDirectPlayer && !audioUnlocked ? (
-                <LiveAudioUnlockChip onClick={enableAudio} placement="header" />
-              ) : null}
-              {showDirectPlayer && !directAudioUnlocked ? (
-                <LiveAudioUnlockChip onClick={enableDirectAudio} placement="header" />
-              ) : null}
-            </div>
-            <Link
-              href={ATTENDEE_DASHBOARD_PATH}
-              aria-label="Back to dashboard"
-              className="touch-target absolute right-4 top-3 z-50 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/10 text-white backdrop-blur transition hover:bg-white/20 lg:top-4"
-            >
-              <X className="h-5 w-5 text-white" aria-hidden="true" />
-            </Link>
-          </header>
+          <LiveExperienceHeader
+            streamTitle="Live Sanctuary Feed"
+            statusLabel={streamStatusLabel}
+            viewerCountLabel={viewerCountLabel}
+            showAudioUnlock={showAudioUnlock}
+            onEnableAudio={handleHeaderEnableAudio}
+          />
 
           <div className="relative h-dvh w-full lg:h-auto lg:min-h-[calc(100dvh-4.5rem)]">
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-44 bg-gradient-to-t from-black/85 via-black/35 to-transparent max-lg:block lg:hidden" />
@@ -1515,8 +1381,6 @@ export default function LiveExperienceClient({
                         Connecting direct camera publisher...
                       </p>
                     </div>
-                  ) : !directAudioUnlocked ? (
-                    <LiveAudioUnlockChip onClick={enableDirectAudio} placement="corner" />
                   ) : null}
                 </>
               ) : (
@@ -1524,22 +1388,18 @@ export default function LiveExperienceClient({
                   url={resolvedPlaybackUrl}
                   videoRef={videoRef}
                   audioUnlocked={audioUnlocked}
-                  showRecoveryOverlay={showPlaybackRecoveryOverlay}
-                  recoveryMessage={playbackRecoveryMessage}
                 />
               )}
 
-              {!showDirectPlayer && !audioUnlocked ? (
-                <LiveAudioUnlockChip onClick={enableAudio} placement="corner" />
-              ) : null}
-
-              {floatingEmojis.map((burst) => (
-                <CustomEmojiAnimator
-                  key={burst.id}
-                  assetId={burst.assetId}
-                  onComplete={() => dismissFloatingEmoji(burst.id)}
-                />
-              ))}
+              <LiveFeatureErrorBoundary featureLabel="Reactions">
+                {floatingEmojis.map((burst) => (
+                  <CustomEmojiAnimator
+                    key={burst.id}
+                    assetId={burst.assetId}
+                    onComplete={() => dismissFloatingEmoji(burst.id)}
+                  />
+                ))}
+              </LiveFeatureErrorBoundary>
             </div>
           </div>
         </section>
@@ -1568,22 +1428,14 @@ export default function LiveExperienceClient({
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 border-b border-white/10 px-4 py-3 sm:px-5">
-              {CUSTOM_REACTIONS.map((reaction) => (
-                <button
-                  key={reaction.assetId}
-                  type="button"
-                  disabled={isDeductingSeeds}
-                  onClick={() => void handleCustomEmojiReaction(reaction.assetId)}
-                  className="touch-target inline-flex min-h-11 flex-col items-center justify-center rounded-xl border border-white/10 bg-white/5 px-3 py-2 font-ui text-[0.62rem] font-bold uppercase tracking-[0.1em] text-white transition hover:border-brand-blue/40 hover:bg-brand-blue/10 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <span>{reaction.label}</span>
-                  <span className="mt-1 text-[0.55rem] font-normal normal-case tracking-normal text-brand-muted">
-                    5 Seeds
-                  </span>
-                </button>
-              ))}
-            </div>
+            <LiveFeatureErrorBoundary featureLabel="Reactions">
+              <LiveReactionTray
+                variant="desktop-grid"
+                onReaction={(assetId) => {
+                  handleCustomEmojiReaction(assetId);
+                }}
+              />
+            </LiveFeatureErrorBoundary>
 
             <div className="border-b border-white/10 px-4 py-3 sm:px-5">
               <button
@@ -1619,28 +1471,29 @@ export default function LiveExperienceClient({
             </div>
           </div>
 
-          <LiveStreamChat
-            ref={liveChatRef}
-            profile={initialProfile?.userId ? initialProfile : null}
-            seedBalance={seedBalance}
-            signInHref={EXPERIENCE_LIVE_PATH}
-            layout="responsive"
-            simulatedMessages={simulatedChatMessages}
-            hideMobileComposer
-            mobileComposerOpen={mobileChatOpen}
-            className="min-h-0 flex-1 lg:border-t lg:border-white/10"
-          />
+          <LiveFeatureErrorBoundary featureLabel="Chat">
+            <LiveStreamChat
+              ref={liveChatRef}
+              profile={initialProfile?.userId ? initialProfile : null}
+              seedBalance={seedBalance}
+              signInHref={EXPERIENCE_LIVE_PATH}
+              layout="responsive"
+              simulatedMessages={simulatedChatMessages}
+              hideMobileComposer
+              mobileComposerOpen={mobileChatOpen}
+              className="min-h-0 flex-1 lg:border-t lg:border-white/10"
+            />
+          </LiveFeatureErrorBoundary>
 
-          <LiveMobileDock
-            seedBalanceLabel={walletLabel}
-            seedBalanceLoading={seedBalanceLoading}
-            isDeductingSeeds={isDeductingSeeds}
-            chatOpen={mobileChatOpen}
-            reactions={MOBILE_DOCK_REACTIONS}
-            onAddSeeds={handleAddSeeds}
-            onToggleChat={() => setMobileChatOpen((open) => !open)}
-            onReaction={(assetId) => void handleCustomEmojiReaction(assetId)}
-          />
+          <LiveFeatureErrorBoundary featureLabel="Actions">
+            <LiveMobileDock
+              chatOpen={mobileChatOpen}
+              onJoinConversation={handleJoinConversation}
+              onReaction={(assetId) => {
+                handleCustomEmojiReaction(assetId);
+              }}
+            />
+          </LiveFeatureErrorBoundary>
 
           <footer className="hidden border-t border-white/10 px-5 py-3 font-body text-xs text-white/55 lg:flex lg:items-center lg:justify-between">
             <span>{attendeeName}</span>
