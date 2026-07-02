@@ -13,6 +13,8 @@ export default function CustomEmojiAnimator({ assetId, onComplete }: CustomEmoji
   const [driftX] = useState(() => (Math.random() > 0.5 ? 1 : -1) * (8 + Math.floor(Math.random() * 18)));
   const [useFallback, setUseFallback] = useState(false);
   const reaction = getLiveReactionDefinition(assetId);
+  const isFullBodySticker =
+    assetId === "praise_break" || assetId === "praise_break_man";
 
   const animationStyle = useMemo(
     () =>
@@ -73,7 +75,9 @@ export default function CustomEmojiAnimator({ assetId, onComplete }: CustomEmoji
           <img
             src={reaction.imageSrc}
             alt=""
-            className="h-14 w-14 object-contain drop-shadow-[0_4px_14px_rgba(0,0,0,0.85)]"
+            className={`object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.55)] ${
+              isFullBodySticker ? "h-24 w-24" : "h-14 w-14"
+            }`}
             onError={() => setUseFallback(true)}
           />
         )}

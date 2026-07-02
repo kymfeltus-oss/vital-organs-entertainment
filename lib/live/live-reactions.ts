@@ -3,6 +3,7 @@ export const LIVE_REACTION_ASSET_IDS = [
   "heart_reaction",
   "seed_fire",
   "praise_break",
+  "praise_break_man",
   "hallelujah",
   "awakening_glow",
 ] as const;
@@ -16,6 +17,7 @@ export type LiveReactionDefinition = {
   imageSrc: string | null;
   chatNotice: string;
   ledgerLabel: string;
+  accessibilityLabel?: string;
 };
 
 const REACTION_DEFINITIONS: Record<LiveReactionAssetId, LiveReactionDefinition> = {
@@ -39,9 +41,19 @@ const REACTION_DEFINITIONS: Record<LiveReactionAssetId, LiveReactionDefinition> 
     assetId: "praise_break",
     label: "Praise Break",
     emoji: "💃🏿",
-    imageSrc: null,
-    chatNotice: "💃🏿 Praise break!",
+    imageSrc: "/images/emojis/praise-break-woman.png",
+    chatNotice: "Praise break!",
     ledgerLabel: "Praise Break",
+    accessibilityLabel: "Praise break, woman dancing",
+  },
+  praise_break_man: {
+    assetId: "praise_break_man",
+    label: "Praise Break",
+    emoji: "👨🏿‍💼",
+    imageSrc: "/images/emojis/praise-break-man.png",
+    chatNotice: "Praise break!",
+    ledgerLabel: "Praise Break",
+    accessibilityLabel: "Praise break, man in suit dancing",
   },
   hallelujah: {
     assetId: "hallelujah",
@@ -61,11 +73,12 @@ const REACTION_DEFINITIONS: Record<LiveReactionAssetId, LiveReactionDefinition> 
   },
 };
 
-/** Primary tray shown to attendees (Heart, Fire, Praise Break, Hallelujah). */
+/** Primary tray shown to attendees (Heart, Fire, Praise Break ×2, Hallelujah). */
 export const LIVE_REACTION_TRAY: LiveReactionDefinition[] = [
   REACTION_DEFINITIONS.heart_reaction,
   REACTION_DEFINITIONS.seed_fire,
   REACTION_DEFINITIONS.praise_break,
+  REACTION_DEFINITIONS.praise_break_man,
   REACTION_DEFINITIONS.hallelujah,
 ];
 
