@@ -31,16 +31,24 @@ export default function LivePageRouterClient({
     initialConfig,
   });
 
-  const { attendeeUiPhase } = useLiveStreamState({
+  const { attendeeUiPhase, isLive } = useLiveStreamState({
     enabled: !forceHoldingRoom,
     initialAttendeeUiPhase: initialPhase,
   });
 
   useEffect(() => {
     if (forceHoldingRoom) return;
-    if (!attendeeUiPhase || attendeeUiPhase === currentPhase) return;
-    setCurrentPhase(attendeeUiPhase);
-  }, [attendeeUiPhase, currentPhase, forceHoldingRoom]);
+
+    const promotedPhase: AttendeeUiPhase =
+      isLive || attendeeUiPhase === "live"
+        ? "live"
+        : attendeeUiPhase === "ended"
+          ? "ended"
+          : "pre_show";
+
+    if (promotedPhase === currentPhase) return;
+    setCurrentPhase(promotedPhase);
+  }, [attendeeUiPhase, currentPhase, forceHoldingRoom, isLive]);
 
   if (currentPhase === "live") {
     return (
