@@ -1,0 +1,254 @@
+"use client";
+
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type RefObject,
+} from "react";
+import Link from "next/link";
+import { Sparkles } from "lucide-react";
+import { buildAttendeeGateUrl } from "@/lib/auth/routing";
+import { chatAuthorColorClass } from "@/lib/experience/chat-author-color";
+import {
+  FELLOWSHIP_MAX_CONTENT_LENGTH,
+  type FellowshipChatMessage,
+} from "@/lib/experience/fellowship-chat";
+import { useFellowshipChat } from "@/lib/experience/useFellowshipChat";
+import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
+
+export type LiveStreamChatHandle = {
+  /** Force-append a notice line into the feed (best-effort persist via Fellowship Chat). */
+  postNotice: (text: string) => void;
+};
+
+type LiveStreamChatLayout = "sidebar" | "responsive";
+
+type LiveStreamChatProps = {
+  profile: AttendeeProfileSnapshot | null;
+  seedBalance: number;
+  className?: string;
+  signInHref?: string;
+  /** sidebar = desktop panel; responsive = IG overlay on mobile, sidebar on lg+ */
+  layout?: LiveStreamChatLayout;
+};
+
+type LocalNoticeLine = FellowshipChatMessage & {
+  isSystemNotice: true;
+};
+
+function buildLocalNotice(text: string): LocalNoticeLine {
+  return {
+    id: `notice-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+    userId: "system",
+    author: "System Notice",
+    body: text,
+    createdAt: new Date().toISOString(),
+    isPinned: false,
+    isSystemNotice: true,
+  };
+}
+
+function ScrollToBottom({
+  containerRef,
+  dependencyKey,
+}: {
+  containerRef: RefObject<HTMLDivElement | null>;
+  dependencyKey: number;
+}) {
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    node.scrollTop = node.scrollHeight;
+  }, [containerRef, dependencyKey]);
+
+  return null;
+}
+
+/**
+ * YouTube-style live chat panel for the attendee `/live` sidebar.
+ * Backed by Fellowship Chat (`chat_messages` + Supabase Realtime via useFellowshipChat).
+ */
+const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
+  function LiveStreamChat(
+    { profile, seedBalance, className, signInHref = "/live", layout = "responsive" },
+    ref,
+  ) {
+    const isResponsive = layout === "responsive";
+    const { messages, session, isSending, error, sendMessage, clearError } = useFellowshipChat();
+    const [draft, setDraft] = useState("");
+    const [localNotices, setLocalNotices] = useState<LocalNoticeLine[]>([]);
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    const profileUserId = profile?.userId ?? null;
+
+    const postNotice = useCallback(
+      (text: string) => {
+        const trimmed = text.trim();
+        if (!trimmed) return;
+
+        const notice = buildLocalNotice(trimmed);
+        setLocalNotices((current) => [...current, notice]);
+
+        // Best-effort persist — never blocks parent emoji rendering; slow-mode failures are ignored.
+        if (session.canSend) {
+          void sendMessage(trimmed);
+        }
+      },
+      [sendMessage, session.canSend],
+    );
+
+    useImperativeHandle(ref, () => ({ postNotice }), [postNotice]);
+
+    const feedLines = useMemo(() => {
+      const persistedIds = new Set(messages.map((message) => message.id));
+      const pendingNotices = localNotices.filter((notice) => {
+        if (persistedIds.has(notice.id)) return false;
+        return !messages.some(
+          (message) =>
+            message.body === notice.body &&
+            Math.abs(
+              new Date(message.createdAt).getTime() - new Date(notice.createdAt).getTime(),
+            ) < 15_000,
+        );
+      });
+      return [...messages, ...pendingNotices];
+    }, [localNotices, messages]);
+
+    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const trimmed = draft.trim();
+      if (!trimmed) return;
+      void sendMessage(trimmed).then((ok) => {
+        if (ok) setDraft("");
+      });
+    };
+
+    const rootClass = isResponsive
+      ? "max-lg:absolute max-lg:inset-0 max-lg:flex max-lg:flex-col max-lg:justify-end max-lg:overflow-hidden max-lg:pointer-events-none lg:flex lg:min-h-0 lg:flex-col"
+      : "flex min-h-0 flex-col";
+
+    const headerClass = isResponsive ? "hidden lg:flex" : "flex";
+    const feedClass = isResponsive
+      ? "viewer-pov-chat-mask pointer-events-none absolute left-[clamp(0.75rem,3vw,1.25rem)] z-20 max-h-[32%] max-w-[min(82%,20rem)] overflow-hidden max-lg:bottom-[calc(var(--live-mobile-dock-h)+var(--live-mobile-composer-h)+0.5rem)] min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3 sm:px-5 lg:relative lg:inset-auto lg:max-h-none lg:max-w-none lg:flex-1"
+      : "min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3 sm:px-5";
+
+    const composerShellClass = isResponsive
+      ? "max-lg:absolute max-lg:inset-x-[clamp(0.75rem,3vw,1.25rem)] max-lg:bottom-[var(--live-mobile-dock-h)] max-lg:z-30 max-lg:border-0 max-lg:px-0 max-lg:py-0 max-lg:pointer-events-auto shrink-0 border-t border-white/10 px-4 py-3 sm:px-5 lg:relative lg:inset-auto"
+      : "shrink-0 border-t border-white/10 px-4 py-3 sm:px-5";
+
+    return (
+      <div className={`${rootClass} ${className ?? ""}`}>
+        <div
+          className={`${headerClass} shrink-0 items-center justify-between border-b border-white/10 px-4 py-2.5 sm:px-5`}
+        >
+          <p className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.2em] text-brand-blue">
+            Live Chat
+          </p>
+          <span className="inline-flex items-center gap-1 font-ui text-[0.55rem] font-bold uppercase tracking-[0.1em] text-brand-muted">
+            <Sparkles className="h-3 w-3 text-amber-300" aria-hidden="true" />
+            {seedBalance.toLocaleString("en-US")} Seeds
+          </span>
+        </div>
+
+        <div
+          ref={scrollRef}
+          className={feedClass}
+          aria-live="polite"
+          aria-label="Live chat messages"
+        >
+          <ScrollToBottom containerRef={scrollRef} dependencyKey={feedLines.length} />
+          <div className={isResponsive ? "viewer-pov-chat-scroll flex flex-col justify-end gap-2.5" : "contents"}>
+            {feedLines.length === 0 ? (
+              <p
+                className={`font-body text-brand-muted viewer-pov-text-shadow ${isResponsive ? "text-xs text-white/55" : "text-sm"}`}
+              >
+                Be the first to say hello to the room.
+              </p>
+            ) : (
+              feedLines.map((message) => {
+                const isOwn =
+                  Boolean(profileUserId) &&
+                  message.userId === profileUserId &&
+                  !("isSystemNotice" in message && message.isSystemNotice);
+                return (
+                  <p
+                    key={message.id}
+                    className={`font-body leading-snug text-white viewer-pov-text-shadow ${isResponsive ? "text-[0.9rem] max-lg:text-sm" : "text-sm"}`}
+                  >
+                    <span
+                      className={`font-ui text-xs font-bold ${chatAuthorColorClass(message.userId)}`}
+                    >
+                      {message.author}
+                      {isOwn ? " (you)" : ""}
+                    </span>{" "}
+                    <span className="text-white/90">{message.body}</span>
+                  </p>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        <div className={composerShellClass}>
+          {error ? (
+            <button
+              type="button"
+              onClick={clearError}
+              className="mb-2 block w-full truncate text-left font-body text-xs text-brand-pink"
+            >
+              {error}
+            </button>
+          ) : null}
+          {!session.authenticated ? (
+            <Link
+              href={buildAttendeeGateUrl(signInHref)}
+              className={`touch-target inline-flex min-h-11 w-full items-center justify-center rounded-full border border-brand-blue/40 bg-brand-blue/10 px-4 font-ui text-[0.62rem] font-bold uppercase tracking-[0.12em] text-brand-blue ${isResponsive ? "max-lg:bg-black/50 max-lg:backdrop-blur-md" : ""}`}
+            >
+              Sign in to join chat
+            </Link>
+          ) : !session.canSend ? (
+            <p
+              className={`rounded-full bg-black/40 px-4 py-3 text-center font-ui text-xs font-bold uppercase tracking-[0.14em] text-brand-muted ${isResponsive ? "max-lg:bg-black/50 max-lg:backdrop-blur-md" : ""}`}
+              role="status"
+            >
+              Muted
+            </p>
+          ) : (
+            <form onSubmit={handleSubmit} className="flex items-center gap-2">
+              <label className="sr-only" htmlFor="live-stream-chat-input">
+                Join the conversation
+              </label>
+              <input
+                id="live-stream-chat-input"
+                type="text"
+                enterKeyHint="send"
+                autoComplete="off"
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder="Say something..."
+                disabled={isSending}
+                maxLength={FELLOWSHIP_MAX_CONTENT_LENGTH}
+                className={`h-11 min-w-0 flex-1 rounded-full border border-white/10 bg-black/45 px-4 font-body text-sm text-white placeholder:text-white/45 focus:outline-none focus:ring-2 focus:ring-brand-blue/35 ${isResponsive ? "max-lg:h-12 max-lg:bg-black/50 max-lg:backdrop-blur-md" : ""}`}
+              />
+              <button
+                type="submit"
+                disabled={isSending || !draft.trim()}
+                className="touch-target shrink-0 rounded-full border border-brand-blue/40 bg-brand-blue/15 px-4 py-2.5 font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-blue disabled:opacity-40"
+              >
+                Send
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    );
+  },
+);
+
+export default LiveStreamChat;

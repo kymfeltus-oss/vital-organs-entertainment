@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { X } from "lucide-react";
 import CustomEmojiAnimator from "@/components/experience/live/CustomEmojiAnimator";
+import LiveStreamChat, {
+  type LiveStreamChatHandle,
+} from "@/components/experience/live/LiveStreamChat";
 import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
@@ -176,7 +179,7 @@ function HlsVideoPlayer({
     <>
       <video
         ref={videoRef}
-        className="absolute inset-0 h-full w-full bg-black object-contain"
+        className="absolute inset-0 h-full w-full bg-black object-cover lg:object-contain"
         controls
         controlsList="nodownload noremoteplayback"
         disablePictureInPicture
@@ -203,7 +206,7 @@ function HlsVideoPlayer({
         <button
           type="button"
           onClick={onEnableAudio}
-          className="absolute bottom-5 left-1/2 z-10 min-h-11 -translate-x-1/2 rounded border border-brand-border bg-black/55 px-6 py-4 text-center font-ui text-[0.68rem] font-bold uppercase tracking-[0.14em] text-brand-blue backdrop-blur"
+          className="absolute bottom-[calc(var(--live-mobile-dock-h)+var(--live-mobile-composer-h)+1rem)] left-1/2 z-10 min-h-11 -translate-x-1/2 rounded border border-brand-border bg-black/55 px-6 py-4 text-center font-ui text-[0.68rem] font-bold uppercase tracking-[0.14em] text-brand-blue backdrop-blur lg:bottom-5"
         >
           TAP FOR AUDIO / UNMUTE
         </button>
@@ -220,6 +223,7 @@ export default function LiveExperienceClient({
   const attendeeName = initialProfile.headerDisplayName || initialProfile.email || "Guest";
   const videoRef = useRef<HTMLVideoElement>(null);
   const directVideoRef = useRef<HTMLVideoElement>(null);
+  const liveChatRef = useRef<LiveStreamChatHandle>(null);
   const hlsCleanupRef = useRef<(() => void) | null>(null);
   const hlsInstanceRef = useRef<import("hls.js").default | null>(null);
   const hlsRetryCountRef = useRef(0);
@@ -1308,6 +1312,11 @@ export default function LiveExperienceClient({
   const handleCustomEmojiReaction = useCallback(
     (assetId: string) => {
       const label = assetId === "awakening_glow" ? "Awakening Glow" : "Fire Seed";
+      const chatNotice =
+        assetId === "awakening_glow" ? "\u2728 Awakening Glow" : "\uD83D\uDD25 sent a Fire Seed";
+
+      // Chat notice fires immediately — independent of seed deduct / slow-mode.
+      liveChatRef.current?.postNotice(chatNotice);
 
       void executeSeedDeduction(
         EMOJI_REACTION_COST,
@@ -1354,15 +1363,17 @@ export default function LiveExperienceClient({
   const walletLabel = seedBalanceLoading ? "..." : seedBalance.toLocaleString("en-US");
 
   return (
-    <main className="min-h-dvh bg-brand-black text-white">
-      <div className="grid min-h-dvh grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
-        <section className="relative flex min-h-[52dvh] flex-col bg-[#050505] lg:min-h-dvh">
-          <header className="relative flex items-center justify-between border-b border-white/10 px-4 py-3 pr-16 sm:px-6 sm:pr-20">
+    <main
+      className="live-sanctuary-experience min-h-dvh bg-brand-black text-white [--live-mobile-composer-h:4.25rem] [--live-mobile-dock-h:calc(4.25rem+max(0.5rem,env(safe-area-inset-bottom)))]"
+    >
+      <div className="relative min-h-dvh lg:grid lg:min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
+        <section className="relative min-h-dvh w-full bg-[#050505]">
+          <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between border-b border-white/10 bg-gradient-to-b from-black/85 via-black/55 to-transparent px-4 py-3 pr-16 sm:px-6 sm:pr-20 lg:relative lg:bg-[#050505] lg:from-transparent lg:via-transparent lg:to-transparent">
             <div>
               <p className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.22em] text-brand-blue">
                 300 Awakening
               </p>
-              <h1 className="font-headline text-xl uppercase tracking-[0.08em] sm:text-2xl">
+              <h1 className="font-headline text-lg uppercase tracking-[0.08em] sm:text-2xl">
                 Live Sanctuary Feed
               </h1>
             </div>
@@ -1386,13 +1397,13 @@ export default function LiveExperienceClient({
             </Link>
           </header>
 
-          <div className="relative min-h-0 flex-1 overflow-hidden">
-            <div className="relative aspect-video w-full bg-black lg:h-full lg:min-h-[calc(100dvh-4.5rem)] lg:aspect-auto">
+          <div className="relative h-dvh w-full lg:h-auto lg:min-h-[calc(100dvh-4.5rem)]">
+            <div className="absolute inset-0 bg-black lg:relative lg:inset-auto lg:h-full lg:min-h-[calc(100dvh-4.5rem)]">
               {showDirectPlayer ? (
                 <>
                   <video
                     ref={directVideoRef}
-                    className="absolute inset-0 h-full w-full bg-black object-contain"
+                    className="absolute inset-0 h-full w-full bg-black object-cover lg:object-contain"
                     controls
                     playsInline
                     autoPlay
@@ -1408,7 +1419,7 @@ export default function LiveExperienceClient({
                     <button
                       type="button"
                       onClick={enableDirectAudio}
-                      className="absolute bottom-5 left-1/2 z-10 min-h-11 -translate-x-1/2 rounded-full border border-brand-blue/50 bg-black/75 px-5 font-ui text-[0.68rem] font-bold uppercase tracking-[0.14em] text-brand-blue backdrop-blur"
+                      className="absolute bottom-[calc(var(--live-mobile-dock-h)+var(--live-mobile-composer-h)+1rem)] left-1/2 z-10 min-h-11 -translate-x-1/2 rounded-full border border-brand-blue/50 bg-black/75 px-5 font-ui text-[0.68rem] font-bold uppercase tracking-[0.14em] text-brand-blue backdrop-blur lg:bottom-5"
                     >
                       Tap for audio
                     </button>
@@ -1434,85 +1445,123 @@ export default function LiveExperienceClient({
               ))}
             </div>
           </div>
-
-          <footer className="flex items-center justify-between border-t border-white/10 px-4 py-3 font-body text-xs text-white/55 sm:px-6 lg:hidden">
-            <span>{attendeeName}</span>
-            <span>{manifest.message}</span>
-          </footer>
         </section>
 
-        <aside className="flex min-h-[40dvh] flex-col border-t border-white/10 bg-brand-panel lg:min-h-dvh lg:border-l lg:border-t-0">
-          <div className="border-b border-white/10 px-4 py-4 sm:px-5">
-            <p className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.2em] text-brand-purple">
-              Live Activity Ledger
-            </p>
-            <p className="mt-1 font-body text-sm text-brand-muted">
-              Reactions, seeds, and real-time stage energy.
-            </p>
-          </div>
+        <aside className="pointer-events-none fixed inset-0 z-30 flex flex-col lg:pointer-events-auto lg:static lg:inset-auto lg:z-auto lg:min-h-dvh lg:border-l lg:border-white/10 lg:bg-brand-panel">
+          <div className="hidden lg:block">
+            <div className="border-b border-white/10 px-4 py-4 sm:px-5">
+              <p className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.2em] text-brand-purple">
+                Live Activity Ledger
+              </p>
+              <p className="mt-1 font-body text-sm text-brand-muted">
+                Reactions, seeds, and real-time stage energy.
+              </p>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-2 border-b border-white/10 px-4 py-3 sm:px-5">
-            <span className="inline-flex min-h-11 items-center rounded-full border border-brand-blue/40 bg-brand-blue/10 px-4 font-ui text-[0.72rem] font-bold tracking-[0.08em] text-white">
-              ✨ {walletLabel} Seeds
-            </span>
-            <button
-              type="button"
-              onClick={handleAddSeeds}
-              className="touch-target inline-flex min-h-11 items-center justify-center rounded-full border border-brand-pink/45 bg-brand-pink/10 px-4 font-ui text-[0.68rem] font-bold uppercase tracking-[0.12em] text-brand-pink"
-            >
-              Buy Seeds
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 border-b border-white/10 px-4 py-3 sm:px-5">
-            {CUSTOM_REACTIONS.map((reaction) => (
+            <div className="flex flex-wrap items-center gap-2 border-b border-white/10 px-4 py-3 sm:px-5">
+              <span className="inline-flex min-h-11 items-center rounded-full border border-brand-blue/40 bg-brand-blue/10 px-4 font-ui text-[0.72rem] font-bold tracking-[0.08em] text-white">
+                ✨ {walletLabel} Seeds
+              </span>
               <button
-                key={reaction.assetId}
+                type="button"
+                onClick={handleAddSeeds}
+                className="touch-target inline-flex min-h-11 items-center justify-center rounded-full border border-brand-pink/45 bg-brand-pink/10 px-4 font-ui text-[0.68rem] font-bold uppercase tracking-[0.12em] text-brand-pink"
+              >
+                Buy Seeds
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 border-b border-white/10 px-4 py-3 sm:px-5">
+              {CUSTOM_REACTIONS.map((reaction) => (
+                <button
+                  key={reaction.assetId}
+                  type="button"
+                  disabled={isDeductingSeeds}
+                  onClick={() => void handleCustomEmojiReaction(reaction.assetId)}
+                  className="touch-target inline-flex min-h-11 flex-col items-center justify-center rounded-xl border border-white/10 bg-white/5 px-3 py-2 font-ui text-[0.62rem] font-bold uppercase tracking-[0.1em] text-white transition hover:border-brand-blue/40 hover:bg-brand-blue/10 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span>{reaction.label}</span>
+                  <span className="mt-1 text-[0.55rem] font-normal normal-case tracking-normal text-brand-muted">
+                    5 Seeds
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="border-b border-white/10 px-4 py-3 sm:px-5">
+              <button
                 type="button"
                 disabled={isDeductingSeeds}
-                onClick={() => void handleCustomEmojiReaction(reaction.assetId)}
-                className="touch-target inline-flex min-h-11 flex-col items-center justify-center rounded-xl border border-white/10 bg-white/5 px-3 py-2 font-ui text-[0.62rem] font-bold uppercase tracking-[0.1em] text-white transition hover:border-brand-blue/40 hover:bg-brand-blue/10 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={handleQuickSow}
+                className="touch-target inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-gradient-to-r from-brand-pink via-brand-purple to-brand-blue px-5 py-2.5 font-ui text-xs font-extrabold uppercase tracking-[0.14em] text-white shadow-xl transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <span>{reaction.label}</span>
-                <span className="mt-1 text-[0.55rem] font-normal normal-case tracking-normal text-brand-muted">
-                  5 Seeds
-                </span>
+                {"\uD83D\uDE4C SOW 100 SEEDS"}
               </button>
-            ))}
+            </div>
+
+            <div className="max-h-36 shrink-0 overflow-y-auto px-4 py-3 sm:px-5">
+              {ledgerEntries.length === 0 ? (
+                <p className="font-body text-sm text-brand-muted">
+                  Tap a reaction to energize the sanctuary feed.
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {ledgerEntries.map((entry) => (
+                    <li
+                      key={entry.id}
+                      className="rounded-lg border border-white/8 bg-black/30 px-3 py-2"
+                    >
+                      <p className="font-ui text-[0.68rem] font-bold uppercase tracking-[0.08em] text-white">
+                        {entry.label}
+                      </p>
+                      <p className="mt-1 font-body text-xs text-brand-muted">{entry.detail}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
 
-          <div className="border-b border-white/10 px-4 py-3 sm:px-5">
-            <button
-              type="button"
-              disabled={isDeductingSeeds}
-              onClick={handleQuickSow}
-              className="touch-target inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-gradient-to-r from-brand-pink via-brand-purple to-brand-blue px-5 py-2.5 font-ui text-xs font-extrabold uppercase tracking-[0.14em] text-white shadow-xl transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {"\uD83D\uDE4C SOW 100 SEEDS"}
-            </button>
-          </div>
+          <LiveStreamChat
+            ref={liveChatRef}
+            profile={initialProfile?.userId ? initialProfile : null}
+            seedBalance={seedBalance}
+            signInHref={EXPERIENCE_LIVE_PATH}
+            layout="responsive"
+            className="min-h-0 flex-1 lg:border-t lg:border-white/10"
+          />
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5">
-            {ledgerEntries.length === 0 ? (
-              <p className="font-body text-sm text-brand-muted">
-                Tap a reaction to energize the sanctuary feed.
-              </p>
-            ) : (
-              <ul className="space-y-2">
-                {ledgerEntries.map((entry) => (
-                  <li
-                    key={entry.id}
-                    className="rounded-lg border border-white/8 bg-black/30 px-3 py-2"
-                  >
-                    <p className="font-ui text-[0.68rem] font-bold uppercase tracking-[0.08em] text-white">
-                      {entry.label}
-                    </p>
-                    <p className="mt-1 font-body text-xs text-brand-muted">{entry.detail}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <footer className="pointer-events-auto absolute inset-x-0 bottom-0 z-40 border-t border-white/10 bg-black/75 backdrop-blur-xl lg:hidden">
+            <div className="flex items-center gap-2 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+              <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-full border border-brand-blue/30 bg-brand-blue/10 px-3 py-2">
+                <span className="font-ui text-[0.5rem] font-bold uppercase tracking-[0.16em] text-brand-muted">
+                  Seeds
+                </span>
+                <span className="min-w-0 truncate font-ui text-sm font-bold tabular-nums text-brand-blue">
+                  {walletLabel}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleAddSeeds}
+                  className="touch-target ml-auto shrink-0 rounded-full border border-brand-pink/45 bg-brand-pink/10 px-3 py-1.5 font-ui text-[0.55rem] font-bold uppercase tracking-[0.1em] text-brand-pink"
+                >
+                  Buy
+                </button>
+              </div>
+              {CUSTOM_REACTIONS.map((reaction) => (
+                <button
+                  key={reaction.assetId}
+                  type="button"
+                  disabled={isDeductingSeeds}
+                  onClick={() => void handleCustomEmojiReaction(reaction.assetId)}
+                  className="touch-target flex h-10 shrink-0 flex-col items-center justify-center rounded-full border border-white/15 bg-white/5 px-2.5 font-ui text-[0.45rem] font-bold uppercase tracking-[0.08em] text-white disabled:opacity-50"
+                >
+                  <span className="text-[0.55rem]">{reaction.label.split(" ")[0]}</span>
+                  <span className="text-[0.4rem] font-normal normal-case text-brand-muted">5</span>
+                </button>
+              ))}
+            </div>
+          </footer>
 
           <footer className="hidden border-t border-white/10 px-5 py-3 font-body text-xs text-white/55 lg:flex lg:items-center lg:justify-between">
             <span>{attendeeName}</span>
