@@ -18,7 +18,7 @@ export type LiveReactionDefinition = {
 
 export const LIVE_REACTION_CATALOG: readonly LiveReactionDefinition[] = [
   { type: "fire", label: "Fire", emoji: "🔥" },
-  { type: "praise", label: "Praise", emoji: "🙌" },
+  { type: "praise", label: "Praise", emoji: "🙌🏿" },
   { type: "heart", label: "Heart", emoji: "❤️" },
   { type: "pray", label: "Pray", emoji: "🙏" },
   { type: "seed", label: "Seed", emoji: "🌱" },

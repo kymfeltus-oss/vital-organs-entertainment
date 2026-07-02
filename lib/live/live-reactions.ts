@@ -38,17 +38,17 @@ const REACTION_DEFINITIONS: Record<LiveReactionAssetId, LiveReactionDefinition> 
   praise_break: {
     assetId: "praise_break",
     label: "Praise Break",
-    emoji: "💃",
-    imageSrc: "/images/emojis/praise-break.png",
-    chatNotice: "💃 Praise break!",
+    emoji: "💃🏿",
+    imageSrc: null,
+    chatNotice: "💃🏿 Praise break!",
     ledgerLabel: "Praise Break",
   },
   hallelujah: {
     assetId: "hallelujah",
     label: "Hallelujah",
-    emoji: "🙌",
-    imageSrc: "/images/emojis/hallelujah.png",
-    chatNotice: "🙌 Hallelujah!",
+    emoji: "🙌🏿",
+    imageSrc: null,
+    chatNotice: "🙌🏿 Hallelujah!",
     ledgerLabel: "Hallelujah",
   },
   awakening_glow: {
