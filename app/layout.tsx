@@ -35,6 +35,11 @@ const oswald = Oswald({
 export const metadata: Metadata = {
   title: "300 Awakening",
   description: "Tap Into The Awakening",
+  icons: {
+    icon: "/images/logo.png",
+    shortcut: "/images/logo.png",
+    apple: "/images/logo.png",
+  },
 };
 
 export const viewport: Viewport = {

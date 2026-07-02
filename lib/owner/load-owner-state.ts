@@ -35,7 +35,16 @@ const SELECT_OWNER_FULL =
 const SELECT_OWNER_LEGACY = "id, is_live, playback_url, active_source, updated_at, updated_by";
 
 function isMissingColumnError(message: string): boolean {
-  return /column .+ does not exist/i.test(message) || message.includes("42703");
+  return (
+    // Postgres: relation column does not exist
+    /column .+ does not exist/i.test(message) ||
+    message.includes("42703") ||
+    // PostgREST schema-cache miss (PGRST204):
+    // "Could not find the 'publish_mode' column of 'live_stream_state' in the schema cache"
+    /could not find the '.+' column/i.test(message) ||
+    message.includes("PGRST204") ||
+    message.toLowerCase().includes("schema cache")
+  );
 }
 
 function normalizePublishMode(raw: unknown): PublishMode {
@@ -57,6 +66,9 @@ function normalizePublishStatus(raw: unknown, isLive: boolean): PublishStatus {
     raw === "ending" ||
     raw === "error"
   ) {
+    if (isLive && (raw === "offline" || raw === "preflight")) {
+      return "publishing";
+    }
     return raw;
   }
   if (isLive) return "publishing";

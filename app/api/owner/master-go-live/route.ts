@@ -7,6 +7,7 @@ import { ownerAuthFailureResponse, ownerJsonResponse, isOwnerAuthed } from "@/li
 
 export const dynamic = "force-dynamic";
 
+/** Flat alias — avoids Turbopack dev cache missing nested /broadcast/* routes. */
 export async function POST(request: Request) {
   const ip = resolveClientIp(request as NextRequest);
   const limit = await consumeRateLimit("owner-master-go-live", ip, { limit: 6, windowMs: 60_000 });
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     const detail = error instanceof Error ? error.message : "unknown";
-    console.error("[owner/broadcast/master-go-live] POST failed:", detail);
+    console.error("[owner/master-go-live] POST failed:", detail);
     return ownerJsonResponse({ error: detail || "Master go-live failed." }, 500);
   }
 }

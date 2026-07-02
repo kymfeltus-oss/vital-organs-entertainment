@@ -1,19 +1,27 @@
 import { requireOwnerUser } from "@/lib/owner/auth";
 import { ownerAuthFailureResponse, ownerJsonResponse, isOwnerAuthed } from "@/lib/owner/api-response";
-import { DEFAULT_AUDIO_LEVEL_TRACKS, type OwnerAudioTelemetry } from "@/lib/owner/audio-contracts";
+import { fetchOwnerAudioMixTelemetry } from "@/lib/owner/fetch-audio-mix-telemetry";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-  const auth = await requireOwnerUser();
-  if (!isOwnerAuthed(auth)) return ownerAuthFailureResponse(auth);
+export async function GET(_request: Request) {
+  try {
+    const auth = await requireOwnerUser();
+    if (!isOwnerAuthed(auth)) {
+      return ownerAuthFailureResponse(auth);
+    }
 
-  const telemetry: OwnerAudioTelemetry = {
-    tracks: DEFAULT_AUDIO_LEVEL_TRACKS,
-    capturedAt: new Date().toISOString(),
-    mediaNodeStatus: "offline",
-    mediaNodeDetail: "Audio telemetry service is not connected.",
-  };
-
-  return ownerJsonResponse({ ok: true, success: true, telemetry });
+    const telemetry = await fetchOwnerAudioMixTelemetry();
+    return ownerJsonResponse({ ok: true, success: true, telemetry });
+  } catch (error) {
+    console.error("[owner/audio/mix-state] GET failed:", error);
+    return ownerJsonResponse(
+      {
+        ok: false,
+        success: false,
+        error: error instanceof Error ? error.message : "Unable to load audio mix state.",
+      },
+      500,
+    );
+  }
 }

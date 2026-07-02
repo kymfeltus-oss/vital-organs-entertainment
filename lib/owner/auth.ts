@@ -27,13 +27,20 @@ export async function requireOwnerUser(): Promise<OwnerAuthResult> {
     };
   }
 
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  let user: { id: string; email?: string | null } | null = null;
+  try {
+    const supabase = await createServerSupabaseClient();
+    const result = await supabase.auth.getUser();
+    if (result.error || !result.data.user?.id) {
+      return { ok: false, status: 401, message: "Sign in required." };
+    }
+    user = result.data.user;
+  } catch (authError) {
+    console.error("[owner/auth] getUser failed:", authError);
+    return { ok: false, status: 401, message: "Sign in required." };
+  }
 
-  if (error || !user?.id) {
+  if (!user?.id) {
     return { ok: false, status: 401, message: "Sign in required." };
   }
 

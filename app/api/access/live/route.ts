@@ -5,6 +5,8 @@ import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { resolveAttendeeUiPhase } from "@/lib/live/attendee-ui-phase";
 import { loadOwnerStreamState } from "@/lib/owner/load-owner-state";
+import { resolveRestreamHlsUrl } from "@/lib/owner/restream-playback";
+import { readEncoderConfigFromStreamPresets } from "@/lib/owner/resolve-show-encoder-config";
 
 function normalizePublishMode(raw: unknown): LivePublishMode {
   if (
@@ -19,11 +21,25 @@ function normalizePublishMode(raw: unknown): LivePublishMode {
 
 function buildStreamFlags(streamRow: Awaited<ReturnType<typeof loadOwnerStreamState>>["row"]) {
   const streamIsLive = streamRow?.is_live === true;
+
+  // Resolve the attendee HLS URL from the row we already loaded (no extra query).
+  // Informational only — the /live player sources playback from /api/stream/manifest;
+  // this keeps the field truthful so it stops derailing debugging tools.
+  const encoder = readEncoderConfigFromStreamPresets(streamRow?.audio_master_presets);
+  const playbackUrl = streamIsLive
+    ? resolveRestreamHlsUrl({
+        showSetupHlsUrl: encoder.hlsPlaybackUrl,
+        primary_playback_url: streamRow?.primary_playback_url,
+        playback_url: streamRow?.playback_url,
+      }) ?? ""
+    : "";
+
   return {
     streamIsLive,
     attendeeUiPhase: resolveAttendeeUiPhase(streamRow),
     publishMode: normalizePublishMode(streamRow?.publish_mode),
     publisherChannel: streamRow?.publisher_channel ?? null,
+    playbackUrl,
   };
 }
 
@@ -59,7 +75,6 @@ export async function GET() {
           canViewStream: true,
           showStreamPaywall: false,
           showFullLockdown: false,
-          playbackUrl: "",
           ...streamFlags,
         });
       }
@@ -79,7 +94,6 @@ export async function GET() {
           canViewStream: true,
           showStreamPaywall: false,
           showFullLockdown: false,
-          playbackUrl: "",
           ...streamFlags,
         });
       }
@@ -95,7 +109,6 @@ export async function GET() {
     return NextResponse.json({
       ...evaluation,
       userId: context.userId,
-      playbackUrl: "",
       ...streamFlags,
     });
   } catch (error) {

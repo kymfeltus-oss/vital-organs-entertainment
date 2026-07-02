@@ -3,8 +3,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   getCountdownAriaLabel,
-  HOLDING_ROOM_STARTING_MESSAGE,
-  isCountdownStartingShortly,
   parseCountdownStartMs,
 } from "@/lib/experience/countdown-display";
 import type { AttendeeUiPhase } from "@/lib/live/attendee-ui-phase";
@@ -24,14 +22,6 @@ type HoldingRoomCountdownOverlayProps = {
   initialCountdownConfig?: EventCountdownConfig;
   initialCountdown?: CountdownParts;
   attendeeUiPhase?: AttendeeUiPhase;
-};
-
-/** Band across all four neon countdown circles on holding-room.png. */
-const STARTING_SHORTLY_BAND: HoldingRoomCountdownRect = {
-  left: 4,
-  top: 42.5,
-  width: 88,
-  height: 14,
 };
 
 function rectStyle(rect: HoldingRoomCountdownRect): CSSProperties {
@@ -80,8 +70,7 @@ export default function HoldingRoomCountdownOverlay({
   const hasStartTime =
     parseCountdownStartMs(config.start_time) !== null ||
     parseCountdownStartMs(initialCountdownConfig?.start_time) !== null;
-  const phaseForStartingShortly = attendeeUiPhase ?? eventPhase;
-  const startingShortly = isCountdownStartingShortly(countdown, phaseForStartingShortly);
+  const phase = attendeeUiPhase ?? eventPhase;
 
   const [mounted, setMounted] = useState(false);
 
@@ -104,8 +93,8 @@ export default function HoldingRoomCountdownOverlay({
 
   const ariaLabel = useMemo(() => {
     const snapshot = !mounted && initialCountdown ? initialCountdown : countdown;
-    return getCountdownAriaLabel(snapshot, phaseForStartingShortly, { isLoading, hasStartTime });
-  }, [countdown, hasStartTime, initialCountdown, isLoading, mounted, phaseForStartingShortly]);
+    return getCountdownAriaLabel(snapshot, phase, { isLoading, hasStartTime });
+  }, [countdown, hasStartTime, initialCountdown, isLoading, mounted, phase]);
 
   if (!hasStartTime) {
     return null;
@@ -118,33 +107,22 @@ export default function HoldingRoomCountdownOverlay({
       aria-label={ariaLabel}
       suppressHydrationWarning
     >
-      {startingShortly ? (
-        <div
-          className="holding-room-countdown__starting-soon"
-          style={rectStyle(STARTING_SHORTLY_BAND)}
-        >
-          <p className="holding-room-countdown__starting-soon-text font-ui">
-            {HOLDING_ROOM_STARTING_MESSAGE}
-          </p>
-        </div>
-      ) : (
-        HOLDING_ROOM_COUNTDOWN_UNITS.map((unit) => (
-          <div key={unit.id} aria-hidden="true">
-            <div
-              className="holding-room-countdown__label-unit"
-              style={rectStyle(unit.labelMask)}
-            >
-              <div className="holding-room-countdown__label font-ui">{unit.label}</div>
-            </div>
-            <div className="holding-room-countdown__unit" style={rectStyle(unit.valueMask)}>
-              <HoldingRoomCountdownDigit
-                value={values[unit.id]}
-                unitClass={HOLDING_ROOM_COUNTDOWN_VALUE_CLASS[unit.id]}
-              />
-            </div>
+      {HOLDING_ROOM_COUNTDOWN_UNITS.map((unit) => (
+        <div key={unit.id} aria-hidden="true">
+          <div
+            className="holding-room-countdown__label-unit"
+            style={rectStyle(unit.labelMask)}
+          >
+            <div className="holding-room-countdown__label font-ui">{unit.label}</div>
           </div>
-        ))
-      )}
+          <div className="holding-room-countdown__unit" style={rectStyle(unit.valueMask)}>
+            <HoldingRoomCountdownDigit
+              value={values[unit.id]}
+              unitClass={HOLDING_ROOM_COUNTDOWN_VALUE_CLASS[unit.id]}
+            />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

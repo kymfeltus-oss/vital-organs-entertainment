@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -13,16 +13,21 @@ import {
   RefreshCw,
   Square,
   Timer,
+  XCircle,
 } from "lucide-react";
 import {
   decodeGraphicsPresetMetadata,
   formatGraphicsTypeLabel,
-  type GraphicLayoutMode,
-  type GraphicPositionAnchor,
   type OwnerGraphicsPreset,
   OWNER_GRAPHICS_EVENT_ID,
 } from "@/lib/owner/graphics-data-plane";
-import type { OwnerAudioTelemetry } from "@/lib/owner/audio-contracts";
+import {
+  AUDIO_SILENCE_FLOOR_DB,
+  COCKPIT_AUDIO_TRACK_SPECS,
+  type AudioLevelTrack,
+  type CockpitAudioTrackId,
+  type OwnerAudioTelemetry,
+} from "@/lib/owner/audio-contracts";
 import type {
   ActiveFeedSource,
   EventPhase,
@@ -40,12 +45,15 @@ import {
   formatBroadcastVideoDefaultLabel,
 } from "@/lib/owner/preflight";
 import { getSupabase } from "@/lib/supabase/client";
+import GoLiveMasterOverrideDialog, {
+  type GoLiveFeedback,
+} from "@/components/owner/GoLiveMasterOverrideDialog";
 import OwnerProductionSideMenu from "@/components/owner/OwnerProductionSideMenu";
-import {
-  BroadcastLowerThirdPreset,
-  BroadcastPresentationSlate,
-  BroadcastVideoCanvas,
-} from "@/components/owner/BroadcastGraphicPresets";
+import ProgramReturnPanel from "@/components/owner/ProgramReturnPanel";
+import RestreamEncoderPanel, {
+  type RestreamEncoderFields,
+} from "@/components/owner/RestreamEncoderPanel";
+import type { EncoderHealthStatus } from "@/lib/owner/encoder-health";
 
 type ApiPresetResponse = {
   success: boolean;
@@ -71,6 +79,8 @@ type BroadcastResponse = {
 
 type DestinationKey = "youtube" | "facebook" | "twitch";
 
+type BroadcastAction = "idle" | "master-go-live" | "stop";
+
 type RestreamDestinations = Record<DestinationKey, boolean>;
 
 type ShowSetupStatePayload = {
@@ -78,6 +88,9 @@ type ShowSetupStatePayload = {
   presenterName?: string;
   targetDateTime?: string;
   scheduleTimezone?: ScheduleTimezone;
+  primaryIngestEndpoint?: string;
+  streamKey?: string;
+  attendeePlaybackHlsUrl?: string;
   restreamDestinations?: Partial<RestreamDestinations>;
 };
 
@@ -86,6 +99,20 @@ type ShowSetupResponse = {
   state?: ShowSetupStatePayload;
   message?: string;
   error?: string;
+};
+
+type EncoderHealthResponse = {
+  ok?: boolean;
+  status?: EncoderHealthStatus;
+  label?: string;
+  detail?: string | null;
+  error?: string;
+};
+
+const EMPTY_ENCODER_FIELDS: RestreamEncoderFields = {
+  primaryIngestEndpoint: "",
+  streamKey: "",
+  attendeePlaybackHlsUrl: "",
 };
 
 function parseOwnerApiError(
@@ -100,6 +127,76 @@ function parseOwnerApiError(
     return "Owner access denied. Sign in with an email listed in ADMIN_EMAILS.";
   }
   return json.error || json.message || fallback;
+}
+
+async function readOwnerApiJson<T>(response: Response, routeLabel: string): Promise<T> {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    if (response.status === 404) {
+      throw new Error(
+        `${routeLabel} returned 404 HTML. Restart dev server (npm run dev) — API route not loaded.`,
+      );
+    }
+    throw new Error(
+      `${routeLabel} returned non-JSON (HTTP ${response.status}). Restart dev server and try again.`,
+    );
+  }
+
+  try {
+    return (await response.json()) as T;
+  } catch {
+    throw new Error(`${routeLabel} returned invalid JSON (HTTP ${response.status}).`);
+  }
+}
+
+function buildGoLiveFeedback(
+  snapshot: OwnerBroadcastSnapshot | undefined,
+  apiMessage: string,
+  apiOk = false,
+): GoLiveFeedback {
+  const isPublishing = snapshot?.publish.status === "publishing";
+
+  if (!isPublishing && !apiOk) {
+    return {
+      kind: "error",
+      message: "Go Live failed.",
+      detail:
+        snapshot?.publish.errorMessage ??
+        apiMessage ??
+        "Stream engine did not reach publishing state.",
+    };
+  }
+
+  if (!isPublishing && apiOk) {
+    return {
+      kind: "success",
+      message: "Go Live command accepted.",
+      detail:
+        apiMessage ||
+        "Stream state is syncing — STOP STREAMING should enable in a moment.",
+    };
+  }
+
+  const hlsUrl = snapshot!.feed.primary.hlsUrl ?? snapshot!.playback.hlsUrl;
+  const manifestReady =
+    snapshot!.feed.primary.manifestReachable || snapshot!.playback.manifestReachable;
+
+  let detail: string;
+  if (!hlsUrl) {
+    detail = "Platform is live but no HLS URL is configured. Save one in the encoder panel.";
+  } else if (!manifestReady) {
+    detail =
+      apiMessage ||
+      "Platform is live. Start your encoder — the HLS manifest is not reachable yet.";
+  } else {
+    detail = "Attendees on /live should receive playback.";
+  }
+
+  return {
+    kind: "success",
+    message: "Go Live succeeded. Broadcast is on air for attendees.",
+    detail,
+  };
 }
 
 type AudioMixStateResponse = {
@@ -147,8 +244,7 @@ function streamEngineLabel(status: PublishStatus): string {
 }
 
 function sourceLaneLabel(source: ActiveFeedSource): string {
-  if (source === "primary") return "SOURCE: RESTREAM PRIMARY CDN";
-  if (source === "backup") return "SOURCE: AMAZON IVS FALLBACK LANE";
+  if (source === "primary") return "SOURCE: RESTREAM HLS";
   return "SOURCE: STANDBY";
 }
 
@@ -163,7 +259,6 @@ function publishBadgeTone(status: PublishStatus): string {
 
 function sourceBadgeTone(source: ActiveFeedSource): string {
   if (source === "primary") return "border-lime-300/35 bg-lime-300/10 text-lime-300";
-  if (source === "backup") return "border-amber-300/35 bg-amber-300/10 text-amber-300";
   return "border-white/10 bg-white/5 text-white/45";
 }
 
@@ -179,7 +274,38 @@ function formatEventPhaseHeader(phase: EventPhase): string {
   return `Event Phase: ${phase.replace(/_/g, " ")}`;
 }
 
-const DB_STEPS = [0, -6, -12, -18, -24, -30, -36, -42, -48, -54, -60];
+const DB_STEPS = [0, -6, -12, -18, -24, -30, -36, -42, -48, -54, -60, -72, -90];
+const METER_SEGMENT_COUNT = 20;
+const METER_VISUAL_FLOOR_DB = -60;
+
+function meterActiveSegments(levelDb: number, offline: boolean): number {
+  if (offline || levelDb <= METER_VISUAL_FLOOR_DB) return 0;
+  return Math.max(
+    0,
+    Math.min(METER_SEGMENT_COUNT, Math.round(((60 + levelDb) / 60) * METER_SEGMENT_COUNT)),
+  );
+}
+
+function formatMeterDbLabel(levelDb: number, offline: boolean): string {
+  if (offline) return "--- dB";
+  return `${levelDb.toFixed(1)} dB`;
+}
+
+function resolveCockpitAudioTrack(
+  tracks: AudioLevelTrack[] | undefined,
+  trackId: CockpitAudioTrackId,
+): AudioLevelTrack {
+  const found = tracks?.find((track) => track.id === trackId);
+  if (found) return found;
+
+  const spec = COCKPIT_AUDIO_TRACK_SPECS.find((entry) => entry.id === trackId);
+  return {
+    id: trackId,
+    label: spec?.label ?? trackId,
+    levelDb: AUDIO_SILENCE_FLOOR_DB,
+    peakDb: AUDIO_SILENCE_FLOOR_DB,
+  };
+}
 
 function sortPresets(presets: OwnerGraphicsPreset[]) {
   return [...presets].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
@@ -255,42 +381,57 @@ function CockpitPanel({
   );
 }
 
-function MeterRail({ levelDb, side }: { levelDb: number; side: "left" | "right" }) {
-  const activeSegments = Math.max(0, Math.min(20, Math.round(((60 + levelDb) / 60) * 20)));
+function MeterRail({
+  label,
+  levelDb,
+  offline,
+  trackId,
+}: {
+  label: string;
+  levelDb: number;
+  offline: boolean;
+  trackId: string;
+}) {
+  const activeSegments = meterActiveSegments(levelDb, offline);
+  const readoutTone = offline ? "text-white/35" : "text-lime-300";
 
   return (
-    <div className="grid grid-cols-[1.15rem_1fr] items-end gap-1.5">
-      <div className="flex h-28 flex-col justify-between font-ui text-[0.42rem] text-white/45 sm:h-32 xl:h-36">
-        {DB_STEPS.map((step) => (
-          <span key={`${side}-${step}`}>{step}</span>
-        ))}
-      </div>
-      <div>
-        <p className="mb-1 text-center font-ui text-[0.55rem] uppercase text-white/70">{side}</p>
-        <div className="flex h-28 w-7 flex-col-reverse gap-0.5 rounded-sm border border-white/10 bg-black/55 p-1 sm:h-32 xl:h-36">
-          {Array.from({ length: 20 }).map((_, index) => {
-            const isHot = index >= 17;
-            const isWarn = index >= 13 && index < 17;
-            const isActive = index < activeSegments;
-            return (
-              <span
-                key={`${side}-segment-${index}`}
-                className={`min-h-0 flex-1 rounded-[1px] ${
-                  isActive
-                    ? isHot
-                      ? "bg-red-500"
-                      : isWarn
-                        ? "bg-yellow-300"
-                        : "bg-emerald-400"
-                    : "bg-white/8"
-                }`}
-              />
-            );
-          })}
+    <div className="flex min-w-0 flex-col items-center">
+      <p className="mb-1 line-clamp-2 min-h-[1.6rem] text-center font-ui text-[0.46rem] font-bold uppercase leading-tight text-white/70 sm:text-[0.5rem]">
+        {label}
+      </p>
+      <div className="grid w-full grid-cols-[0.85rem_1fr] items-end gap-1">
+        <div className="flex h-20 flex-col justify-between font-ui text-[0.34rem] leading-none text-white/40 sm:h-24 sm:text-[0.38rem]">
+          {DB_STEPS.map((step) => (
+            <span key={`${trackId}-${step}`}>{step}</span>
+          ))}
         </div>
-        <p className="mt-2 text-center font-ui text-[0.68rem] font-black text-lime-300">
-          {levelDb.toFixed(1)} dB
-        </p>
+        <div className="flex min-w-0 flex-col items-center">
+          <div className="flex h-20 w-6 flex-col-reverse gap-0.5 rounded-sm border border-white/10 bg-black/55 p-0.5 sm:h-24 sm:w-7">
+            {Array.from({ length: METER_SEGMENT_COUNT }).map((_, index) => {
+              const isHot = index >= 17;
+              const isWarn = index >= 13 && index < 17;
+              const isActive = index < activeSegments;
+              return (
+                <span
+                  key={`${trackId}-segment-${index}`}
+                  className={`min-h-0 flex-1 rounded-[1px] ${
+                    isActive
+                      ? isHot
+                        ? "bg-red-500"
+                        : isWarn
+                          ? "bg-yellow-300"
+                          : "bg-emerald-400"
+                      : "bg-white/8"
+                  }`}
+                />
+              );
+            })}
+          </div>
+          <p className={`mt-1.5 text-center font-ui text-[0.58rem] font-black sm:text-[0.62rem] ${readoutTone}`}>
+            {formatMeterDbLabel(levelDb, offline)}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -307,11 +448,13 @@ function AudioMonitorPanel({
   error: string | null;
   onRefresh: () => void;
 }) {
-  const leftTrack = telemetry?.tracks[0] ?? { id: "program-l", label: "Left", levelDb: -60, peakDb: -60 };
-  const rightTrack = telemetry?.tracks[1] ?? { id: "program-r", label: "Right", levelDb: -60, peakDb: -60 };
   const status = telemetry?.mediaNodeStatus ?? "offline";
+  const offline = status === "offline" || Boolean(error);
   const connected = !error && status === "online";
   const degraded = !error && status === "degraded";
+  const cockpitTracks = COCKPIT_AUDIO_TRACK_SPECS.map((spec) =>
+    resolveCockpitAudioTrack(telemetry?.tracks, spec.id),
+  );
   const statusLabel = loading
     ? "X32 SYNCING"
     : connected
@@ -356,18 +499,20 @@ function AudioMonitorPanel({
         <div className="mt-2 flex-1 rounded-md border border-white/10 bg-black/35 p-2">
           <div className="mb-2 flex items-center gap-1.5 font-ui text-[0.54rem] font-bold uppercase text-white/70 sm:text-[0.6rem]">
             <Lock className="h-3.5 w-3.5 text-purple-400" />
-            BUS 15/16 (MAIN)
+            X32 LIVE BUS MATRIX (5 CH)
           </div>
-          <div className="grid grid-cols-2 gap-1.5">
-            <MeterRail side="left" levelDb={leftTrack.levelDb} />
-            <MeterRail side="right" levelDb={rightTrack.levelDb} />
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
+            {cockpitTracks.map((track) => (
+              <MeterRail
+                key={track.id}
+                trackId={track.id}
+                label={track.label}
+                levelDb={track.levelDb}
+                offline={offline}
+              />
+            ))}
           </div>
-          <p className="mt-2 text-center font-ui text-[0.5rem] uppercase text-white/60 sm:text-[0.54rem]">
-            USB CH 1-2
-            <br />
-            (BUS 15/16)
-          </p>
-          <p className="mt-1 truncate text-center font-body text-[0.5rem] text-white/45">
+          <p className="mt-2 truncate text-center font-body text-[0.5rem] text-white/45">
             {error || telemetry?.mediaNodeDetail || "Waiting for audio telemetry."}
           </p>
         </div>
@@ -387,178 +532,13 @@ function graphicBuilderLabel(preset: OwnerGraphicsPreset) {
   return metadata.builderKind === "SANCTUARY_VIDEO" ? "Sanctuary Video" : formatGraphicsTypeLabel(preset.type);
 }
 
-function graphicPlacementStyle(
-  layoutMode: GraphicLayoutMode,
-  positionAnchor: GraphicPositionAnchor,
-  xPercent: number,
-  yPercent: number,
-  widthPercent: number,
-  heightPercent: number,
-): CSSProperties {
-  if (positionAnchor === "FULLSCREEN" || layoutMode === "fullscreen" || layoutMode === "sanctuary_video") {
-    return { inset: 0, width: "100%", height: "100%" };
-  }
-
-  if (layoutMode === "ticker") {
-    return { left: "4%", right: "4%", bottom: "6%", minHeight: "9%" };
-  }
-
-  if (positionAnchor === "CENTER") {
-    return {
-      left: "50%",
-      top: "50%",
-      width: `${widthPercent}%`,
-      minHeight: `${heightPercent}%`,
-      transform: "translate(-50%, -50%)",
-    };
-  }
-
-  return {
-    left: `${xPercent}%`,
-    top: `${yPercent}%`,
-    width: `${widthPercent}%`,
-    minHeight: `${heightPercent}%`,
-  };
-}
-
-function ProgramReturnPanel({
-  livePreset,
-}: {
-  livePreset: OwnerGraphicsPreset | null;
-}) {
-  const metadata = livePreset ? decodeGraphicsPresetMetadata(livePreset) : null;
-  const primary = livePreset?.content_primary || "NO LIVE OVERLAY";
-  const secondary = metadata?.secondaryText || "STAGED IN DECK QUEUE";
-  const mediaStyle = metadata
-    ? graphicPlacementStyle(
-        metadata.layoutMode,
-        metadata.positionAnchor,
-        metadata.xPercent,
-        metadata.yPercent,
-        metadata.widthPercent,
-        metadata.heightPercent,
-      )
-    : undefined;
-  const isLiveMedia = Boolean(metadata?.builderKind === "SANCTUARY_VIDEO" && metadata.mediaUrl);
-
-  return (
-    <CockpitPanel className="pointer-events-none flex min-h-0 flex-col p-2">
-      <div className="mb-1.5 font-ui text-[0.58rem] font-bold uppercase tracking-[0.08em] text-white/72 sm:text-[0.64rem]">
-        LIVE PROGRAM RETURN (16:9) - TITLE-SAFE LOCKED (5% INSET)
-      </div>
-      {isLiveMedia && metadata?.mediaUrl ? (
-        <BroadcastVideoCanvas className="rounded-md border border-white/20 xl:min-h-0 xl:flex-1">
-          <div
-            className="absolute overflow-hidden rounded-md border border-cyan-200/25 bg-black shadow-[0_0_24px_rgba(0,221,235,0.28)]"
-            style={{ ...mediaStyle, zIndex: metadata.zIndex }}
-          >
-            <video src={metadata.mediaUrl} className="h-full w-full object-cover" autoPlay muted loop playsInline />
-            <div className="absolute left-2 top-2 rounded bg-black/70 px-2 py-1 font-ui text-[0.48rem] font-black uppercase tracking-[0.1em] text-cyan-100">
-              Sanctuary Video
-            </div>
-          </div>
-        </BroadcastVideoCanvas>
-      ) : metadata?.builderKind === "SLATE" || metadata?.layoutMode === "fullscreen" ? (
-        <BroadcastPresentationSlate
-          headerText={primary}
-          bodyText={secondary}
-          logoUrl={metadata?.imageUrl ?? null}
-          className="rounded-md border border-white/20 xl:min-h-0 xl:flex-1"
-        />
-      ) : (
-        <BroadcastLowerThirdPreset
-          mainText={primary}
-          subtitleText={secondary}
-          logoUrl={metadata?.imageUrl ?? null}
-          className="rounded-md border border-white/20 xl:min-h-0 xl:flex-1"
-        />
-      )}
-    </CockpitPanel>
-  );
-}
-
-function GoLiveMasterOverrideModal({
-  open,
-  pending,
-  scheduledLabel,
-  onCancel,
-  onConfirm,
-}: {
-  open: boolean;
-  pending: boolean;
-  scheduledLabel: string;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
-  if (!open) return null;
-
-  return (
-    <div
-      data-testid="override-modal"
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/75 px-4 py-8 backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="master-go-live-title"
-    >
-      <div className="w-full max-w-md rounded-xl border border-amber-300/35 bg-[#050814] p-5 shadow-[0_0_40px_rgba(255,193,7,0.12)]">
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="mt-0.5 h-6 w-6 shrink-0 text-amber-300" aria-hidden="true" />
-          <div className="min-w-0">
-            <h2
-              id="master-go-live-title"
-              className="font-headline text-xl uppercase tracking-[0.06em] text-white"
-            >
-              Master Go Live Override
-            </h2>
-            <p className="mt-3 font-body text-sm leading-relaxed text-white/72">
-              This will permanently override the scheduled event date and time, move the countdown to{" "}
-              <strong className="text-white">right now</strong>, and force the broadcast live for
-              attendees.
-            </p>
-            <p className="mt-2 rounded-md border border-white/10 bg-black/35 px-3 py-2 font-body text-xs text-white/55">
-              Current schedule: {scheduledLabel}
-            </p>
-            <p className="mt-2 font-body text-xs text-amber-200/90">
-              This action cannot undo the previous scheduled go-live time. Adjust the schedule manually
-              if you need to revert.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            disabled={pending}
-            onClick={onCancel}
-            className="min-h-11 rounded-md border border-white/15 bg-white/5 px-4 font-ui text-xs font-bold uppercase tracking-[0.1em] text-white/70 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-45"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={pending}
-            onClick={onConfirm}
-            className="min-h-11 rounded-md bg-gradient-to-br from-lime-400 to-green-700 px-4 font-ui text-xs font-black uppercase tracking-[0.1em] text-black shadow-[0_0_18px_rgba(85,255,75,0.28)] disabled:cursor-not-allowed disabled:opacity-45"
-          >
-            {pending ? (
-              <span className="inline-flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                Confirming...
-              </span>
-            ) : (
-              "Confirm Go Live"
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function StreamMatrixPanel({
-  broadcastPending,
+  broadcastAction,
+  isGoLiveModalOpen,
+  isOwnerReady,
   broadcastMessage,
   broadcastError,
+  goLiveFeedback,
   broadcastSnapshot,
   destinations,
   destinationsLoading,
@@ -568,9 +548,12 @@ function StreamMatrixPanel({
   onStop,
   onDestinationChange,
 }: {
-  broadcastPending: boolean;
+  broadcastAction: BroadcastAction;
+  isGoLiveModalOpen: boolean;
+  isOwnerReady: boolean;
   broadcastMessage: string | null;
   broadcastError: string | null;
+  goLiveFeedback: GoLiveFeedback | null;
   broadcastSnapshot: OwnerBroadcastSnapshot;
   destinations: RestreamDestinations;
   destinationsLoading: boolean;
@@ -580,6 +563,10 @@ function StreamMatrixPanel({
   onStop: () => void;
   onDestinationChange: (destination: DestinationKey, enabled: boolean) => void;
 }) {
+  const isBroadcastBusy = broadcastAction !== "idle";
+  const isConfirmingGoLive = broadcastAction === "master-go-live";
+  const isStopping = broadcastAction === "stop";
+  const isLive = broadcastSnapshot.publish.status === "publishing";
   const destinationRows: Array<{ key: DestinationKey | "instagram"; name: string; on: boolean; disabled?: boolean }> = [
     { key: "youtube", name: "YouTube", on: destinations.youtube },
     { key: "facebook", name: "Facebook", on: destinations.facebook },
@@ -600,20 +587,65 @@ function StreamMatrixPanel({
             <button
               type="button"
               data-testid="go-live-button"
-              disabled={broadcastPending || ownerAuthorized === false}
+              data-loading={isConfirmingGoLive || undefined}
+              disabled={!isOwnerReady || isBroadcastBusy || isGoLiveModalOpen}
+              aria-busy={isConfirmingGoLive || undefined}
               onClick={onRequestGoLive}
-              className="relative z-50 pointer-events-auto cursor-pointer flex min-h-16 items-center justify-center gap-2 rounded-md bg-gradient-to-br from-lime-400 to-green-700 px-3 font-ui text-xl font-black uppercase text-black shadow-[0_0_22px_rgba(85,255,75,0.28)] disabled:cursor-not-allowed disabled:opacity-45 xl:min-h-20 xl:text-2xl"
+              className="relative z-50 pointer-events-auto flex min-h-16 cursor-pointer items-center justify-center gap-2 rounded-md bg-gradient-to-br from-lime-400 to-green-700 px-3 font-ui text-xl font-black uppercase text-black shadow-[0_0_22px_rgba(85,255,75,0.28)] transition-opacity duration-200 disabled:cursor-not-allowed disabled:opacity-45 data-[loading=true]:pointer-events-none data-[loading=true]:opacity-45 xl:min-h-20 xl:text-2xl"
             >
-              {broadcastPending ? (
-                <Loader2 className="h-6 w-6 animate-spin" aria-hidden="true" />
+              {isConfirmingGoLive ? (
+                <>
+                  <Loader2 className="h-6 w-6 animate-spin" aria-hidden="true" />
+                  <span className="sr-only">Initializing signal</span>
+                  INITIALIZING SIGNAL...
+                </>
               ) : (
-                <Play className="h-7 w-7 fill-black" aria-hidden="true" />
+                <>
+                  <Play className="h-7 w-7 fill-black" aria-hidden="true" />
+                  GO LIVE
+                </>
               )}
-              {broadcastPending ? "INITIALIZING SIGNAL..." : "GO LIVE"}
             </button>
             <p className="text-center font-ui text-[0.44rem] uppercase tracking-[0.08em] text-white/40">
               Master override — confirms before forcing live
             </p>
+            {goLiveFeedback ? (
+              <div
+                data-testid="go-live-status-banner"
+                role="status"
+                aria-live="polite"
+                className={`rounded-md border px-3 py-2 ${
+                  goLiveFeedback.kind === "success"
+                    ? "border-lime-300/35 bg-lime-300/10"
+                    : "border-red-400/35 bg-red-500/10"
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  {goLiveFeedback.kind === "success" ? (
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-lime-300" aria-hidden="true" />
+                  ) : (
+                    <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-300" aria-hidden="true" />
+                  )}
+                  <div className="min-w-0">
+                    <p
+                      className={`font-ui text-[0.58rem] font-black uppercase tracking-[0.06em] ${
+                        goLiveFeedback.kind === "success" ? "text-lime-200" : "text-red-200"
+                      }`}
+                    >
+                      {goLiveFeedback.kind === "success" ? "Go Live Active" : "Go Live Failed"}
+                    </p>
+                    <p className="mt-1 font-body text-[0.62rem] leading-snug text-white/82">
+                      {goLiveFeedback.message}
+                    </p>
+                    {goLiveFeedback.detail ? (
+                      <p className="mt-1 font-body text-[0.55rem] leading-snug text-white/55">
+                        {goLiveFeedback.detail}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ) : null}
             {ownerAuthorized === false ? (
               <span className="mt-2 block font-body text-xs text-red-400">
                 Error: Current session email is not authorized in ADMIN_EMAILS configuration.
@@ -621,11 +653,21 @@ function StreamMatrixPanel({
             ) : null}
             <button
               type="button"
-              disabled={broadcastPending}
+              data-testid="stop-streaming-button"
+              data-loading={isStopping || undefined}
+              disabled={!isLive || isBroadcastBusy}
+              aria-busy={isStopping || undefined}
               onClick={onStop}
-              className="flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/10 bg-[#08101f] px-3 font-ui text-[0.62rem] font-bold uppercase text-white/78 disabled:cursor-not-allowed disabled:opacity-45 xl:min-h-14 xl:text-xs"
+              className="flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/10 bg-[#08101f] px-3 font-ui text-[0.62rem] font-bold uppercase text-white/78 transition-opacity duration-200 disabled:cursor-not-allowed disabled:opacity-45 data-[loading=true]:pointer-events-none data-[loading=true]:opacity-45 xl:min-h-14 xl:text-xs"
             >
-              {broadcastPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
+              {isStopping ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  <span className="sr-only">Stopping stream</span>
+                </>
+              ) : (
+                <Square className="h-4 w-4" aria-hidden="true" />
+              )}
               STOP STREAMING
             </button>
           </div>
@@ -660,8 +702,8 @@ function StreamMatrixPanel({
             </div>
           </div>
           <div className="min-h-7 rounded-md border border-white/10 bg-black/25 px-2 py-1.5 font-body text-[0.58rem] text-white/65">
-            <span className={broadcastError ? "text-red-200" : undefined}>
-              {broadcastError ?? telemetryLine ?? broadcastMessage ?? "Stream commands ready."}
+            <span className={broadcastError ? "text-red-200" : broadcastMessage ? "text-lime-200/90" : undefined}>
+              {broadcastError ?? broadcastMessage ?? telemetryLine ?? "Stream commands ready."}
             </span>
           </div>
         </div>
@@ -1129,7 +1171,11 @@ export default function ProductionCockpitClient() {
   const [countdownScheduleTimezone, setCountdownScheduleTimezone] =
     useState<ScheduleTimezone>(DEFAULT_SCHEDULE_TIMEZONE);
   const [masterGoLiveModalOpen, setMasterGoLiveModalOpen] = useState(false);
-  const [broadcastPending, setBroadcastPending] = useState(false);
+  const [goLiveFeedback, setGoLiveFeedback] = useState<GoLiveFeedback | null>(null);
+  const [broadcastAction, setBroadcastAction] = useState<BroadcastAction>("idle");
+  const confirmGoLiveInFlightRef = useRef(false);
+  const stopStreamInFlightRef = useRef(false);
+  const snapshotPollInFlightRef = useRef(false);
   const [destinations, setDestinations] = useState<RestreamDestinations>(DEFAULT_RESTREAM_DESTINATIONS);
   const [destinationsLoading, setDestinationsLoading] = useState(true);
   const [destinationSaving, setDestinationSaving] = useState<DestinationKey | null>(null);
@@ -1144,6 +1190,10 @@ export default function ProductionCockpitClient() {
   const [systemSynced, setSystemSynced] = useState(false);
   const [ownerAuthorized, setOwnerAuthorized] = useState<boolean | null>(null);
   const [streamHealthStatus, setStreamHealthStatus] = useState("Stream health pending");
+  const [encoderFields, setEncoderFields] = useState<RestreamEncoderFields>(EMPTY_ENCODER_FIELDS);
+  const [encoderHealth, setEncoderHealth] = useState<EncoderHealthStatus | "checking">("checking");
+  const [encoderHealthDetail, setEncoderHealthDetail] = useState<string | null>(null);
+  const [encoderSaving, setEncoderSaving] = useState(false);
   const autoClearedIds = useRef<Set<string>>(new Set());
 
   const applyShowSetupState = useCallback((state: ShowSetupStatePayload) => {
@@ -1155,28 +1205,65 @@ export default function ProductionCockpitClient() {
       facebook: state.restreamDestinations?.facebook ?? DEFAULT_RESTREAM_DESTINATIONS.facebook,
       twitch: state.restreamDestinations?.twitch ?? DEFAULT_RESTREAM_DESTINATIONS.twitch,
     });
+    setEncoderFields({
+      primaryIngestEndpoint: state.primaryIngestEndpoint ?? "",
+      streamKey: state.streamKey ?? "",
+      attendeePlaybackHlsUrl: state.attendeePlaybackHlsUrl ?? "",
+    });
     setNow(Date.now());
   }, []);
 
   useEffect(() => {
-    void fetch("/api/owner/show-setup", { credentials: "include" })
-      .then((res) => {
-        setOwnerAuthorized(res.ok);
-        if (!res.ok) {
-          setBroadcastError("Owner session not authorized — check ADMIN_EMAILS.");
+    let cancelled = false;
+
+    // Retry transient failures (dev server restart, cold compile) so a brief
+    // blip never latches a false "not authorized in ADMIN_EMAILS" state.
+    async function verifyOwnerSession(attempt = 0): Promise<void> {
+      try {
+        const res = await fetch("/api/owner/show-setup", { credentials: "include" });
+        if (cancelled) return;
+
+        if (res.ok) {
+          setOwnerAuthorized(true);
+          return;
         }
-      })
-      .catch(() => {
+
+        // 401/403 are real authorization failures — surface immediately.
+        if (res.status === 401 || res.status === 403) {
+          setOwnerAuthorized(false);
+          setBroadcastError("Owner session not authorized — check ADMIN_EMAILS.");
+          return;
+        }
+
+        // 5xx / unexpected: treat as transient and retry.
+        throw new Error(`show-setup returned HTTP ${res.status}`);
+      } catch {
+        if (cancelled) return;
+        if (attempt < 4) {
+          setTimeout(() => void verifyOwnerSession(attempt + 1), 1_000 * (attempt + 1));
+          return;
+        }
         setOwnerAuthorized(false);
-        setBroadcastError("Unable to verify owner session.");
-      });
+        setBroadcastError("Unable to verify owner session — restart dev server and refresh.");
+      }
+    }
+
+    void verifyOwnerSession();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const loadBroadcastSnapshot = useCallback(async (_silent = false) => {
+    if (snapshotPollInFlightRef.current) return;
+    snapshotPollInFlightRef.current = true;
+
     try {
       const response = await fetch("/api/owner/broadcast", {
         credentials: "include",
         cache: "no-store",
+        signal: AbortSignal.timeout(20_000),
       });
 
       if (response.status === 401 || response.status === 403) {
@@ -1198,10 +1285,24 @@ export default function ProductionCockpitClient() {
         console.error("[cockpit/snapshot-parse] Failed to parse snapshot JSON payload:", parseError);
       }
     } catch (err) {
-      console.error(
-        "[cockpit/snapshot-poll] Fetch failed:",
-        err instanceof Error ? err.message : "unknown",
-      );
+      const message = err instanceof Error ? err.message : "unknown";
+      const errName = err instanceof Error ? err.name : "";
+      // AbortSignal.timeout() rejects with a TimeoutError whose message is
+      // "signal timed out" — match name + both "timeout"/"timed out" spellings.
+      const transient =
+        errName === "TimeoutError" ||
+        errName === "AbortError" ||
+        message === "Failed to fetch" ||
+        message.includes("aborted") ||
+        message.includes("timeout") ||
+        message.includes("timed out");
+      if (transient) {
+        console.warn("[cockpit/snapshot-poll] Transient fetch issue:", message);
+      } else {
+        console.error("[cockpit/snapshot-poll] Fetch failed:", message);
+      }
+    } finally {
+      snapshotPollInFlightRef.current = false;
     }
   }, []);
 
@@ -1233,6 +1334,32 @@ export default function ProductionCockpitClient() {
     const interval = window.setInterval(() => void loadStreamHealth(), 15_000);
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const loadEncoderHealth = async () => {
+      try {
+        const response = await fetch("/api/owner/encoder-health", {
+          credentials: "include",
+          cache: "no-store",
+        });
+        const json = (await response.json()) as EncoderHealthResponse;
+        if (!response.ok || json.ok === false) {
+          setEncoderHealth("offline");
+          setEncoderHealthDetail(json.error ?? "Encoder health unavailable.");
+          return;
+        }
+        setEncoderHealth(json.status ?? "unconfigured");
+        setEncoderHealthDetail(json.detail ?? null);
+      } catch {
+        setEncoderHealth("offline");
+        setEncoderHealthDetail("Encoder health unavailable.");
+      }
+    };
+
+    void loadEncoderHealth();
+    const interval = window.setInterval(() => void loadEncoderHealth(), 10_000);
+    return () => window.clearInterval(interval);
+  }, [encoderFields.attendeePlaybackHlsUrl]);
 
   const livePreset = useMemo(
     () => presets.find((preset) => preset.is_active_on_stream) ?? null,
@@ -1485,56 +1612,87 @@ export default function ProductionCockpitClient() {
     }
   }, []);
 
-  const sendBroadcastCommand = useCallback(async (endpoint: string, body?: unknown) => {
-    setBroadcastPending(true);
+  const stopStreaming = useCallback(async () => {
+    if (stopStreamInFlightRef.current || broadcastAction !== "idle") return;
+    if (broadcastSnapshot.publish.status !== "publishing") return;
+
+    stopStreamInFlightRef.current = true;
+    setBroadcastAction("stop");
     setBroadcastError(null);
     setBroadcastMessage("Sending broadcast command...");
 
     try {
-      const response = await fetch(endpoint, {
+      const response = await fetch("/api/owner/broadcast-end", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: body ? JSON.stringify(body) : undefined,
       });
-      const json = (await response.json()) as BroadcastResponse;
+      const json = await readOwnerApiJson<BroadcastResponse>(
+        response,
+        "Stop broadcast",
+      );
 
       if (!response.ok || json.ok === false) {
         throw new Error(json.message || json.error || `Broadcast command failed with HTTP ${response.status}.`);
       }
 
       if (json.snapshot) setBroadcastSnapshot(json.snapshot);
-      else void loadBroadcastSnapshot(true);
+      else await loadBroadcastSnapshot(true);
 
       setBroadcastMessage(json.message || "Broadcast command confirmed.");
     } catch (commandError) {
       setBroadcastError(commandError instanceof Error ? commandError.message : "Broadcast command failed.");
       setBroadcastMessage(null);
     } finally {
-      setBroadcastPending(false);
+      stopStreamInFlightRef.current = false;
+      setBroadcastAction("idle");
     }
-  }, [loadBroadcastSnapshot]);
+  }, [broadcastAction, broadcastSnapshot.publish.status, loadBroadcastSnapshot]);
 
   const confirmMasterGoLive = useCallback(async () => {
-    setBroadcastPending(true);
+    if (confirmGoLiveInFlightRef.current || broadcastAction !== "idle") return;
+
+    confirmGoLiveInFlightRef.current = true;
+    setBroadcastAction("master-go-live");
     setBroadcastError(null);
+    setGoLiveFeedback(null);
     setBroadcastMessage("Master override — forcing live broadcast...");
 
     try {
-      const response = await fetch("/api/owner/broadcast/master-go-live", {
+      const response = await fetch("/api/owner/master-go-live", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "rtmp_encoder", confirm: true, masterOverride: true }),
+        body: JSON.stringify({ mode: "external_hls", confirm: true, masterOverride: true }),
       });
-      const json = (await response.json()) as BroadcastResponse & {
-        state?: ShowSetupStatePayload;
-        previousTargetDateTime?: string;
-      };
+      const json = await readOwnerApiJson<
+        BroadcastResponse & {
+          state?: ShowSetupStatePayload;
+          previousTargetDateTime?: string;
+        }
+      >(response, "Master go-live");
 
       if (!response.ok || json.ok === false) {
         throw new Error(parseOwnerApiError(response, json, "Master go-live failed."));
       }
+
+      const snapshot = json.snapshot;
+      const feedback = buildGoLiveFeedback(
+        snapshot,
+        json.message || "Master go-live failed.",
+        json.ok === true,
+      );
+      setGoLiveFeedback(feedback);
+
+      if (feedback.kind === "error") {
+        setBroadcastError(feedback.detail ?? feedback.message);
+        setBroadcastMessage(null);
+        if (snapshot) setBroadcastSnapshot(snapshot);
+        else await loadBroadcastSnapshot(true);
+        return;
+      }
+
+      await loadBroadcastSnapshot(true);
 
       if (json.state) {
         applyShowSetupState(json.state);
@@ -1542,26 +1700,31 @@ export default function ProductionCockpitClient() {
         await loadShowSetup();
       }
 
-      if (json.snapshot) {
-        setBroadcastSnapshot(json.snapshot);
-      } else {
-        await loadBroadcastSnapshot(true);
+      if (snapshot) {
+        setBroadcastSnapshot(snapshot);
       }
+      await loadBroadcastSnapshot(true);
 
-      setMasterGoLiveModalOpen(false);
-      setBroadcastMessage(json.message || "Master go-live confirmed.");
+      setBroadcastError(null);
+      setBroadcastMessage(feedback.message);
       console.info("[cockpit/master-go-live] success", {
         previousTargetDateTime: json.previousTargetDateTime,
       });
     } catch (goLiveError) {
       const message = goLiveError instanceof Error ? goLiveError.message : "Master go-live failed.";
+      setGoLiveFeedback({
+        kind: "error",
+        message: "Go Live failed.",
+        detail: message,
+      });
       setBroadcastError(message);
       setBroadcastMessage(null);
       console.error("[cockpit/master-go-live] failed:", message);
     } finally {
-      setBroadcastPending(false);
+      confirmGoLiveInFlightRef.current = false;
+      setBroadcastAction("idle");
     }
-  }, [applyShowSetupState, loadBroadcastSnapshot, loadShowSetup]);
+  }, [applyShowSetupState, broadcastAction, loadBroadcastSnapshot, loadShowSetup]);
 
   const handleDestinationChange = useCallback(
     async (destination: DestinationKey, enabled: boolean) => {
@@ -1608,17 +1771,57 @@ export default function ProductionCockpitClient() {
     [destinationSaving, destinations],
   );
 
+  const handleSaveEncoder = useCallback(async () => {
+    if (encoderSaving) return;
+
+    setEncoderSaving(true);
+    setBroadcastError(null);
+    setBroadcastMessage("Saving Restream encoder settings...");
+
+    try {
+      const response = await fetch("/api/owner/show-setup", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(encoderFields),
+      });
+      const json = (await response.json()) as ShowSetupResponse;
+
+      if (!response.ok || !json.state) {
+        throw new Error(json.error || "Unable to save encoder settings.");
+      }
+
+      applyShowSetupState(json.state);
+      setBroadcastMessage(json.message || "Encoder settings saved.");
+      await loadBroadcastSnapshot();
+    } catch (encoderError) {
+      setBroadcastError(
+        encoderError instanceof Error ? encoderError.message : "Unable to save encoder settings.",
+      );
+      setBroadcastMessage(null);
+    } finally {
+      setEncoderSaving(false);
+    }
+  }, [applyShowSetupState, encoderFields, encoderSaving, loadBroadcastSnapshot]);
+
+  const isBroadcastLive = broadcastSnapshot.publish.status === "publishing";
+
   return (
     <main className="min-h-dvh overflow-x-hidden overflow-y-auto bg-[#020203] bg-[radial-gradient(circle_at_22%_0%,rgba(0,168,255,0.13),transparent_28%),radial-gradient(circle_at_78%_4%,rgba(255,47,175,0.15),transparent_30%),linear-gradient(180deg,#050507_0%,#020203_54%,#010102_100%)] px-2 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-2 text-white">
-      <GoLiveMasterOverrideModal
+      <GoLiveMasterOverrideDialog
         open={masterGoLiveModalOpen}
-        pending={broadcastPending}
+        isConfirming={broadcastAction === "master-go-live"}
         scheduledLabel={formatCockpitEventDate(countdownTargetIso, countdownScheduleTimezone)}
+        feedback={goLiveFeedback}
         onCancel={() => {
-          if (broadcastPending) return;
+          if (broadcastAction === "master-go-live") return;
+          setMasterGoLiveModalOpen(false);
+          setGoLiveFeedback(null);
+        }}
+        onDismissFeedback={() => {
           setMasterGoLiveModalOpen(false);
         }}
-        onConfirm={() => void confirmMasterGoLive()}
+        onConfirm={confirmMasterGoLive}
       />
       <span data-testid="stream-health-status" className="sr-only" aria-live="polite">
         {streamHealthStatus}
@@ -1686,22 +1889,45 @@ export default function ProductionCockpitClient() {
         </header>
 
         <div className="grid min-h-0 flex-1 gap-2 xl:grid-cols-[17rem_minmax(0,1fr)_26rem]">
-          <section className="relative order-1 grid min-h-0 gap-2 xl:order-2 xl:grid-rows-[minmax(0,1fr)_12.5rem]">
+          <section className="relative order-1 grid min-h-0 gap-2 xl:order-2 xl:grid-rows-[minmax(0,1fr)_auto_auto]">
             <div className="pointer-events-none min-h-0 overflow-hidden">
-              <ProgramReturnPanel livePreset={livePreset} />
+              <ProgramReturnPanel
+                livePreset={livePreset}
+                playbackHlsUrl={broadcastSnapshot.playback.hlsUrl}
+                publishStatus={broadcastSnapshot.publish.status}
+                playbackReachable={broadcastSnapshot.playback.manifestReachable}
+              />
+            </div>
+            <div className="relative z-50 pointer-events-auto min-h-0">
+              <RestreamEncoderPanel
+                fields={encoderFields}
+                health={encoderHealth}
+                healthDetail={encoderHealthDetail}
+                saving={encoderSaving}
+                disabled={!ownerAuthorized || isBroadcastLive}
+                onChange={setEncoderFields}
+                onSave={() => void handleSaveEncoder()}
+              />
             </div>
             <div className="relative z-50 pointer-events-auto min-h-0">
               <StreamMatrixPanel
-                broadcastPending={broadcastPending}
+                broadcastAction={broadcastAction}
+                isGoLiveModalOpen={masterGoLiveModalOpen}
+                isOwnerReady={ownerAuthorized === true}
                 broadcastMessage={broadcastMessage}
                 broadcastError={broadcastError}
+                goLiveFeedback={goLiveFeedback}
                 broadcastSnapshot={broadcastSnapshot}
                 destinations={destinations}
                 destinationsLoading={destinationsLoading}
                 destinationSaving={destinationSaving}
                 ownerAuthorized={ownerAuthorized}
-                onRequestGoLive={() => setMasterGoLiveModalOpen(true)}
-                onStop={() => void sendBroadcastCommand("/api/owner/broadcast/end")}
+                onRequestGoLive={() => {
+                  setGoLiveFeedback(null);
+                  setBroadcastError(null);
+                  setMasterGoLiveModalOpen(true);
+                }}
+                onStop={() => void stopStreaming()}
                 onDestinationChange={(destination, enabled) => void handleDestinationChange(destination, enabled)}
               />
             </div>
@@ -1723,7 +1949,7 @@ export default function ProductionCockpitClient() {
             />
           </aside>
 
-          <aside className="order-3 min-h-[24rem] xl:order-1 xl:min-h-0">
+          <aside className="order-3 min-h-[28rem] xl:order-1 xl:min-h-0">
             <AudioMonitorPanel
               telemetry={audioTelemetry}
               loading={audioLoading}

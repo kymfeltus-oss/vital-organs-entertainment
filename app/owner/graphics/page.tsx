@@ -1,11 +1,19 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { MonitorPlay } from "lucide-react";
 import GraphicsSuitePrepClient from "@/components/owner/GraphicsSuitePrepClient";
 import OwnerProductionSideMenu from "@/components/owner/OwnerProductionSideMenu";
+import { buildTeamGateUrl } from "@/lib/auth/routing";
+import { requireOwnerUser } from "@/lib/owner/auth";
 
 export const dynamic = "force-dynamic";
 
-export default function OwnerGraphicsPage() {
+export default async function OwnerGraphicsPage() {
+  const auth = await requireOwnerUser();
+  if (!auth.ok) {
+    redirect(buildTeamGateUrl("/owner/graphics"));
+  }
+
   return (
     <main className="min-h-dvh overflow-x-hidden overflow-y-auto bg-[#020203] bg-[radial-gradient(circle_at_22%_0%,rgba(0,168,255,0.13),transparent_28%),radial-gradient(circle_at_78%_4%,rgba(255,47,175,0.15),transparent_30%),linear-gradient(180deg,#050507_0%,#020203_54%,#010102_100%)] px-2 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-2 text-white">
       <div className="mx-auto grid min-h-[calc(100dvh-2.5rem)] w-full max-w-[112rem] gap-2 xl:grid-cols-[12rem_minmax(0,1fr)]">

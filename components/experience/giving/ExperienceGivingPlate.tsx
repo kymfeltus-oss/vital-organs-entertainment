@@ -42,7 +42,9 @@ export default function ExperienceGivingPlate({
     const scale = Math.min(stageRect.width / nativeW, stageRect.height / nativeH);
     const paintedHeightPx = nativeH * scale;
     const paintedBottomPct = (paintedHeightPx / stageRect.height) * 100;
-    const formTopPct = Math.min(paintedBottomPct + 1.25, 62);
+    // Drop the form well below the header art so "Select Amount" clears the
+    // SEED wordmark. Bottom stays pinned above the nav dock via CSS.
+    const formTopPct = Math.min(paintedBottomPct + 9, 72);
 
     overlay.style.setProperty("--vital-giving-form-top", `${formTopPct}%`);
   }, []);
@@ -71,7 +73,7 @@ export default function ExperienceGivingPlate({
         style={
           {
             ...mobileArtboardStageStyle(),
-            "--vital-giving-form-top": `${VITAL_SEED_GIVING_HEADER_STAGE_RATIO * 100 + 1.25}%`,
+            "--vital-giving-form-top": `${VITAL_SEED_GIVING_HEADER_STAGE_RATIO * 100 + 9}%`,
           } as CSSProperties
         }
       >

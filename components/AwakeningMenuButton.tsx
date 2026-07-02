@@ -109,7 +109,6 @@ export default function AwakeningMenuButton({
 
       if (res.ok) {
         closeMenu();
-        router.refresh();
         router.push(PERSONA_HUB_PATH);
       }
     } finally {

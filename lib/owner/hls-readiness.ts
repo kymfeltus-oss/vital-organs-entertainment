@@ -8,7 +8,23 @@ export type HlsProbeResult = {
   detail: string | null;
 };
 
-const MANIFEST_PROBE_TIMEOUT_MS = 6_000;
+const MANIFEST_PROBE_TIMEOUT_MS = 4_000;
+
+/**
+ * Short-lived probe cache + in-flight dedupe.
+ *
+ * The cockpit polls several endpoints every few seconds (broadcast snapshot,
+ * encoder-health, stream-health, manifest) and each independently probes the
+ * same external HLS URL. Without caching, one cockpit render fires N redundant
+ * cross-network fetches that serialize into 15-20s of latency on cold start.
+ * A brief TTL collapses them into a single shared probe per URL.
+ */
+const PROBE_CACHE_TTL_MS = 10_000;
+
+type CachedProbe = { result: HlsProbeResult; expiresAt: number };
+
+const probeCache = new Map<string, CachedProbe>();
+const probeInFlight = new Map<string, Promise<HlsProbeResult>>();
 
 export function resolveSafePublicHlsUrl(
   dbPlaybackUrl: string | null | undefined,
@@ -45,6 +61,31 @@ export async function probeHlsManifest(url: string | null): Promise<HlsProbeResu
     };
   }
 
+  const now = Date.now();
+  const cached = probeCache.get(hlsUrl);
+  if (cached && cached.expiresAt > now) {
+    return { ...cached.result, envConfigured };
+  }
+
+  const existing = probeInFlight.get(hlsUrl);
+  if (existing) {
+    const result = await existing;
+    return { ...result, envConfigured };
+  }
+
+  const pending = fetchHlsProbe(hlsUrl, envConfigured);
+  probeInFlight.set(hlsUrl, pending);
+
+  try {
+    const result = await pending;
+    probeCache.set(hlsUrl, { result, expiresAt: Date.now() + PROBE_CACHE_TTL_MS });
+    return result;
+  } finally {
+    probeInFlight.delete(hlsUrl);
+  }
+}
+
+async function fetchHlsProbe(hlsUrl: string, envConfigured: boolean): Promise<HlsProbeResult> {
   try {
     const response = await fetch(hlsUrl, {
       method: "GET",

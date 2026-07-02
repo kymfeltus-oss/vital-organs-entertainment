@@ -1,9 +1,5 @@
-import { isValidHlsUrl } from "@/lib/live/hls";
 import type { ManifestStreamSource } from "@/lib/live/fetch-manifest-stream-config";
-import {
-  normalizeEnvPlaybackString,
-  resolvePrimaryAttendeePlaybackFromEnv,
-} from "@/lib/live/manifest-dev-fallback";
+import { resolveRestreamHlsUrl, type RestreamPlaybackInputs } from "@/lib/owner/restream-playback";
 
 export type FeedUrlInputs = {
   primary_playback_url?: string | null;
@@ -13,65 +9,53 @@ export type FeedUrlInputs = {
   is_live?: boolean;
 };
 
-/** Server-only backup HLS manifest (Amazon IVS, etc.). */
-export function resolveBackupPlaybackFromEnv(): string | null {
-  const backup = normalizeEnvPlaybackString(process.env.ATTENDEE_BACKUP_HLS_URL);
-  if (backup && isValidHlsUrl(backup)) return backup;
-  return null;
+export type PrimaryFeedOptions = {
+  showSetupHlsUrl?: string | null;
+};
+
+function toRestreamInputs(
+  inputs: FeedUrlInputs,
+  options?: PrimaryFeedOptions,
+): RestreamPlaybackInputs {
+  return {
+    primary_playback_url: inputs.primary_playback_url,
+    playback_url: inputs.playback_url,
+    showSetupHlsUrl: options?.showSetupHlsUrl,
+  };
 }
 
-export function resolvePrimaryFeedUrl(inputs: FeedUrlInputs = {}): string | null {
-  const env = resolvePrimaryAttendeePlaybackFromEnv();
-  if (env) return env;
-
-  const dbPrimary = inputs.primary_playback_url?.trim() ?? "";
-  if (dbPrimary && isValidHlsUrl(dbPrimary)) return dbPrimary;
-
-  const legacy = inputs.playback_url?.trim() ?? "";
-  if (legacy && isValidHlsUrl(legacy)) return legacy;
-
-  return null;
+/** Restream HLS — sole attendee playback lane. */
+export function resolvePrimaryFeedUrl(
+  inputs: FeedUrlInputs = {},
+  options?: PrimaryFeedOptions,
+): string | null {
+  return resolveRestreamHlsUrl(toRestreamInputs(inputs, options));
 }
 
-export function resolveBackupFeedUrl(inputs: FeedUrlInputs = {}): string | null {
-  const env = resolveBackupPlaybackFromEnv();
-  if (env) return env;
-
-  const dbBackup = inputs.backup_playback_url?.trim() ?? "";
-  if (dbBackup && isValidHlsUrl(dbBackup)) return dbBackup;
-
+/** Restream-only stack — backup lane removed. */
+export function resolveBackupFeedUrl(_inputs: FeedUrlInputs = {}): string | null {
   return null;
 }
 
 export function normalizeActiveFeedSource(
-  raw: string | null | undefined,
+  _raw: string | null | undefined,
   isLive: boolean,
 ): ManifestStreamSource {
-  if (raw === "primary" || raw === "backup" || raw === "offline") {
-    return raw;
-  }
   return isLive ? "primary" : "offline";
 }
 
-export function resolveActiveFeedPlaybackUrl(inputs: FeedUrlInputs): {
+export function resolveActiveFeedPlaybackUrl(
+  inputs: FeedUrlInputs,
+  options?: PrimaryFeedOptions,
+): {
   url: string | null;
   activeSource: ManifestStreamSource;
 } {
-  const activeSource = normalizeActiveFeedSource(inputs.active_source, inputs.is_live === true);
-  const primary = resolvePrimaryFeedUrl(inputs);
-  const backup = resolveBackupFeedUrl(inputs);
-
-  if (activeSource === "backup") {
-    if (backup) return { url: backup, activeSource: "backup" };
-    if (primary) return { url: primary, activeSource: "primary" };
-    return { url: null, activeSource: "offline" };
+  const url = resolvePrimaryFeedUrl(inputs, options);
+  if (!inputs.is_live) {
+    return { url, activeSource: "offline" };
   }
-
-  if (activeSource === "primary") {
-    return { url: primary, activeSource: primary ? "primary" : "offline" };
-  }
-
-  return { url: null, activeSource: "offline" };
+  return { url, activeSource: url ? "primary" : "offline" };
 }
 
 export function seedFeedUrlsFromEnv(): {
@@ -80,6 +64,6 @@ export function seedFeedUrlsFromEnv(): {
 } {
   return {
     primary_playback_url: resolvePrimaryFeedUrl({}),
-    backup_playback_url: resolveBackupFeedUrl({}),
+    backup_playback_url: null,
   };
 }

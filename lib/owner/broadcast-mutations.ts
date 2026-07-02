@@ -3,12 +3,7 @@ import type { GoLiveRequestBody, OwnerBroadcastSnapshot, PublishMode, SwitchFeed
 import { buildOwnerBroadcastSnapshot } from "@/lib/owner/build-broadcast-snapshot";
 import { emitStreamStateSync } from "@/lib/owner/broadcast-stream-sync";
 import { resolvePrimaryRtmpIngestUrl } from "@/lib/owner/broadcast-engine-fallbacks";
-import {
-  resolveActiveFeedPlaybackUrl,
-  resolveBackupFeedUrl,
-  resolvePrimaryFeedUrl,
-  seedFeedUrlsFromEnv,
-} from "@/lib/owner/feed-urls";
+import { resolvePrimaryFeedUrl, seedFeedUrlsFromEnv } from "@/lib/owner/feed-urls";
 import { probeHlsManifest } from "@/lib/owner/hls-readiness";
 import { loadOwnerStreamState, updateOwnerStreamState } from "@/lib/owner/load-owner-state";
 import {
@@ -19,8 +14,8 @@ import {
 } from "@/lib/owner/preflight";
 import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
 import { mapEventPhaseState } from "@/lib/owner/map-event-phase";
+import { buildRtmpIngestUrlFromEncoderConfig } from "@/lib/owner/resolve-show-encoder-config";
 import { loadShowSetupState, type ShowSetupState } from "@/lib/owner/show-setup-state";
-import { fetchVmixSnapshot, startVmixStreaming, stopVmixStreaming } from "@/lib/owner/vmix/client";
 
 export { parseGoLiveBody, parseSwitchFeedBody };
 
@@ -38,7 +33,7 @@ export async function runOwnerPreflight(
     });
   }
 
-  const { snapshot } = await buildOwnerBroadcastSnapshot(mode);
+  const { snapshot } = await buildOwnerBroadcastSnapshot(mode ?? "external_hls");
   return { snapshot, blocked: preflightHasBlockers(snapshot.preflight) };
 }
 
@@ -49,27 +44,20 @@ export async function runOwnerGoLive(
 ): Promise<{ ok: boolean; snapshot: OwnerBroadcastSnapshot; message: string }> {
   const { row } = await loadOwnerStreamState(admin);
   if (row?.is_live) {
-    const { snapshot } = await buildOwnerBroadcastSnapshot(body.mode);
+    const { snapshot } = await buildOwnerBroadcastSnapshot("external_hls");
     return { ok: false, snapshot, message: "Broadcast is already live." };
   }
 
   const countdownConfig = await loadActiveCountdownConfig();
   const eventPhase = mapEventPhaseState(countdownConfig);
+  const showSetup = await loadShowSetupState();
+  const feedOptions = { showSetupHlsUrl: showSetup.attendeePlaybackHlsUrl };
   const feedInputs = {
     primary_playback_url: row?.primary_playback_url,
-    backup_playback_url: row?.backup_playback_url,
     playback_url: row?.playback_url,
-    active_source: row?.active_source,
-    is_live: row?.is_live,
   };
   const seeded = seedFeedUrlsFromEnv();
-  const primaryUrl = resolvePrimaryFeedUrl(feedInputs) ?? seeded.primary_playback_url;
-  const backupUrl = resolveBackupFeedUrl(feedInputs) ?? seeded.backup_playback_url;
-  const hlsUrl =
-    body.mode === "browser_camera"
-      ? null
-      : resolveActiveFeedPlaybackUrl({ ...feedInputs, active_source: "primary", is_live: false }).url ??
-        primaryUrl;
+  const hlsUrl = resolvePrimaryFeedUrl(feedInputs, feedOptions) ?? seeded.primary_playback_url;
   const hlsProbe = await probeHlsManifest(hlsUrl);
 
   const preflight = buildPreflightChecks({
@@ -77,12 +65,11 @@ export async function runOwnerGoLive(
     countdownConfig,
     streamState: row,
     hlsProbe,
-    requestedMode: body.mode,
-    vmix: await fetchVmixSnapshot(),
+    requestedMode: "external_hls",
   });
 
   if (preflightHasBlockers(preflight) && !body.confirm) {
-    const { snapshot } = await buildOwnerBroadcastSnapshot(body.mode);
+    const { snapshot } = await buildOwnerBroadcastSnapshot("external_hls");
     return {
       ok: false,
       snapshot: { ...snapshot, preflight },
@@ -92,7 +79,7 @@ export async function runOwnerGoLive(
 
   const fails = preflight.filter((c) => c.status === "fail");
   if (fails.length > 0 && !body.masterOverride) {
-    const { snapshot } = await buildOwnerBroadcastSnapshot(body.mode);
+    const { snapshot } = await buildOwnerBroadcastSnapshot("external_hls");
     return {
       ok: false,
       snapshot: { ...snapshot, preflight },
@@ -101,7 +88,7 @@ export async function runOwnerGoLive(
   }
 
   await updateOwnerStreamState(admin, {
-    publish_mode: body.mode,
+    publish_mode: "external_hls",
     publish_status: "starting",
     publish_error_message: null,
     playback_status: "ready",
@@ -109,43 +96,42 @@ export async function runOwnerGoLive(
     updated_by: updatedBy,
   });
 
-  if (body.mode === "rtmp_encoder") {
-    const vmixStart = await startVmixStreaming();
-    if (!vmixStart.ok) {
-      await updateOwnerStreamState(admin, {
-        publish_status: "error",
-        publish_error_message: vmixStart.message,
-        updated_by: updatedBy,
-      });
-      const { snapshot } = await buildOwnerBroadcastSnapshot(body.mode);
-      return { ok: false, snapshot, message: vmixStart.message };
-    }
-  }
+  const showSetupRtmp = buildRtmpIngestUrlFromEncoderConfig({
+    rtmpServer: showSetup.primaryIngestEndpoint,
+    streamKey: showSetup.streamKey,
+    hlsPlaybackUrl: showSetup.attendeePlaybackHlsUrl || null,
+  });
+  const primaryRtmpIngestUrl =
+    showSetupRtmp || row?.primary_rtmp_ingest_url?.trim() || resolvePrimaryRtmpIngestUrl();
 
-  const playbackUrl = body.mode === "browser_camera" ? row?.playback_url : primaryUrl;
-  const existingRtmpIngest = row?.primary_rtmp_ingest_url?.trim() ?? "";
-  const primaryRtmpIngestUrl = existingRtmpIngest || resolvePrimaryRtmpIngestUrl();
-
-  await updateOwnerStreamState(admin, {
+  const liveUpdate = await updateOwnerStreamState(admin, {
     publish_status: "publishing",
     playback_status: "playback_pending",
     is_live: true,
     attendee_ui_phase: "live",
     active_source: "primary",
-    primary_playback_url: primaryUrl,
-    backup_playback_url: backupUrl,
-    playback_url: playbackUrl ?? primaryUrl ?? row?.playback_url,
+    primary_playback_url: hlsUrl,
+    playback_url: hlsUrl,
     ...(primaryRtmpIngestUrl ? { primary_rtmp_ingest_url: primaryRtmpIngestUrl } : {}),
     updated_by: updatedBy,
   });
 
+  if (liveUpdate.error || liveUpdate.row?.is_live !== true) {
+    const { snapshot } = await buildOwnerBroadcastSnapshot("external_hls");
+    return {
+      ok: false,
+      snapshot,
+      message: liveUpdate.error ?? "Unable to mark broadcast live in platform state.",
+    };
+  }
+
   await emitStreamStateSync();
 
-  const { snapshot } = await buildOwnerBroadcastSnapshot(body.mode);
+  const { snapshot } = await buildOwnerBroadcastSnapshot("external_hls");
   return {
     ok: true,
     snapshot,
-    message: "Go-live requested. Playback may remain pending until the manifest is ready.",
+    message: "Go-live requested. Playback may remain pending until the Restream manifest is ready.",
   };
 }
 
@@ -157,7 +143,6 @@ export type MasterGoLiveResult = {
   previousTargetDateTime: string;
 };
 
-/** Override preflight blockers and force go-live (production master override). */
 export async function runOwnerMasterGoLive(
   admin: SupabaseClient,
   body: GoLiveRequestBody,
@@ -168,7 +153,7 @@ export async function runOwnerMasterGoLive(
   const { row } = await loadOwnerStreamState(admin);
   if (row?.is_live) {
     await emitStreamStateSync();
-    const { snapshot } = await buildOwnerBroadcastSnapshot(body.mode);
+    const { snapshot } = await buildOwnerBroadcastSnapshot("external_hls");
     return {
       ok: true,
       snapshot,
@@ -180,7 +165,7 @@ export async function runOwnerMasterGoLive(
 
   const goLiveResult = await runOwnerGoLive(
     admin,
-    { ...body, confirm: true, masterOverride: true },
+    { ...body, mode: "external_hls", confirm: true, masterOverride: true },
     updatedBy,
   );
 
@@ -209,14 +194,6 @@ export async function runOwnerEndBroadcast(
     publish_status: "ending",
     updated_by: updatedBy,
   });
-
-  if (row.publish_mode === "rtmp_encoder") {
-    try {
-      await stopVmixStreaming();
-    } catch (error) {
-      console.warn("[owner/end] vMix stop failed; continuing offline transition:", error);
-    }
-  }
 
   const offlineUpdate = await updateOwnerStreamState(admin, {
     is_live: false,
@@ -247,88 +224,16 @@ export async function runOwnerEndBroadcast(
   return { ok: true, snapshot, message: "Broadcast ended." };
 }
 
+/** Restream-only — feed switching removed (mixer failover can return later). */
 export async function runOwnerSwitchFeed(
-  admin: SupabaseClient,
-  body: SwitchFeedRequestBody,
-  updatedBy: string,
+  _admin: SupabaseClient,
+  _body: SwitchFeedRequestBody,
+  _updatedBy: string,
 ): Promise<{ ok: boolean; snapshot: OwnerBroadcastSnapshot; message: string }> {
-  const { row } = await loadOwnerStreamState(admin);
-
-  if (!row?.is_live) {
-    const { snapshot } = await buildOwnerBroadcastSnapshot();
-    return { ok: false, snapshot, message: "Broadcast is not live — go live before switching feeds." };
-  }
-
-  if (row.publish_mode === "browser_camera") {
-    const { snapshot } = await buildOwnerBroadcastSnapshot();
-    return {
-      ok: false,
-      snapshot,
-      message: "Direct camera mode uses WebRTC — end and use HLS go-live for dual-ingest failover.",
-    };
-  }
-
-  const feedInputs = {
-    primary_playback_url: row.primary_playback_url,
-    backup_playback_url: row.backup_playback_url,
-    playback_url: row.playback_url,
-    active_source: row.active_source,
-    is_live: true,
-  };
-
-  const targetUrl =
-    body.source === "backup"
-      ? resolveBackupFeedUrl(feedInputs)
-      : resolvePrimaryFeedUrl(feedInputs);
-
-  if (!targetUrl) {
-    const { snapshot } = await buildOwnerBroadcastSnapshot();
-    return {
-      ok: false,
-      snapshot,
-      message:
-        body.source === "backup"
-          ? "Backup feed URL is not configured. Set ATTENDEE_BACKUP_HLS_URL."
-          : "Primary feed URL is not configured. Set ATTENDEE_PLAYBACK_HLS_URL.",
-    };
-  }
-
-  const probe = await probeHlsManifest(targetUrl);
-  if (!probe.manifestReachable && !body.confirm) {
-    const { snapshot } = await buildOwnerBroadcastSnapshot();
-    return {
-      ok: false,
-      snapshot,
-      message: `${body.source === "backup" ? "Backup" : "Primary"} manifest is not reachable. Send confirm: true to switch anyway.`,
-    };
-  }
-
-  if (row.active_source === body.source) {
-    const { snapshot } = await buildOwnerBroadcastSnapshot();
-    return {
-      ok: true,
-      snapshot,
-      message: `Already routing attendees to ${body.source} feed.`,
-    };
-  }
-
-  await updateOwnerStreamState(admin, {
-    active_source: body.source,
-    playback_url: targetUrl,
-    playback_status: "playback_pending",
-    playback_error_message: null,
-    updated_by: updatedBy,
-  });
-
-  await emitStreamStateSync();
-
   const { snapshot } = await buildOwnerBroadcastSnapshot();
   return {
-    ok: true,
+    ok: false,
     snapshot,
-    message:
-      body.source === "backup"
-        ? "Failover active — attendees switched to backup (IVS) feed."
-        : "Attendees switched back to primary (Restream) feed.",
+    message: "Feed switching is disabled. Restream is the sole playback lane.",
   };
 }

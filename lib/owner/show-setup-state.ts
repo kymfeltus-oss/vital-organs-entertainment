@@ -10,8 +10,11 @@ import {
   type ScheduleTimezone,
 } from "@/lib/live/schedule-timezone";
 import { loadAdminCountdownConfig, saveCountdownConfig } from "@/lib/live/fetch-countdown-config";
-import { resolveExternalIngestCredentials } from "@/lib/owner/resolve-external-ingest-credentials";
-import { resolveIvsIngestCredentials } from "@/lib/owner/resolve-ivs-config";
+import {
+  mergeEncoderConfigFields,
+  resolveDefaultEncoderConfigFromEnv,
+} from "@/lib/owner/resolve-show-encoder-config";
+import { isValidHlsUrl } from "@/lib/live/hls";
 import { loadOwnerStreamState, updateOwnerStreamState } from "@/lib/owner/load-owner-state";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
@@ -44,6 +47,8 @@ export type ShowSetupState = {
   gateControl: "LOCKED" | "EARLY_ACCESS";
   primaryIngestEndpoint: string;
   streamKey: string;
+  /** Restream / CDN HLS .m3u8 for attendee /live — overrides env when saved. */
+  attendeePlaybackHlsUrl: string;
   fallbackAssetPath: string;
   lowerThirds: LowerThirdAsset[];
   programFlow: ProgramSegment[];
@@ -221,6 +226,9 @@ function mergeStoredSetup(
       youtube: cleanBool(restream.youtube, baseRestream.youtube),
       facebook: cleanBool(restream.facebook, baseRestream.facebook),
     },
+    primaryIngestEndpoint: cleanText(stored.primaryIngestEndpoint, base.primaryIngestEndpoint, 200),
+    streamKey: cleanText(stored.streamKey, base.streamKey, 200),
+    attendeePlaybackHlsUrl: cleanText(stored.attendeePlaybackHlsUrl, base.attendeePlaybackHlsUrl, 500),
   };
 }
 
@@ -231,16 +239,8 @@ export async function loadShowSetupState(): Promise<ShowSetupState> {
     loadAdminCountdownConfig(),
   ]);
 
-  let row = initialRow;
-  if (row && !row.is_live && row.attendee_ui_phase !== "pre_show") {
-    const { row: resetRow } = await updateOwnerStreamState(admin, {
-      attendee_ui_phase: "pre_show",
-      updated_by: "show_setup_reset",
-    });
-    if (resetRow) row = resetRow;
-  }
-  const primary = resolveExternalIngestCredentials();
-  const backup = resolveIvsIngestCredentials();
+  const row = initialRow;
+  const encoderDefaults = resolveDefaultEncoderConfigFromEnv();
   const base: ShowSetupState = {
     showTitle: row?.concert_title ?? "IAN CRAIG & 300",
     presenterName: row?.headliner_name ?? "IAN CRAIG",
@@ -250,8 +250,9 @@ export async function loadShowSetupState(): Promise<ShowSetupState> {
     targetDateTime: countdownConfig.start_time,
     scheduleTimezone: resolveScheduleTimezone(countdownConfig.schedule_timezone),
     gateControl: "EARLY_ACCESS",
-    primaryIngestEndpoint: primary.rtmpUrl ?? backup.ingestServer ?? "",
-    streamKey: primary.streamKey ?? backup.streamKey ?? "",
+    primaryIngestEndpoint: encoderDefaults.rtmpServer,
+    streamKey: encoderDefaults.streamKey,
+    attendeePlaybackHlsUrl: encoderDefaults.hlsPlaybackUrl ?? "",
     fallbackAssetPath: "",
     lowerThirds: DEFAULT_LOWER_THIRDS,
     programFlow: DEFAULT_PROGRAM_FLOW,
@@ -272,7 +273,22 @@ export async function loadShowSetupState(): Promise<ShowSetupState> {
   const storedPresets = asRecord(row?.audio_master_presets);
   const storedSetup = asRecord(storedPresets[SETUP_KEY]);
 
-  return mergeStoredSetup(base, storedSetup);
+  const merged = mergeStoredSetup(base, storedSetup);
+  const encoder = mergeEncoderConfigFields(
+    {
+      primaryIngestEndpoint: merged.primaryIngestEndpoint,
+      streamKey: merged.streamKey,
+      attendeePlaybackHlsUrl: merged.attendeePlaybackHlsUrl,
+    },
+    encoderDefaults,
+  );
+
+  return {
+    ...merged,
+    primaryIngestEndpoint: encoder.rtmpServer,
+    streamKey: encoder.streamKey,
+    attendeePlaybackHlsUrl: encoder.hlsPlaybackUrl ?? "",
+  };
 }
 
 export async function saveShowSetupState(
@@ -296,6 +312,17 @@ export async function saveShowSetupState(
         input.schedule_timezone ?? input.scheduleTimezone ?? current.scheduleTimezone,
       ),
       gateControl: input.gateControl === "LOCKED" ? "LOCKED" : "EARLY_ACCESS",
+      primaryIngestEndpoint: cleanText(
+        input.primaryIngestEndpoint,
+        current.primaryIngestEndpoint,
+        200,
+      ),
+      streamKey: cleanText(input.streamKey, current.streamKey, 200),
+      attendeePlaybackHlsUrl: cleanText(
+        input.attendeePlaybackHlsUrl,
+        current.attendeePlaybackHlsUrl,
+        500,
+      ),
     },
     input,
   );
@@ -334,10 +361,15 @@ export async function saveShowSetupState(
     dvrBufferEnabled: next.dvrBufferEnabled,
     verboseTelemetry: next.verboseTelemetry,
     restreamDestinations: next.restreamDestinations,
+    primaryIngestEndpoint: next.primaryIngestEndpoint,
+    streamKey: next.streamKey,
+    attendeePlaybackHlsUrl: next.attendeePlaybackHlsUrl,
   };
 
   await saveCountdownConfig(validation.config as EventCountdownConfig);
-  const { error } = await updateOwnerStreamState(admin, {
+
+  const savedHls = next.attendeePlaybackHlsUrl.trim();
+  const streamPatch: Parameters<typeof updateOwnerStreamState>[1] = {
     concert_title: next.showTitle,
     headliner_name: next.presenterName,
     audio_master_presets: {
@@ -346,7 +378,14 @@ export async function saveShowSetupState(
     },
     ...(!row?.is_live ? { attendee_ui_phase: "pre_show" as const } : {}),
     updated_by: updatedBy,
-  });
+  };
+
+  if (savedHls && isValidHlsUrl(savedHls) && !row?.is_live) {
+    streamPatch.primary_playback_url = savedHls;
+    streamPatch.playback_url = savedHls;
+  }
+
+  const { error } = await updateOwnerStreamState(admin, streamPatch);
 
   if (error) throw new Error(error);
   return loadShowSetupState();

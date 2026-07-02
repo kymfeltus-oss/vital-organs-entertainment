@@ -13,6 +13,8 @@ const ALLOWED_HOST_SUFFIXES = [
   "mux.dev",
   "mux.com",
   "restream.io",
+  // AWS IVS — covers *.playback / *.playlist / *.global-contribute .live-video.net
+  "live-video.net",
 ];
 
 function relayReject(reason: string, detail: Record<string, unknown> = {}): void {

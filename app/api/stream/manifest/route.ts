@@ -36,7 +36,13 @@ function jsonResponse(
     status,
     headers: {
       ...manifestCorsHeaderRecord(request),
-      "Cache-Control": "private, max-age=10",
+      // Short edge cache absorbs viewer-poll bursts (1 origin fetch per PoP per
+      // few seconds instead of per-viewer) while keeping GO LIVE / STOP signals
+      // fast to propagate. Kept short on purpose — a long TTL would delay the
+      // live/offline transition for attendees. Vary: Origin so the reflected
+      // CORS Allow-Origin header is cache-keyed per requesting origin.
+      "Cache-Control": "public, max-age=0, s-maxage=3, stale-while-revalidate=12",
+      Vary: "Origin",
     },
   });
 }

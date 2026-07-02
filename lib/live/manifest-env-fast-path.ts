@@ -20,8 +20,22 @@ const LOCALHOST_ORIGIN =
 
 export function resolveManifestCorsOrigin(request: NextRequest): string {
   const origin = request.headers.get("origin")?.trim() ?? "";
-  if (origin && LOCALHOST_ORIGIN.test(origin)) return origin;
-  return "http://localhost:3000";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") ?? "";
+  const host = request.headers.get("host")?.trim() ?? "";
+  const proto = request.headers.get("x-forwarded-proto")?.trim() || "https";
+
+  // Echo the requesting origin only when it is trusted. Credentialed CORS
+  // (Allow-Credentials: true) forbids "*", so we must return a specific origin.
+  const trusted =
+    Boolean(origin) &&
+    (LOCALHOST_ORIGIN.test(origin) || // local dev
+      (appUrl !== "" && origin === appUrl) || // configured canonical origin
+      (host !== "" && origin === `${proto}://${host}`)); // same-origin as this request
+
+  if (trusted) return origin;
+
+  // Fall back to the configured production origin, not a hardcoded localhost.
+  return appUrl || "http://localhost:3000";
 }
 
 export function manifestCorsHeaderRecord(request: NextRequest): Record<string, string> {

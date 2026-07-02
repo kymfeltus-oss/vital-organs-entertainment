@@ -20,17 +20,17 @@ export default async function LivePage() {
   const isLocalDev = process.env.NODE_ENV !== "production";
   const forceHoldingRoom = isLocalDev && process.env.FORCE_HOLDING_ROOM_TESTING === "true";
 
-  const initialAttendeeUiPhase = forceHoldingRoom ? "pre_show" : await loadAttendeeUiPhase();
-
+  const serverPhase = await loadAttendeeUiPhase();
+  const initialPhase = forceHoldingRoom ? "pre_show" : serverPhase;
   const initialCountdown = computeCountdown(countdownConfig.start_time);
   const initialProfile = await loadTabPageProfile();
 
   return (
     <div className="relative min-h-dvh overflow-hidden bg-brand-black text-brand-blue">
       <LivePageRouterClient
-        initialAttendeeUiPhase={initialAttendeeUiPhase}
+        initialPhase={initialPhase}
         forceHoldingRoom={forceHoldingRoom}
-        countdownConfig={countdownConfig}
+        initialConfig={countdownConfig}
         initialCountdown={initialCountdown}
         initialProfile={initialProfile}
       />
