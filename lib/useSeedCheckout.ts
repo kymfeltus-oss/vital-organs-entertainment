@@ -8,9 +8,20 @@ type UseSeedCheckoutResult = {
   isSubmitting: boolean;
   errorMessage: string | null;
   activePackageId: SeedBillingPackageId | null;
-  startCheckout: (packageId: SeedBillingPackageId) => Promise<void>;
+  startCheckout: (
+    packageId: SeedBillingPackageId,
+    options?: { returnPath?: string },
+  ) => Promise<void>;
   clearError: () => void;
 };
+
+function normalizeReturnPath(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (trimmed === "/live" || trimmed.startsWith("/live?")) return "/live";
+  if (trimmed === "/buy-seeds" || trimmed.startsWith("/buy-seeds?")) return "/buy-seeds";
+  return null;
+}
 
 export function useSeedCheckout(): UseSeedCheckoutResult {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,17 +34,22 @@ export function useSeedCheckout(): UseSeedCheckoutResult {
     setErrorMessage(null);
   }, []);
 
-  const startCheckout = useCallback(async (packageId: SeedBillingPackageId) => {
+  const startCheckout = useCallback(async (packageId: SeedBillingPackageId, options?: { returnPath?: string }) => {
     setIsSubmitting(true);
     setActivePackageId(packageId);
     setErrorMessage(null);
+
+    const returnPath = normalizeReturnPath(options?.returnPath);
 
     try {
       const response = await fetch(`${getClientAppUrl()}/api/billing/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ packageId }),
+        body: JSON.stringify({
+          packageId,
+          ...(returnPath ? { returnPath } : {}),
+        }),
       });
 
       const data = (await response.json()) as { url?: string; error?: string };

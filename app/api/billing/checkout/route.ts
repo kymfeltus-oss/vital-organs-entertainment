@@ -16,7 +16,16 @@ import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 type SeedCheckoutBody = {
   packageId?: string;
+  returnPath?: string;
 };
+
+function normalizeCheckoutReturnPath(value: unknown): string {
+  if (typeof value !== "string") return "/buy-seeds";
+  const trimmed = value.trim();
+  if (trimmed === "/live" || trimmed.startsWith("/live?")) return "/live";
+  if (trimmed === "/buy-seeds" || trimmed.startsWith("/buy-seeds?")) return "/buy-seeds";
+  return "/buy-seeds";
+}
 
 /**
  * Vital Seed bundle checkout — always available (no event phase / live-signal gate).
@@ -51,6 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     const targetPack = getSeedBillingPackage(packageId);
+    const returnPath = normalizeCheckoutReturnPath(body.returnPath);
 
     if (!targetPack) {
       return NextResponse.json(
@@ -96,8 +106,8 @@ export async function POST(request: NextRequest) {
         user_id: buyer.userId,
         email: buyer.email,
       },
-      success_url: `${appUrl}/buy-seeds?success=true`,
-      cancel_url: `${appUrl}/buy-seeds?canceled=true`,
+      success_url: `${appUrl}${returnPath}?success=true`,
+      cancel_url: `${appUrl}${returnPath}?canceled=true`,
     });
 
     if (!session.url) {

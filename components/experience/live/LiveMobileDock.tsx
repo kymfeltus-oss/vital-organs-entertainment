@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
+import { Gem, MessageCircle } from "lucide-react";
 import LiveReactionTray from "@/components/experience/live/LiveReactionTray";
 import { useIgLiveChat } from "@/components/experience/live/ig/IgLiveChatContext";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
@@ -12,6 +12,8 @@ type LiveMobileDockProps = {
   chatOpen: boolean;
   onJoinConversation: () => void;
   onReaction: (assetId: string) => void;
+  onBuySeeds: () => void;
+  seedBalance: number;
   signInHref?: string;
 };
 
@@ -20,6 +22,8 @@ export default function LiveMobileDock({
   chatOpen,
   onJoinConversation,
   onReaction,
+  onBuySeeds,
+  seedBalance,
   signInHref = "/live",
 }: LiveMobileDockProps) {
   const { session, isSending, error, sendMessage, clearError } = useIgLiveChat();
@@ -125,6 +129,15 @@ export default function LiveMobileDock({
       ) : null}
       <div className="flex items-center gap-2 px-3 py-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {conversationSlot}
+        <button
+          type="button"
+          onClick={onBuySeeds}
+          aria-label="Buy Vital Seeds"
+          className="touch-target flex h-11 shrink-0 flex-col items-center justify-center rounded-full border border-brand-pink/35 bg-brand-pink/10 px-3 font-ui text-[0.48rem] font-bold uppercase tracking-[0.08em] text-brand-pink"
+        >
+          <Gem className="mb-0.5 h-4 w-4" aria-hidden="true" />
+          <span className="tabular-nums">{seedBalance >= 1000 ? `${Math.floor(seedBalance / 1000)}k` : seedBalance}</span>
+        </button>
         <LiveReactionTray variant="mobile-dock" onReaction={onReaction} />
       </div>
     </footer>
