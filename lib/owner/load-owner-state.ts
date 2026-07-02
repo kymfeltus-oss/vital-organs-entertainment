@@ -186,8 +186,6 @@ export async function updateOwnerStreamState(
       if ("playback_status" in patch) legacyPatch.playback_status = patch.playback_status;
       if ("publish_error_message" in patch) legacyPatch.publish_error_message = patch.publish_error_message;
       if ("playback_error_message" in patch) legacyPatch.playback_error_message = patch.playback_error_message;
-      if ("publisher_session_id" in patch) legacyPatch.publisher_session_id = patch.publisher_session_id;
-      if ("publisher_channel" in patch) legacyPatch.publisher_channel = patch.publisher_channel;
       if ("updated_by" in patch) legacyPatch.updated_by = patch.updated_by;
       legacyPatch.updated_at = payload.updated_at;
 
