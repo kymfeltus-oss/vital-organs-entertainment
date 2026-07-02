@@ -1466,12 +1466,14 @@ export default function LiveExperienceClient({
                   ) : null}
                 </>
               )}
-              {activeGraphic ? (
-                <LiveFeatureErrorBoundary featureLabel="Stream graphics">
-                  <LiveStreamGraphicsOverlay graphic={activeGraphic} />
-                </LiveFeatureErrorBoundary>
-              ) : null}
             </div>
+            {activeGraphic ? (
+              <LiveFeatureErrorBoundary featureLabel="Stream graphics">
+                <div className="pointer-events-none fixed inset-0 z-[36] lg:absolute lg:inset-0 lg:z-[35]">
+                  <LiveStreamGraphicsOverlay graphic={activeGraphic} />
+                </div>
+              </LiveFeatureErrorBoundary>
+            ) : null}
           </div>
         </section>
 

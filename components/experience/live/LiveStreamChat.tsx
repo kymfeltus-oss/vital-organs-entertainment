@@ -102,7 +102,7 @@ export default function LiveStreamChat({
 
     const headerClass = isResponsive ? "hidden lg:flex" : "flex";
     const feedClass = isResponsive
-      ? "viewer-pov-chat-mask pointer-events-none absolute left-3 z-20 max-h-[28%] max-w-[min(78%,18rem)] overflow-hidden max-lg:bottom-[calc(var(--live-mobile-dock-h)+0.75rem)] min-h-0 flex-1 overflow-y-auto px-1 py-2 sm:left-4 lg:relative lg:inset-auto lg:max-h-none lg:max-w-none lg:flex-1 lg:space-y-2 lg:px-4 lg:py-3 sm:px-5"
+      ? "viewer-pov-chat-mask pointer-events-none absolute left-3 z-10 max-h-[28%] max-w-[min(78%,18rem)] overflow-hidden max-lg:bottom-[calc(var(--live-mobile-dock-h)+0.75rem)] min-h-0 flex-1 overflow-y-auto px-1 py-2 sm:left-4 lg:relative lg:inset-auto lg:z-auto lg:max-h-none lg:max-w-none lg:flex-1 lg:space-y-2 lg:px-4 lg:py-3 sm:px-5"
       : "min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3 sm:px-5";
 
     const composerShellClass = isResponsive

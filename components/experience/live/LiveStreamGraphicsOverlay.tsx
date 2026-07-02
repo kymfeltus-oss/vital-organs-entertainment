@@ -16,7 +16,7 @@ function LowerThirdOverlay({
   logoUrl?: string | null;
 }) {
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[28] px-4 pb-[calc(var(--live-mobile-dock-h,4.5rem)+0.75rem)] lg:pb-6">
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] px-4 pb-[calc(var(--live-mobile-dock-h,4.5rem)+0.75rem)] lg:pb-6">
       {logoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -50,7 +50,7 @@ function SlateOverlay({
   logoUrl?: string | null;
 }) {
   return (
-    <div className="pointer-events-none absolute inset-0 z-[28] flex items-center justify-center overflow-hidden bg-black/35 px-4 pb-[var(--live-mobile-dock-h,4.5rem)] pt-4 text-center lg:pb-6">
+    <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center overflow-hidden bg-black/35 px-4 pb-[var(--live-mobile-dock-h,4.5rem)] pt-4 text-center lg:pb-6">
       <div className="w-full max-w-md rounded-xl border border-white/14 bg-[linear-gradient(135deg,rgba(6,12,26,0.9),rgba(13,21,45,0.82)_48%,rgba(28,8,31,0.86))] px-4 py-5 shadow-[0_18px_48px_rgba(0,0,0,0.55)]">
         {logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -82,7 +82,7 @@ function TickerOverlay({ text }: { text: string }) {
           animation: live-stream-ticker 18s linear infinite;
         }
       `}</style>
-      <div className="pointer-events-none absolute inset-x-0 bottom-[var(--live-mobile-dock-h,4.5rem)] z-[28] overflow-hidden border-t border-white/10 bg-black/75 py-2 lg:bottom-0">
+      <div className="pointer-events-none absolute inset-x-0 bottom-[var(--live-mobile-dock-h,4.5rem)] z-[1] overflow-hidden border-t border-white/10 bg-black/75 py-2 lg:bottom-0">
         <div className="live-stream-ticker-track whitespace-nowrap font-ui text-[0.58rem] font-black uppercase tracking-[0.14em] text-white sm:text-[0.62rem]">
           <span className="inline-block px-4">{text}</span>
           <span className="inline-block px-4" aria-hidden="true">
@@ -113,12 +113,12 @@ function PositionedOverlay({
             : undefined;
 
   if (graphic.positionAnchor === "FULLSCREEN") {
-    return <div className="pointer-events-none absolute inset-0 z-[28]">{children}</div>;
+    return <div className="pointer-events-none absolute inset-0 z-[1]">{children}</div>;
   }
 
   return (
     <div
-      className="pointer-events-none absolute z-[28]"
+      className="pointer-events-none absolute z-[1]"
       style={{
         left: `${graphic.xPercent}%`,
         top: `${graphic.yPercent}%`,
@@ -142,7 +142,7 @@ export default function LiveStreamGraphicsOverlay({ graphic }: LiveStreamGraphic
 
   if (isSanctuaryVideo && graphic.mediaUrl) {
     return (
-      <div className="pointer-events-none absolute inset-0 z-[28] bg-black">
+      <div className="pointer-events-none absolute inset-0 z-[1] bg-black">
         <video
           src={graphic.mediaUrl}
           className="h-full w-full object-cover lg:object-contain"
