@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
-import { X } from "lucide-react";
+import { VolumeX, X } from "lucide-react";
 import CustomEmojiAnimator from "@/components/experience/live/CustomEmojiAnimator";
 import LiveStreamChat, {
   type LiveStreamChatHandle,
@@ -162,16 +162,32 @@ type HlsVideoPlayerProps = {
   url: string;
   videoRef: RefObject<HTMLVideoElement | null>;
   audioUnlocked: boolean;
-  onEnableAudio: () => void;
   showRecoveryOverlay: boolean;
   recoveryMessage: string;
 };
+
+/** Compact corner chip — keeps the stream clear while satisfying browser autoplay unlock. */
+function LiveAudioUnlockChip({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Turn on live stream sound"
+      className="touch-target absolute z-20 flex items-center gap-2 rounded-full border border-brand-blue/45 bg-black/65 px-3 py-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-blue shadow-[0_4px_24px_rgba(0,0,0,0.45)] backdrop-blur-md transition hover:border-brand-blue/70 hover:bg-black/80 max-lg:right-3 max-lg:bottom-[calc(var(--live-mobile-dock-h)+0.35rem)] lg:right-5 lg:bottom-5"
+    >
+      <span className="grid h-8 w-8 place-items-center rounded-full border border-brand-blue/35 bg-brand-blue/15">
+        <VolumeX className="h-4 w-4" aria-hidden="true" />
+      </span>
+      <span className="pr-1 max-lg:hidden">Sound on</span>
+      <span className="pr-0.5 lg:hidden">Tap for sound</span>
+    </button>
+  );
+}
 
 function HlsVideoPlayer({
   url,
   videoRef,
   audioUnlocked,
-  onEnableAudio,
   showRecoveryOverlay,
   recoveryMessage,
 }: HlsVideoPlayerProps) {
@@ -201,15 +217,6 @@ function HlsVideoPlayer({
             {recoveryMessage}
           </p>
         </div>
-      ) : null}
-      {!audioUnlocked ? (
-        <button
-          type="button"
-          onClick={onEnableAudio}
-          className="absolute bottom-[calc(var(--live-mobile-dock-h)+var(--live-mobile-composer-h)+1rem)] left-1/2 z-10 min-h-11 -translate-x-1/2 rounded border border-brand-border bg-black/55 px-6 py-4 text-center font-ui text-[0.68rem] font-bold uppercase tracking-[0.14em] text-brand-blue backdrop-blur lg:bottom-5"
-        >
-          TAP FOR AUDIO / UNMUTE
-        </button>
       ) : null}
     </>
   );
@@ -1416,13 +1423,7 @@ export default function LiveExperienceClient({
                       </p>
                     </div>
                   ) : !directAudioUnlocked ? (
-                    <button
-                      type="button"
-                      onClick={enableDirectAudio}
-                      className="absolute bottom-[calc(var(--live-mobile-dock-h)+var(--live-mobile-composer-h)+1rem)] left-1/2 z-10 min-h-11 -translate-x-1/2 rounded-full border border-brand-blue/50 bg-black/75 px-5 font-ui text-[0.68rem] font-bold uppercase tracking-[0.14em] text-brand-blue backdrop-blur lg:bottom-5"
-                    >
-                      Tap for audio
-                    </button>
+                    <LiveAudioUnlockChip onClick={enableDirectAudio} />
                   ) : null}
                 </>
               ) : (
@@ -1430,11 +1431,14 @@ export default function LiveExperienceClient({
                   url={resolvedPlaybackUrl}
                   videoRef={videoRef}
                   audioUnlocked={audioUnlocked}
-                  onEnableAudio={enableAudio}
                   showRecoveryOverlay={showPlaybackRecoveryOverlay}
                   recoveryMessage={playbackRecoveryMessage}
                 />
               )}
+
+              {!showDirectPlayer && !audioUnlocked ? (
+                <LiveAudioUnlockChip onClick={enableAudio} />
+              ) : null}
 
               {floatingEmojis.map((burst) => (
                 <CustomEmojiAnimator
