@@ -7,10 +7,13 @@ import CustomEmojiAnimator from "@/components/experience/live/CustomEmojiAnimato
 import LiveStreamChat, {
   type LiveStreamChatHandle,
 } from "@/components/experience/live/LiveStreamChat";
+import LiveMobileDock from "@/components/experience/live/LiveMobileDock";
 import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { useIanCraigLiveSeedActions } from "@/lib/experience/useIanCraigLiveSeedActions";
+import { useLiveChatSimulation } from "@/lib/live/use-live-chat-simulation";
+import { useLiveViewerCount } from "@/lib/experience/useLiveViewerCount";
 import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
 import { fetchLiveAccessEvaluation, type LiveAccessEvaluation } from "@/lib/access";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
@@ -55,9 +58,15 @@ const EMOJI_REACTION_COST = 5;
 const QUICK_SOW_COST = 100;
 
 const CUSTOM_REACTIONS = [
-  { assetId: "seed_fire", label: "Fire Seed" },
-  { assetId: "awakening_glow", label: "Awakening Glow" },
+  { assetId: "seed_fire", label: "Fire Seed", emoji: "🔥" },
+  { assetId: "awakening_glow", label: "Awakening Glow", emoji: "✨" },
 ] as const;
+
+const MOBILE_DOCK_REACTIONS = CUSTOM_REACTIONS.map(({ assetId, label, emoji }) => ({
+  assetId,
+  label,
+  emoji,
+}));
 
 type FloatingEmojiBurst = {
   id: string;
@@ -166,20 +175,38 @@ type HlsVideoPlayerProps = {
   recoveryMessage: string;
 };
 
-/** Compact corner chip — keeps the stream clear while satisfying browser autoplay unlock. */
-function LiveAudioUnlockChip({ onClick }: { onClick: () => void }) {
+/** Compact audio unlock — header icon on mobile, corner chip on desktop. */
+function LiveAudioUnlockChip({
+  onClick,
+  placement = "corner",
+}: {
+  onClick: () => void;
+  placement?: "header" | "corner";
+}) {
+  if (placement === "header") {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label="Turn on live stream sound"
+        className="touch-target grid h-10 w-10 place-items-center rounded-full border border-brand-blue/45 bg-black/60 text-brand-blue shadow-[0_4px_20px_rgba(0,0,0,0.35)] backdrop-blur-md transition hover:border-brand-blue/70 hover:bg-black/75"
+      >
+        <VolumeX className="h-4 w-4" aria-hidden="true" />
+      </button>
+    );
+  }
+
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label="Turn on live stream sound"
-      className="touch-target absolute z-20 flex items-center gap-2 rounded-full border border-brand-blue/45 bg-black/65 px-3 py-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-blue shadow-[0_4px_24px_rgba(0,0,0,0.45)] backdrop-blur-md transition hover:border-brand-blue/70 hover:bg-black/80 max-lg:right-3 max-lg:bottom-[calc(var(--live-mobile-dock-h)+0.35rem)] lg:right-5 lg:bottom-5"
+      className="touch-target absolute z-20 hidden items-center gap-2 rounded-full border border-brand-blue/45 bg-black/65 px-3 py-2 font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-blue shadow-[0_4px_24px_rgba(0,0,0,0.45)] backdrop-blur-md transition hover:border-brand-blue/70 hover:bg-black/80 lg:flex lg:right-5 lg:bottom-5"
     >
       <span className="grid h-8 w-8 place-items-center rounded-full border border-brand-blue/35 bg-brand-blue/15">
         <VolumeX className="h-4 w-4" aria-hidden="true" />
       </span>
-      <span className="pr-1 max-lg:hidden">Sound on</span>
-      <span className="pr-0.5 lg:hidden">Tap for sound</span>
+      <span className="pr-1">Sound on</span>
     </button>
   );
 }
@@ -282,6 +309,8 @@ export default function LiveExperienceClient({
   const [playbackRecoveryMessage, setPlaybackRecoveryMessage] = useState(
     "Waiting for the first live frame...",
   );
+  const [mobileChatOpen, setMobileChatOpen] = useState(false);
+  const mainRef = useRef<HTMLElement>(null);
 
   const { playbackUrl } = useLiveManifestPoller(manifest);
   const {
@@ -292,6 +321,41 @@ export default function LiveExperienceClient({
   const [optimisticSeedBalance, setSeedBalance] = useState<number | null>(null);
   const [isDeductingSeeds, setIsDeductingSeeds] = useState(false);
   const seedBalance = optimisticSeedBalance ?? walletSeedBalance;
+
+  const { displayLabel: viewerCountLabel } = useLiveViewerCount({
+    enabled: true,
+    userId: initialProfile.userId ?? null,
+  });
+  const { messages: simulatedChatMessages } = useLiveChatSimulation({ enabled: true });
+
+  useEffect(() => {
+    const root = mainRef.current;
+    if (!root) return;
+
+    const syncMobileOffsets = () => {
+      const dock = root.querySelector(".live-sanctuary-mobile-dock");
+      const composer = root.querySelector(".live-sanctuary-mobile-composer");
+
+      const dockHeight =
+        dock instanceof HTMLElement ? Math.ceil(dock.getBoundingClientRect().height) : 0;
+      const composerHeight =
+        composer instanceof HTMLElement ? Math.ceil(composer.getBoundingClientRect().height) : 0;
+
+      root.style.setProperty("--live-mobile-dock-h", `${dockHeight}px`);
+      root.style.setProperty("--live-mobile-composer-h", `${composerHeight}px`);
+    };
+
+    syncMobileOffsets();
+
+    const observer = new ResizeObserver(syncMobileOffsets);
+    observer.observe(root);
+    const dock = root.querySelector(".live-sanctuary-mobile-dock");
+    const composer = root.querySelector(".live-sanctuary-mobile-composer");
+    if (dock instanceof HTMLElement) observer.observe(dock);
+    if (composer instanceof HTMLElement) observer.observe(composer);
+
+    return () => observer.disconnect();
+  }, [mobileChatOpen]);
 
   const useDirectCamera =
     access?.publishMode === "browser_camera" &&
@@ -1371,40 +1435,69 @@ export default function LiveExperienceClient({
 
   return (
     <main
-      className="live-sanctuary-experience min-h-dvh bg-brand-black text-white [--live-mobile-composer-h:4.25rem] [--live-mobile-dock-h:calc(4.25rem+max(0.5rem,env(safe-area-inset-bottom)))]"
+      ref={mainRef}
+      className="live-sanctuary-experience min-h-dvh bg-brand-black text-white [--live-mobile-composer-h:0px] [--live-mobile-dock-h:4.5rem]"
     >
       <div className="relative min-h-dvh lg:grid lg:min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
         <section className="relative min-h-dvh w-full bg-[#050505]">
-          <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between border-b border-white/10 bg-gradient-to-b from-black/85 via-black/55 to-transparent px-4 py-3 pr-16 sm:px-6 sm:pr-20 lg:relative lg:bg-[#050505] lg:from-transparent lg:via-transparent lg:to-transparent">
-            <div>
-              <p className="font-ui text-[0.62rem] font-bold uppercase tracking-[0.22em] text-brand-blue">
+          <header className="absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-3 border-b border-white/10 bg-gradient-to-b from-black/90 via-black/60 to-transparent px-4 py-3 pr-[4.75rem] sm:px-6 sm:pr-24 lg:relative lg:items-center lg:bg-[#050505] lg:from-transparent lg:via-transparent lg:to-transparent lg:pr-20">
+            <div className="min-w-0">
+              <p className="font-ui text-[0.58rem] font-bold uppercase tracking-[0.22em] text-brand-blue sm:text-[0.62rem]">
                 300 Awakening
               </p>
-              <h1 className="font-headline text-lg uppercase tracking-[0.08em] sm:text-2xl">
+              <h1 className="hidden font-headline text-lg uppercase tracking-[0.08em] sm:block sm:text-2xl lg:block">
                 Live Sanctuary Feed
               </h1>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5 lg:hidden">
+                <div className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 font-ui text-[0.52rem] font-bold uppercase tracking-[0.12em] text-white/70">
+                  {showDirectPlayer ? "Direct" : access?.streamIsLive ? "On Air" : "Live"}
+                </div>
+                <div
+                  className="rounded-full border border-brand-blue/30 bg-brand-blue/10 px-2.5 py-0.5 font-ui text-[0.52rem] font-bold uppercase tracking-[0.12em] text-brand-blue"
+                  aria-label={`${viewerCountLabel} watching`}
+                >
+                  {viewerCountLabel} watching
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col items-end gap-1.5">
+            <div className="hidden flex-col items-end gap-1.5 lg:flex">
               {autoLevelingActive ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-lime-300/35 bg-lime-300/10 px-3 py-1 font-ui text-[0.52rem] font-black uppercase tracking-[0.12em] text-lime-300">
                   <span className="h-1.5 w-1.5 rounded-full bg-lime-300 shadow-[0_0_8px_rgba(132,255,75,0.8)]" />
                   Auto-Leveling Active
                 </span>
               ) : null}
-              <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-white/70">
-                {showDirectPlayer ? "Direct Live" : access?.streamIsLive ? "On Air" : "Connected"}
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-white/70">
+                  {showDirectPlayer ? "Direct Live" : access?.streamIsLive ? "On Air" : "Connected"}
+                </div>
+                <div
+                  className="rounded-full border border-brand-blue/30 bg-brand-blue/10 px-3 py-1 font-ui text-[0.62rem] font-bold uppercase tracking-[0.14em] text-brand-blue"
+                  aria-label={`${viewerCountLabel} watching`}
+                >
+                  {viewerCountLabel} watching
+                </div>
               </div>
+            </div>
+            <div className="absolute right-14 top-3 z-50 flex items-center gap-2 lg:hidden">
+              {!showDirectPlayer && !audioUnlocked ? (
+                <LiveAudioUnlockChip onClick={enableAudio} placement="header" />
+              ) : null}
+              {showDirectPlayer && !directAudioUnlocked ? (
+                <LiveAudioUnlockChip onClick={enableDirectAudio} placement="header" />
+              ) : null}
             </div>
             <Link
               href={ATTENDEE_DASHBOARD_PATH}
               aria-label="Back to dashboard"
-              className="touch-target absolute right-4 top-4 z-50 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/10 text-white backdrop-blur transition hover:bg-white/20"
+              className="touch-target absolute right-4 top-3 z-50 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/10 text-white backdrop-blur transition hover:bg-white/20 lg:top-4"
             >
               <X className="h-5 w-5 text-white" aria-hidden="true" />
             </Link>
           </header>
 
           <div className="relative h-dvh w-full lg:h-auto lg:min-h-[calc(100dvh-4.5rem)]">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-44 bg-gradient-to-t from-black/85 via-black/35 to-transparent max-lg:block lg:hidden" />
             <div className="absolute inset-0 bg-black lg:relative lg:inset-auto lg:h-full lg:min-h-[calc(100dvh-4.5rem)]">
               {showDirectPlayer ? (
                 <>
@@ -1423,7 +1516,7 @@ export default function LiveExperienceClient({
                       </p>
                     </div>
                   ) : !directAudioUnlocked ? (
-                    <LiveAudioUnlockChip onClick={enableDirectAudio} />
+                    <LiveAudioUnlockChip onClick={enableDirectAudio} placement="corner" />
                   ) : null}
                 </>
               ) : (
@@ -1437,7 +1530,7 @@ export default function LiveExperienceClient({
               )}
 
               {!showDirectPlayer && !audioUnlocked ? (
-                <LiveAudioUnlockChip onClick={enableAudio} />
+                <LiveAudioUnlockChip onClick={enableAudio} placement="corner" />
               ) : null}
 
               {floatingEmojis.map((burst) => (
@@ -1532,40 +1625,22 @@ export default function LiveExperienceClient({
             seedBalance={seedBalance}
             signInHref={EXPERIENCE_LIVE_PATH}
             layout="responsive"
+            simulatedMessages={simulatedChatMessages}
+            hideMobileComposer
+            mobileComposerOpen={mobileChatOpen}
             className="min-h-0 flex-1 lg:border-t lg:border-white/10"
           />
 
-          <footer className="pointer-events-auto absolute inset-x-0 bottom-0 z-40 border-t border-white/10 bg-black/75 backdrop-blur-xl lg:hidden">
-            <div className="flex items-center gap-2 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-              <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-full border border-brand-blue/30 bg-brand-blue/10 px-3 py-2">
-                <span className="font-ui text-[0.5rem] font-bold uppercase tracking-[0.16em] text-brand-muted">
-                  Seeds
-                </span>
-                <span className="min-w-0 truncate font-ui text-sm font-bold tabular-nums text-brand-blue">
-                  {walletLabel}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleAddSeeds}
-                  className="touch-target ml-auto shrink-0 rounded-full border border-brand-pink/45 bg-brand-pink/10 px-3 py-1.5 font-ui text-[0.55rem] font-bold uppercase tracking-[0.1em] text-brand-pink"
-                >
-                  Buy
-                </button>
-              </div>
-              {CUSTOM_REACTIONS.map((reaction) => (
-                <button
-                  key={reaction.assetId}
-                  type="button"
-                  disabled={isDeductingSeeds}
-                  onClick={() => void handleCustomEmojiReaction(reaction.assetId)}
-                  className="touch-target flex h-10 shrink-0 flex-col items-center justify-center rounded-full border border-white/15 bg-white/5 px-2.5 font-ui text-[0.45rem] font-bold uppercase tracking-[0.08em] text-white disabled:opacity-50"
-                >
-                  <span className="text-[0.55rem]">{reaction.label.split(" ")[0]}</span>
-                  <span className="text-[0.4rem] font-normal normal-case text-brand-muted">5</span>
-                </button>
-              ))}
-            </div>
-          </footer>
+          <LiveMobileDock
+            seedBalanceLabel={walletLabel}
+            seedBalanceLoading={seedBalanceLoading}
+            isDeductingSeeds={isDeductingSeeds}
+            chatOpen={mobileChatOpen}
+            reactions={MOBILE_DOCK_REACTIONS}
+            onAddSeeds={handleAddSeeds}
+            onToggleChat={() => setMobileChatOpen((open) => !open)}
+            onReaction={(assetId) => void handleCustomEmojiReaction(assetId)}
+          />
 
           <footer className="hidden border-t border-white/10 px-5 py-3 font-body text-xs text-white/55 lg:flex lg:items-center lg:justify-between">
             <span>{attendeeName}</span>

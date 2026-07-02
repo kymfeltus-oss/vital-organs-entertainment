@@ -1,5 +1,5 @@
 /** Always added on top of the realtime presence count shown to attendees. */
-export const LIVE_VIEWER_DISPLAY_BUFFER = 200;
+export const LIVE_VIEWER_DISPLAY_BUFFER = 400;
 
 export const LIVE_VIEWER_PRESENCE_CHANNEL = "live-viewer-presence";
 

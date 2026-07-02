@@ -20,6 +20,7 @@ import {
   type FellowshipChatMessage,
 } from "@/lib/experience/fellowship-chat";
 import { useFellowshipChat } from "@/lib/experience/useFellowshipChat";
+import type { SimulatedChatMessage } from "@/lib/live/live-simulation";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
 export type LiveStreamChatHandle = {
@@ -36,6 +37,12 @@ type LiveStreamChatProps = {
   signInHref?: string;
   /** sidebar = desktop panel; responsive = IG overlay on mobile, sidebar on lg+ */
   layout?: LiveStreamChatLayout;
+  /** Ambient simulated comments merged into the overlay feed (never persisted). */
+  simulatedMessages?: SimulatedChatMessage[];
+  /** Hide the floating mobile composer — overlay thread only. */
+  hideMobileComposer?: boolean;
+  /** When true, show the mobile composer sheet above the dock. */
+  mobileComposerOpen?: boolean;
 };
 
 type LocalNoticeLine = FellowshipChatMessage & {
@@ -76,10 +83,20 @@ function ScrollToBottom({
  */
 const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
   function LiveStreamChat(
-    { profile, seedBalance, className, signInHref = "/live", layout = "responsive" },
+    {
+      profile,
+      seedBalance,
+      className,
+      signInHref = "/live",
+      layout = "responsive",
+      simulatedMessages = [],
+      hideMobileComposer = false,
+      mobileComposerOpen = false,
+    },
     ref,
   ) {
     const isResponsive = layout === "responsive";
+    const mobileComposerVisible = isResponsive && (!hideMobileComposer || mobileComposerOpen);
     const { messages, session, isSending, error, sendMessage, clearError } = useFellowshipChat();
     const [draft, setDraft] = useState("");
     const [localNotices, setLocalNotices] = useState<LocalNoticeLine[]>([]);
@@ -117,8 +134,12 @@ const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
             ) < 15_000,
         );
       });
-      return [...messages, ...pendingNotices];
-    }, [localNotices, messages]);
+      const merged = [...messages, ...pendingNotices, ...simulatedMessages];
+      return merged.sort(
+        (left, right) =>
+          new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
+      );
+    }, [localNotices, messages, simulatedMessages]);
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -135,11 +156,11 @@ const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
 
     const headerClass = isResponsive ? "hidden lg:flex" : "flex";
     const feedClass = isResponsive
-      ? "viewer-pov-chat-mask pointer-events-none absolute left-[clamp(0.75rem,3vw,1.25rem)] z-20 max-h-[32%] max-w-[min(82%,20rem)] overflow-hidden max-lg:bottom-[calc(var(--live-mobile-dock-h)+var(--live-mobile-composer-h)+0.5rem)] min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3 sm:px-5 lg:relative lg:inset-auto lg:max-h-none lg:max-w-none lg:flex-1"
+      ? "viewer-pov-chat-mask pointer-events-none absolute left-3 z-20 max-h-[28%] max-w-[min(78%,18rem)] overflow-hidden max-lg:bottom-[calc(var(--live-mobile-dock-h)+var(--live-mobile-composer-h)+0.75rem)] min-h-0 flex-1 overflow-y-auto px-1 py-2 sm:left-4 lg:relative lg:inset-auto lg:max-h-none lg:max-w-none lg:flex-1 lg:space-y-2 lg:px-4 lg:py-3 sm:px-5"
       : "min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3 sm:px-5";
 
     const composerShellClass = isResponsive
-      ? "max-lg:absolute max-lg:inset-x-[clamp(0.75rem,3vw,1.25rem)] max-lg:bottom-[var(--live-mobile-dock-h)] max-lg:z-30 max-lg:border-0 max-lg:px-0 max-lg:py-0 max-lg:pointer-events-auto shrink-0 border-t border-white/10 px-4 py-3 sm:px-5 lg:relative lg:inset-auto"
+      ? `${mobileComposerVisible ? "live-sanctuary-mobile-composer max-lg:absolute max-lg:inset-x-3 max-lg:bottom-[var(--live-mobile-dock-h)] max-lg:z-[35] max-lg:rounded-2xl max-lg:border max-lg:border-white/10 max-lg:bg-black/80 max-lg:p-3 max-lg:shadow-[0_-8px_32px_rgba(0,0,0,0.45)] max-lg:backdrop-blur-xl max-lg:pointer-events-auto" : "max-lg:hidden"} shrink-0 border-t border-white/10 px-4 py-3 sm:px-5 lg:relative lg:!flex lg:inset-auto lg:flex-col lg:border-t lg:border-white/10`
       : "shrink-0 border-t border-white/10 px-4 py-3 sm:px-5";
 
     return (
@@ -163,15 +184,16 @@ const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
           aria-label="Live chat messages"
         >
           <ScrollToBottom containerRef={scrollRef} dependencyKey={feedLines.length} />
-          <div className={isResponsive ? "viewer-pov-chat-scroll flex flex-col justify-end gap-2.5" : "contents"}>
+          <div className={isResponsive ? "viewer-pov-chat-scroll flex flex-col justify-end gap-2" : "contents"}>
             {feedLines.length === 0 ? (
               <p
                 className={`font-body text-brand-muted viewer-pov-text-shadow ${isResponsive ? "text-xs text-white/55" : "text-sm"}`}
               >
-                Be the first to say hello to the room.
+                The room is gathering...
               </p>
             ) : (
-              feedLines.map((message) => {
+              feedLines.slice(-8).map((message) => {
+                const isSimulated = "isSimulated" in message && message.isSimulated;
                 const isOwn =
                   Boolean(profileUserId) &&
                   message.userId === profileUserId &&
@@ -179,7 +201,7 @@ const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
                 return (
                   <p
                     key={message.id}
-                    className={`font-body leading-snug text-white viewer-pov-text-shadow ${isResponsive ? "text-[0.9rem] max-lg:text-sm" : "text-sm"}`}
+                    className={`font-body leading-snug text-white viewer-pov-text-shadow ${isResponsive ? "text-[0.82rem] max-lg:rounded-md max-lg:bg-black/35 max-lg:px-2 max-lg:py-1 max-lg:backdrop-blur-sm" : "text-sm"} ${isSimulated ? "max-lg:opacity-85" : ""}`}
                   >
                     <span
                       className={`font-ui text-xs font-bold ${chatAuthorColorClass(message.userId)}`}
@@ -200,7 +222,7 @@ const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
             <button
               type="button"
               onClick={clearError}
-              className="mb-2 block w-full truncate text-left font-body text-xs text-brand-pink"
+              className="mb-2 block w-full truncate text-left font-body text-xs text-brand-pink max-lg:mb-1.5"
             >
               {error}
             </button>
@@ -208,13 +230,13 @@ const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
           {!session.authenticated ? (
             <Link
               href={buildAttendeeGateUrl(signInHref)}
-              className={`touch-target inline-flex min-h-11 w-full items-center justify-center rounded-full border border-brand-blue/40 bg-brand-blue/10 px-4 font-ui text-[0.62rem] font-bold uppercase tracking-[0.12em] text-brand-blue ${isResponsive ? "max-lg:bg-black/50 max-lg:backdrop-blur-md" : ""}`}
+              className="touch-target inline-flex min-h-11 w-full items-center justify-center rounded-full border border-brand-blue/40 bg-brand-blue/10 px-4 font-ui text-[0.62rem] font-bold uppercase tracking-[0.12em] text-brand-blue"
             >
               Sign in to join chat
             </Link>
           ) : !session.canSend ? (
             <p
-              className={`rounded-full bg-black/40 px-4 py-3 text-center font-ui text-xs font-bold uppercase tracking-[0.14em] text-brand-muted ${isResponsive ? "max-lg:bg-black/50 max-lg:backdrop-blur-md" : ""}`}
+              className="rounded-full bg-black/40 px-4 py-3 text-center font-ui text-xs font-bold uppercase tracking-[0.14em] text-brand-muted"
               role="status"
             >
               Muted
@@ -231,10 +253,10 @@ const LiveStreamChat = forwardRef<LiveStreamChatHandle, LiveStreamChatProps>(
                 autoComplete="off"
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
-                placeholder="Say something..."
+                placeholder={mobileComposerVisible ? "Join the conversation..." : "Say something..."}
                 disabled={isSending}
                 maxLength={FELLOWSHIP_MAX_CONTENT_LENGTH}
-                className={`h-11 min-w-0 flex-1 rounded-full border border-white/10 bg-black/45 px-4 font-body text-sm text-white placeholder:text-white/45 focus:outline-none focus:ring-2 focus:ring-brand-blue/35 ${isResponsive ? "max-lg:h-12 max-lg:bg-black/50 max-lg:backdrop-blur-md" : ""}`}
+                className="h-11 min-w-0 flex-1 rounded-full border border-white/10 bg-black/45 px-4 font-body text-sm text-white placeholder:text-white/45 focus:outline-none focus:ring-2 focus:ring-brand-blue/35 max-lg:bg-black/55"
               />
               <button
                 type="submit"
