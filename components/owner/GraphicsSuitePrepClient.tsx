@@ -48,6 +48,7 @@ import {
   BroadcastLowerThirdPreset,
   BroadcastPresentationSlate,
 } from "@/components/owner/BroadcastGraphicPresets";
+import GraphicsMonetizationRemindersPanel from "@/components/owner/GraphicsMonetizationRemindersPanel";
 
 const BUILDER_KINDS = [...GRAPHICS_PRESET_TYPES, "SANCTUARY_VIDEO"] as const;
 
@@ -567,6 +568,8 @@ export default function GraphicsSuitePrepClient() {
 
   return (
     <section className="space-y-5">
+      <GraphicsMonetizationRemindersPanel />
+
       <div className="rounded-[6px] border border-white/10 bg-[#050814]/94 p-4 shadow-[0_0_28px_rgba(0,168,255,0.08)] sm:p-5">
         <div className="mb-5 text-center">
           <p className="font-ui text-[0.65rem] uppercase tracking-[0.28em] text-[#7aa7ff]">

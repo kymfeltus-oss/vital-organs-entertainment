@@ -16,6 +16,7 @@ import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
 import { mapEventPhaseState } from "@/lib/owner/map-event-phase";
 import { buildRtmpIngestUrlFromEncoderConfig } from "@/lib/owner/resolve-show-encoder-config";
 import { loadShowSetupState, type ShowSetupState } from "@/lib/owner/show-setup-state";
+import { armMonetizationReminderScheduleOnGoLive } from "@/lib/owner/graphics-monetization-reminders";
 
 export { parseGoLiveBody, parseSwitchFeedBody };
 
@@ -124,6 +125,8 @@ export async function runOwnerGoLive(
       message: liveUpdate.error ?? "Unable to mark broadcast live in platform state.",
     };
   }
+
+  await armMonetizationReminderScheduleOnGoLive(admin, updatedBy);
 
   await emitStreamStateSync();
 

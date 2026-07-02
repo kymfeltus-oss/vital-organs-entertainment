@@ -2,7 +2,9 @@
 
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { useRouter } from "next/navigation";
 import CustomEmojiAnimator from "@/components/experience/live/CustomEmojiAnimator";
+import LiveMonetizationReminderBanner from "@/components/experience/live/LiveMonetizationReminderBanner";
 import LiveStreamChat from "@/components/experience/live/LiveStreamChat";
 import LiveMobileDock from "@/components/experience/live/LiveMobileDock";
 import { IgLiveChatProvider } from "@/components/experience/live/ig/IgLiveChatContext";
@@ -13,6 +15,7 @@ import ExperienceHoldingRoomPageClient from "@/components/experience/holding-roo
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { useIanCraigLiveSeedActions } from "@/lib/experience/useIanCraigLiveSeedActions";
+import { useLiveMonetizationReminder } from "@/lib/experience/useLiveMonetizationReminder";
 import { useLiveChatSimulation } from "@/lib/live/use-live-chat-simulation";
 import { useLiveViewerCount } from "@/lib/experience/useLiveViewerCount";
 import { fetchLiveAccessEvaluation, type LiveAccessEvaluation } from "@/lib/access";
@@ -44,6 +47,11 @@ import {
   unregisterPlatformListener,
 } from "@/lib/live/platform-channel";
 import { LIVE_ROOM_PLATFORM_CHANNEL, LIVE_STREAM_STATE_BROADCAST_EVENT } from "@/lib/live/types";
+import {
+  buildMonetizationReminderHref,
+  monetizationReminderUsesInLiveAction,
+} from "@/lib/live/monetization-reminder-cta";
+import type { MonetizationReminderCtaKind } from "@/lib/owner/graphics-monetization-reminders";
 import {
   getLiveReactionDefinition,
   parseEmojiBurstPayload,
@@ -186,6 +194,7 @@ export default function LiveExperienceClient({
   countdownConfig,
   initialCountdown,
 }: LiveExperienceClientProps) {
+  const router = useRouter();
   const attendeeName = initialProfile.headerDisplayName || initialProfile.email || "Guest";
   const videoRef = useRef<HTMLVideoElement>(null);
   const directVideoRef = useRef<HTMLVideoElement>(null);
@@ -255,6 +264,10 @@ export default function LiveExperienceClient({
     userId: initialProfile.userId ?? null,
   });
   const { messages: simulatedChatMessages } = useLiveChatSimulation({ enabled: true });
+  const streamIsLive = access?.streamIsLive === true;
+  const { activeReminder, dismissActive } = useLiveMonetizationReminder({
+    enabled: streamIsLive,
+  });
 
   useEffect(() => {
     const root = mainRef.current;
@@ -1304,6 +1317,22 @@ export default function LiveExperienceClient({
     );
   }, [executeSeedDeduction]);
 
+  const handleMonetizationReminderCta = useCallback(
+    (ctaKind: MonetizationReminderCtaKind) => {
+      if (monetizationReminderUsesInLiveAction(ctaKind)) {
+        handleQuickSow();
+        dismissActive();
+        return;
+      }
+
+      const href = buildMonetizationReminderHref(ctaKind);
+      if (href) {
+        router.push(href);
+      }
+    },
+    [dismissActive, handleQuickSow, router],
+  );
+
   const isPublishMode = useDirectCamera;
   const showConnectingShroud =
     !isPublishMode &&
@@ -1344,6 +1373,16 @@ export default function LiveExperienceClient({
             showAudioUnlock={showAudioUnlock}
             onEnableAudio={handleHeaderEnableAudio}
           />
+
+          {activeReminder ? (
+            <LiveFeatureErrorBoundary featureLabel="Monetization reminder">
+              <LiveMonetizationReminderBanner
+                reminder={activeReminder}
+                onDismiss={dismissActive}
+                onCta={handleMonetizationReminderCta}
+              />
+            </LiveFeatureErrorBoundary>
+          ) : null}
 
           <div className="relative h-dvh w-full lg:h-auto lg:min-h-[calc(100dvh-4.5rem)]">
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-44 bg-gradient-to-t from-black/85 via-black/35 to-transparent max-lg:block lg:hidden" />
