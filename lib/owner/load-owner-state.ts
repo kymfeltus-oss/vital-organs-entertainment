@@ -176,11 +176,18 @@ export async function updateOwnerStreamState(
     if (isMissingColumnError(error.message)) {
       const legacyPatch: Record<string, unknown> = {};
       if ("is_live" in patch) legacyPatch.is_live = patch.is_live;
+      if ("attendee_ui_phase" in patch) legacyPatch.attendee_ui_phase = patch.attendee_ui_phase;
       if ("playback_url" in patch) legacyPatch.playback_url = patch.playback_url;
       if ("active_source" in patch) legacyPatch.active_source = patch.active_source;
       if ("primary_playback_url" in patch) legacyPatch.primary_playback_url = patch.primary_playback_url;
       if ("backup_playback_url" in patch) legacyPatch.backup_playback_url = patch.backup_playback_url;
       if ("primary_rtmp_ingest_url" in patch) legacyPatch.primary_rtmp_ingest_url = patch.primary_rtmp_ingest_url;
+      if ("publish_status" in patch) legacyPatch.publish_status = patch.publish_status;
+      if ("playback_status" in patch) legacyPatch.playback_status = patch.playback_status;
+      if ("publish_error_message" in patch) legacyPatch.publish_error_message = patch.publish_error_message;
+      if ("playback_error_message" in patch) legacyPatch.playback_error_message = patch.playback_error_message;
+      if ("publisher_session_id" in patch) legacyPatch.publisher_session_id = patch.publisher_session_id;
+      if ("publisher_channel" in patch) legacyPatch.publisher_channel = patch.publisher_channel;
       if ("updated_by" in patch) legacyPatch.updated_by = patch.updated_by;
       legacyPatch.updated_at = payload.updated_at;
 
