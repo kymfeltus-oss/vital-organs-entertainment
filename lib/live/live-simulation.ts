@@ -15,23 +15,23 @@ type SimulationTemplate = {
   body: string;
 };
 
-/** Short, gospel-appropriate ambient comments — kept minimal and respectful. */
+/** Short, casual live-room comments — natural tone, not overly polished. */
 const GOSPEL_CHAT_TEMPLATES: SimulationTemplate[] = [
-  { author: "Sarah M.", body: "Beautiful worship tonight" },
-  { author: "Marcus T.", body: "Amen" },
-  { author: "Keisha R.", body: "Glory to God" },
-  { author: "Daniel W.", body: "This is blessing my heart" },
-  { author: "Lisa K.", body: "Praying with everyone" },
-  { author: "Chris P.", body: "Thank you Lord" },
-  { author: "Nina J.", body: "He is worthy" },
-  { author: "Jordan A.", body: "Amen" },
-  { author: "Elena R.", body: "Hallelujah" },
-  { author: "Tyler S.", body: "God is good" },
-  { author: "Monica H.", body: "What a moment" },
-  { author: "David L.", body: "Bless this worship" },
-  { author: "Grace W.", body: "Amen" },
-  { author: "James C.", body: "Praise Him" },
-  { author: "Ruth B.", body: "So grateful to be here" },
+  { author: "Sarah M.", body: "Amen!" },
+  { author: "Marcus T.", body: "Yes!" },
+  { author: "Keisha R.", body: "This live stream app is dope." },
+  { author: "Daniel W.", body: "Amen!" },
+  { author: "Lisa K.", body: "Yes Lord" },
+  { author: "Chris P.", body: "We up!" },
+  { author: "Nina J.", body: "Hallelujah" },
+  { author: "Jordan A.", body: "Yes!" },
+  { author: "Elena R.", body: "Amen!" },
+  { author: "Tyler S.", body: "This is fire" },
+  { author: "Monica H.", body: "Glory!" },
+  { author: "David L.", body: "Amen!" },
+  { author: "Grace W.", body: "Yes!" },
+  { author: "James C.", body: "Love this" },
+  { author: "Ruth B.", body: "Amen!" },
 ];
 
 let simulationCounter = 0;

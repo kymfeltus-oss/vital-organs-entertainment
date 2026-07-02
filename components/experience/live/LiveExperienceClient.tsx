@@ -1339,11 +1339,6 @@ export default function LiveExperienceClient({
   const resolvedPlaybackUrl = playbackUrl ?? "";
   const showDirectPlayer = isPublishMode && !playbackUrl;
   const walletLabel = seedBalanceLoading ? "..." : seedBalance.toLocaleString("en-US");
-  const streamStatusLabel = showDirectPlayer
-    ? "Direct Live"
-    : access?.streamIsLive
-      ? "On Air"
-      : "Connected";
   const showAudioUnlock = showDirectPlayer ? !directAudioUnlocked : !audioUnlocked;
   const handleHeaderEnableAudio = showDirectPlayer ? enableDirectAudio : enableAudio;
 
@@ -1355,8 +1350,8 @@ export default function LiveExperienceClient({
       <div className="relative min-h-dvh lg:grid lg:min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
         <section className="relative min-h-dvh w-full bg-[#050505]">
           <LiveExperienceHeader
-            streamTitle="Live Sanctuary Feed"
-            statusLabel={streamStatusLabel}
+            streamSubtitle="The Awakening"
+            streamTitle="Ian Craig & 300"
             viewerCountLabel={viewerCountLabel}
             showAudioUnlock={showAudioUnlock}
             onEnableAudio={handleHeaderEnableAudio}
