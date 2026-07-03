@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-const STORY_PREVIEW_SRC = "/awakening/vital-seed-story-preview.mp4";
+const STORY_PREVIEW_SRC = "/awakening/vital-seed-story-preview-9x16.mp4";
 
 export const metadata: Metadata = {
   title: "The Journey of Ian Craig — Coming Soon",
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function StoryPage() {
   return (
-    <main className="relative isolate min-h-dvh overflow-hidden bg-black text-white">
+    <main className="relative isolate h-dvh min-h-dvh overflow-hidden bg-black text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_45%,rgba(0,168,255,0.22),transparent_34%),radial-gradient(circle_at_80%_55%,rgba(255,0,140,0.2),transparent_36%)]" />
 
       <video
@@ -27,7 +27,7 @@ export default function StoryPage() {
       <div className="absolute inset-0 flex justify-center">
         <video
           src={STORY_PREVIEW_SRC}
-          className="h-dvh w-auto max-w-full object-contain"
+          className="h-full w-full object-cover object-center sm:w-auto sm:max-w-full sm:object-contain"
           autoPlay
           loop
           muted
