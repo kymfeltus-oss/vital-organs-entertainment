@@ -3,14 +3,15 @@ import type { FellowshipChatMessage } from "@/lib/experience/fellowship-chat";
 /** Always added on top of realtime presence count shown to attendees. */
 export const LIVE_VIEWER_SIMULATION_BUFFER = 400;
 
-/** Max simulated chat lines kept in the overlay feed. */
-export const LIVE_CHAT_SIMULATION_MAX_VISIBLE = 14;
+/** Four hours at ten comments per hour; also bounds simulated scrollback. */
+export const LIVE_CHAT_SIMULATION_MAX_VISIBLE = 40;
 
 /** How many recent authors must pass before the same name can appear again. */
 export const LIVE_CHAT_SIMULATION_AUTHOR_COOLDOWN = 12;
 
-/** Target ~40 ambient comments spread across a ~3 hour service window. */
-export const LIVE_CHAT_SIMULATION_TARGET_DURATION_MS = 3 * 60 * 60 * 1000;
+/** Target 40 ambient comments spread across a four-hour event. */
+export const LIVE_CHAT_SIMULATION_COMMENTS_PER_HOUR = 10;
+export const LIVE_CHAT_SIMULATION_TARGET_DURATION_MS = 4 * 60 * 60 * 1000;
 
 export type SimulatedChatMessage = FellowshipChatMessage & {
   isSimulated: true;
@@ -308,10 +309,12 @@ export function createSimulatedChatMessage(template: SimulationTemplate): Simula
   };
 }
 
-/** ~3 min average — enough variety visible while still paced for long services. */
+/** Ten comments per hour with natural jitter around the six-minute interval. */
 export function nextLiveChatSimulationDelayMs(): number {
-  const minMs = 2 * 60 * 1000;
-  const maxMs = 4 * 60 * 1000;
+  const averageMs = (60 * 60 * 1000) / LIVE_CHAT_SIMULATION_COMMENTS_PER_HOUR;
+  const jitterMs = 60 * 1000;
+  const minMs = averageMs - jitterMs;
+  const maxMs = averageMs + jitterMs;
   return minMs + Math.floor(Math.random() * (maxMs - minMs + 1));
 }
 
@@ -443,7 +446,10 @@ export function trimSimulatedChatMessages(
 export const LIVE_CHAT_SIMULATION_STATS = {
   authorCount: LIVE_CHAT_SIMULATED_AUTHORS.length,
   bodyCount: LIVE_CHAT_SIMULATED_BODIES.length,
-  minDelayMinutes: 2,
-  maxDelayMinutes: 4,
+  eventDurationHours: 4,
+  commentsPerHour: LIVE_CHAT_SIMULATION_COMMENTS_PER_HOUR,
+  targetCommentCount: 40,
+  minDelayMinutes: 5,
+  maxDelayMinutes: 7,
   authorCooldown: LIVE_CHAT_SIMULATION_AUTHOR_COOLDOWN,
 };

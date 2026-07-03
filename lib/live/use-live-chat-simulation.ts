@@ -38,7 +38,7 @@ export function useLiveChatSimulation({
 
     const scheduler = new LiveChatSimulationScheduler(excludedNames);
     schedulerRef.current = scheduler;
-    setMessages(scheduler.createInitialBatch(6));
+    queueMicrotask(() => setMessages([]));
 
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
