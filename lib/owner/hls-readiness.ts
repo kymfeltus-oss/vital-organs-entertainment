@@ -44,11 +44,7 @@ function responseBodySaysIvsChannelNotFound(body: string): boolean {
 }
 
 export function isFatalHlsProbeFailure(result: HlsProbeResult): boolean {
-  return (
-    result.invalidReason === "invalid_url" ||
-    result.invalidReason === "ivs_arn_mismatch" ||
-    result.invalidReason === "ivs_channel_not_found"
-  );
+  return result.invalidReason === "invalid_url";
 }
 
 export function resolveSafePublicHlsUrl(

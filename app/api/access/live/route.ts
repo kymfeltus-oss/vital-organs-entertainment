@@ -4,10 +4,7 @@ import { isLiveAccessDevBypassEnabled } from "@/lib/access/live-dev-bypass";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { resolveAttendeeUiPhase } from "@/lib/live/attendee-ui-phase";
-import { LIVE_STREAM_STATE_ID } from "@/lib/live/types";
-import { probeHlsManifest } from "@/lib/owner/hls-readiness";
 import { loadOwnerStreamState } from "@/lib/owner/load-owner-state";
-import { resolveIvsChannelConfig } from "@/lib/owner/resolve-ivs-config";
 import { resolveRestreamHlsUrl } from "@/lib/owner/restream-playback";
 import { readEncoderConfigFromStreamPresets } from "@/lib/owner/resolve-show-encoder-config";
 
@@ -22,7 +19,7 @@ function normalizePublishMode(raw: unknown): LivePublishMode {
   return "none";
 }
 
-async function buildStreamFlags(streamRow: Awaited<ReturnType<typeof loadOwnerStreamState>>["row"]) {
+function buildStreamFlags(streamRow: Awaited<ReturnType<typeof loadOwnerStreamState>>["row"]) {
   const streamIsLive = streamRow?.is_live === true;
   const publishMode = normalizePublishMode(streamRow?.publish_mode);
 
@@ -30,27 +27,13 @@ async function buildStreamFlags(streamRow: Awaited<ReturnType<typeof loadOwnerSt
   // Informational only — the /live player sources playback from /api/stream/manifest;
   // this keeps the field truthful so it stops derailing debugging tools.
   const encoder = readEncoderConfigFromStreamPresets(streamRow?.audio_master_presets);
-  const candidatePlaybackUrl = streamIsLive && publishMode !== "browser_camera"
+  const playbackUrl = streamIsLive && publishMode !== "browser_camera"
     ? resolveRestreamHlsUrl({
         showSetupHlsUrl: encoder.hlsPlaybackUrl,
         primary_playback_url: streamRow?.primary_playback_url,
         playback_url: streamRow?.playback_url,
       }) ?? ""
     : "";
-  const probe = candidatePlaybackUrl ? await probeHlsManifest(candidatePlaybackUrl) : null;
-  const playbackUrl = probe?.manifestReachable ? candidatePlaybackUrl : "";
-  const ivs = resolveIvsChannelConfig();
-
-  console.info("[access/live] playback selection", {
-    selectedShowId: streamRow?.id ?? LIVE_STREAM_STATE_ID,
-    ivsChannelArn: ivs.channelArn,
-    ivsPlaybackUrl: ivs.playbackUrl,
-    streamStatus: streamIsLive ? "live" : "offline",
-    publishMode,
-    playbackUrl: candidatePlaybackUrl || null,
-    playerMountStatus: playbackUrl ? "ready" : "waiting",
-    probeDetail: probe?.detail ?? null,
-  });
 
   return {
     streamIsLive,
@@ -86,7 +69,7 @@ export async function GET() {
         canViewStream: true,
         showStreamPaywall: false,
         showFullLockdown: false,
-        ...(await buildStreamFlags(streamRow)),
+        ...buildStreamFlags(streamRow),
       });
     }
 
@@ -124,7 +107,7 @@ export async function GET() {
       context.isGuest,
       false,
     );
-    const streamFlags = await buildStreamFlags(streamRow);
+    const streamFlags = buildStreamFlags(streamRow);
 
     return NextResponse.json({
       ...evaluation,

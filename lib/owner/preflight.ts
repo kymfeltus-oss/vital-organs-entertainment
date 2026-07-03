@@ -115,6 +115,16 @@ function scheduleCheck(input: BuildPreflightInput): PreflightCheck {
 }
 
 function hlsChecks(hlsProbe: HlsProbeResult): PreflightCheck[] {
+  if (
+    hlsProbe.invalidReason === "ivs_arn_mismatch" ||
+    hlsProbe.invalidReason === "ivs_channel_not_found"
+  ) {
+    console.warn("[owner/preflight] Continuing RTMP publish despite IVS playback diagnostic.", {
+      invalidReason: hlsProbe.invalidReason,
+      detail: hlsProbe.detail,
+    });
+  }
+
   const fatalHlsFailure = isFatalHlsProbeFailure(hlsProbe);
 
   return [

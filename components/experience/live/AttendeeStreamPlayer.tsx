@@ -51,6 +51,7 @@ export default function AttendeeStreamPlayer({
   const shouldPlay = enabled && !showPaywall;
   const shouldPlayRef = useRef(shouldPlay);
   shouldPlayRef.current = shouldPlay;
+  const restreamEmbedUrl = process.env.NEXT_PUBLIC_RESTREAM_EMBED_URL;
 
   useEffect(() => {
     experienceRef.current = experience;
@@ -397,6 +398,20 @@ export default function AttendeeStreamPlayer({
   }
 
   const showRecovery = autoplayBlocked || isReconnecting || isBuffering || !isPlaying;
+
+  if (restreamEmbedUrl && restreamEmbedUrl.trim().length > 0) {
+    return (
+      <iframe
+        src={restreamEmbedUrl}
+        width="100%"
+        height="100%"
+        frameBorder="0"
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowFullScreen
+        className="absolute inset-0 z-0 h-full w-full bg-black object-cover opacity-100"
+      />
+    );
+  }
 
   return (
     <div className={playerShellClass}>
