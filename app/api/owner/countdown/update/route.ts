@@ -43,6 +43,9 @@ async function handleCountdownUpdate(request: Request) {
       datetime?: unknown;
       schedule_timezone?: unknown;
       scheduleTimezone?: unknown;
+      eventLocation?: unknown;
+      livestreamAvailability?: unknown;
+      hostNames?: unknown;
     };
 
     const targetDateTime = parseTargetDateTime(body.targetDateTime ?? body.datetime);
@@ -56,6 +59,14 @@ async function handleCountdownUpdate(request: Request) {
     const current = await loadShowSetupState();
     const showTitle = cleanText(body.title ?? body.eventTitle);
     const presenterName = cleanText(body.presenterName ?? body.pastor);
+    const eventLocation = cleanText(body.eventLocation, 100);
+    const livestreamAvailability = cleanText(body.livestreamAvailability, 100);
+    const hostNames = Array.isArray(body.hostNames)
+      ? body.hostNames
+          .map((host) => cleanText(host, 80))
+          .filter((host): host is string => Boolean(host))
+          .slice(0, 8)
+      : undefined;
     const scheduleTimezone = resolveScheduleTimezone(
       body.schedule_timezone ?? body.scheduleTimezone ?? current.scheduleTimezone,
     );
@@ -64,6 +75,9 @@ async function handleCountdownUpdate(request: Request) {
       {
         ...(showTitle ? { showTitle } : {}),
         ...(presenterName ? { presenterName } : {}),
+        ...(eventLocation ? { eventLocation } : {}),
+        ...(livestreamAvailability ? { livestreamAvailability } : {}),
+        ...(hostNames ? { hostNames } : {}),
         targetDateTime,
         schedule_timezone: scheduleTimezone,
       },

@@ -88,8 +88,8 @@ export const AWAKENING_ASSETS = {
   ianCraigStoryVideo: null as string | null,
   routes: {
     enterExperience: EXPERIENCE_LIVE_PATH,
-    /** Cinematic intro — Ian Craig story video (`VideoIntroExperience`). */
-    watchStory: "/",
+    /** Ian Craig story preview and coming-soon page. */
+    watchStory: "/story",
     giving: "/giving",
     liveRoom: EXPERIENCE_LIVE_PATH,
     music: "/music",

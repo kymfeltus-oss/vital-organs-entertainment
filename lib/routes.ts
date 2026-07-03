@@ -7,6 +7,8 @@ const NAV_HIDDEN_EXACT = [
   "/create-account",
   "/test-suite",
   "/countdown",
+  "/program",
+  "/story",
 ] as const;
 
 const NAV_HIDDEN_PREFIXES = [
