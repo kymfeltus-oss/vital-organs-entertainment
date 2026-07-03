@@ -1,16 +1,19 @@
 "use client";
 
-import { Check, Loader2, Pencil } from "lucide-react";
+import { Check, Loader2, Mail, Pencil } from "lucide-react";
 import { givingAmounts } from "@/lib/vital-seed/giving-assets";
 
 type ExperienceGivingNativeFormProps = {
   activePreset: number | null;
   customAmount: string;
+  guestEmail: string;
+  showGuestEmail: boolean;
   isLoading: boolean;
   error: string | null;
   onSelectAmount: (amount: number) => void;
   onCustomAmountChange: (value: string) => void;
   onCustomAmountFocus: () => void;
+  onGuestEmailChange: (value: string) => void;
   onGiveNow: () => void;
 };
 
@@ -27,11 +30,14 @@ function presetButtonClassName(isSelected: boolean, isDimmed: boolean): string {
 export default function ExperienceGivingNativeForm({
   activePreset,
   customAmount,
+  guestEmail,
+  showGuestEmail,
   isLoading,
   error,
   onSelectAmount,
   onCustomAmountChange,
   onCustomAmountFocus,
+  onGuestEmailChange,
   onGiveNow,
 }: ExperienceGivingNativeFormProps) {
   const hasPresetSelection = activePreset != null;
@@ -103,6 +109,24 @@ export default function ExperienceGivingNativeForm({
           className="vital-giving-custom-field__input font-body"
         />
       </label>
+
+      {showGuestEmail ? (
+        <label className="vital-giving-custom-field w-full shrink-0">
+          <span className="sr-only">Email for giving receipt</span>
+          <Mail className="vital-giving-custom-field__icon" aria-hidden="true" />
+          <input
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            aria-label="Email for giving receipt"
+            placeholder="Email for receipt"
+            disabled={isLoading}
+            value={guestEmail}
+            onChange={(event) => onGuestEmailChange(event.target.value)}
+            className="vital-giving-custom-field__input font-body"
+          />
+        </label>
+      ) : null}
 
       <div className="vital-giving-action-stack shrink-0 !mt-0 !gap-4">
         {error ? (

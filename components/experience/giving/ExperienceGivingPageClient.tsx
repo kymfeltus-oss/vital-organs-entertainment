@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import ExperienceGivingNativeForm from "@/components/experience/giving/ExperienceGivingNativeForm";
 import ExperienceGivingPlate from "@/components/experience/giving/ExperienceGivingPlate";
+import { isValidEmail } from "@/lib/auth/validation";
 import { getClientAppUrl } from "@/lib/client-api";
 import { type GivingFrequency } from "@/lib/experience/giving-mobile-slots";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
@@ -27,10 +28,13 @@ function ExperienceGivingPageContent({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const successParam = searchParams.get("success") === "true";
+  const guestMode =
+    searchParams.get("guest") === "1" || searchParams.get("guest") === "true";
 
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [activePreset, setActivePreset] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
   const [selectedFrequency, setSelectedFrequency] =
     useState<GivingFrequency>("one_time");
   const [isLoading, setIsLoading] = useState(false);
@@ -66,6 +70,12 @@ function ExperienceGivingPageContent({
   }, []);
 
   const handleGiveNow = useCallback(async () => {
+    const normalizedGuestEmail = guestEmail.trim().toLowerCase();
+    if (guestMode && !isValidEmail(normalizedGuestEmail)) {
+      setError("Enter a valid email address for your giving receipt.");
+      return;
+    }
+
     if (selectedAmount == null || selectedAmount <= 0) {
       setError("Please select or enter an amount.");
       return;
@@ -89,14 +99,21 @@ function ExperienceGivingPageContent({
         body: JSON.stringify({
           amountInCents,
           frequency: selectedFrequency,
-          source: "vital-seed-giving",
+          source: guestMode ? "in-person-qr" : "vital-seed-giving",
+          ...(guestMode
+            ? { guest: true, guestEmail: normalizedGuestEmail }
+            : {}),
         }),
       });
 
       const data = (await response.json()) as { url?: string; error?: string };
 
       if (response.status === 401) {
-        setError("Sign in at the email gate before giving.");
+        setError(
+          guestMode
+            ? "Guest checkout could not be started. Please try again."
+            : "Sign in at the email gate before giving.",
+        );
         return;
       }
 
@@ -111,7 +128,7 @@ function ExperienceGivingPageContent({
     } finally {
       setIsLoading(false);
     }
-  }, [selectedAmount, selectedFrequency]);
+  }, [guestEmail, guestMode, selectedAmount, selectedFrequency]);
 
   return (
     <>
@@ -124,11 +141,17 @@ function ExperienceGivingPageContent({
           <ExperienceGivingNativeForm
             activePreset={activePreset}
             customAmount={customAmount}
+            guestEmail={guestEmail}
+            showGuestEmail={guestMode}
             isLoading={isLoading}
             error={error}
             onSelectAmount={handleSelectAmount}
             onCustomAmountChange={handleCustomAmountChange}
             onCustomAmountFocus={handleCustomAmountFocus}
+            onGuestEmailChange={(value) => {
+              setGuestEmail(value);
+              setError(null);
+            }}
             onGiveNow={() => void handleGiveNow()}
           />
         </ExperienceGivingPlate>

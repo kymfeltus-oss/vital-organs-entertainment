@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { consumeRateLimit, resolveClientIp } from "@/lib/auth/rate-limit";
+import { isValidEmail } from "@/lib/auth/validation";
 import {
   getAppUrl,
   getStripeSecretKey,
@@ -13,6 +15,8 @@ type DonationCheckoutBody = {
   amountInCents?: number;
   frequency?: DonationFrequency;
   source?: string;
+  guest?: boolean;
+  guestEmail?: string;
 };
 
 const MIN_DONATION_CENTS = 50;
@@ -51,15 +55,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const body = (await request.json()) as DonationCheckoutBody;
     const auth = await resolveAuthenticatedBuyer(request);
+    const guestRequested = body.guest === true;
+    const guestEmail =
+      typeof body.guestEmail === "string"
+        ? body.guestEmail.trim().toLowerCase().slice(0, 254)
+        : "";
 
-    if (!auth) {
+    if (!auth && !guestRequested) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    const { buyer, withSessionCookies } = auth;
+    if (!auth && !isValidEmail(guestEmail)) {
+      return NextResponse.json(
+        { error: "Enter a valid email address for your giving receipt." },
+        { status: 400 },
+      );
+    }
 
-    const body = (await request.json()) as DonationCheckoutBody;
+    if (!auth) {
+      const limit = await consumeRateLimit(
+        "guest-donation-checkout",
+        resolveClientIp(request),
+        { limit: 8, windowMs: 60_000 },
+      );
+      if (!limit.allowed) {
+        return NextResponse.json(
+          { error: "Too many checkout attempts. Please wait a moment and try again." },
+          { status: 429 },
+        );
+      }
+    }
+
+    const buyerEmail = auth?.buyer.email ?? guestEmail;
+    const buyerUserId = auth?.buyer.userId ?? null;
     const amountInCents = body.amountInCents;
     const frequency: DonationFrequency =
       body.frequency === "monthly" || body.frequency === "weekly"
@@ -85,12 +115,13 @@ export async function POST(request: NextRequest) {
     const appUrl = getAppUrl(request);
     const isRecurring = frequency === "monthly" || frequency === "weekly";
     const recurringInterval = frequency === "weekly" ? "week" : "month";
+    const guestReturnQuery = auth ? "" : "guest=1&";
 
     const session = await stripe.checkout.sessions.create({
       mode: isRecurring ? "subscription" : "payment",
       payment_method_types: ["card", "link"],
-      client_reference_id: buyer.userId,
-      customer_email: buyer.email,
+      ...(buyerUserId ? { client_reference_id: buyerUserId } : {}),
+      customer_email: buyerEmail,
       line_items: [
         {
           quantity: 1,
@@ -108,19 +139,20 @@ export async function POST(request: NextRequest) {
       ],
       metadata: {
         checkout_type: isRecurring ? "donation_recurring" : "donation",
-        user_id: buyer.userId,
-        email: buyer.email,
+        ...(buyerUserId ? { user_id: buyerUserId } : {}),
+        email: buyerEmail,
+        donor_type: auth ? "attendee" : "guest",
         amount_cents: String(amountInCents),
         frequency,
         source,
       },
-      success_url: `${appUrl}/giving?success=true`,
-      cancel_url: `${appUrl}/giving?canceled=true`,
+      success_url: `${appUrl}/giving?${guestReturnQuery}success=true`,
+      cancel_url: `${appUrl}/giving?${guestReturnQuery}canceled=true`,
     });
 
     const supabase = getSupabaseAdmin();
     const { error: insertError } = await supabase.from("donations").insert({
-      email: buyer.email,
+      email: buyerEmail,
       amount_cents: amountInCents,
       status: "pending",
       stripe_session_id: session.id,
@@ -141,7 +173,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return withSessionCookies(NextResponse.json({ url: session.url }));
+    const response = NextResponse.json({ url: session.url });
+    return auth ? auth.withSessionCookies(response) : response;
   } catch (error) {
     console.error("Donation checkout session error:", error);
     return NextResponse.json(
