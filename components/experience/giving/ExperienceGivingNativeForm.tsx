@@ -45,8 +45,8 @@ export default function ExperienceGivingNativeForm({
 
   return (
     <div
-      className={`vital-giving-form flex min-h-0 flex-1 flex-col !gap-4${
-        showGuestEmail ? " vital-giving-form--guest" : ""
+      className={`vital-giving-form flex min-h-0 flex-1 flex-col ${
+        showGuestEmail ? "vital-giving-form--guest !gap-1.5" : "!gap-4"
       }`}
     >
       <section aria-label="Choose a gift amount" className="shrink-0">

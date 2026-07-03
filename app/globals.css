@@ -2730,10 +2730,6 @@ body::-webkit-scrollbar {
 }
 
 @media (max-height: 760px) {
-  .vital-giving-form--guest {
-    gap: 0.375rem !important;
-  }
-
   .vital-giving-form--guest .vital-giving-form__section-title {
     margin-bottom: 0.375rem;
   }
