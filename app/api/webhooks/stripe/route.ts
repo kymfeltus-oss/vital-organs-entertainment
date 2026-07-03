@@ -3,11 +3,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient, type PostgrestError } from "@supabase/supabase-js";
 import { getEventTicketTier, isEventTicketTierId } from "@/lib/merch/catalog";
-import {
-  parseSeedPackCheckoutCount,
-  SEED_PACK_LEGACY_ORDER_BASE_CREDIT,
-  SEED_PACK_LEGACY_ORDER_PRODUCT_TYPE,
-} from "@/lib/billing-config";
+import { parseSeedPackCheckoutCount } from "@/lib/billing-config";
 import { getSupabaseServiceRoleKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 function getStripeClient(): Stripe {
@@ -135,12 +131,16 @@ export async function POST(request: Request) {
         normalizeEmail(session.customer_details?.email);
       const amountTotal = session.amount_total ?? 0;
       const seedCount = parseSeedPackCheckoutCount(session.metadata ?? undefined);
+      const productId =
+        session.metadata?.product_id?.trim() ??
+        session.metadata?.product_type?.trim() ??
+        null;
 
-      if (!userId || !userEmail || amountTotal <= 0 || seedCount <= 0) {
+      if (!userId || !userEmail || !productId || amountTotal <= 0 || seedCount <= 0) {
         console.error(
           "❌ [SEED_PACK_WEBHOOK_DATA_MISSING]:",
           session.id,
-          { userId, userEmail, amountTotal, seedCount },
+          { userId, userEmail, productId, amountTotal, seedCount },
         );
         return NextResponse.json(
           { error: "Seed pack checkout metadata missing." },
@@ -169,31 +169,23 @@ export async function POST(request: Request) {
           );
         }
 
-        const { error: rpcError } = await supabaseAdmin.rpc(
-          "fulfill_stripe_checkout_session",
+        const { data: fulfillment, error: rpcError } = await supabaseAdmin.rpc(
+          "fulfill_seed_pack_checkout",
           {
             p_stripe_session_id: session.id,
             p_user_id: userId,
             p_email: userEmail,
-            p_product_id: SEED_PACK_LEGACY_ORDER_PRODUCT_TYPE,
+            p_product_id: productId,
             p_amount_total: amountTotal,
-            p_selected_size: "N/A",
+            p_seed_count: seedCount,
           },
         );
 
         if (rpcError) throw rpcError;
 
-        const bonusSeeds = seedCount - SEED_PACK_LEGACY_ORDER_BASE_CREDIT;
-        if (bonusSeeds > 0) {
-          const { error: creditError } = await supabaseAdmin.rpc("credit_seed_wallet", {
-            p_user_id: userId,
-            p_amount: bonusSeeds,
-          });
-          if (creditError) throw creditError;
-        }
-
         console.info(
           `✅ [SEED_PACK_FULFILLMENT_SUCCESS]: ${seedCount} seeds for ${userEmail}`,
+          fulfillment,
         );
       } catch (error) {
         const pgError = error as PostgrestError;

@@ -18,6 +18,9 @@ import {
 } from "@/lib/seeds/assets";
 
 type BuySeedsPlateProps = {
+  seedBalance: number;
+  seedBalanceLoading: boolean;
+  seedBalanceError: string | null;
   profile: AttendeeProfileSnapshot;
   onProfileChange: (profile: AttendeeProfileSnapshot) => void;
   selectedPackageId: SeedPackageId;
@@ -29,6 +32,9 @@ type BuySeedsPlateProps = {
 };
 
 export default function BuySeedsPlate({
+  seedBalance,
+  seedBalanceLoading,
+  seedBalanceError,
   profile,
   onProfileChange,
   selectedPackageId,
@@ -65,6 +71,9 @@ export default function BuySeedsPlate({
           <MobileArtboardTabHeader profile={profile} onProfileChange={onProfileChange} />
 
           <BuySeedsOverlay
+            seedBalance={seedBalance}
+            seedBalanceLoading={seedBalanceLoading}
+            seedBalanceError={seedBalanceError}
             selectedPackageId={selectedPackageId}
             isSubmitting={isSubmitting}
             activePackageId={activePackageId}

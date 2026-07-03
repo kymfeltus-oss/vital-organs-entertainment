@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
         user_id: buyer.userId,
         email: buyer.email,
       },
-      success_url: `${appUrl}${returnPath}?success=true`,
+      success_url: `${appUrl}${returnPath}?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}${returnPath}?canceled=true`,
     });
 

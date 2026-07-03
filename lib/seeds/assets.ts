@@ -69,6 +69,14 @@ export const BUY_SEEDS_BAKED_CONTROLS_MASK = {
   height: "38%",
 } as const;
 
+/** Replaces the baked sample balance (`250`) with the authenticated wallet value. */
+export const BUY_SEEDS_BALANCE_VALUE_SLOT = {
+  left: "21.5%",
+  top: "44.8%",
+  width: "24%",
+  height: "5.4%",
+} as const;
+
 /** Native package list panel — aligned to four baked row slots on the PNG. */
 export const BUY_SEEDS_PACKAGES_PANEL = {
   left: BUY_SEEDS_PANEL_INSET_LEFT,

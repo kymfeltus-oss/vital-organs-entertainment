@@ -2729,6 +2729,22 @@ body::-webkit-scrollbar {
   color: #ff2faf;
 }
 
+.buy-seeds-page__balance-value {
+  z-index: 3;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding-inline: clamp(0.15rem, 1cqw, 0.35rem);
+  background: #000000;
+  color: #ffffff;
+  font-size: clamp(1.75rem, 11cqw, 3.4rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 18px rgb(0 168 255 / 0.22);
+  pointer-events: none;
+}
+
 @media (max-height: 760px) {
   .vital-giving-form--guest .vital-giving-form__section-title {
     margin-bottom: 0.375rem;

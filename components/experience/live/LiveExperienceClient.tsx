@@ -350,10 +350,40 @@ export default function LiveExperienceClient({
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("success") !== "true") return;
+    const checkoutSessionId = params.get("session_id")?.trim();
 
-    requestLiveSeedWalletRefresh();
-    setBuySeedsOpen(false);
-    window.history.replaceState({}, "", EXPERIENCE_LIVE_PATH);
+    void (async () => {
+      if (checkoutSessionId) {
+        try {
+          const response = await fetch("/api/billing/checkout/confirm", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sessionId: checkoutSessionId }),
+          });
+          const data = (await response.json()) as {
+            success?: boolean;
+            balance?: number;
+            error?: string;
+          };
+
+          if (response.ok && data.success && typeof data.balance === "number") {
+            setSeedBalance(data.balance);
+          } else {
+            console.error(
+              "Seed checkout return confirmation failed:",
+              data.error ?? response.status,
+            );
+          }
+        } catch (error) {
+          console.error("Seed checkout return confirmation failed:", error);
+        }
+      }
+
+      requestLiveSeedWalletRefresh();
+      setBuySeedsOpen(false);
+      window.history.replaceState({}, "", EXPERIENCE_LIVE_PATH);
+    })();
   }, []);
 
   useEffect(() => {

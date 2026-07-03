@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BUY_SEEDS_BALANCE_VALUE_SLOT,
   BUY_SEEDS_BAKED_CONTROLS_MASK,
   BUY_SEEDS_CONTINUE_SLOT,
   BUY_SEEDS_ERROR_SLOT,
@@ -12,6 +13,9 @@ import { ChevronRight, Lock } from "lucide-react";
 import type { CSSProperties } from "react";
 
 type BuySeedsOverlayProps = {
+  seedBalance: number;
+  seedBalanceLoading: boolean;
+  seedBalanceError: string | null;
   selectedPackageId: SeedPackageId;
   isSubmitting: boolean;
   activePackageId: SeedPackageId | null;
@@ -46,6 +50,9 @@ function rectStyle(rect: {
 }
 
 export default function BuySeedsOverlay({
+  seedBalance,
+  seedBalanceLoading,
+  seedBalanceError,
   selectedPackageId,
   isSubmitting,
   activePackageId,
@@ -66,6 +73,22 @@ export default function BuySeedsOverlay({
         } as CSSProperties
       }
     >
+      <div
+        className="buy-seeds-page__balance-value font-ui"
+        style={rectStyle(BUY_SEEDS_BALANCE_VALUE_SLOT)}
+        aria-label={
+          seedBalanceError
+            ? "Seed balance unavailable"
+            : `Current seed balance ${seedBalance.toLocaleString("en-US")}`
+        }
+      >
+        {seedBalanceLoading
+          ? "…"
+          : seedBalanceError
+            ? "--"
+            : seedBalance.toLocaleString("en-US")}
+      </div>
+
       <div className="buy-seeds-page__baked-mask" aria-hidden="true" />
 
       <div

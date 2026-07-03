@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveAuthenticatedBuyer } from "@/lib/checkout/server";
-import { getUserSeedBalance } from "@/lib/seeds/wallet";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 type SeedDeductRequestBody = {
@@ -21,7 +20,11 @@ function cleanOptionalReferenceId(value: unknown): string | null {
   if (typeof value !== "string") return null;
 
   const trimmed = value.trim();
-  return trimmed || null;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    trimmed,
+  )
+    ? trimmed
+    : null;
 }
 
 function parsePositiveInteger(value: unknown): number | null {
@@ -54,16 +57,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const currentBalance = await getUserSeedBalance(auth.buyer.userId);
-    if (currentBalance < cost) {
-      return auth.withSessionCookies(
-        NextResponse.json(
-          { success: false, message: "Insufficient Seed Balance" },
-          { status: 400 },
-        ),
-      );
-    }
-
     const transactionType = cleanOptionalText(body.transactionType, "live_interaction");
     const description = cleanOptionalText(
       body.description,
@@ -71,30 +64,39 @@ export async function POST(request: NextRequest) {
     );
     const referenceId = cleanOptionalReferenceId(body.referenceId);
 
-    const { error: insertError } = await getSupabaseAdmin()
-      .from("seed_transactions")
-      .insert({
-        profile_id: auth.buyer.userId,
-        amount: -cost,
-        transaction_type: transactionType,
-        description,
-        reference_id: referenceId,
-      });
+    const { data, error } = await getSupabaseAdmin().rpc("deduct_seed_wallet", {
+      p_user_id: auth.buyer.userId,
+      p_cost: cost,
+      p_transaction_type: transactionType,
+      p_description: description,
+      p_reference_id: referenceId,
+    });
 
-    if (insertError) {
-      console.error("[SEED_DEDUCT_WRITE_ERROR]", insertError);
+    if (error) {
+      if (error.message.toLowerCase().includes("insufficient seed balance")) {
+        return auth.withSessionCookies(
+          NextResponse.json(
+            { success: false, message: "Insufficient Seed Balance" },
+            { status: 400 },
+          ),
+        );
+      }
+
+      console.error("[SEED_DEDUCT_WRITE_ERROR]", error);
       return auth.withSessionCookies(
         NextResponse.json(
-          { success: false, message: "Database ledger transaction failed" },
+          { success: false, message: "Database wallet transaction failed" },
           { status: 500 },
         ),
       );
     }
 
+    const result = data as { balance?: number } | null;
+
     return auth.withSessionCookies(
       NextResponse.json({
         success: true,
-        newBalance: currentBalance - cost,
+        newBalance: result?.balance ?? 0,
       }),
     );
   } catch (error) {
