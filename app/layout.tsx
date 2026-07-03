@@ -35,6 +35,12 @@ const oswald = Oswald({
 export const metadata: Metadata = {
   title: "300 Awakening",
   description: "Tap Into The Awakening",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "300 Awakening",
+  },
   icons: {
     icon: "/images/logo.png",
     shortcut: "/images/logo.png",

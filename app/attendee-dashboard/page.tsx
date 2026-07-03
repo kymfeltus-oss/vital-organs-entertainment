@@ -7,6 +7,7 @@ import { buildAttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { AWAKENING_PRELOAD_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
 import { computeCountdown } from "@/lib/live/event-lobby";
 import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
+import AttendeeInstallPrompt from "@/components/pwa/AttendeeInstallPrompt";
 
 export const revalidate = 0;
 
@@ -48,6 +49,7 @@ export default async function AttendeeDashboardPage() {
           initialCountdown={initialCountdown}
         />
       </main>
+      <AttendeeInstallPrompt />
     </>
   );
 }
