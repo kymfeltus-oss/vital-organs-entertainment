@@ -90,13 +90,10 @@ export async function probeHlsManifest(url: string | null): Promise<HlsProbeResu
     isAmazonIvsPlaybackUrl(hlsUrl) &&
     !ivsPlaybackUrlMatchesArn(hlsUrl, ivsChannelArn)
   ) {
-    return {
-      envConfigured,
+    console.warn("[owner/hls-readiness] IVS ARN mismatch is non-blocking; probing manifest directly.", {
       hlsUrl,
-      manifestReachable: false,
-      detail: "IVS playback URL does not match the configured active IVS channel ARN.",
-      invalidReason: "ivs_arn_mismatch",
-    };
+      ivsChannelArn,
+    });
   }
 
   const now = Date.now();
