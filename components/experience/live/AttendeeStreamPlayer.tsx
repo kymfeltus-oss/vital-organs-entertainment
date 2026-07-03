@@ -50,8 +50,11 @@ export default function AttendeeStreamPlayer({
 
   const shouldPlay = enabled && !showPaywall;
   const shouldPlayRef = useRef(shouldPlay);
-  shouldPlayRef.current = shouldPlay;
   const restreamEmbedUrl = process.env.NEXT_PUBLIC_RESTREAM_EMBED_URL;
+
+  useEffect(() => {
+    shouldPlayRef.current = shouldPlay;
+  }, [shouldPlay]);
 
   useEffect(() => {
     experienceRef.current = experience;
@@ -83,7 +86,6 @@ export default function AttendeeStreamPlayer({
   const destroyPlayer = useCallback(() => {
     hlsCleanupRef.current?.();
     hlsCleanupRef.current = null;
-    setStreamUrl(null);
     const video = videoRef.current;
     if (video) {
       video.removeAttribute("src");
@@ -222,6 +224,7 @@ export default function AttendeeStreamPlayer({
       destroyPlayer();
       queueMicrotask(() => {
         if (!isMountedRef.current) return;
+        setStreamUrl(null);
         setIsReconnecting(false);
         setIsBuffering(false);
         setIsPlaying(false);
@@ -326,6 +329,7 @@ export default function AttendeeStreamPlayer({
         setPlaybackStatus("Live stream playback error. Retrying...");
         lastKnownGoodPlaybackUrlRef.current = "";
         destroyPlayer();
+        setStreamUrl(null);
         scheduleReconnectRef.current();
       },
     }).then((cleanup) => {

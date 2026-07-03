@@ -53,6 +53,8 @@ export default function LiveMobileDock({
         <button
           type="button"
           onClick={onJoinConversation}
+          aria-expanded="false"
+          aria-controls="live-mobile-chat-composer"
           className="touch-target flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 font-ui text-[0.62rem] font-bold uppercase tracking-[0.12em] text-white transition hover:border-brand-blue/35 hover:bg-brand-blue/10"
         >
           <MessageCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -65,7 +67,7 @@ export default function LiveMobileDock({
       return (
         <Link
           href={buildAttendeeGateUrl(signInHref)}
-          className="touch-target flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-full border border-brand-blue/40 bg-brand-blue/10 px-4 font-ui text-[0.62rem] font-bold uppercase tracking-[0.12em] text-brand-blue"
+          className="touch-target flex min-h-11 w-full min-w-0 items-center justify-center gap-2 rounded-full border border-brand-blue/40 bg-brand-blue/10 px-4 font-ui text-[0.62rem] font-bold uppercase tracking-[0.12em] text-brand-blue"
         >
           <MessageCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span>Sign in to join chat</span>
@@ -76,7 +78,7 @@ export default function LiveMobileDock({
     if (!session.canSend) {
       return (
         <p
-          className="flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 text-center font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-muted"
+          className="flex min-h-11 w-full min-w-0 items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 text-center font-ui text-[0.58rem] font-bold uppercase tracking-[0.12em] text-brand-muted"
           role="status"
         >
           Muted
@@ -86,8 +88,9 @@ export default function LiveMobileDock({
 
     return (
       <form
+        id="live-mobile-chat-composer"
         onSubmit={handleSubmit}
-        className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-brand-blue/40 bg-brand-blue/10 px-3"
+        className="flex min-h-12 w-full min-w-0 items-center gap-2 rounded-2xl border border-white/20 bg-black/90 px-3 shadow-[0_8px_30px_rgba(0,0,0,0.35)] transition focus-within:border-brand-blue/70 focus-within:ring-2 focus-within:ring-brand-blue/25"
       >
         <label className="sr-only" htmlFor="live-mobile-dock-chat-input">
           Join the conversation
@@ -103,12 +106,12 @@ export default function LiveMobileDock({
           placeholder="Join the conversation..."
           disabled={isSending}
           maxLength={FELLOWSHIP_MAX_CONTENT_LENGTH}
-          className="min-w-0 flex-1 bg-transparent font-body text-sm text-white placeholder:text-white/50 focus:outline-none"
+          className="h-11 min-w-0 flex-1 appearance-none bg-transparent px-1 font-body text-base text-white caret-brand-blue placeholder:text-white/55 focus:outline-none disabled:cursor-wait disabled:opacity-60"
         />
         <button
           type="submit"
           disabled={isSending || !draft.trim()}
-          className="touch-target shrink-0 rounded-full px-2 py-1 font-ui text-[0.58rem] font-bold uppercase tracking-[0.1em] text-brand-blue disabled:opacity-40"
+          className="touch-target min-h-9 shrink-0 rounded-full bg-brand-blue/15 px-3 py-1 font-ui text-[0.58rem] font-bold uppercase tracking-[0.1em] text-brand-blue transition active:scale-95 disabled:bg-transparent disabled:opacity-40"
         >
           Send
         </button>
@@ -127,18 +130,21 @@ export default function LiveMobileDock({
           {error}
         </button>
       ) : null}
-      <div className="flex items-center gap-2 px-3 py-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        {conversationSlot}
-        <button
-          type="button"
-          onClick={onBuySeeds}
-          aria-label="Buy Vital Seeds"
-          className="touch-target flex h-11 shrink-0 flex-col items-center justify-center rounded-full border border-brand-pink/35 bg-brand-pink/10 px-3 font-ui text-[0.48rem] font-bold uppercase tracking-[0.08em] text-brand-pink"
-        >
-          <Gem className="mb-0.5 h-4 w-4" aria-hidden="true" />
-          <span className="tabular-nums">{seedBalance >= 1000 ? `${Math.floor(seedBalance / 1000)}k` : seedBalance}</span>
-        </button>
-        <LiveReactionTray variant="mobile-dock" onReaction={onReaction} />
+      <div className="px-3 pt-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        {chatOpen ? <div className="mb-2 w-full">{conversationSlot}</div> : null}
+        <div className="flex min-w-0 items-center gap-2">
+          {!chatOpen ? conversationSlot : null}
+          <button
+            type="button"
+            onClick={onBuySeeds}
+            aria-label="Buy Vital Seeds"
+            className="touch-target flex h-11 shrink-0 flex-col items-center justify-center rounded-full border border-brand-pink/35 bg-brand-pink/10 px-3 font-ui text-[0.48rem] font-bold uppercase tracking-[0.08em] text-brand-pink"
+          >
+            <Gem className="mb-0.5 h-4 w-4" aria-hidden="true" />
+            <span className="tabular-nums">{seedBalance >= 1000 ? `${Math.floor(seedBalance / 1000)}k` : seedBalance}</span>
+          </button>
+          <LiveReactionTray variant="mobile-dock" onReaction={onReaction} />
+        </div>
       </div>
     </footer>
   );
