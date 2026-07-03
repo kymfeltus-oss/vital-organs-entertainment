@@ -20,7 +20,7 @@ function ReactionVisual({
 }) {
   const [useFallback, setUseFallback] = useState(false);
   const imageClass =
-    size === "mobile" ? "h-9 w-9 object-contain" : "h-11 w-11 object-contain";
+    size === "mobile" ? "h-8 w-8 object-contain" : "h-10 w-10 object-contain";
   const emojiClass =
     size === "mobile" ? "text-base leading-none" : "text-lg leading-none";
 

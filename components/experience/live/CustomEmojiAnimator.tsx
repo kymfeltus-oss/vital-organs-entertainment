@@ -77,7 +77,7 @@ export default function CustomEmojiAnimator({ assetId, onComplete }: CustomEmoji
         aria-hidden="true"
       >
         {useFallback || !reaction.imageSrc ? (
-          <span className="block text-[2.75rem] leading-none drop-shadow-[0_4px_14px_rgba(0,0,0,0.85)]">
+          <span className="block text-[2.5rem] leading-none drop-shadow-[0_4px_14px_rgba(0,0,0,0.85)]">
             {reaction.emoji}
           </span>
         ) : (
@@ -86,7 +86,7 @@ export default function CustomEmojiAnimator({ assetId, onComplete }: CustomEmoji
             src={reaction.imageSrc}
             alt=""
             className={`object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.55)] ${
-              isFullBodySticker ? "h-24 w-24" : "h-14 w-14"
+              isFullBodySticker ? "h-20 w-20" : "h-12 w-12"
             }`}
             onError={() => setUseFallback(true)}
           />

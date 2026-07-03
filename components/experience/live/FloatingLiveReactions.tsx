@@ -15,7 +15,7 @@ export default function FloatingLiveReactions() {
       {floatingReactions.map((reaction) => (
         <span
           key={reaction.key}
-          className="live-reaction-burst absolute bottom-[14%] text-2xl drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)] sm:text-3xl md:text-4xl"
+          className="live-reaction-burst absolute bottom-[14%] text-xl drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)] sm:text-2xl md:text-3xl"
           style={{ left: `${reaction.originX * 100}%`, filter: "saturate(1.05)" }}
         >
           {reaction.emoji}
