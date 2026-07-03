@@ -8,6 +8,7 @@ import {
 import { attachHlsPlayback } from "@/lib/live/attach-hls-playback";
 
 const RECONNECT_DELAY_MS = 3_500;
+const RECONNECT_JITTER_MS = 1_500;
 
 const MANIFEST_HOT_SWAP_MS = 3_000;
 
@@ -37,12 +38,14 @@ export default function AttendeeStreamPlayer({
   const playbackUrlRef = useRef("");
   const experienceRef = useRef(experience);
   const onUnavailableRef = useRef(onExperienceUnavailable);
+  const audioUnlockedRef = useRef(false);
 
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const [playbackStatus, setPlaybackStatus] = useState("Connecting to live broadcast...");
 
   const shouldPlay = enabled && !showPaywall;
@@ -56,6 +59,14 @@ export default function AttendeeStreamPlayer({
   useEffect(() => {
     onUnavailableRef.current = onExperienceUnavailable;
   }, [onExperienceUnavailable]);
+
+  useEffect(() => {
+    audioUnlockedRef.current = audioUnlocked;
+    const video = videoRef.current;
+    if (video) {
+      video.muted = !audioUnlocked;
+    }
+  }, [audioUnlocked]);
 
   const clearReconnectTimer = useCallback(() => {
     if (reconnectTimerRef.current) {
@@ -94,8 +105,10 @@ export default function AttendeeStreamPlayer({
     setIsReconnecting(true);
     setIsPlaying(false);
     setIsBuffering(true);
+    setAutoplayBlocked(false);
     setPlaybackStatus("Reconnecting to live broadcast...");
 
+    const reconnectDelayMs = RECONNECT_DELAY_MS + Math.floor(Math.random() * RECONNECT_JITTER_MS);
     reconnectTimerRef.current = setTimeout(() => {
       void loadStreamRef.current().then((url) => {
         if (!isMountedRef.current) return;
@@ -106,7 +119,7 @@ export default function AttendeeStreamPlayer({
         }
         scheduleReconnectRef.current();
       });
-    }, RECONNECT_DELAY_MS);
+    }, reconnectDelayMs);
   }, [clearReconnectTimer, shouldPlay]);
 
   const loadStream = useCallback(async (): Promise<string | null> => {
@@ -193,6 +206,7 @@ export default function AttendeeStreamPlayer({
         setIsReconnecting(false);
         setIsBuffering(false);
         setIsPlaying(false);
+        setAutoplayBlocked(false);
         setPlaybackStatus("Live stream paused.");
       });
       playbackUrlRef.current = "";
@@ -206,12 +220,14 @@ export default function AttendeeStreamPlayer({
       setIsReconnecting(false);
       setIsBuffering(true);
       setIsPlaying(false);
+      setAutoplayBlocked(false);
       setPlaybackStatus("Connecting to live broadcast...");
     });
 
     void loadStreamRef.current().then((url) => {
       if (cancelled || !isMountedRef.current || !url) return;
       playbackUrlRef.current = url;
+      setAutoplayBlocked(false);
       setStreamUrl(url);
     });
 
@@ -236,6 +252,7 @@ export default function AttendeeStreamPlayer({
         if (!url || !isMountedRef.current || !shouldPlayRef.current) return;
         if (url === playbackUrlRef.current) return;
         playbackUrlRef.current = url;
+        setAutoplayBlocked(false);
         setStreamUrl(url);
       });
     }, MANIFEST_HOT_SWAP_MS);
@@ -253,21 +270,40 @@ export default function AttendeeStreamPlayer({
       return;
     }
 
-    video.muted = !audioUnlocked;
+    const startMuted = !audioUnlockedRef.current;
+    video.muted = startMuted;
     let cancelled = false;
 
     setPlaybackStatus("Loading live stream...");
 
     void attachHlsPlayback(video, streamUrl, {
+      startMuted,
       onManifestParsed: () => {
         if (cancelled) return;
         setIsReconnecting(false);
-        setIsBuffering(false);
+        setIsBuffering(true);
         setPlaybackStatus("Starting live video...");
+      },
+      onRecovering: () => {
+        if (cancelled) return;
+        setAutoplayBlocked(false);
+        setIsReconnecting(true);
+        setIsBuffering(true);
+        setIsPlaying(false);
+        setPlaybackStatus("Waiting for the live encoder to warm up...");
+      },
+      onAutoplayBlocked: () => {
+        if (cancelled) return;
+        setAutoplayBlocked(true);
+        setIsReconnecting(false);
+        setIsBuffering(false);
+        setIsPlaying(false);
+        setPlaybackStatus("Tap to start the live video.");
       },
       onFatalError: () => {
         if (cancelled) return;
         console.error("[Telemetry Error] HLS fatal error");
+        setAutoplayBlocked(false);
         setPlaybackStatus("Live stream playback error. Retrying...");
         scheduleReconnectRef.current();
       },
@@ -285,13 +321,14 @@ export default function AttendeeStreamPlayer({
       hlsCleanupRef.current?.();
       hlsCleanupRef.current = null;
     };
-  }, [audioUnlocked, shouldPlay, streamUrl]);
+  }, [shouldPlay, streamUrl]);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !shouldPlay) return;
 
     const onPlaying = () => {
+      setAutoplayBlocked(false);
       setIsPlaying(true);
       setIsReconnecting(false);
       setIsBuffering(false);
@@ -303,6 +340,7 @@ export default function AttendeeStreamPlayer({
     };
     const onError = () => {
       const code = video.error?.code;
+      setAutoplayBlocked(false);
       setPlaybackStatus(`Video element error${code ? ` ${code}` : ""}. Retrying...`);
       scheduleReconnectRef.current();
     };
@@ -321,10 +359,15 @@ export default function AttendeeStreamPlayer({
   const enableAudio = useCallback(() => {
     const video = videoRef.current;
     setAudioUnlocked(true);
+    setAutoplayBlocked(false);
     if (!video) return;
     video.muted = false;
     video.volume = 1;
-    void video.play().catch(() => undefined);
+    void video.play().catch(() => {
+      setAutoplayBlocked(true);
+      setIsPlaying(false);
+      setPlaybackStatus("Tap to start the live video.");
+    });
   }, []);
 
   if (!enabled && !showPaywall) return null;
@@ -349,7 +392,7 @@ export default function AttendeeStreamPlayer({
     );
   }
 
-  const showRecovery = isReconnecting || isBuffering || !isPlaying;
+  const showRecovery = autoplayBlocked || isReconnecting || isBuffering || !isPlaying;
 
   return (
     <div className={playerShellClass}>
@@ -378,10 +421,19 @@ export default function AttendeeStreamPlayer({
           <p className="mt-4 max-w-sm font-ui text-[0.62rem] font-bold uppercase tracking-[0.16em] text-zinc-300">
             {playbackStatus}
           </p>
+          {autoplayBlocked ? (
+            <button
+              type="button"
+              onClick={enableAudio}
+              className="mt-5 min-h-11 rounded-full border border-brand-blue/50 bg-black/80 px-5 font-ui text-[0.68rem] font-bold uppercase tracking-[0.14em] text-brand-blue backdrop-blur"
+            >
+              Tap to join live
+            </button>
+          ) : null}
         </div>
       )}
 
-      {isPlaying && !audioUnlocked ? (
+      {isPlaying && !audioUnlocked && !autoplayBlocked ? (
         <button
           type="button"
           onClick={enableAudio}

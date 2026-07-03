@@ -1,7 +1,15 @@
 "use client";
 
 
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { useRouter } from "next/navigation";
 import LiveBuySeedsSheet from "@/components/experience/live/LiveBuySeedsSheet";
 import LiveFloatingEmojiLayer from "@/components/experience/live/LiveFloatingEmojiLayer";
@@ -31,6 +39,11 @@ import {
 } from "@/lib/live/audio-auto-leveling";
 import { requestLiveSeedWalletRefresh } from "@/lib/live/seed-wallet-events";
 import { isDemoManifestPlaybackUrl } from "@/lib/live/manifest-dev-fallback";
+import {
+  cacheBustHlsPlaybackUrl,
+  HLS_STARTUP_RETRY_CONFIG,
+  reportAutoplayBlocked,
+} from "@/lib/live/attach-hls-playback";
 import { getSupabase } from "@/lib/supabase/client";
 import {
   clearDirectCameraChannelSignals,
@@ -63,6 +76,7 @@ import {
 const LIVE_ACCESS_POLL_MS = 5_000;
 const MANIFEST_RETRY_FAST_MS = 2_500;
 const MANIFEST_RETRY_STEADY_MS = 5_000;
+const MANIFEST_RETRY_JITTER_MS = 1_500;
 const MANIFEST_SYNC_LISTENER_ID = "live-manifest-stream-sync";
 const EMOJI_BURST_LISTENER_ID = "live-emoji-burst-sync";
 const HLS_MAX_RECOVERY_ATTEMPTS = 3;
@@ -70,6 +84,11 @@ const HLS_RECOVERY_BASE_MS = 1_500;
 const EMOJI_BURST_EVENT = "emoji_burst";
 const GLOBAL_OFFERING_ALERT_EVENT = "global_offering_alert";
 const QUICK_SOW_COST = 100;
+
+function resolveManifestPollMs(hasPlaybackUrl: boolean): number {
+  const baseMs = hasPlaybackUrl ? MANIFEST_RETRY_STEADY_MS : MANIFEST_RETRY_FAST_MS;
+  return baseMs + Math.floor(Math.random() * MANIFEST_RETRY_JITTER_MS);
+}
 
 type FloatingEmojiBurst = {
   id: string;
@@ -192,7 +211,13 @@ function HlsVideoPlayer({
   );
 }
 
-function LiveStreamConnectingOverlay({ message }: { message: string }) {
+function LiveStreamConnectingOverlay({
+  message,
+  action,
+}: {
+  message: string;
+  action?: ReactNode;
+}) {
   return (
     <div className="absolute inset-0 z-[2] flex flex-col items-center justify-center bg-black px-6 text-center">
       <div className="flex h-8 items-end justify-center gap-1" aria-hidden="true">
@@ -210,6 +235,7 @@ function LiveStreamConnectingOverlay({ message }: { message: string }) {
         />
       </div>
       <p className="mt-4 max-w-sm font-body text-sm text-white/70">{message}</p>
+      {action}
     </div>
   );
 }
@@ -269,6 +295,7 @@ export default function LiveExperienceClient({
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
   const [isPlaybackBuffering, setIsPlaybackBuffering] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
   const [buySeedsOpen, setBuySeedsOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
@@ -684,6 +711,7 @@ export default function LiveExperienceClient({
       if (componentIsUnmountingRef.current) return;
 
       if (!response.ok) {
+        setAutoplayBlocked(false);
         setManifest((prev) => {
           if (prev.status === "ready" && prev.playbackUrl) {
             return prev;
@@ -705,6 +733,9 @@ export default function LiveExperienceClient({
       const data = (await response.json()) as ManifestResponse;
       if (componentIsUnmountingRef.current) return;
       const nextManifest = resolveManifestMessage(data);
+      if (nextManifest.status !== "ready") {
+        setAutoplayBlocked(false);
+      }
       setManifest(nextManifest);
       if (nextManifest.status === "ready" && nextManifest.playbackUrl) {
         manifestHasUrlRef.current = true;
@@ -712,6 +743,7 @@ export default function LiveExperienceClient({
       }
     } catch {
       if (componentIsUnmountingRef.current) return;
+      setAutoplayBlocked(false);
       setManifest((prev) => {
         if (prev.status === "ready" && prev.playbackUrl) {
           return prev;
@@ -839,21 +871,22 @@ export default function LiveExperienceClient({
 
     queueMicrotask(() => void loadManifest());
 
-    let currentPollMs = MANIFEST_RETRY_FAST_MS;
+    let currentPollMode: "fast" | "steady" = "fast";
 
     const armManifestInterval = () => {
       if (manifestPollingTimerRef.current !== null) {
         window.clearInterval(manifestPollingTimerRef.current);
       }
-      currentPollMs = manifestHasUrlRef.current ? MANIFEST_RETRY_STEADY_MS : MANIFEST_RETRY_FAST_MS;
+      currentPollMode = manifestHasUrlRef.current ? "steady" : "fast";
+      const currentPollMs = resolveManifestPollMs(manifestHasUrlRef.current);
       manifestPollingTimerRef.current = window.setInterval(() => void loadManifest(), currentPollMs);
     };
 
     armManifestInterval();
 
     manifestPollingWatchRef.current = window.setInterval(() => {
-      const nextPollMs = manifestHasUrlRef.current ? MANIFEST_RETRY_STEADY_MS : MANIFEST_RETRY_FAST_MS;
-      if (nextPollMs !== currentPollMs) {
+      const nextPollMode = manifestHasUrlRef.current ? "steady" : "fast";
+      if (nextPollMode !== currentPollMode) {
         armManifestInterval();
       }
     }, MANIFEST_RETRY_FAST_MS);
@@ -903,6 +936,7 @@ export default function LiveExperienceClient({
 
   const finalizePlaybackFailure = useCallback((message: string) => {
     hlsRetryCountRef.current = 0;
+    setAutoplayBlocked(false);
     setIsPlaybackBuffering(false);
     setIsVideoPlaying(false);
     manifestHasUrlRef.current = false;
@@ -915,6 +949,20 @@ export default function LiveExperienceClient({
       activeSource: null,
     });
   }, [destroyHlsPlayback]);
+
+  const handleAutoplayBlocked = useCallback(() => {
+    setAutoplayBlocked(true);
+    setIsPlaybackBuffering(false);
+    setIsVideoPlaying(false);
+    setManifest((prev) =>
+      prev.status === "ready"
+        ? {
+            ...prev,
+            message: "Tap to start the live video.",
+          }
+        : prev,
+    );
+  }, []);
 
   const scheduleHlsRecovery = useCallback(
     (
@@ -935,6 +983,7 @@ export default function LiveExperienceClient({
 
       hlsRetryCountRef.current += 1;
       const delayMs = HLS_RECOVERY_BASE_MS * 2 ** (hlsRetryCountRef.current - 1);
+      setAutoplayBlocked(false);
       setIsPlaybackBuffering(true);
       setIsVideoPlaying(false);
 
@@ -948,10 +997,10 @@ export default function LiveExperienceClient({
 
         video.muted = !audioUnlockedRef.current;
         recover();
-        void video.play().catch(() => undefined);
+        reportAutoplayBlocked(video, { onAutoplayBlocked: handleAutoplayBlocked });
       }, delayMs);
     },
-    [finalizePlaybackFailure],
+    [finalizePlaybackFailure, handleAutoplayBlocked],
   );
 
   const hotSwapHlsSource = useCallback((nextUrl: string) => {
@@ -960,15 +1009,16 @@ export default function LiveExperienceClient({
     if (!hls || !video || activePlaybackUrlRef.current === nextUrl) return false;
 
     hlsRetryCountRef.current = 0;
-    hls.loadSource(nextUrl);
+    hls.loadSource(cacheBustHlsPlaybackUrl(nextUrl));
     hls.startLoad();
     activePlaybackUrlRef.current = nextUrl;
     video.muted = !audioUnlockedRef.current;
+    setAutoplayBlocked(false);
     setIsPlaybackBuffering(true);
     setIsVideoPlaying(false);
-    void video.play().catch(() => undefined);
+    reportAutoplayBlocked(video, { onAutoplayBlocked: handleAutoplayBlocked });
     return true;
-  }, []);
+  }, [handleAutoplayBlocked]);
 
   const attachHlsEngine = useCallback(
     async (video: HTMLVideoElement, streamUrl: string, cancelled: () => boolean) => {
@@ -978,6 +1028,7 @@ export default function LiveExperienceClient({
         destroyHlsPlayback();
 
         const hlsConfig = {
+          ...HLS_STARTUP_RETRY_CONFIG,
           // Sit further back from the live edge and keep a deeper buffer so the
           // player doesn't starve/stall (the "flashing in and out") when the feed
           // has upstream jitter (Restream → IVS → relay). A few extra seconds of
@@ -1000,15 +1051,16 @@ export default function LiveExperienceClient({
         hlsInstanceRef.current = hls;
         activePlaybackUrlRef.current = streamUrl;
         video.muted = !audioUnlockedRef.current;
-        hls.loadSource(streamUrl);
+        hls.loadSource(cacheBustHlsPlaybackUrl(streamUrl));
         hls.attachMedia(video);
 
         hls.on(HlsModule.Events.MANIFEST_PARSED, () => {
           if (cancelled()) return;
+          setAutoplayBlocked(false);
           installAutoLevelingMatrix(video);
           setIsPlaybackBuffering(true);
           video.muted = !audioUnlockedRef.current;
-          void video.play().catch(() => undefined);
+          reportAutoplayBlocked(video, { onAutoplayBlocked: handleAutoplayBlocked });
         });
 
         hls.on(HlsModule.Events.ERROR, (_, data) => {
@@ -1051,11 +1103,12 @@ export default function LiveExperienceClient({
         destroyHlsPlayback();
         activePlaybackUrlRef.current = streamUrl;
         video.muted = !audioUnlockedRef.current;
-        video.src = streamUrl;
+        video.src = cacheBustHlsPlaybackUrl(streamUrl);
         video.load();
         installAutoLevelingMatrix(video);
+        setAutoplayBlocked(false);
         setIsPlaybackBuffering(true);
-        void video.play().catch(() => undefined);
+        reportAutoplayBlocked(video, { onAutoplayBlocked: handleAutoplayBlocked });
         hlsCleanupRef.current = () => {
           video.removeAttribute("src");
           video.load();
@@ -1066,7 +1119,13 @@ export default function LiveExperienceClient({
 
       finalizePlaybackFailure("This browser cannot play the live HLS stream.");
     },
-    [destroyHlsPlayback, finalizePlaybackFailure, installAutoLevelingMatrix, scheduleHlsRecovery],
+    [
+      destroyHlsPlayback,
+      finalizePlaybackFailure,
+      handleAutoplayBlocked,
+      installAutoLevelingMatrix,
+      scheduleHlsRecovery,
+    ],
   );
 
   useEffect(() => {
@@ -1079,6 +1138,17 @@ export default function LiveExperienceClient({
 
     const onPlaying = () => {
       hlsRetryCountRef.current = 0;
+      setAutoplayBlocked(false);
+      setManifest((prev) =>
+        prev.status === "ready"
+          ? {
+              ...prev,
+              message: isDemoManifestPlaybackUrl(prev.playbackUrl)
+                ? "Playing development test stream."
+                : "Live stream connected.",
+            }
+          : prev,
+      );
       setIsVideoPlaying(true);
       setIsPlaybackBuffering(false);
     };
@@ -1089,6 +1159,7 @@ export default function LiveExperienceClient({
     const onError = () => {
       if (hlsInstanceRef.current) return;
       const code = video.error?.code;
+      setAutoplayBlocked(false);
       scheduleHlsRecovery(
         video,
         streamUrl,
@@ -1097,7 +1168,7 @@ export default function LiveExperienceClient({
         () => {
           video.muted = !audioUnlockedRef.current;
           video.load();
-          void video.play().catch(() => undefined);
+          reportAutoplayBlocked(video, { onAutoplayBlocked: handleAutoplayBlocked });
         },
       );
     };
@@ -1111,7 +1182,7 @@ export default function LiveExperienceClient({
       video.removeEventListener("waiting", onWaiting);
       video.removeEventListener("error", onError);
     };
-  }, [scheduleHlsRecovery, streamUrl, useDirectCamera]);
+  }, [handleAutoplayBlocked, scheduleHlsRecovery, streamUrl, useDirectCamera]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -1131,6 +1202,7 @@ export default function LiveExperienceClient({
     const video = videoRef.current;
     if (!video || !streamUrl) {
       manifestHasUrlRef.current = false;
+      setAutoplayBlocked(false);
       destroyHlsPlayback();
       clearAutoLevelingMatrix();
       if (video) {
@@ -1167,12 +1239,15 @@ export default function LiveExperienceClient({
   const enableAudio = useCallback(() => {
     const video = videoRef.current;
     setAudioUnlocked(true);
+    setAutoplayBlocked(false);
     if (!video) return;
     video.muted = false;
     video.volume = 1;
     void autoLevelingMatrixRef.current?.resume();
-    void video.play().catch(() => undefined);
-  }, []);
+    void video.play().catch(() => {
+      handleAutoplayBlocked();
+    });
+  }, [handleAutoplayBlocked]);
 
   const enableDirectAudio = useCallback(() => {
     const video = directVideoRef.current;
@@ -1399,8 +1474,16 @@ export default function LiveExperienceClient({
   const showDirectPlayer = isPublishMode && !playbackUrl;
   const showHlsConnecting =
     !isPublishMode && !resolvedPlaybackUrl && access?.streamIsLive !== false;
+  const showTapToStart = !isPublishMode && Boolean(resolvedPlaybackUrl) && autoplayBlocked;
+  const showActiveHlsOverlay =
+    !isPublishMode &&
+    Boolean(resolvedPlaybackUrl) &&
+    (autoplayBlocked || isPlaybackBuffering || !isVideoPlaying);
   const connectingMessage =
     manifest.message?.trim() || "Connecting to the live broadcast...";
+  const activeHlsOverlayMessage = showTapToStart
+    ? "Tap to start the live video."
+    : connectingMessage;
 
   const walletLabel = seedBalanceLoading ? "..." : seedBalance.toLocaleString("en-US");
   const showAudioUnlock = showDirectPlayer ? !directAudioUnlocked : !audioUnlocked;
@@ -1453,11 +1536,29 @@ export default function LiveExperienceClient({
                   ) : null}
                 </>
               ) : resolvedPlaybackUrl ? (
-                <HlsVideoPlayer
-                  url={resolvedPlaybackUrl}
-                  videoRef={videoRef}
-                  audioUnlocked={audioUnlocked}
-                />
+                <>
+                  <HlsVideoPlayer
+                    url={resolvedPlaybackUrl}
+                    videoRef={videoRef}
+                    audioUnlocked={audioUnlocked}
+                  />
+                  {showActiveHlsOverlay ? (
+                    <LiveStreamConnectingOverlay
+                      message={activeHlsOverlayMessage}
+                      action={
+                        showTapToStart ? (
+                          <button
+                            type="button"
+                            onClick={enableAudio}
+                            className="mt-5 min-h-11 rounded-full border border-brand-blue/50 bg-black/80 px-5 font-ui text-[0.68rem] font-bold uppercase tracking-[0.14em] text-brand-blue backdrop-blur"
+                          >
+                            Tap to join live
+                          </button>
+                        ) : undefined
+                      }
+                    />
+                  ) : null}
+                </>
               ) : (
                 <>
                   <div className="absolute inset-0 bg-black" aria-hidden="true" />

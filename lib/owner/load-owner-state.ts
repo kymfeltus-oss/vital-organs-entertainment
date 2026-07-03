@@ -29,6 +29,9 @@ export type OwnerStreamStateRow = {
 const SELECT_OWNER_WITH_FEEDS =
   "id, is_live, attendee_ui_phase, playback_url, active_source, primary_playback_url, backup_playback_url, primary_rtmp_ingest_url, publish_mode, publish_status, playback_status, publish_error_message, playback_error_message, publisher_session_id, publisher_channel, concert_title, headliner_name, audio_master_presets, updated_at, updated_by";
 
+const SELECT_OWNER_SETUP =
+  "id, is_live, attendee_ui_phase, playback_url, active_source, primary_playback_url, backup_playback_url, primary_rtmp_ingest_url, concert_title, headliner_name, audio_master_presets, updated_at, updated_by";
+
 const SELECT_OWNER_FULL =
   "id, is_live, attendee_ui_phase, playback_url, active_source, publish_mode, publish_status, playback_status, publish_error_message, playback_error_message, publisher_session_id, publisher_channel, updated_at, updated_by";
 
@@ -134,7 +137,12 @@ function normalizeRow(row: Record<string, unknown>): OwnerStreamStateRow {
 export async function loadOwnerStreamState(
   admin: SupabaseClient,
 ): Promise<{ row: OwnerStreamStateRow | null; error: string | null }> {
-  for (const selectClause of [SELECT_OWNER_WITH_FEEDS, SELECT_OWNER_FULL, SELECT_OWNER_LEGACY]) {
+  for (const selectClause of [
+    SELECT_OWNER_WITH_FEEDS,
+    SELECT_OWNER_SETUP,
+    SELECT_OWNER_FULL,
+    SELECT_OWNER_LEGACY,
+  ]) {
     const { data, error } = await admin
       .from("live_stream_state")
       .select(selectClause)
@@ -174,6 +182,38 @@ export async function updateOwnerStreamState(
 
   if (error) {
     if (isMissingColumnError(error.message)) {
+      const setupPatch: Record<string, unknown> = {};
+      if ("is_live" in patch) setupPatch.is_live = patch.is_live;
+      if ("attendee_ui_phase" in patch) setupPatch.attendee_ui_phase = patch.attendee_ui_phase;
+      if ("playback_url" in patch) setupPatch.playback_url = patch.playback_url;
+      if ("active_source" in patch) setupPatch.active_source = patch.active_source;
+      if ("primary_playback_url" in patch) setupPatch.primary_playback_url = patch.primary_playback_url;
+      if ("backup_playback_url" in patch) setupPatch.backup_playback_url = patch.backup_playback_url;
+      if ("primary_rtmp_ingest_url" in patch) setupPatch.primary_rtmp_ingest_url = patch.primary_rtmp_ingest_url;
+      if ("concert_title" in patch) setupPatch.concert_title = patch.concert_title;
+      if ("headliner_name" in patch) setupPatch.headliner_name = patch.headliner_name;
+      if ("audio_master_presets" in patch) setupPatch.audio_master_presets = patch.audio_master_presets;
+      if ("updated_by" in patch) setupPatch.updated_by = patch.updated_by;
+      setupPatch.updated_at = payload.updated_at;
+
+      const setup = await admin
+        .from("live_stream_state")
+        .update(setupPatch)
+        .eq("id", LIVE_STREAM_STATE_ID)
+        .select(SELECT_OWNER_SETUP)
+        .maybeSingle();
+
+      if (!setup.error) {
+        return {
+          row: setup.data ? normalizeRow(setup.data as unknown as Record<string, unknown>) : null,
+          error: null,
+        };
+      }
+
+      if (!isMissingColumnError(setup.error.message)) {
+        return { row: null, error: setup.error.message };
+      }
+
       const legacyPatch: Record<string, unknown> = {};
       if ("is_live" in patch) legacyPatch.is_live = patch.is_live;
       if ("attendee_ui_phase" in patch) legacyPatch.attendee_ui_phase = patch.attendee_ui_phase;

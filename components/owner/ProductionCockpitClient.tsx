@@ -39,6 +39,7 @@ import {
   DEFAULT_SCHEDULE_TIMEZONE,
   type ScheduleTimezone,
 } from "@/lib/live/schedule-timezone";
+import { HLS_PLAYBACK_REQUIREMENT, isValidHlsUrl } from "@/lib/live/hls";
 import {
   BROADCAST_HARDWARE_DEFAULTS,
   formatBroadcastAudioDefaultLabel,
@@ -1779,6 +1780,16 @@ export default function ProductionCockpitClient() {
   const handleSaveEncoder = useCallback(async () => {
     if (encoderSaving) return;
 
+    const playbackUrl = encoderFields.attendeePlaybackHlsUrl.trim();
+    if (playbackUrl && !isValidHlsUrl(playbackUrl)) {
+      const message = HLS_PLAYBACK_REQUIREMENT;
+      setEncoderSaveMessage(null);
+      setEncoderSaveError(message);
+      setBroadcastError(message);
+      setBroadcastMessage(null);
+      return;
+    }
+
     setEncoderSaving(true);
     setEncoderSaveError(null);
     setEncoderSaveMessage(null);
@@ -1909,6 +1920,13 @@ export default function ProductionCockpitClient() {
                 disabled={ownerAuthorized !== true}
                 saveMessage={encoderSaveMessage}
                 saveError={encoderSaveError}
+                disabledMessage={
+                  ownerAuthorized === false
+                    ? "Owner access is not authorized. Sign in with an ADMIN_EMAILS account before saving."
+                    : ownerAuthorized === null
+                      ? "Checking owner access before saving..."
+                      : null
+                }
                 lastSavedLabel={
                   encoderLastSavedAt
                     ? `Last saved ${new Date(encoderLastSavedAt).toLocaleString("en-US", {

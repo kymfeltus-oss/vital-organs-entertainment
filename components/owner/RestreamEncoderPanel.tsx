@@ -18,6 +18,7 @@ type RestreamEncoderPanelProps = {
   disabled?: boolean;
   saveMessage?: string | null;
   saveError?: string | null;
+  disabledMessage?: string | null;
   lastSavedLabel?: string | null;
   onChange: (fields: RestreamEncoderFields) => void;
   onSave: () => void;
@@ -79,6 +80,7 @@ export default function RestreamEncoderPanel({
   disabled = false,
   saveMessage,
   saveError,
+  disabledMessage,
   lastSavedLabel,
   onChange,
   onSave,
@@ -86,6 +88,8 @@ export default function RestreamEncoderPanel({
   const [showStreamKey, setShowStreamKey] = useState(false);
   const tone = healthTone(health);
   const isBusy = saving || disabled;
+  const saveDisabledReasonId = "restream-encoder-save-disabled-reason";
+  const saveIsBlocked = disabled && Boolean(disabledMessage);
 
   return (
     <section
@@ -185,11 +189,19 @@ export default function RestreamEncoderPanel({
           </label>
 
           {saveError ? (
-            <p role="alert" className="rounded border border-red-400/35 bg-red-500/10 px-2 py-1.5 font-body text-[0.52rem] text-red-200">
+            <p role="alert" className="rounded border border-red-300/70 bg-red-700/90 px-2 py-1.5 font-body text-[0.58rem] font-semibold text-white">
               {saveError}
             </p>
+          ) : disabled && disabledMessage ? (
+            <p
+              id={saveDisabledReasonId}
+              role="status"
+              className="rounded border border-amber-200/80 bg-amber-300 px-2 py-1.5 font-body text-[0.58rem] font-semibold text-black"
+            >
+              {disabledMessage}
+            </p>
           ) : saveMessage ? (
-            <p role="status" className="rounded border border-lime-300/35 bg-lime-300/10 px-2 py-1.5 font-body text-[0.52rem] text-lime-200">
+            <p role="status" className="rounded border border-lime-200/70 bg-lime-700/90 px-2 py-1.5 font-body text-[0.58rem] font-semibold text-white">
               {saveMessage}
             </p>
           ) : null}
@@ -212,9 +224,16 @@ export default function RestreamEncoderPanel({
           <button
             type="button"
             data-testid="save-encoder-settings"
-            disabled={isBusy}
-            onClick={onSave}
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-cyan-400/35 bg-cyan-400/12 px-3 font-ui text-[0.58rem] font-black uppercase tracking-[0.08em] text-cyan-100 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-45 sm:text-xs"
+            disabled={saving}
+            aria-disabled={disabled || saving}
+            aria-describedby={saveIsBlocked ? saveDisabledReasonId : undefined}
+            onClick={() => {
+              if (disabled || saving) return;
+              onSave();
+            }}
+            className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-cyan-400/35 bg-cyan-400/12 px-3 font-ui text-[0.58rem] font-black uppercase tracking-[0.08em] text-cyan-100 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-45 sm:text-xs ${
+              saveIsBlocked ? "cursor-not-allowed opacity-70" : ""
+            }`}
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Save / Update Credentials

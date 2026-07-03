@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { Bebas_Neue, Inter, Montserrat, Oswald } from "next/font/google";
 import RootLayoutShell from "@/components/RootLayoutShell";
-import { BROWSER_CHROME_MINIMIZE_SCRIPT } from "@/lib/mobile/browser-chrome-minimize";
 import "./globals.css";
 
 const bebasNeue = Bebas_Neue({
@@ -37,15 +35,6 @@ const oswald = Oswald({
 export const metadata: Metadata = {
   title: "300 Awakening",
   description: "Tap Into The Awakening",
-  applicationName: "300 Awakening",
-  appleWebApp: {
-    capable: true,
-    title: "300 Awakening",
-    statusBarStyle: "black-translucent",
-  },
-  formatDetection: {
-    telephone: false,
-  },
   icons: {
     icon: "/images/logo.png",
     shortcut: "/images/logo.png",
@@ -57,8 +46,6 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#020203",
-  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({
@@ -71,9 +58,6 @@ export default function RootLayout({
       lang="en"
       className={`${bebasNeue.variable} ${montserrat.variable} ${inter.variable} ${oswald.variable}`}
     >
-      <Script id="browser-chrome-minimize" strategy="beforeInteractive">
-        {BROWSER_CHROME_MINIMIZE_SCRIPT}
-      </Script>
       <body className="font-body device-fit-page min-h-dvh max-w-[100vw] overflow-x-hidden bg-transparent text-[16px] text-white antialiased">
         <a
           href="#main-content"

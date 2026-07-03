@@ -356,6 +356,11 @@ export async function saveShowSetupState(
     throw new Error("Add your Restream stream key before saving RTMP credentials.");
   }
 
+  const savedHls = next.attendeePlaybackHlsUrl.trim();
+  if (savedHls && !isValidHlsUrl(savedHls)) {
+    throw new Error("Playback URL must be a valid HLS .m3u8 manifest (http/https).");
+  }
+
   const admin = getSupabaseAdmin();
   const { row } = await loadOwnerStreamState(admin);
   const existingPresets = asRecord(row?.audio_master_presets);
@@ -383,7 +388,6 @@ export async function saveShowSetupState(
 
   await saveCountdownConfig(validation.config as EventCountdownConfig);
 
-  const savedHls = next.attendeePlaybackHlsUrl.trim();
   const streamPatch: Parameters<typeof updateOwnerStreamState>[1] = {
     concert_title: next.showTitle,
     headliner_name: next.presenterName,
@@ -395,7 +399,7 @@ export async function saveShowSetupState(
     updated_by: updatedBy,
   };
 
-  if (savedHls && isValidHlsUrl(savedHls) && !row?.is_live) {
+  if (savedHls) {
     streamPatch.primary_playback_url = savedHls;
     streamPatch.playback_url = savedHls;
   }
