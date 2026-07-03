@@ -23,6 +23,10 @@ import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 
 type LiveStreamChatLayout = "sidebar" | "responsive";
 
+const LIVE_MESSAGE_VISIBLE_MS = 12_000;
+const LIVE_MESSAGE_HISTORY_LIMIT = 40;
+const CHAT_BOTTOM_THRESHOLD_PX = 24;
+
 type LiveStreamChatProps = {
   profile: AttendeeProfileSnapshot | null;
   seedBalance: number;
@@ -37,15 +41,18 @@ type LiveStreamChatProps = {
 function ScrollToBottom({
   containerRef,
   dependencyKey,
+  enabled,
 }: {
   containerRef: RefObject<HTMLDivElement | null>;
   dependencyKey: number;
+  enabled: boolean;
 }) {
   useEffect(() => {
+    if (!enabled) return;
     const node = containerRef.current;
     if (!node) return;
     node.scrollTop = node.scrollHeight;
-  }, [containerRef, dependencyKey]);
+  }, [containerRef, dependencyKey, enabled]);
 
   return null;
 }
@@ -65,6 +72,8 @@ export default function LiveStreamChat({
   const isResponsive = layout === "responsive";
   const { messages, session, isSending, error, sendMessage, clearError } = useIgLiveChat();
   const [draft, setDraft] = useState("");
+  const [isReviewingHistory, setIsReviewingHistory] = useState(false);
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -81,11 +90,27 @@ export default function LiveStreamChat({
 
     const feedLines = useMemo(() => {
       const merged = [...messages, ...simulatedMessages];
-      return merged.sort(
-        (left, right) =>
-          new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
-      );
+      return merged
+        .sort(
+          (left, right) =>
+            new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
+        )
+        .slice(-LIVE_MESSAGE_HISTORY_LIMIT);
     }, [messages, simulatedMessages]);
+
+    useEffect(() => {
+      if (!isResponsive) return;
+      const intervalId = window.setInterval(() => setNowMs(Date.now()), 1_000);
+      return () => window.clearInterval(intervalId);
+    }, [isResponsive]);
+
+    const handleFeedScroll = () => {
+      if (!isResponsive) return;
+      const node = scrollRef.current;
+      if (!node) return;
+      const distanceFromBottom = node.scrollHeight - node.scrollTop - node.clientHeight;
+      setIsReviewingHistory(distanceFromBottom > CHAT_BOTTOM_THRESHOLD_PX);
+    };
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -102,7 +127,7 @@ export default function LiveStreamChat({
 
     const headerClass = isResponsive ? "hidden lg:flex" : "flex";
     const feedClass = isResponsive
-      ? "viewer-pov-chat-mask pointer-events-none absolute left-3 z-10 max-h-[28%] max-w-[min(78%,18rem)] overflow-hidden max-lg:bottom-[calc(var(--live-mobile-dock-h)+0.75rem)] min-h-0 flex-1 overflow-y-auto px-1 py-2 sm:left-4 lg:relative lg:inset-auto lg:z-auto lg:max-h-none lg:max-w-none lg:flex-1 lg:space-y-2 lg:px-4 lg:py-3 sm:px-5"
+      ? "viewer-pov-chat-mask pointer-events-auto absolute left-3 z-10 max-h-[28%] max-w-[min(78%,18rem)] touch-pan-y max-lg:bottom-[calc(var(--live-mobile-dock-h)+0.75rem)] max-lg:overflow-y-auto min-h-0 flex-1 px-1 py-2 sm:left-4 lg:relative lg:inset-auto lg:z-auto lg:max-h-none lg:max-w-none lg:flex-1 lg:space-y-2 lg:overflow-y-auto lg:px-4 lg:py-3 sm:px-5"
       : "min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3 sm:px-5";
 
     const composerShellClass = isResponsive
@@ -131,9 +156,14 @@ export default function LiveStreamChat({
           className={feedClass}
           aria-live="polite"
           aria-label="Live chat messages"
+          onScroll={handleFeedScroll}
         >
-          <ScrollToBottom containerRef={scrollRef} dependencyKey={feedLines.length} />
-          <div className={isResponsive ? "viewer-pov-chat-scroll flex flex-col justify-end gap-2" : "contents"}>
+          <ScrollToBottom
+            containerRef={scrollRef}
+            dependencyKey={feedLines.length}
+            enabled={!isReviewingHistory}
+          />
+          <div className={isResponsive ? "flex flex-col justify-end gap-2" : "contents"}>
             {feedLines.length === 0 ? (
               <p
                 className={`font-body text-brand-muted viewer-pov-text-shadow ${isResponsive ? "text-xs text-white/55" : "text-sm"}`}
@@ -141,8 +171,14 @@ export default function LiveStreamChat({
                 The room is gathering...
               </p>
             ) : (
-              feedLines.slice(-10).map((message) => {
+              feedLines.map((message) => {
                 const isSimulated = "isSimulated" in message && message.isSimulated;
+                const createdAtMs = new Date(message.createdAt).getTime();
+                const hideFromLiveView =
+                  isResponsive &&
+                  !isReviewingHistory &&
+                  Number.isFinite(createdAtMs) &&
+                  nowMs - createdAtMs > LIVE_MESSAGE_VISIBLE_MS;
                 const isOwn =
                   Boolean(profileUserId) && message.userId === profileUserId;
                 const authorLabel =
@@ -150,7 +186,8 @@ export default function LiveStreamChat({
                 return (
                   <p
                     key={message.id}
-                    className={`font-body leading-snug text-white viewer-pov-text-shadow ${isResponsive ? "text-[0.82rem] max-lg:rounded-md max-lg:bg-black/35 max-lg:px-2 max-lg:py-1 max-lg:backdrop-blur-sm" : "text-sm"} ${isSimulated ? "max-lg:opacity-85" : ""}`}
+                    aria-hidden={hideFromLiveView}
+                    className={`font-body leading-snug text-white viewer-pov-text-shadow transition-[opacity,transform] duration-500 ${isResponsive ? "text-[0.82rem] max-lg:rounded-md max-lg:bg-black/35 max-lg:px-2 max-lg:py-1 max-lg:backdrop-blur-sm" : "text-sm"} ${hideFromLiveView ? "pointer-events-none translate-y-1 opacity-0" : isSimulated ? "max-lg:opacity-85" : ""}`}
                   >
                     <span
                       className={`font-ui text-xs font-bold ${chatAuthorColorClass(message.userId)}`}
