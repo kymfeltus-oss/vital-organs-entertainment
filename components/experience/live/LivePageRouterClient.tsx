@@ -66,9 +66,8 @@ export default function LivePageRouterClient({
         initialCountdownConfig={syncedCountdownConfig}
         initialCountdown={initialCountdown}
         initialProfile={initialProfile}
-        attendeeUiPhase="ended"
-        showClock={false}
-        statusMessage={syncedCountdownConfig.outro_headline || "THANK YOU FOR JOINING"}
+        attendeeUiPhase="pre_show"
+        showClock
       />
     );
   }
