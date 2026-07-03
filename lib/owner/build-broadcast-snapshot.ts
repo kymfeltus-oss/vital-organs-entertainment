@@ -114,6 +114,7 @@ export async function buildOwnerBroadcastSnapshot(
     hlsUrl,
     manifestReachable,
     detail: feed.primary.detail,
+    invalidReason: feed.primary.manifestReachable ? null : "manifest_unreachable" as const,
   };
 
   const preflight = buildPreflightChecks({

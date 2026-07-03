@@ -4,13 +4,16 @@ import {
   resolveClientPlaybackUrl,
 } from "@/lib/live/manifest-env-fast-path";
 import {
-  buildDevManifestFallbackPayload,
+  resolveConfiguredAttendeePlaybackFromEnv,
   type ManifestExperienceKey,
 } from "@/lib/live/manifest-dev-fallback";
 import {
   resolveLiveManifestPlayback,
   resolveManifestCarrier,
 } from "@/lib/live/resolve-manifest-playback";
+import { LIVE_STREAM_STATE_ID } from "@/lib/live/types";
+import { probeHlsManifest } from "@/lib/owner/hls-readiness";
+import { resolveIvsChannelConfig } from "@/lib/owner/resolve-ivs-config";
 
 const EXPERIENCE_KEYS: readonly ManifestExperienceKey[] = [
   "main_stage",
@@ -47,6 +50,33 @@ function jsonResponse(
   });
 }
 
+type PlaybackCandidate = {
+  source: "database" | "env";
+  playbackUrl: string;
+  activeSource: "primary";
+};
+
+function logPlaybackSelection(input: {
+  selectedShowId: string;
+  candidate: PlaybackCandidate | null;
+  streamStatus: "offline" | "live";
+  playerMountStatus: "ready" | "waiting";
+  probeDetail?: string | null;
+}): void {
+  const ivs = resolveIvsChannelConfig();
+
+  console.info("[stream/manifest] playback selection", {
+    selectedShowId: input.selectedShowId,
+    ivsChannelArn: ivs.channelArn,
+    ivsPlaybackUrl: ivs.playbackUrl,
+    streamStatus: input.streamStatus,
+    candidateSource: input.candidate?.source ?? null,
+    playbackUrl: input.candidate?.playbackUrl ?? null,
+    playerMountStatus: input.playerMountStatus,
+    probeDetail: input.probeDetail ?? null,
+  });
+}
+
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
     status: 204,
@@ -61,36 +91,70 @@ export async function GET(request: NextRequest) {
   }
 
   const resolved = await resolveLiveManifestPlayback();
+  const candidates: PlaybackCandidate[] = [];
+
   if (resolved.playbackUrl) {
+    candidates.push({
+      source: "database",
+      playbackUrl: resolved.playbackUrl,
+      activeSource: resolved.activeSource,
+    });
+  }
+
+  const envPlaybackUrl =
+    resolved.streamIsLive && experience === "main_stage"
+      ? resolveConfiguredAttendeePlaybackFromEnv()
+      : null;
+  if (
+    envPlaybackUrl &&
+    !candidates.some((candidate) => candidate.playbackUrl === envPlaybackUrl)
+  ) {
+    candidates.push({
+      source: "env",
+      playbackUrl: envPlaybackUrl,
+      activeSource: "primary",
+    });
+  }
+
+  for (const candidate of candidates) {
+    const probe = await probeHlsManifest(candidate.playbackUrl);
+    const playerMountStatus = probe.manifestReachable ? "ready" : "waiting";
+
+    logPlaybackSelection({
+      selectedShowId: resolved.selectedShowId,
+      candidate,
+      streamStatus: resolved.streamIsLive ? "live" : "offline",
+      playerMountStatus,
+      probeDetail: probe.detail,
+    });
+
+    if (!probe.manifestReachable) {
+      continue;
+    }
+
     return jsonResponse(request, {
       success: true,
       activeExperience: experience,
-      activeSource: resolved.activeSource,
-      carrier: resolveManifestCarrier(resolved.activeSource),
+      activeSource: candidate.activeSource,
+      carrier: resolveManifestCarrier(candidate.activeSource),
       fallback: false,
-      playbackUrl: resolveClientPlaybackUrl(request, resolved.playbackUrl),
+      playbackUrl: resolveClientPlaybackUrl(request, candidate.playbackUrl),
     });
   }
 
-  const fallbackPayload = buildDevManifestFallbackPayload(
-    experience,
-    "NO_CONFIGURED_HLS_PLAYBACK_URL",
-    { suppressDemoFallback: true },
-  );
-
-  if (fallbackPayload) {
-    return jsonResponse(request, {
-      ...fallbackPayload,
-      carrier: resolveManifestCarrier(fallbackPayload.activeSource),
-      playbackUrl: resolveClientPlaybackUrl(request, fallbackPayload.playbackUrl),
-    });
-  }
+  logPlaybackSelection({
+    selectedShowId: resolved.selectedShowId || LIVE_STREAM_STATE_ID,
+    candidate: null,
+    streamStatus: resolved.streamIsLive ? "live" : "offline",
+    playerMountStatus: "waiting",
+    probeDetail: candidates.length ? "No validated HLS manifest candidate." : "No playback URL candidate.",
+  });
 
   return jsonResponse(
     request,
     {
       success: false,
-      error: "Live is open, but no HLS playback URL is configured.",
+      error: "Stream not available yet.",
     },
     404,
   );

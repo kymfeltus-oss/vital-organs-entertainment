@@ -142,7 +142,11 @@ export default function AttendeeStreamPlayer({
       if (!shouldPlayRef.current || !isMountedRef.current) return null;
 
       if (!response.ok) {
-        setPlaybackStatus(`Live manifest unavailable (${response.status}). Retrying...`);
+        setPlaybackStatus(
+          response.status === 404
+            ? "Stream not available yet. Retrying..."
+            : `Live manifest unavailable (${response.status}). Retrying...`,
+        );
         if (
           requestedExperience !== DEFAULT_ATTENDEE_EXPERIENCE &&
           (response.status === 503 || response.status === 400)

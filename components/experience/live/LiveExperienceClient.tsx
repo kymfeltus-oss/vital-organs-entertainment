@@ -62,7 +62,11 @@ import {
   releasePlatformChannel,
   unregisterPlatformListener,
 } from "@/lib/live/platform-channel";
-import { LIVE_ROOM_PLATFORM_CHANNEL, LIVE_STREAM_STATE_BROADCAST_EVENT } from "@/lib/live/types";
+import {
+  LIVE_ROOM_PLATFORM_CHANNEL,
+  LIVE_STREAM_STATE_BROADCAST_EVENT,
+  LIVE_STREAM_STATE_ID,
+} from "@/lib/live/types";
 import {
   buildMonetizationReminderHref,
   monetizationReminderUsesInLiveAction,
@@ -272,7 +276,7 @@ export default function LiveExperienceClient({
   const handshakeCompleteRef = useRef(false);
   const offerInFlightRef = useRef(false);
   const directStatusRef = useRef<"idle" | "connecting" | "ready">("idle");
-  const componentIsUnmountingRef = useRef(false);
+  const isMounted = useRef(true);
   const accessSyncInFlightRef = useRef(false);
   const manifestInFlightRef = useRef(false);
   const loadManifestRef = useRef<() => Promise<void>>(async () => {});
@@ -419,8 +423,9 @@ export default function LiveExperienceClient({
   }, []);
 
   useEffect(() => {
+    isMounted.current = true;
     return () => {
-      componentIsUnmountingRef.current = true;
+      isMounted.current = false;
     };
   }, []);
 
@@ -664,14 +669,75 @@ export default function LiveExperienceClient({
     accessSyncInFlightRef.current = true;
     try {
       const evaluation = await fetchLiveAccessEvaluation();
-      if (componentIsUnmountingRef.current) return;
+      if (!isMounted.current) return;
+
       setAccess(evaluation);
       setAccessError(null);
+
+      const accessPlaybackUrl =
+        typeof evaluation.playbackUrl === "string" ? evaluation.playbackUrl.trim() : "";
+
+      // Synchronize authorized payloads with HLS player lifecycle in one render pass.
+      if (
+        evaluation.canViewStream &&
+        evaluation.streamIsLive &&
+        evaluation.publishMode !== "browser_camera" &&
+        accessPlaybackUrl
+      ) {
+        console.log("[Access Discovery] Stream authorized. Mapping source:", accessPlaybackUrl);
+
+        const nextManifest = resolveManifestMessage({
+          success: true,
+          playbackUrl: accessPlaybackUrl,
+        });
+        const sourceChanged = activePlaybackUrlRef.current !== accessPlaybackUrl;
+        manifestHasUrlRef.current = true;
+        setAutoplayBlocked(false);
+        if (sourceChanged) {
+          setIsPlaybackBuffering(true);
+          setIsVideoPlaying(false);
+        }
+        setManifest((prev) =>
+          prev.status === "ready" && prev.playbackUrl === accessPlaybackUrl
+            ? prev
+            : nextManifest,
+        );
+      } else {
+        const accessMessage =
+          "message" in evaluation &&
+          typeof evaluation.message === "string" &&
+          evaluation.message.trim()
+            ? evaluation.message
+            : evaluation.streamIsLive
+              ? "Waiting for the live playback URL."
+              : "Live stream is currently offline.";
+
+        if (
+          evaluation.canViewStream &&
+          evaluation.streamIsLive &&
+          evaluation.publishMode !== "browser_camera"
+        ) {
+          console.warn("[Access Discovery] Stream authorized but missing manifest HLS URL parameters.");
+        }
+        setManifest((prev) =>
+          prev.status === "ready" && prev.playbackUrl
+            ? prev
+            : {
+                status: "waiting",
+                playbackUrl: null,
+                message: accessMessage,
+                carrier: null,
+                activeSource: null,
+              },
+        );
+      }
     } catch {
-      if (componentIsUnmountingRef.current) return;
+      if (!isMounted.current) return;
       setAccessError("Unable to check live access. Retrying...");
     } finally {
-      accessSyncInFlightRef.current = false;
+      if (isMounted.current) {
+        accessSyncInFlightRef.current = false;
+      }
     }
   }, []);
 
@@ -708,7 +774,7 @@ export default function LiveExperienceClient({
         cache: "no-store",
       });
 
-      if (componentIsUnmountingRef.current) return;
+      if (!isMounted.current) return;
 
       if (!response.ok) {
         setAutoplayBlocked(false);
@@ -721,7 +787,7 @@ export default function LiveExperienceClient({
             playbackUrl: null,
             message:
               response.status === 404
-                ? "The broadcast is not live yet."
+                ? "Stream not available yet."
                 : `Live playback is unavailable (${response.status}).`,
             carrier: null,
             activeSource: null,
@@ -731,7 +797,7 @@ export default function LiveExperienceClient({
       }
 
       const data = (await response.json()) as ManifestResponse;
-      if (componentIsUnmountingRef.current) return;
+      if (!isMounted.current) return;
       const nextManifest = resolveManifestMessage(data);
       if (nextManifest.status !== "ready") {
         setAutoplayBlocked(false);
@@ -742,7 +808,7 @@ export default function LiveExperienceClient({
         setIsPlaybackBuffering(true);
       }
     } catch {
-      if (componentIsUnmountingRef.current) return;
+      if (!isMounted.current) return;
       setAutoplayBlocked(false);
       setManifest((prev) => {
         if (prev.status === "ready" && prev.playbackUrl) {
@@ -904,6 +970,22 @@ export default function LiveExperienceClient({
 
   const streamUrl = manifest.playbackUrl;
 
+  useEffect(() => {
+    console.info("[live/player] mount status", {
+      selectedShowId: LIVE_STREAM_STATE_ID,
+      streamStatus: manifest.status,
+      playbackUrl: streamUrl,
+      publishMode: access?.publishMode ?? "none",
+      streamIsLive: access?.streamIsLive ?? false,
+      playerMountStatus:
+        streamUrl && !useDirectCamera
+          ? videoRef.current
+            ? "mounted"
+            : "ready_to_mount"
+          : "waiting",
+    });
+  }, [access?.publishMode, access?.streamIsLive, manifest.status, streamUrl, useDirectCamera]);
+
   const clearAutoLevelingMatrix = useCallback(() => {
     autoLevelingMatrixRef.current?.cleanup();
     autoLevelingMatrixRef.current = null;
@@ -972,7 +1054,7 @@ export default function LiveExperienceClient({
       errorDetail: string,
       recover: () => void,
     ) => {
-      if (cancelled() || componentIsUnmountingRef.current) return;
+      if (cancelled() || !isMounted.current) return;
 
       if (hlsRetryCountRef.current >= HLS_MAX_RECOVERY_ATTEMPTS) {
         finalizePlaybackFailure(
@@ -993,7 +1075,7 @@ export default function LiveExperienceClient({
 
       hlsRecoveryTimerRef.current = window.setTimeout(() => {
         hlsRecoveryTimerRef.current = null;
-        if (cancelled() || componentIsUnmountingRef.current) return;
+        if (cancelled() || !isMounted.current) return;
 
         video.muted = !audioUnlockedRef.current;
         recover();
@@ -1163,7 +1245,7 @@ export default function LiveExperienceClient({
       scheduleHlsRecovery(
         video,
         streamUrl,
-        () => componentIsUnmountingRef.current,
+        () => !isMounted.current,
         code ? `Video element error ${code}` : "Video element error",
         () => {
           video.muted = !audioUnlockedRef.current;

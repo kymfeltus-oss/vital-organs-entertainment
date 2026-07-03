@@ -4,7 +4,7 @@ import { buildOwnerBroadcastSnapshot } from "@/lib/owner/build-broadcast-snapsho
 import { emitStreamStateSync } from "@/lib/owner/broadcast-stream-sync";
 import { resolvePrimaryRtmpIngestUrl } from "@/lib/owner/broadcast-engine-fallbacks";
 import { resolvePrimaryFeedUrl, seedFeedUrlsFromEnv } from "@/lib/owner/feed-urls";
-import { probeHlsManifest } from "@/lib/owner/hls-readiness";
+import { isFatalHlsProbeFailure, probeHlsManifest } from "@/lib/owner/hls-readiness";
 import { loadOwnerStreamState, updateOwnerStreamState } from "@/lib/owner/load-owner-state";
 import {
   buildPreflightChecks,
@@ -15,8 +15,10 @@ import {
 import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
 import { mapEventPhaseState } from "@/lib/owner/map-event-phase";
 import { buildRtmpIngestUrlFromEncoderConfig } from "@/lib/owner/resolve-show-encoder-config";
+import { resolveIvsChannelConfig } from "@/lib/owner/resolve-ivs-config";
 import { loadShowSetupState, type ShowSetupState } from "@/lib/owner/show-setup-state";
 import { armMonetizationReminderScheduleOnGoLive } from "@/lib/owner/graphics-monetization-reminders";
+import { LIVE_STREAM_STATE_ID } from "@/lib/live/types";
 
 export { parseGoLiveBody, parseSwitchFeedBody };
 
@@ -60,6 +62,17 @@ export async function runOwnerGoLive(
   const seeded = seedFeedUrlsFromEnv();
   const hlsUrl = resolvePrimaryFeedUrl(feedInputs, feedOptions) ?? seeded.primary_playback_url;
   const hlsProbe = await probeHlsManifest(hlsUrl);
+  const ivs = resolveIvsChannelConfig();
+
+  console.info("[owner/go-live] playback selection", {
+    selectedShowId: row?.id ?? LIVE_STREAM_STATE_ID,
+    ivsChannelArn: ivs.channelArn,
+    ivsPlaybackUrl: ivs.playbackUrl,
+    streamStatus: row?.is_live ? "live" : "offline",
+    playbackUrl: hlsUrl,
+    playerMountStatus: hlsProbe.manifestReachable ? "ready" : "waiting",
+    probeDetail: hlsProbe.detail,
+  });
 
   const preflight = buildPreflightChecks({
     eventPhase,
@@ -68,6 +81,15 @@ export async function runOwnerGoLive(
     hlsProbe,
     requestedMode: "external_hls",
   });
+
+  if (isFatalHlsProbeFailure(hlsProbe)) {
+    const { snapshot } = await buildOwnerBroadcastSnapshot("external_hls");
+    return {
+      ok: false,
+      snapshot: { ...snapshot, preflight },
+      message: hlsProbe.detail ?? "Active IVS playback URL is invalid.",
+    };
+  }
 
   if (preflightHasBlockers(preflight) && !body.confirm) {
     const { snapshot } = await buildOwnerBroadcastSnapshot("external_hls");

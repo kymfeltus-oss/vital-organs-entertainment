@@ -7,7 +7,7 @@ import type {
   EventPhaseState,
   SwitchFeedRequestBody,
 } from "@/lib/owner/contracts";
-import type { HlsProbeResult } from "@/lib/owner/hls-readiness";
+import { isFatalHlsProbeFailure, type HlsProbeResult } from "@/lib/owner/hls-readiness";
 import type { OwnerStreamStateRow } from "@/lib/owner/load-owner-state";
 
 export const BROADCAST_HARDWARE_DEFAULTS = {
@@ -115,6 +115,8 @@ function scheduleCheck(input: BuildPreflightInput): PreflightCheck {
 }
 
 function hlsChecks(hlsProbe: HlsProbeResult): PreflightCheck[] {
+  const fatalHlsFailure = isFatalHlsProbeFailure(hlsProbe);
+
   return [
     {
       id: "hls_env",
@@ -125,7 +127,13 @@ function hlsChecks(hlsProbe: HlsProbeResult): PreflightCheck[] {
     {
       id: "hls_manifest",
       label: "Restream HLS manifest reachable",
-      status: hlsProbe.manifestReachable ? "pass" : hlsProbe.hlsUrl ? "warn" : "skipped",
+      status: hlsProbe.manifestReachable
+        ? "pass"
+        : fatalHlsFailure
+          ? "fail"
+          : hlsProbe.hlsUrl
+            ? "warn"
+            : "skipped",
       detail: hlsProbe.detail ?? (hlsProbe.manifestReachable ? "Manifest validated." : undefined),
     },
   ];

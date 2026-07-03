@@ -87,17 +87,8 @@ export function parseIvsPlaybackUrl(raw: string | null | undefined): IvsChannelR
   }
 }
 
-export function isAmazonIvsPlaybackUrl(url: string): boolean {
+export function isAmazonIvsPlaybackUrl(url: string | null | undefined): boolean {
   return parseIvsPlaybackUrl(url) !== null;
-}
-
-/** IVS channel IDs retired from this project — reject if still present in DB/env URLs. */
-export const KNOWN_STALE_IVS_CHANNEL_IDS = ["KLoL2ogCRZRV"] as const;
-
-export function isStaleIvsChannelPlaybackUrl(raw: string | null | undefined): boolean {
-  const ref = parseIvsPlaybackUrl(raw);
-  if (!ref) return false;
-  return (KNOWN_STALE_IVS_CHANNEL_IDS as readonly string[]).includes(ref.channelId);
 }
 
 /** True when playback URL region, account, and channel ID match the configured ARN. */
