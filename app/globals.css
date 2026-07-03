@@ -2729,6 +2729,28 @@ body::-webkit-scrollbar {
   color: #ff2faf;
 }
 
+@media (max-height: 760px) {
+  .vital-giving-form--guest {
+    gap: 0.375rem !important;
+  }
+
+  .vital-giving-form--guest .vital-giving-form__section-title {
+    margin-bottom: 0.375rem;
+  }
+
+  .vital-giving-form--guest .vital-giving-preset-grid {
+    gap: 0.375rem;
+  }
+
+  .vital-giving-form--guest .vital-giving-preset-btn {
+    min-height: 2.75rem;
+  }
+
+  .vital-giving-form--guest .vital-giving-custom-field {
+    min-height: 2.5rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .vital-giving-preset-btn,
   .vital-giving-give-btn {

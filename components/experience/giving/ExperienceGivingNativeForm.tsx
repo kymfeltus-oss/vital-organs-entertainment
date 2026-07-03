@@ -44,7 +44,11 @@ export default function ExperienceGivingNativeForm({
   const isCustomSelected = !hasPresetSelection && customAmount.trim().length > 0;
 
   return (
-    <div className="vital-giving-form flex min-h-0 flex-1 flex-col !gap-4">
+    <div
+      className={`vital-giving-form flex min-h-0 flex-1 flex-col !gap-4${
+        showGuestEmail ? " vital-giving-form--guest" : ""
+      }`}
+    >
       <section aria-label="Choose a gift amount" className="shrink-0">
         <h2 className="vital-giving-form__section-title font-ui text-brand-gradient">
           Select Amount
