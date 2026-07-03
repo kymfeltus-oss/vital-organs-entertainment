@@ -11,6 +11,7 @@ import type { AttendeeUiPhase } from "@/lib/live/attendee-ui-phase";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import type { CountdownParts } from "@/lib/live/event-lobby";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
+import { useLiveSeedWallet } from "@/lib/useLiveSeedWallet";
 import {
   MOBILE_ARTBOARD_ART_FIT,
   MOBILE_ARTBOARD_TAB_SHELL,
@@ -55,6 +56,7 @@ function ExperienceHoldingRoomPageContent({
   statusMessage?: string;
 }) {
   const [profile, setProfile] = useState(initialProfile);
+  const { balance: seedBalance, isLoading: seedBalanceLoading } = useLiveSeedWallet();
 
   return (
     <div className={`holding-room-page ${MOBILE_ARTBOARD_TAB_SHELL}`}>
@@ -74,6 +76,19 @@ function ExperienceHoldingRoomPageContent({
             decoding="async"
             draggable={false}
           />
+          <div
+            className="holding-room-seed-balance font-ui"
+            aria-label={
+              seedBalanceLoading
+                ? "Loading seed balance"
+                : `Seed balance ${seedBalance.toLocaleString("en-US")}`
+            }
+          >
+            <span className="holding-room-seed-balance__label">Seeds</span>
+            <strong className="holding-room-seed-balance__value">
+              {seedBalanceLoading ? "…" : seedBalance.toLocaleString("en-US")}
+            </strong>
+          </div>
           {showClock ? (
             <HoldingRoomCountdownOverlay
               initialCountdownConfig={initialCountdownConfig}

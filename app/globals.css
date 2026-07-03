@@ -3199,6 +3199,45 @@ body::-webkit-scrollbar {
   pointer-events: none;
 }
 
+.holding-room-seed-balance {
+  position: absolute;
+  left: 4%;
+  top: 9%;
+  z-index: 5;
+  display: inline-flex;
+  min-width: clamp(4.8rem, 22cqw, 7rem);
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(0.3rem, 1.4cqw, 0.55rem);
+  box-sizing: border-box;
+  padding: clamp(0.3rem, 1.4cqw, 0.45rem) clamp(0.5rem, 2cqw, 0.75rem);
+  border: 1px solid rgb(0 168 255 / 0.72);
+  border-radius: 9999px;
+  background: rgb(0 0 0 / 0.78);
+  box-shadow:
+    0 0 16px rgb(0 168 255 / 0.24),
+    inset 0 0 12px rgb(255 0 140 / 0.08);
+  pointer-events: none;
+}
+
+.holding-room-seed-balance__label {
+  color: rgb(255 255 255 / 0.74);
+  font-size: clamp(0.48rem, 2cqw, 0.7rem);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.holding-room-seed-balance__value {
+  color: #ffffff;
+  font-size: clamp(0.65rem, 2.8cqw, 0.95rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-shadow:
+    0 0 10px rgb(0 168 255 / 0.8),
+    0 0 16px rgb(255 0 140 / 0.45);
+}
+
 .holding-room-countdown__label-unit {
   position: absolute;
   box-sizing: border-box;
