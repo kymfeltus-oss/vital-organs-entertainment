@@ -90,6 +90,10 @@ export async function attachHlsPlayback(
         data.type === HlsModule.ErrorTypes.NETWORK_ERROR &&
         softRecoveryAttempts < HLS_SOFT_RECOVERY_LIMIT
       ) {
+        console.warn("[HLS] soft network recovery", {
+          details,
+          attempt: softRecoveryAttempts + 1,
+        });
         softRecoveryAttempts += 1;
         options.onRecovering?.(details);
         hls.startLoad(-1);
@@ -100,12 +104,20 @@ export async function attachHlsPlayback(
         data.type === HlsModule.ErrorTypes.MEDIA_ERROR &&
         softRecoveryAttempts < HLS_SOFT_RECOVERY_LIMIT
       ) {
+        console.warn("[HLS] soft media recovery", {
+          details,
+          attempt: softRecoveryAttempts + 1,
+        });
         softRecoveryAttempts += 1;
         options.onRecovering?.(details);
         hls.recoverMediaError();
         return;
       }
 
+      console.warn("[HLS] hard recovery initiated", {
+        details,
+        attempts: softRecoveryAttempts,
+      });
       options.onFatalError?.(details);
     });
 

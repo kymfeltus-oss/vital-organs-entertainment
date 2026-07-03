@@ -78,7 +78,7 @@ import {
 } from "@/lib/live/live-reactions";
 
 const LIVE_ACCESS_POLL_MS = 5_000;
-const MANIFEST_RETRY_FAST_MS = 2_500;
+const MANIFEST_RETRY_FAST_MS = 5_000;
 const MANIFEST_RETRY_STEADY_MS = 5_000;
 const MANIFEST_RETRY_JITTER_MS = 1_500;
 const MANIFEST_SYNC_LISTENER_ID = "live-manifest-stream-sync";
@@ -262,6 +262,7 @@ export default function LiveExperienceClient({
   const manifestPollingTimerRef = useRef<number | null>(null);
   const manifestPollingWatchRef = useRef<number | null>(null);
   const activePlaybackUrlRef = useRef<string | null>(null);
+  const lastKnownGoodPlaybackUrlRef = useRef<string | null>(null);
   const autoLevelingMatrixRef = useRef<AutoLevelingMatrix | null>(null);
   const audioUnlockedRef = useRef(false);
   const directPeerRef = useRef<RTCPeerConnection | null>(null);
@@ -686,6 +687,16 @@ export default function LiveExperienceClient({
       ) {
         console.log("[Access Discovery] Stream authorized. Mapping source:", accessPlaybackUrl);
 
+        if (lastKnownGoodPlaybackUrlRef.current) {
+          console.info(
+            lastKnownGoodPlaybackUrlRef.current === accessPlaybackUrl
+              ? "[HLS] duplicate manifest ignored"
+              : "[HLS] using last known good playback URL",
+          );
+          return;
+        }
+        lastKnownGoodPlaybackUrlRef.current = accessPlaybackUrl;
+
         const nextManifest = resolveManifestMessage({
           success: true,
           playbackUrl: accessPlaybackUrl,
@@ -718,7 +729,12 @@ export default function LiveExperienceClient({
           evaluation.publishMode !== "browser_camera"
         ) {
           console.warn("[Access Discovery] Stream authorized but missing manifest HLS URL parameters.");
+          if (lastKnownGoodPlaybackUrlRef.current) {
+            console.info("[HLS] using last known good playback URL");
+            return;
+          }
         }
+        lastKnownGoodPlaybackUrlRef.current = null;
         setManifest((prev) =>
           prev.status === "ready" && prev.playbackUrl
             ? prev
@@ -777,6 +793,10 @@ export default function LiveExperienceClient({
       if (!isMounted.current) return;
 
       if (!response.ok) {
+        if (lastKnownGoodPlaybackUrlRef.current) {
+          console.info("[HLS] using last known good playback URL");
+          return;
+        }
         setAutoplayBlocked(false);
         setManifest((prev) => {
           if (prev.status === "ready" && prev.playbackUrl) {
@@ -799,16 +819,27 @@ export default function LiveExperienceClient({
       const data = (await response.json()) as ManifestResponse;
       if (!isMounted.current) return;
       const nextManifest = resolveManifestMessage(data);
-      if (nextManifest.status !== "ready") {
+      if (nextManifest.status === "ready" && nextManifest.playbackUrl) {
+        if (lastKnownGoodPlaybackUrlRef.current === nextManifest.playbackUrl) {
+          console.info("[HLS] duplicate manifest ignored");
+          return;
+        }
+        lastKnownGoodPlaybackUrlRef.current = nextManifest.playbackUrl;
+        manifestHasUrlRef.current = true;
+        setIsPlaybackBuffering(true);
+      } else if (lastKnownGoodPlaybackUrlRef.current) {
+        console.info("[HLS] using last known good playback URL");
+        return;
+      } else {
         setAutoplayBlocked(false);
       }
       setManifest(nextManifest);
-      if (nextManifest.status === "ready" && nextManifest.playbackUrl) {
-        manifestHasUrlRef.current = true;
-        setIsPlaybackBuffering(true);
-      }
     } catch {
       if (!isMounted.current) return;
+      if (lastKnownGoodPlaybackUrlRef.current) {
+        console.info("[HLS] using last known good playback URL");
+        return;
+      }
       setAutoplayBlocked(false);
       setManifest((prev) => {
         if (prev.status === "ready" && prev.playbackUrl) {
@@ -910,6 +941,7 @@ export default function LiveExperienceClient({
     if (useDirectCamera) {
       queueMicrotask(() => {
         clearManifestStreamTracking();
+        lastKnownGoodPlaybackUrlRef.current = null;
         setManifest({
           status: "idle",
           playbackUrl: null,
@@ -924,6 +956,7 @@ export default function LiveExperienceClient({
     if (!access?.canViewStream || !access.streamIsLive) {
       queueMicrotask(() => {
         clearManifestStreamTracking();
+        lastKnownGoodPlaybackUrlRef.current = null;
         setManifest({
           status: "idle",
           playbackUrl: null,
@@ -1022,6 +1055,7 @@ export default function LiveExperienceClient({
     setIsPlaybackBuffering(false);
     setIsVideoPlaying(false);
     manifestHasUrlRef.current = false;
+    lastKnownGoodPlaybackUrlRef.current = null;
     destroyHlsPlayback();
     setManifest({
       status: "error",

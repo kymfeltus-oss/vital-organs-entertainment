@@ -44,7 +44,7 @@ function jsonResponse(
       // fast to propagate. Kept short on purpose — a long TTL would delay the
       // live/offline transition for attendees. Vary: Origin so the reflected
       // CORS Allow-Origin header is cache-keyed per requesting origin.
-      "Cache-Control": "public, max-age=0, s-maxage=3, stale-while-revalidate=12",
+      "Cache-Control": "public, max-age=2, stale-while-revalidate=5",
       Vary: "Origin",
     },
   });

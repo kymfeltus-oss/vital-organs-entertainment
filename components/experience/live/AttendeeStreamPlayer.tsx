@@ -10,7 +10,7 @@ import { attachHlsPlayback } from "@/lib/live/attach-hls-playback";
 const RECONNECT_DELAY_MS = 3_500;
 const RECONNECT_JITTER_MS = 1_500;
 
-const MANIFEST_HOT_SWAP_MS = 3_000;
+const MANIFEST_HOT_SWAP_MS = 5_000;
 
 type AttendeeStreamPlayerProps = {
   experience?: AttendeeExperienceKey;
@@ -35,7 +35,7 @@ export default function AttendeeStreamPlayer({
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const manifestInFlightRef = useRef(false);
   const isMountedRef = useRef(true);
-  const playbackUrlRef = useRef("");
+  const lastKnownGoodPlaybackUrlRef = useRef("");
   const experienceRef = useRef(experience);
   const onUnavailableRef = useRef(onExperienceUnavailable);
   const audioUnlockedRef = useRef(false);
@@ -114,7 +114,7 @@ export default function AttendeeStreamPlayer({
       void loadStreamRef.current().then((url) => {
         if (!isMountedRef.current) return;
         if (url) {
-          playbackUrlRef.current = url;
+          lastKnownGoodPlaybackUrlRef.current = url;
           setStreamUrl(url);
           return;
         }
@@ -125,7 +125,7 @@ export default function AttendeeStreamPlayer({
 
   const loadStream = useCallback(async (): Promise<string | null> => {
     if (!shouldPlayRef.current) return null;
-    if (manifestInFlightRef.current) return playbackUrlRef.current || null;
+    if (manifestInFlightRef.current) return lastKnownGoodPlaybackUrlRef.current || null;
 
     manifestInFlightRef.current = true;
     const requestedExperience = experienceRef.current;
@@ -143,6 +143,10 @@ export default function AttendeeStreamPlayer({
       if (!shouldPlayRef.current || !isMountedRef.current) return null;
 
       if (!response.ok) {
+        if (lastKnownGoodPlaybackUrlRef.current) {
+          console.info("[HLS] using last known good playback URL");
+          return lastKnownGoodPlaybackUrlRef.current;
+        }
         setPlaybackStatus(
           response.status === 404
             ? "Stream not available yet. Retrying..."
@@ -168,6 +172,10 @@ export default function AttendeeStreamPlayer({
 
       const playbackUrl = data.playbackUrl?.trim() ?? "";
       if (!data.success || !playbackUrl) {
+        if (lastKnownGoodPlaybackUrlRef.current) {
+          console.info("[HLS] using last known good playback URL");
+          return lastKnownGoodPlaybackUrlRef.current;
+        }
         setPlaybackStatus("Live manifest did not include a playback URL. Retrying...");
         if (requestedExperience !== DEFAULT_ATTENDEE_EXPERIENCE) {
           notifyExperienceUnavailable();
@@ -177,10 +185,16 @@ export default function AttendeeStreamPlayer({
         return null;
       }
 
-      playbackUrlRef.current = playbackUrl;
+      if (playbackUrl === lastKnownGoodPlaybackUrlRef.current) {
+        console.info("[HLS] duplicate manifest ignored");
+      }
       return playbackUrl;
     } catch (error) {
       if (!shouldPlayRef.current || !isMountedRef.current) return null;
+      if (lastKnownGoodPlaybackUrlRef.current) {
+        console.info("[HLS] using last known good playback URL");
+        return lastKnownGoodPlaybackUrlRef.current;
+      }
       console.error("[Telemetry Error]", error);
       setPlaybackStatus("Could not load the live manifest. Retrying...");
       scheduleReconnectRef.current();
@@ -214,7 +228,7 @@ export default function AttendeeStreamPlayer({
         setAutoplayBlocked(false);
         setPlaybackStatus("Live stream paused.");
       });
-      playbackUrlRef.current = "";
+      lastKnownGoodPlaybackUrlRef.current = "";
       return;
     }
 
@@ -231,7 +245,7 @@ export default function AttendeeStreamPlayer({
 
     void loadStreamRef.current().then((url) => {
       if (cancelled || !isMountedRef.current || !url) return;
-      playbackUrlRef.current = url;
+      lastKnownGoodPlaybackUrlRef.current = url;
       setAutoplayBlocked(false);
       setStreamUrl(url);
     });
@@ -255,8 +269,8 @@ export default function AttendeeStreamPlayer({
     const intervalId = window.setInterval(() => {
       void loadStreamRef.current().then((url) => {
         if (!url || !isMountedRef.current || !shouldPlayRef.current) return;
-        if (url === playbackUrlRef.current) return;
-        playbackUrlRef.current = url;
+        if (url === lastKnownGoodPlaybackUrlRef.current) return;
+        lastKnownGoodPlaybackUrlRef.current = url;
         setAutoplayBlocked(false);
         setStreamUrl(url);
       });
@@ -310,6 +324,8 @@ export default function AttendeeStreamPlayer({
         console.error("[Telemetry Error] HLS fatal error");
         setAutoplayBlocked(false);
         setPlaybackStatus("Live stream playback error. Retrying...");
+        lastKnownGoodPlaybackUrlRef.current = "";
+        destroyPlayer();
         scheduleReconnectRef.current();
       },
     }).then((cleanup) => {
@@ -326,7 +342,7 @@ export default function AttendeeStreamPlayer({
       hlsCleanupRef.current?.();
       hlsCleanupRef.current = null;
     };
-  }, [shouldPlay, streamUrl]);
+  }, [destroyPlayer, shouldPlay, streamUrl]);
 
   useEffect(() => {
     const video = videoRef.current;
