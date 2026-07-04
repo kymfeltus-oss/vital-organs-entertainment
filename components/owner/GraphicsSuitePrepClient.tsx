@@ -14,21 +14,22 @@ import {
   BadgeIcon,
   BookOpen,
   Film,
+  GripVertical,
   HeartHandshake,
+  ImageIcon,
   Loader2,
-  Lock,
-  MonitorPlay,
   Move,
   Pencil,
+  Plus,
   RotateCcw,
   Save,
-  SlidersHorizontal,
   Square,
   Ticket,
   Trash2,
   Upload,
-  X,
 } from "lucide-react";
+import Image from "next/image";
+import GraphicsMonetizationRemindersPanel from "@/components/owner/GraphicsMonetizationRemindersPanel";
 import {
   decodeGraphicsPresetMetadata,
   defaultGraphicsMetadataForKind,
@@ -44,14 +45,8 @@ import {
   type OwnerGraphicsPreset,
   type OwnerGraphicsTheme,
 } from "@/lib/owner/graphics-data-plane";
-import {
-  BroadcastLowerThirdPreset,
-  BroadcastPresentationSlate,
-} from "@/components/owner/BroadcastGraphicPresets";
-import GraphicsMonetizationRemindersPanel from "@/components/owner/GraphicsMonetizationRemindersPanel";
 
 const BUILDER_KINDS = [...GRAPHICS_PRESET_TYPES, "SANCTUARY_VIDEO"] as const;
-
 const TYPE_ICONS: Record<GraphicsBuilderKind, typeof BadgeIcon> = {
   LOWER_THIRD: BadgeIcon,
   OFFERING: HeartHandshake,
@@ -71,81 +66,28 @@ const LAYOUT_OPTIONS: Array<{ value: GraphicLayoutMode; label: string }> = [
 ];
 
 const POSITION_OPTIONS: Array<{ value: GraphicPositionAnchor; label: string }> = [
-  { value: "FULLSCREEN", label: "Full Screen" },
-  { value: "BOTTOM_LEFT", label: "Bottom Left" },
-  { value: "BOTTOM_RIGHT", label: "Bottom Right" },
-  { value: "TOP_LEFT", label: "Top Left" },
-  { value: "TOP_RIGHT", label: "Top Right" },
+  { value: "TOP_LEFT", label: "Top left" },
+  { value: "TOP_RIGHT", label: "Top right" },
   { value: "CENTER", label: "Center" },
+  { value: "BOTTOM_LEFT", label: "Bottom left" },
+  { value: "BOTTOM_RIGHT", label: "Bottom right" },
+  { value: "FULLSCREEN", label: "Full screen" },
 ];
 
 const UPLOAD_SLOTS = [
-  {
-    key: "logo",
-    label: "Logo",
-    description: "Main event or ministry mark",
-    accept: "image/png,image/jpeg,image/webp,image/svg+xml",
-    target: "image",
-  },
-  {
-    key: "offering-logo",
-    label: "Offering Logo",
-    description: "Giving, seed, QR, or offering art",
-    accept: "image/png,image/jpeg,image/webp,image/svg+xml",
-    target: "image",
-  },
-  {
-    key: "custom-graphic",
-    label: "Other Graphic",
-    description: "Any full-screen or supporting image",
-    accept: "image/png,image/jpeg,image/webp,image/svg+xml",
-    target: "image",
-  },
-  {
-    key: "sanctuary-video",
-    label: "Video",
-    description: "MP4, WEBM, or MOV for full-screen stream playback",
-    accept: "video/mp4,video/webm,video/quicktime",
-    target: "video",
-  },
+  { key: "logo", label: "Logo", accept: "image/png,image/jpeg,image/webp,image/svg+xml", target: "image", fallback: "/assets/logos/300-awakening-logo.png" },
+  { key: "offering-logo", label: "Offering Logo", accept: "image/png,image/jpeg,image/webp,image/svg+xml", target: "image", fallback: "/owner-graphics/offering-logo-1782854413877.png" },
+  { key: "custom-graphic", label: "Other Graphic", accept: "image/png,image/jpeg,image/webp,image/svg+xml", target: "image", fallback: "/effects/hero-audience-banner.png" },
+  { key: "sanctuary-video", label: "Video", accept: "video/mp4,video/webm,video/quicktime", target: "video", fallback: null },
 ] as const;
 
 type DurationMode = "manual" | "15" | "30" | "custom";
-
-type ApiPresetResponse = {
-  success: boolean;
-  presets?: OwnerGraphicsPreset[];
-  preset?: OwnerGraphicsPreset;
-  deletedId?: string;
-  error?: string;
-};
-
-type ApiThemeResponse = {
-  success: boolean;
-  theme?: OwnerGraphicsTheme | null;
-  error?: string;
-};
-
-type ApiAssetResponse = {
-  success: boolean;
-  asset?: {
-    label: string;
-    url: string;
-  };
-  error?: string;
-};
-
+type ApiPresetResponse = { success: boolean; presets?: OwnerGraphicsPreset[]; preset?: OwnerGraphicsPreset; deletedId?: string; error?: string };
+type ApiThemeResponse = { success: boolean; theme?: OwnerGraphicsTheme | null; error?: string };
+type ApiAssetResponse = { success: boolean; asset?: { label: string; url: string }; error?: string };
 type UploadedSlotAssets = Partial<Record<(typeof UPLOAD_SLOTS)[number]["key"], { label: string; url: string }>>;
 
-const DEFAULT_FORM = {
-  primary: "PASTOR IAN CRAIG",
-  secondary: "LEAD PASTOR",
-  customDuration: 45,
-};
-
-function compactId(id: string, index: number) {
-  return `#${String(index + 1).padStart(3, "0")} / ${id.slice(0, 8)}`;
-}
+const DEFAULT_FORM = { primary: "IAN CRAIG & 300", secondary: "LIVE IN CONCERT", customDuration: 10 };
 
 function getDurationSeconds(mode: DurationMode, customDuration: number) {
   if (mode === "15") return 15;
@@ -158,26 +100,11 @@ function builderLabel(kind: GraphicsBuilderKind) {
   return kind === "SANCTUARY_VIDEO" ? "Sanctuary Video" : formatGraphicsTypeLabel(kind as GraphicsPresetType);
 }
 
-function getBuilderHelp(kind: GraphicsBuilderKind) {
+function builderHelp(kind: GraphicsBuilderKind) {
   if (kind === "SANCTUARY_VIDEO") {
-    return {
-      primary: "Video Title",
-      secondary: "Production Notes",
-      placeholderPrimary: "SANCTUARY SCREEN ROLL-IN",
-      placeholderSecondary: "Mirror the house-screen video to stream",
-    };
+    return { primary: "Video title", secondary: "Production notes", placeholderPrimary: "SANCTUARY VIDEO", placeholderSecondary: "Program roll-in" };
   }
-
   return getGraphicsTypeHelp(kind);
-}
-
-function previewAccent(kind: GraphicsBuilderKind) {
-  if (kind === "SANCTUARY_VIDEO") return "from-cyan-300 via-blue-400 to-emerald-300";
-  if (kind === "OFFERING") return "from-lime-300 via-emerald-400 to-cyan-300";
-  if (kind === "SCRIPTURE") return "from-amber-300 via-yellow-400 to-orange-400";
-  if (kind === "SLATE") return "from-violet-300 via-purple-500 to-fuchsia-400";
-  if (kind === "TICKER") return "from-yellow-300 via-orange-400 to-rose-400";
-  return "from-[#0984ff] via-[#6c49ff] to-[#ff3fae]";
 }
 
 function sortPresets(presets: OwnerGraphicsPreset[]) {
@@ -197,38 +124,25 @@ function defaultTheme(): OwnerGraphicsTheme {
   };
 }
 
-function placementStyle(
-  layoutMode: GraphicLayoutMode,
-  positionAnchor: GraphicPositionAnchor,
-  xPercent: number,
-  yPercent: number,
-  widthPercent: number,
-  heightPercent: number,
-): CSSProperties {
-  if (positionAnchor === "FULLSCREEN" || layoutMode === "fullscreen" || layoutMode === "sanctuary_video") {
-    return { inset: 0, width: "100%", height: "100%" };
-  }
+function placementStyle(layout: GraphicLayoutMode, anchor: GraphicPositionAnchor, x: number, y: number, width: number, height: number): CSSProperties {
+  if (anchor === "FULLSCREEN" || layout === "fullscreen" || layout === "sanctuary_video") return { inset: "5%", width: "90%", height: "90%" };
+  if (layout === "ticker") return { left: "4%", bottom: "6%", width: "92%", minHeight: "10%" };
+  if (anchor === "CENTER") return { left: "50%", top: "50%", width: `${width}%`, minHeight: `${height}%`, transform: "translate(-50%, -50%)" };
+  return { left: `${x}%`, top: `${y}%`, width: `${width}%`, minHeight: `${height}%` };
+}
 
-  if (layoutMode === "ticker") {
-    return { left: "4%", right: "4%", bottom: "6%", minHeight: "9%" };
-  }
+function catalogId(preset: OwnerGraphicsPreset, index: number) {
+  const metadata = decodeGraphicsPresetMetadata(preset);
+  const prefix = metadata.builderKind === "SANCTUARY_VIDEO" ? "VID" : preset.type === "LOWER_THIRD" ? "LT" : preset.type.slice(0, 3);
+  return `${prefix}-${String(index + 1).padStart(3, "0")}`;
+}
 
-  if (positionAnchor === "CENTER") {
-    return {
-      left: "50%",
-      top: "50%",
-      width: `${widthPercent}%`,
-      minHeight: `${heightPercent}%`,
-      transform: "translate(-50%, -50%)",
-    };
-  }
-
-  return {
-    left: `${xPercent}%`,
-    top: `${yPercent}%`,
-    width: `${widthPercent}%`,
-    minHeight: `${heightPercent}%`,
-  };
+function typeColor(kind: GraphicsBuilderKind) {
+  if (kind === "OFFERING") return "border-[#ff2c9f]/60 text-[#ff4db2]";
+  if (kind === "SCRIPTURE") return "border-purple-500/60 text-purple-400";
+  if (kind === "TICKER") return "border-yellow-500/60 text-yellow-400";
+  if (kind === "SANCTUARY_VIDEO") return "border-lime-500/60 text-lime-400";
+  return "border-[#00bff8]/60 text-[#00bff8]";
 }
 
 export default function GraphicsSuitePrepClient() {
@@ -241,11 +155,11 @@ export default function GraphicsSuitePrepClient() {
   const [positionAnchor, setPositionAnchor] = useState<GraphicPositionAnchor>("BOTTOM_LEFT");
   const [xPercent, setXPercent] = useState(6);
   const [yPercent, setYPercent] = useState(72);
-  const [widthPercent, setWidthPercent] = useState(54);
+  const [widthPercent, setWidthPercent] = useState(72);
   const [heightPercent, setHeightPercent] = useState(20);
   const [zIndex, setZIndex] = useState(10);
   const [mediaUrl, setMediaUrl] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState("/assets/logos/300-awakening-logo.png");
   const [uploadedSlotAssets, setUploadedSlotAssets] = useState<UploadedSlotAssets>({});
   const [uploadingSlot, setUploadingSlot] = useState<string | null>(null);
   const [presets, setPresets] = useState<OwnerGraphicsPreset[]>([]);
@@ -267,34 +181,25 @@ export default function GraphicsSuitePrepClient() {
   const previewSurfaceRef = useRef<HTMLDivElement | null>(null);
   const dragOffsetRef = useRef<{ x: number; y: number } | null>(null);
 
-  const selectedHelp = useMemo(() => getBuilderHelp(selectedKind), [selectedKind]);
-  const activeDurationSeconds = getDurationSeconds(durationMode, customDuration);
+  const selectedHelp = useMemo(() => builderHelp(selectedKind), [selectedKind]);
+  const durationSeconds = getDurationSeconds(durationMode, customDuration);
+  const isVideo = selectedKind === "SANCTUARY_VIDEO" || layoutMode === "sanctuary_video";
   const previewBoxStyle = placementStyle(layoutMode, positionAnchor, xPercent, yPercent, widthPercent, heightPercent);
-  const isMediaBuilder = selectedKind === "SANCTUARY_VIDEO" || layoutMode === "sanctuary_video";
 
   const loadWorkspace = useCallback(async () => {
     setLoading(true);
     setError(null);
-
     try {
-      const [presetsResponse, themeResponse] = await Promise.all([
+      const [presetResponse, themeResponse] = await Promise.all([
         fetch("/api/owner/graphics/presets", { cache: "no-store" }),
         fetch("/api/owner/graphics/theme", { cache: "no-store" }),
       ]);
-
-      const presetsJson = (await presetsResponse.json()) as ApiPresetResponse;
+      const presetJson = (await presetResponse.json()) as ApiPresetResponse;
       const themeJson = (await themeResponse.json()) as ApiThemeResponse;
-
-      if (!presetsResponse.ok || !presetsJson.success) {
-        throw new Error(presetsJson.error || "Unable to load saved graphics presets.");
-      }
-
-      if (!themeResponse.ok || !themeJson.success) {
-        throw new Error(themeJson.error || "Unable to load system theme defaults.");
-      }
-
+      if (!presetResponse.ok || !presetJson.success) throw new Error(presetJson.error || "Unable to load saved graphics.");
+      if (!themeResponse.ok || !themeJson.success) throw new Error(themeJson.error || "Unable to load the graphics theme.");
       const nextTheme = themeJson.theme ?? defaultTheme();
-      setPresets(sortPresets(presetsJson.presets ?? []));
+      setPresets(sortPresets(presetJson.presets ?? []));
       setTheme(nextTheme);
       setThemeDraft({
         cornerRadiusPx: nextTheme.corner_radius_px,
@@ -325,27 +230,26 @@ export default function GraphicsSuitePrepClient() {
     setHeightPercent(metadata.heightPercent);
     setZIndex(metadata.zIndex);
     setMediaUrl("");
-    setImageUrl("");
+    setImageUrl(metadata.imageUrl ?? theme.custom_logo_url ?? "/assets/logos/300-awakening-logo.png");
   }
 
-  function handleTypeSelect(kind: GraphicsBuilderKind) {
-    const nextHelp = getBuilderHelp(kind);
+  function selectType(kind: GraphicsBuilderKind) {
+    const help = builderHelp(kind);
     setSelectedKind(kind);
-    setPrimary(nextHelp.placeholderPrimary);
-    setSecondary(nextHelp.placeholderSecondary);
-    applyMetadataDefaults(kind);
+    setPrimary(help.placeholderPrimary);
+    setSecondary(help.placeholderSecondary);
     setEditingPresetId(null);
-    setSuccess(null);
+    applyMetadataDefaults(kind);
     setError(null);
+    setSuccess(null);
   }
 
-  function handleEditPreset(preset: OwnerGraphicsPreset) {
+  function editPreset(preset: OwnerGraphicsPreset) {
     const metadata = decodeGraphicsPresetMetadata(preset);
-    const help = getBuilderHelp(metadata.builderKind);
     setEditingPresetId(preset.id);
     setSelectedKind(metadata.builderKind);
-    setPrimary(preset.content_primary || help.placeholderPrimary);
-    setSecondary(metadata.secondaryText || "");
+    setPrimary(preset.content_primary);
+    setSecondary(metadata.secondaryText ?? "");
     setLayoutMode(metadata.layoutMode);
     setPositionAnchor(metadata.positionAnchor);
     setXPercent(metadata.xPercent);
@@ -355,104 +259,69 @@ export default function GraphicsSuitePrepClient() {
     setZIndex(metadata.zIndex);
     setMediaUrl(metadata.mediaUrl ?? "");
     setImageUrl(metadata.imageUrl ?? "");
-    setDurationMode(preset.duration_seconds > 0 ? "custom" : "manual");
-    setCustomDuration(preset.duration_seconds > 0 ? preset.duration_seconds : DEFAULT_FORM.customDuration);
-    setSuccess(`${preset.content_primary} loaded for editing.`);
-    setError(null);
+    setDurationMode(preset.duration_seconds ? "custom" : "manual");
+    setCustomDuration(preset.duration_seconds || DEFAULT_FORM.customDuration);
+    setSuccess(`Editing ${preset.content_primary}.`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function handleCancelEdit() {
+  function cancelEdit() {
     setEditingPresetId(null);
-    handleTypeSelect("LOWER_THIRD");
-    setSuccess(null);
+    setSelectedKind("LOWER_THIRD");
+    setPrimary(DEFAULT_FORM.primary);
+    setSecondary(DEFAULT_FORM.secondary);
+    setDurationMode("manual");
+    applyMetadataDefaults("LOWER_THIRD");
     setError(null);
+    setSuccess(null);
   }
 
-  function handlePreviewDragStart(event: PointerEvent<HTMLDivElement>) {
-    if (!previewSurfaceRef.current) return;
-    const surfaceRect = previewSurfaceRef.current.getBoundingClientRect();
-    const targetRect = event.currentTarget.getBoundingClientRect();
-    dragOffsetRef.current = {
-      x: ((event.clientX - targetRect.left) / surfaceRect.width) * 100,
-      y: ((event.clientY - targetRect.top) / surfaceRect.height) * 100,
-    };
-
-    if (positionAnchor === "FULLSCREEN") setPositionAnchor("TOP_LEFT");
-    if (layoutMode === "fullscreen" || layoutMode === "sanctuary_video") setLayoutMode("partial");
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
-
-  function handlePreviewDragMove(event: PointerEvent<HTMLDivElement>) {
-    if (!previewSurfaceRef.current || !dragOffsetRef.current) return;
-    const surfaceRect = previewSurfaceRef.current.getBoundingClientRect();
-    const nextX = ((event.clientX - surfaceRect.left) / surfaceRect.width) * 100 - dragOffsetRef.current.x;
-    const nextY = ((event.clientY - surfaceRect.top) / surfaceRect.height) * 100 - dragOffsetRef.current.y;
-    setXPercent(Math.max(0, Math.min(95, Math.round(nextX))));
-    setYPercent(Math.max(0, Math.min(95, Math.round(nextY))));
-  }
-
-  function handlePreviewDragEnd(event: PointerEvent<HTMLDivElement>) {
-    dragOffsetRef.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  }
-
-  async function handleUploadAsset(slot: string, file: File | null) {
-    if (!file) return;
+  async function uploadAsset(slot: string, file: File | null) {
+    if (!file || uploadingSlot) return;
     setUploadingSlot(slot);
     setError(null);
     setSuccess(null);
-
     try {
-      const formData = new FormData();
-      formData.append("slot", slot);
-      formData.append("file", file);
-
-      const response = await fetch("/api/owner/graphics/assets", {
-        method: "POST",
-        body: formData,
-      });
+      const body = new FormData();
+      body.append("slot", slot);
+      body.append("file", file);
+      const response = await fetch("/api/owner/graphics/assets", { method: "POST", body });
       const json = (await response.json()) as ApiAssetResponse;
-
-      if (!response.ok || !json.success || !json.asset) {
-        throw new Error(json.error || "Unable to upload graphic asset.");
-      }
-
-      const uploaded = {
-        label: `${slot.replace(/-/g, " ")} upload`,
-        url: json.asset.url,
-      };
-      const slotConfig = UPLOAD_SLOTS.find((item) => item.key === slot);
-      if (slotConfig?.target === "video") {
-        setUploadedSlotAssets((current) => ({ ...current, [slot]: uploaded }));
+      if (!response.ok || !json.success || !json.asset) throw new Error(json.error || "Unable to upload the media asset.");
+      const asset = { label: file.name, url: json.asset.url };
+      setUploadedSlotAssets((current) => ({ ...current, [slot]: asset }));
+      if (slot === "sanctuary-video") {
         setSelectedKind("SANCTUARY_VIDEO");
         setLayoutMode("sanctuary_video");
         setPositionAnchor("FULLSCREEN");
-        setXPercent(0);
-        setYPercent(0);
-        setWidthPercent(100);
-        setHeightPercent(100);
-        setMediaUrl(uploaded.url);
-        setSuccess(`${uploaded.label} uploaded and selected as the full-screen video.`);
+        setMediaUrl(asset.url);
       } else {
-        setUploadedSlotAssets((current) => ({ ...current, [slot]: uploaded }));
-        setImageUrl(uploaded.url);
-        setSuccess(`${uploaded.label} uploaded and selected.`);
+        setImageUrl(asset.url);
       }
+      setSuccess(`${file.name} uploaded and selected.`);
     } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : "Unable to upload graphic asset.");
+      setError(uploadError instanceof Error ? uploadError.message : "Unable to upload the media asset.");
     } finally {
       setUploadingSlot(null);
     }
   }
 
-  async function handleSavePreset(event: FormEvent<HTMLFormElement>) {
+  async function savePreset(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (saving) return;
+    if (!primary.trim()) {
+      setError("Primary text is required before saving the graphic.");
+      return;
+    }
+    if (isVideo && !mediaUrl.trim()) {
+      setError("Choose or enter a sanctuary video before saving.");
+      return;
+    }
+
+    const wasEditing = Boolean(editingPresetId);
     setSaving(true);
     setError(null);
     setSuccess(null);
-
     try {
       const response = await fetch("/api/owner/graphics/presets", {
         method: editingPresetId ? "PATCH" : "POST",
@@ -462,7 +331,7 @@ export default function GraphicsSuitePrepClient() {
           type: selectedKind,
           contentPrimary: primary,
           contentSecondary: secondary,
-          durationSeconds: activeDurationSeconds,
+          durationSeconds,
           layoutMode,
           positionAnchor,
           xPercent,
@@ -474,34 +343,42 @@ export default function GraphicsSuitePrepClient() {
           imageUrl,
         }),
       });
-
       const json = (await response.json()) as ApiPresetResponse;
-      if (!response.ok || !json.success || !json.preset) {
-        throw new Error(json.error || "Unable to save graphic.");
+      if (!response.ok || !json.success || !json.preset) throw new Error(json.error || "Unable to save the graphic.");
+      setPresets((current) => wasEditing
+        ? sortPresets(current.map((item) => item.id === json.preset!.id ? json.preset! : item))
+        : sortPresets([json.preset!, ...current]));
+      if (wasEditing) {
+        setEditingPresetId(json.preset.id);
+        setSuccess("Graphic updated.");
+      } else {
+        // Keep the current styling/media as a batch-entry template, but return to
+        // create mode so every subsequent save makes a new catalog record.
+        setEditingPresetId(null);
+        setPrimary("");
+        setSecondary("");
+        setSuccess("Graphic saved. Ready for the next catalog item.");
       }
-
-      setPresets((current) =>
-        editingPresetId
-          ? sortPresets(current.map((preset) => (preset.id === json.preset?.id ? (json.preset as OwnerGraphicsPreset) : preset)))
-          : sortPresets([json.preset as OwnerGraphicsPreset, ...current]),
-      );
-      setEditingPresetId(json.preset.id);
-      setSuccess(`${builderLabel(selectedKind)} ${editingPresetId ? "updated" : "saved"} in the Production Cockpit.`);
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Unable to save graphic.");
+      setError(saveError instanceof Error ? saveError.message : "Unable to save the graphic.");
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleDeletePreset(preset: OwnerGraphicsPreset) {
-    const confirmed = window.confirm(`Delete "${preset.content_primary}" from the master graphics catalog?`);
-    if (!confirmed) return;
+  function startNewGraphic() {
+    setEditingPresetId(null);
+    setPrimary("");
+    setSecondary("");
+    setError(null);
+    setSuccess("Ready to create a new graphic with the current style.");
+  }
 
+  async function deletePreset(preset: OwnerGraphicsPreset) {
+    if (deletingPresetId || !window.confirm(`Delete “${preset.content_primary}” from the master catalog?`)) return;
     setDeletingPresetId(preset.id);
     setError(null);
     setSuccess(null);
-
     try {
       const response = await fetch("/api/owner/graphics/presets", {
         method: "DELETE",
@@ -509,56 +386,40 @@ export default function GraphicsSuitePrepClient() {
         body: JSON.stringify({ id: preset.id }),
       });
       const json = (await response.json()) as ApiPresetResponse;
-      if (!response.ok || !json.success) {
-        throw new Error(json.error || "Unable to delete graphic.");
-      }
-
+      if (!response.ok || !json.success) throw new Error(json.error || "Unable to delete the graphic.");
       setPresets((current) => current.filter((item) => item.id !== preset.id));
-      if (editingPresetId === preset.id) handleCancelEdit();
-      setSuccess(`${preset.content_primary} deleted from the master catalog.`);
+      if (editingPresetId === preset.id) cancelEdit();
+      setSuccess("Graphic deleted.");
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Unable to delete graphic.");
+      setError(deleteError instanceof Error ? deleteError.message : "Unable to delete the graphic.");
     } finally {
       setDeletingPresetId(null);
     }
   }
 
-  async function handleSaveTheme(reset = false) {
+  async function saveTheme(action: "save" | "reset") {
+    if (themeSaving) return;
     setThemeSaving(true);
     setError(null);
     setSuccess(null);
-
+    const next = action === "reset" ? {
+      cornerRadiusPx: OWNER_GRAPHICS_DEFAULT_THEME.corner_radius_px,
+      paddingPx: OWNER_GRAPHICS_DEFAULT_THEME.padding_px,
+      backgroundOpacityPercent: OWNER_GRAPHICS_DEFAULT_THEME.background_opacity_percent,
+      placementAnchor: OWNER_GRAPHICS_DEFAULT_THEME.placement_anchor,
+      customLogoUrl: "",
+    } : themeDraft;
     try {
-      const body = reset
-        ? {
-            cornerRadiusPx: OWNER_GRAPHICS_DEFAULT_THEME.corner_radius_px,
-            paddingPx: OWNER_GRAPHICS_DEFAULT_THEME.padding_px,
-            backgroundOpacityPercent: OWNER_GRAPHICS_DEFAULT_THEME.background_opacity_percent,
-            placementAnchor: OWNER_GRAPHICS_DEFAULT_THEME.placement_anchor,
-            customLogoUrl: "",
-          }
-        : themeDraft;
-
       const response = await fetch("/api/owner/graphics/theme", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(next),
       });
-
       const json = (await response.json()) as ApiThemeResponse;
-      if (!response.ok || !json.success || !json.theme) {
-        throw new Error(json.error || "Unable to save system theme defaults.");
-      }
-
+      if (!response.ok || !json.success || !json.theme) throw new Error(json.error || "Unable to save theme defaults.");
       setTheme(json.theme);
-      setThemeDraft({
-        cornerRadiusPx: json.theme.corner_radius_px,
-        paddingPx: json.theme.padding_px,
-        backgroundOpacityPercent: json.theme.background_opacity_percent,
-        placementAnchor: json.theme.placement_anchor,
-        customLogoUrl: json.theme.custom_logo_url ?? "",
-      });
-      setSuccess(reset ? "System theme defaults reset." : "System theme defaults updated.");
+      setThemeDraft(next);
+      setSuccess(action === "reset" ? "Theme defaults restored." : "Theme defaults saved.");
     } catch (themeError) {
       setError(themeError instanceof Error ? themeError.message : "Unable to save theme defaults.");
     } finally {
@@ -566,588 +427,260 @@ export default function GraphicsSuitePrepClient() {
     }
   }
 
+  function beginDrag(event: PointerEvent<HTMLDivElement>) {
+    if (!previewSurfaceRef.current || layoutMode === "fullscreen" || layoutMode === "sanctuary_video") return;
+    const surface = previewSurfaceRef.current.getBoundingClientRect();
+    const target = event.currentTarget.getBoundingClientRect();
+    dragOffsetRef.current = { x: ((event.clientX - target.left) / surface.width) * 100, y: ((event.clientY - target.top) / surface.height) * 100 };
+    if (positionAnchor === "CENTER") setPositionAnchor("TOP_LEFT");
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveDrag(event: PointerEvent<HTMLDivElement>) {
+    if (!previewSurfaceRef.current || !dragOffsetRef.current) return;
+    const surface = previewSurfaceRef.current.getBoundingClientRect();
+    setXPercent(Math.max(0, Math.min(100 - widthPercent, Math.round(((event.clientX - surface.left) / surface.width) * 100 - dragOffsetRef.current.x))));
+    setYPercent(Math.max(0, Math.min(100 - heightPercent, Math.round(((event.clientY - surface.top) / surface.height) * 100 - dragOffsetRef.current.y))));
+  }
+
+  function endDrag(event: PointerEvent<HTMLDivElement>) {
+    dragOffsetRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+  }
+
+  const panelClass = "rounded-[3px] border border-white/10 bg-[linear-gradient(135deg,#0b1012,#070a0c)] shadow-[0_10px_32px_rgba(0,0,0,0.28)]";
+  const sectionTitle = "font-headline text-base uppercase tracking-[0.05em] text-white/80";
+  const labelClass = "mb-1 block font-ui text-[0.56rem] font-semibold uppercase tracking-[0.06em] text-white/55";
+  const inputClass = "h-9 w-full rounded-[2px] border border-white/15 bg-[#090d0f] px-3 font-body text-[0.72rem] text-white outline-none transition placeholder:text-white/25 focus:border-[#00bff8]/65";
+  const rangeClass = "h-1 w-full cursor-pointer appearance-none rounded bg-white/15 accent-[#00bff8]";
+
   return (
-    <section className="space-y-5">
+    <div className="space-y-2">
       <GraphicsMonetizationRemindersPanel />
 
-      <div className="rounded-[6px] border border-white/10 bg-[#050814]/94 p-4 shadow-[0_0_28px_rgba(0,168,255,0.08)] sm:p-5">
-        <div className="mb-5 text-center">
-          <p className="font-ui text-[0.65rem] uppercase tracking-[0.28em] text-[#7aa7ff]">
-            Create / Style / Save / Build your master catalog
-          </p>
-          <h2 className="mt-1 font-headline text-2xl uppercase tracking-[0.08em] text-white">
-            Graphics Suite <span className="text-[#6d6dff]">Build & Prepare</span>
-          </h2>
+      {loading ? (
+        <div className={`${panelClass} flex min-h-[28rem] items-center justify-center font-ui text-xs uppercase tracking-wider text-white/55`}>
+          <Loader2 className="mr-3 h-5 w-5 animate-spin text-[#00bff8]" /> Loading graphics workspace
         </div>
+      ) : (
+        <form onSubmit={(event) => void savePreset(event)} className="grid gap-2 lg:grid-cols-[minmax(31rem,0.94fr)_minmax(0,1.06fr)]">
+          <section className={`${panelClass} min-w-0 overflow-hidden`}>
+            <div className="border-b border-white/10 px-4 py-2">
+              <h2 className="font-headline text-xl uppercase tracking-[0.05em] text-white/85">Graphic Builder</h2>
+            </div>
 
-        {loading ? (
-          <div className="flex min-h-[360px] items-center justify-center rounded-[6px] border border-white/10 bg-white/[0.03] text-white/70">
-            <Loader2 className="mr-3 h-5 w-5 animate-spin text-[#00DDEB]" />
-            Loading synchronized graphics workspace...
-          </div>
-        ) : (
-          <div className="grid gap-4 xl:grid-cols-[0.94fr_1.06fr]">
-            <form onSubmit={handleSavePreset} className="space-y-4">
-              <div className="rounded-[6px] border border-white/10 bg-black/30 p-4">
-                <p className="mb-3 font-ui text-xs uppercase tracking-[0.16em] text-white/80">
-                  1. Choose Graphic Type
-                </p>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="p-4">
+              <fieldset>
+                <legend className={sectionTitle}>1. Graphic Type</legend>
+                <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6">
                   {BUILDER_KINDS.map((kind) => {
                     const Icon = TYPE_ICONS[kind];
-                    const isSelected = selectedKind === kind;
+                    const active = selectedKind === kind;
                     return (
-                      <button
-                        key={kind}
-                        type="button"
-                        onClick={() => handleTypeSelect(kind)}
-                        className={`rounded-[6px] border p-3 text-center transition ${
-                          isSelected
-                            ? "border-[#1687ff] bg-[#073a85]/60 shadow-[0_0_18px_rgba(0,132,255,0.35)]"
-                            : "border-white/10 bg-white/[0.03] hover:border-[#1687ff]/50"
-                        }`}
-                      >
-                        <Icon className={`mx-auto mb-2 h-6 w-6 ${isSelected ? "text-[#18a0ff]" : "text-white/65"}`} />
-                        <span className="font-ui text-[0.62rem] uppercase tracking-[0.08em] text-white">
-                          {builderLabel(kind)}
-                        </span>
+                      <button key={kind} type="button" aria-pressed={active} onClick={() => selectType(kind)} className={`flex min-h-[4.35rem] flex-col items-center justify-center gap-2 border px-1 transition first:rounded-l-[2px] last:rounded-r-[2px] ${active ? "relative z-10 border-[#00bff8] bg-[#00bff8]/5 text-[#00c7ff] shadow-[inset_0_-2px_0_#00bff8]" : "border-white/10 bg-[#090d0f] text-white/60 hover:border-white/25 hover:text-white"}`}>
+                        <Icon className="h-5 w-5" />
+                        <span className="font-ui text-[0.55rem] font-bold uppercase leading-tight tracking-[0.04em]">{builderLabel(kind)}</span>
                       </button>
                     );
                   })}
                 </div>
-              </div>
+              </fieldset>
 
-              <div className="rounded-[6px] border border-white/10 bg-black/30 p-4">
-                <p className="mb-3 font-ui text-xs uppercase tracking-[0.16em] text-white/80">
-                  2. Content
-                </p>
-                <label className="block">
-                  <span className="flex items-center justify-between font-ui text-[0.68rem] uppercase text-white/65">
-                    {selectedHelp.primary}
-                    <span>{primary.length}/180</span>
-                  </span>
-                  <input
-                    value={primary}
-                    onChange={(event) => setPrimary(event.target.value)}
-                    placeholder={selectedHelp.placeholderPrimary}
-                    maxLength={180}
-                    className="mt-2 min-h-11 w-full rounded-[6px] border border-white/10 bg-[#07101f] px-3 font-ui text-sm text-white outline-none focus:border-[#1687ff]"
-                    required
-                  />
-                </label>
-                <label className="mt-3 block">
-                  <span className="flex items-center justify-between font-ui text-[0.68rem] uppercase text-white/65">
-                    {selectedHelp.secondary}
-                    <span>{secondary.length}/260</span>
-                  </span>
-                  <textarea
-                    value={secondary}
-                    onChange={(event) => setSecondary(event.target.value)}
-                    placeholder={selectedHelp.placeholderSecondary}
-                    maxLength={260}
-                    rows={3}
-                    className="mt-2 w-full rounded-[6px] border border-white/10 bg-[#07101f] px-3 py-2 font-ui text-sm text-white outline-none focus:border-[#1687ff]"
-                  />
-                </label>
-                {isMediaBuilder ? (
-                  <label className="mt-3 block">
-                    <span className="font-ui text-[0.68rem] uppercase text-white/65">
-                      Video URL or local public path
-                    </span>
-                    <input
-                      value={mediaUrl}
-                      onChange={(event) => setMediaUrl(event.target.value)}
-                      placeholder="/videos/sanctuary-roll-in.mp4 or https://..."
-                      className="mt-2 min-h-11 w-full rounded-[6px] border border-white/10 bg-[#07101f] px-3 font-ui text-sm text-white outline-none focus:border-[#1687ff]"
-                    />
+              <div className="mt-4 grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
+                <fieldset>
+                  <legend className={sectionTitle}>2. Content</legend>
+                  <label className="mt-2 block">
+                    <span className="flex items-center justify-between"><span className={labelClass}>{selectedHelp.primary}</span><span className="font-ui text-[0.5rem] text-white/45">{primary.length} / 120</span></span>
+                    <input value={primary} maxLength={120} onChange={(event) => setPrimary(event.target.value)} placeholder={selectedHelp.placeholderPrimary} className={inputClass} />
                   </label>
-                ) : null}
-              </div>
+                  <label className="mt-3 block">
+                    <span className="flex items-center justify-between"><span className={labelClass}>{selectedHelp.secondary}</span><span className="font-ui text-[0.5rem] text-white/45">{secondary.length} / 260</span></span>
+                    <input value={secondary} maxLength={260} onChange={(event) => setSecondary(event.target.value)} placeholder={selectedHelp.placeholderSecondary} className={inputClass} />
+                  </label>
+                </fieldset>
 
-              <div className="rounded-[6px] border border-white/10 bg-black/30 p-4">
-                <p className="mb-3 font-ui text-xs uppercase tracking-[0.16em] text-white/80">
-                  3. Upload / Choose Image
-                </p>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  {UPLOAD_SLOTS.map((slot) => {
-                    const uploadedAsset = uploadedSlotAssets[slot.key];
-                    const isVideoSlot = slot.target === "video";
-                    const isSelected = uploadedAsset
-                      ? isVideoSlot
-                        ? mediaUrl === uploadedAsset.url
-                        : imageUrl === uploadedAsset.url
-                      : false;
-                    return (
-                      <label
-                        key={slot.key}
-                        className={`group flex min-h-36 cursor-pointer flex-col justify-between rounded-[6px] border p-3 transition ${
-                          isSelected
-                            ? "border-[#00DDEB] bg-[#00DDEB]/12 shadow-[0_0_16px_rgba(0,221,235,0.22)]"
-                            : "border-dashed border-white/18 bg-[#07101f] hover:border-[#00DDEB]/60 hover:bg-[#00DDEB]/8"
-                        }`}
-                      >
-                        <input
-                          type="file"
-                          accept={slot.accept}
-                          className="sr-only"
-                          onChange={(event) => {
-                            const file = event.target.files?.[0] ?? null;
-                            void handleUploadAsset(slot.key, file);
-                            event.currentTarget.value = "";
-                          }}
-                        />
-                        <span className="flex items-center justify-between gap-2">
-                          <span className="font-ui text-xs uppercase tracking-[0.12em] text-white">
-                            {slot.label}
+                <fieldset className="min-w-0 xl:border-l xl:border-white/10 xl:pl-4">
+                  <legend className={sectionTitle}>3. Upload / Choose Media</legend>
+                  <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {UPLOAD_SLOTS.map((slot) => {
+                      const asset = uploadedSlotAssets[slot.key];
+                      const preview = asset?.url ?? slot.fallback;
+                      const selected = asset?.url === imageUrl || asset?.url === mediaUrl || (!asset && preview === imageUrl);
+                      return (
+                        <label key={slot.key} className={`group relative min-w-0 cursor-pointer rounded-[2px] border p-1.5 transition ${selected ? "border-[#00bff8]/65" : "border-white/10 hover:border-white/30"}`}>
+                          <span className={labelClass}>{slot.label}</span>
+                          <span className="relative grid aspect-[1.65/1] place-items-center overflow-hidden rounded-[2px] bg-[#030506]">
+                            {preview ? (
+                              <Image src={preview} alt="" width={320} height={180} unoptimized className="h-full w-full object-cover" />
+                            ) : <Film className="h-7 w-7 text-white/35" />}
+                            {uploadingSlot === slot.key ? <span className="absolute inset-0 grid place-items-center bg-black/75"><Loader2 className="h-5 w-5 animate-spin text-[#00bff8]" /></span> : null}
                           </span>
-                          {uploadingSlot === slot.key ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-[#00DDEB]" />
-                          ) : (
-                            <Upload className="h-4 w-4 text-[#00DDEB]" />
-                          )}
-                        </span>
-                        <span className="mt-3 flex h-16 items-center justify-center overflow-hidden rounded bg-black/40 p-2">
-                          {uploadedAsset ? (
-                            isVideoSlot ? (
-                              <video src={uploadedAsset.url} muted playsInline className="h-full w-full object-cover" />
-                            ) : (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={uploadedAsset.url} alt="" className="max-h-full max-w-full object-contain" />
-                            )
-                          ) : (
-                            <span className="font-ui text-[0.58rem] uppercase tracking-[0.14em] text-white/35">
-                              Upload
-                            </span>
-                          )}
-                        </span>
-                        <span className="mt-3 font-body text-xs leading-snug text-white/50">
-                          {uploadedAsset ? uploadedAsset.url : slot.description}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-                <label className="mt-3 block">
-                  <span className="font-ui text-[0.68rem] uppercase text-white/65">
-                    Custom image path or URL
-                  </span>
-                  <input
-                    value={imageUrl}
-                    onChange={(event) => setImageUrl(event.target.value)}
-                    placeholder="/branding/awakening-lockup.png or https://..."
-                    className="mt-2 min-h-11 w-full rounded-[6px] border border-white/10 bg-[#07101f] px-3 font-ui text-sm text-white outline-none focus:border-[#1687ff]"
-                  />
-                </label>
+                          <span className="mt-1.5 flex h-7 items-center justify-center gap-1 rounded-[2px] border border-white/15 bg-white/[0.03] font-ui text-[0.52rem] font-bold uppercase text-white/65 transition group-hover:text-white"><Upload className="h-3 w-3" /> Change</span>
+                          <input type="file" accept={slot.accept} disabled={Boolean(uploadingSlot)} onChange={(event) => { void uploadAsset(slot.key, event.target.files?.[0] ?? null); event.currentTarget.value = ""; }} className="sr-only" />
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <label className="mt-3 block">
+                    <span className={labelClass}>Custom image path or URL</span>
+                    <input value={isVideo ? mediaUrl : imageUrl} onChange={(event) => isVideo ? setMediaUrl(event.target.value) : setImageUrl(event.target.value)} placeholder="/owner-graphics/asset.png or https://…" className={inputClass} />
+                  </label>
+                </fieldset>
               </div>
+            </div>
 
-              <div className="rounded-[6px] border border-white/10 bg-black/30 p-4">
-                <p className="mb-3 inline-flex items-center gap-2 font-ui text-xs uppercase tracking-[0.16em] text-white/80">
-                  <Move className="h-4 w-4 text-[#00DDEB]" />
-                  4. Position & Size
-                </p>
-                <div className="grid grid-cols-2 gap-2">
+            <div className="grid border-t border-white/10 xl:grid-cols-[1.35fr_0.65fr]">
+              <fieldset className="p-4">
+                <legend className={sectionTitle}>4. Position &amp; Size</legend>
+                <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6">
                   {LAYOUT_OPTIONS.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setLayoutMode(option.value)}
-                      className={`min-h-10 rounded-[6px] border font-ui text-[0.62rem] uppercase tracking-[0.08em] ${
-                        layoutMode === option.value
-                          ? "border-[#00DDEB] bg-[#00DDEB]/15 text-[#9df8ff]"
-                          : "border-white/10 bg-white/[0.03] text-white/65"
-                      }`}
-                    >
+                    <button key={option.value} type="button" onClick={() => { setLayoutMode(option.value); if (option.value === "fullscreen" || option.value === "sanctuary_video") setPositionAnchor("FULLSCREEN"); }} className={`min-h-11 border px-1 font-ui text-[0.49rem] font-bold uppercase leading-tight transition ${layoutMode === option.value ? "relative z-10 border-[#00bff8] bg-[#00bff8]/5 text-[#00c7ff]" : "border-white/10 bg-[#090d0f] text-white/55 hover:text-white"}`}>
                       {option.label}
                     </button>
                   ))}
                 </div>
-                <label className="mt-3 block">
-                  <span className="font-ui text-[0.68rem] uppercase text-white/65">Anchor</span>
-                  <select
-                    value={positionAnchor}
-                    onChange={(event) => setPositionAnchor(event.target.value as GraphicPositionAnchor)}
-                    className="mt-2 min-h-11 w-full rounded-[6px] border border-white/10 bg-[#07101f] px-3 font-ui text-sm text-white outline-none focus:border-[#1687ff]"
-                  >
-                    {POSITION_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
+
+                <div className="mt-4 grid gap-5 sm:grid-cols-[6.25rem_1fr]">
+                  <div>
+                    <span className={labelClass}>Anchor</span>
+                    <div className="grid grid-cols-3 gap-3 rounded-[2px] border border-white/10 bg-black/20 p-2">
+                      {["TOP_LEFT", "TOP_RIGHT", "CENTER", "BOTTOM_LEFT", "BOTTOM_RIGHT", "FULLSCREEN"].map((anchor, index) => {
+                        const gridPosition = ["col-start-1 row-start-1", "col-start-3 row-start-1", "col-start-2 row-start-2", "col-start-1 row-start-3", "col-start-3 row-start-3", "col-start-2 row-start-3"][index];
+                        return <button key={anchor} type="button" title={POSITION_OPTIONS.find((item) => item.value === anchor)?.label} aria-label={POSITION_OPTIONS.find((item) => item.value === anchor)?.label} onClick={() => setPositionAnchor(anchor as GraphicPositionAnchor)} className={`${gridPosition} h-3 w-3 rounded-full border transition ${positionAnchor === anchor ? "border-[#00bff8] bg-[#00bff8] shadow-[0_0_7px_#00bff8]" : "border-white/55 hover:border-white"}`} />;
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    {[
+                      { label: "X position", value: xPercent, set: setXPercent, min: 0, max: 95 },
+                      { label: "Y position", value: yPercent, set: setYPercent, min: 0, max: 95 },
+                      { label: "Width", value: widthPercent, set: setWidthPercent, min: 5, max: 100 },
+                      { label: "Height", value: heightPercent, set: setHeightPercent, min: 5, max: 100 },
+                      { label: "Layer (z-index)", value: zIndex, set: setZIndex, min: 0, max: 99 },
+                    ].map((control) => (
+                      <label key={control.label} className="grid grid-cols-[5.5rem_1fr_3rem] items-center gap-2">
+                        <span className={`${labelClass} mb-0`}>{control.label}</span>
+                        <input type="range" min={control.min} max={control.max} value={control.value} onChange={(event) => control.set(Number(event.target.value))} className={rangeClass} />
+                        <input type="number" min={control.min} max={control.max} value={control.value} onChange={(event) => control.set(Number(event.target.value))} className="h-7 rounded-[2px] border border-white/15 bg-[#090d0f] px-1 text-center font-body text-[0.65rem] text-white outline-none focus:border-[#00bff8]/65" />
+                      </label>
                     ))}
-                  </select>
-                </label>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  {[
-                    ["X", xPercent, setXPercent, 0, 95],
-                    ["Y", yPercent, setYPercent, 0, 95],
-                    ["Width", widthPercent, setWidthPercent, 5, 100],
-                    ["Height", heightPercent, setHeightPercent, 5, 100],
-                    ["Layer", zIndex, setZIndex, 0, 99],
-                  ].map(([label, value, setter, min, max]) => (
-                    <label key={label as string} className="block">
-                      <span className="flex justify-between font-ui text-[0.68rem] uppercase text-white/65">
-                        {label as string}
-                        <span>
-                          {value as number}
-                          {label === "Layer" ? "" : "%"}
-                        </span>
-                      </span>
-                      <input
-                        type="range"
-                        min={min as number}
-                        max={max as number}
-                        value={value as number}
-                        onChange={(event) => (setter as (next: number) => void)(Number.parseInt(event.target.value, 10))}
-                        className="mt-2 w-full accent-[#00DDEB]"
-                      />
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset className="border-t border-white/10 p-4 xl:border-l xl:border-t-0">
+                <legend className={sectionTitle}>5. Duration</legend>
+                <div className="mt-3 grid gap-3">
+                  {(["manual", "15", "30", "custom"] as DurationMode[]).map((mode) => (
+                    <label key={mode} className="flex cursor-pointer items-center gap-2 font-ui text-[0.62rem] uppercase text-white/65">
+                      <input type="radio" name="duration" value={mode} checked={durationMode === mode} onChange={() => setDurationMode(mode)} className="h-4 w-4 accent-[#00bff8]" />
+                      {mode === "manual" ? "Manual" : mode === "custom" ? "Custom" : `${mode} seconds`}
                     </label>
                   ))}
+                  {durationMode === "custom" ? (
+                    <label className="flex items-center gap-2">
+                      <input type="number" min={1} max={3600} value={customDuration} onChange={(event) => setCustomDuration(Number(event.target.value))} className="h-8 w-20 rounded-[2px] border border-white/15 bg-[#090d0f] px-2 font-body text-xs text-white outline-none focus:border-[#00bff8]/65" />
+                      <span className="font-ui text-[0.55rem] uppercase text-white/45">Seconds</span>
+                    </label>
+                  ) : null}
+                </div>
+              </fieldset>
+            </div>
+
+            <fieldset className="border-t border-white/10 p-4">
+              <legend className={sectionTitle}>6. Theme Defaults</legend>
+              <div className="mt-2 grid gap-4 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1.1fr_auto] xl:items-end">
+                <label><span className={labelClass}>Background opacity</span><span className="grid grid-cols-[1fr_2.5rem] items-center gap-2"><input type="range" min={0} max={100} value={themeDraft.backgroundOpacityPercent} onChange={(event) => setThemeDraft({ ...themeDraft, backgroundOpacityPercent: Number(event.target.value) })} className={rangeClass} /><span className="font-body text-xs text-white/65">{themeDraft.backgroundOpacityPercent}%</span></span></label>
+                <label><span className={labelClass}>Padding</span><span className="grid grid-cols-[1fr_2rem] items-center gap-2"><input type="range" min={0} max={96} value={themeDraft.paddingPx} onChange={(event) => setThemeDraft({ ...themeDraft, paddingPx: Number(event.target.value) })} className={rangeClass} /><span className="font-body text-xs text-white/65">{themeDraft.paddingPx}</span></span></label>
+                <label><span className={labelClass}>Placement anchor</span><select value={themeDraft.placementAnchor} onChange={(event) => setThemeDraft({ ...themeDraft, placementAnchor: event.target.value as GraphicsPlacementAnchor })} className={inputClass}>{POSITION_OPTIONS.filter((item) => item.value !== "FULLSCREEN").map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+                <div className="flex gap-2">
+                  <button type="button" disabled={themeSaving} onClick={() => void saveTheme("reset")} className="inline-flex h-9 items-center gap-1 rounded-[2px] border border-white/20 px-3 font-ui text-[0.54rem] font-bold uppercase text-white/65 transition hover:text-white disabled:opacity-45"><RotateCcw className="h-3 w-3" /> Reset</button>
+                  <button type="button" disabled={themeSaving} onClick={() => void saveTheme("save")} className="inline-flex h-9 items-center gap-1 rounded-[2px] bg-[#00afe9] px-3 font-ui text-[0.54rem] font-black uppercase text-[#001018] transition hover:bg-[#35caff] disabled:opacity-45">{themeSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />} Save Theme</button>
                 </div>
               </div>
+            </fieldset>
 
-              <div className="rounded-[6px] border border-white/10 bg-black/30 p-4">
-                <p className="mb-3 font-ui text-xs uppercase tracking-[0.16em] text-white/80">
-                  5. Duration Timer
-                </p>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {[
-                    ["manual", "Manual"],
-                    ["15", "15s"],
-                    ["30", "30s"],
-                    ["custom", "Custom"],
-                  ].map(([value, label]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setDurationMode(value as DurationMode)}
-                      className={`min-h-10 rounded-[6px] border font-ui text-xs uppercase tracking-[0.12em] ${
-                        durationMode === value
-                          ? "border-[#00DDEB] bg-[#00DDEB]/15 text-[#9df8ff]"
-                          : "border-white/10 bg-white/[0.03] text-white/65"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                {durationMode === "custom" ? (
-                  <label className="mt-3 block">
-                    <span className="font-ui text-[0.68rem] uppercase text-white/65">
-                      Custom seconds
-                    </span>
-                    <input
-                      type="number"
-                      min={1}
-                      max={3600}
-                      value={customDuration}
-                      onChange={(event) => setCustomDuration(Number.parseInt(event.target.value, 10) || 1)}
-                      className="mt-2 min-h-11 w-full rounded-[6px] border border-white/10 bg-[#07101f] px-3 font-ui text-sm text-white outline-none focus:border-[#1687ff]"
-                    />
-                  </label>
-                ) : null}
+            {error || success ? <div role="status" className={`border-t px-4 py-2 font-body text-xs ${error ? "border-red-500/30 bg-red-500/10 text-red-200" : "border-emerald-400/25 bg-emerald-400/10 text-emerald-200"}`}>{error ?? success}</div> : null}
+
+            <div className="grid gap-2 border-t border-white/10 p-4 sm:grid-cols-2">
+              <button type="submit" disabled={saving} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[2px] bg-[#00afe9] font-ui text-[0.72rem] font-black uppercase tracking-[0.08em] text-[#001018] transition hover:bg-[#35caff] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-45">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {editingPresetId ? "Save Changes" : "Save New Graphic"}</button>
+              <button type="button" onClick={startNewGraphic} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[2px] border border-white/25 font-ui text-[0.72rem] font-bold uppercase tracking-[0.08em] text-white/65 transition hover:border-white/45 hover:text-white active:translate-y-px"><Plus className="h-4 w-4" /> Start New Graphic</button>
+            </div>
+          </section>
+
+          <div className="min-w-0 space-y-2">
+            <section className={`${panelClass} overflow-hidden`}>
+              <div className="flex items-center justify-between border-b border-white/10 px-4 py-2">
+                <h2 className="font-headline text-xl uppercase tracking-[0.05em] text-white/85">Live Preview (16:9)</h2>
+                <span className="inline-flex items-center gap-1.5 font-ui text-[0.52rem] uppercase tracking-wider text-white/40"><Move className="h-3 w-3" /> Drag to position</span>
               </div>
+              <div className="p-4">
+                <div ref={previewSurfaceRef} className="relative aspect-video overflow-hidden rounded-[2px] border border-[#006ca0]/45 bg-[#020508] shadow-[inset_0_0_36px_rgba(0,0,0,0.55)]">
+                  {isVideo && mediaUrl ? (
+                    <video src={mediaUrl} muted autoPlay loop playsInline className="absolute inset-0 h-full w-full object-cover" />
+                  ) : (
+                    <Image src="/effects/hero-audience-banner.png" alt="Broadcast preview audience" fill sizes="(min-width: 1024px) 50vw, 100vw" className="absolute inset-0 h-full w-full object-cover opacity-80" />
+                  )}
+                  <div className="absolute inset-[2.5%] border border-dashed border-[#00bff8]/35" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-[#0075ff]/10" />
 
-              <details className="rounded-[6px] border border-white/10 bg-black/30 p-4">
-                <summary className="flex cursor-pointer list-none items-center justify-between font-ui text-xs uppercase tracking-[0.14em] text-white/80">
-                  <span className="inline-flex items-center gap-2">
-                    <SlidersHorizontal className="h-4 w-4 text-[#b682ff]" />
-                    Edit System Theme Defaults
-                  </span>
-                  <Lock className="h-4 w-4 text-white/45" />
-                </summary>
-                <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
-                  <label className="block">
-                    <span className="flex justify-between font-ui text-[0.68rem] uppercase text-white/65">
-                      Background Opacity <span>{themeDraft.backgroundOpacityPercent}%</span>
-                    </span>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={themeDraft.backgroundOpacityPercent}
-                      onChange={(event) =>
-                        setThemeDraft((current) => ({
-                          ...current,
-                          backgroundOpacityPercent: Number.parseInt(event.target.value, 10),
-                        }))
-                      }
-                      className="mt-2 w-full accent-[#b682ff]"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="flex justify-between font-ui text-[0.68rem] uppercase text-white/65">
-                      Padding <span>{themeDraft.paddingPx}px</span>
-                    </span>
-                    <input
-                      type="range"
-                      min={4}
-                      max={64}
-                      value={themeDraft.paddingPx}
-                      onChange={(event) =>
-                        setThemeDraft((current) => ({
-                          ...current,
-                          paddingPx: Number.parseInt(event.target.value, 10),
-                        }))
-                      }
-                      className="mt-2 w-full accent-[#1687ff]"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="font-ui text-[0.68rem] uppercase text-white/65">
-                      Placement Anchor
-                    </span>
-                    <select
-                      value={themeDraft.placementAnchor}
-                      onChange={(event) =>
-                        setThemeDraft((current) => ({
-                          ...current,
-                          placementAnchor: event.target.value as GraphicsPlacementAnchor,
-                        }))
-                      }
-                      className="mt-2 min-h-11 w-full rounded-[6px] border border-white/10 bg-[#07101f] px-3 font-ui text-sm text-white outline-none focus:border-[#1687ff]"
-                    >
-                      <option value="BOTTOM_LEFT">Bottom Left</option>
-                      <option value="BOTTOM_RIGHT">Bottom Right</option>
-                      <option value="TOP_LEFT">Top Left</option>
-                      <option value="TOP_RIGHT">Top Right</option>
-                      <option value="CENTER">Center</option>
-                    </select>
-                  </label>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <button
-                      type="button"
-                      onClick={() => void handleSaveTheme(true)}
-                      disabled={themeSaving}
-                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[6px] border border-white/10 bg-white/[0.04] font-ui text-xs uppercase tracking-[0.14em] text-white/70 disabled:opacity-50"
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                      Reset Defaults
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleSaveTheme()}
-                      disabled={themeSaving}
-                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[6px] bg-[#28104d] font-ui text-xs uppercase tracking-[0.14em] text-[#ecdfff] disabled:opacity-50"
-                    >
-                      {themeSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                      Save Theme
-                    </button>
-                  </div>
-                </div>
-              </details>
-
-              <button
-                type="submit"
-                disabled={saving || !primary.trim() || (selectedKind === "SANCTUARY_VIDEO" && !mediaUrl.trim())}
-                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[6px] bg-[#096bff] font-ui text-sm uppercase tracking-[0.14em] text-white shadow-[0_0_22px_rgba(9,107,255,0.35)] transition hover:bg-[#1687ff] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {editingPresetId ? "Update Graphic" : "Save Graphic"}
-              </button>
-              {editingPresetId ? (
-                <button
-                  type="button"
-                  onClick={handleCancelEdit}
-                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[6px] border border-white/10 bg-white/[0.04] font-ui text-xs uppercase tracking-[0.14em] text-white/70"
-                >
-                  <X className="h-4 w-4" />
-                  Cancel Edit
-                </button>
-              ) : null}
-            </form>
-
-            <div className="space-y-4">
-              <div className="rounded-[6px] border border-white/10 bg-black/30 p-4">
-                <p className="mb-3 font-ui text-xs uppercase tracking-[0.16em] text-white/80">
-                  Preview <span className="text-white/45">(title-safe applied)</span>
-                </p>
-                {selectedKind === "LOWER_THIRD" && layoutMode === "lower_third" ? (
-                  <BroadcastLowerThirdPreset
-                    mainText={primary || selectedHelp.placeholderPrimary}
-                    subtitleText={secondary || selectedHelp.placeholderSecondary}
-                    logoUrl={imageUrl.trim() || null}
-                    className="rounded-[6px] border border-[#315ebd]/70 shadow-inner"
-                  />
-                ) : selectedKind === "SLATE" || layoutMode === "fullscreen" ? (
-                  <BroadcastPresentationSlate
-                    headerText={primary || selectedHelp.placeholderPrimary}
-                    bodyText={secondary || selectedHelp.placeholderSecondary}
-                    logoUrl={imageUrl.trim() || null}
-                    className="rounded-[6px] border border-[#315ebd]/70 shadow-inner"
-                  />
-                ) : (
-                  <div className="aspect-video rounded-[6px] border border-[#315ebd]/70 bg-[radial-gradient(circle_at_18%_18%,rgba(0,115,255,0.42),transparent_34%),radial-gradient(circle_at_82%_82%,rgba(255,40,174,0.34),transparent_38%),linear-gradient(135deg,#061022,#110727)] p-[5%] shadow-inner">
-                  <div ref={previewSurfaceRef} className="relative h-full w-full overflow-hidden rounded-[6px] bg-black/20">
-                    {imageUrl.trim() ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={imageUrl.trim()}
-                        alt=""
-                        className="absolute right-4 top-4 max-h-12 max-w-[28%] object-contain drop-shadow-[0_0_14px_rgba(0,168,255,0.45)]"
-                      />
+                  <div role="presentation" onPointerDown={beginDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} className={`absolute z-10 touch-none select-none border border-dashed border-[#00bff8]/60 ${layoutMode === "fullscreen" || layoutMode === "sanctuary_video" ? "cursor-default" : "cursor-move"}`} style={previewBoxStyle}>
+                    {layoutMode === "fullscreen" || layoutMode === "sanctuary_video" ? (
+                      <div className="grid h-full w-full place-items-center bg-black/45 p-[5%] text-center backdrop-blur-[1px]">
+                        {imageUrl ? (
+                          <Image src={imageUrl} alt="" width={480} height={270} unoptimized className="mb-3 max-h-[38%] max-w-[44%] object-contain" />
+                        ) : null}
+                        <div><p className="font-headline text-[clamp(1.4rem,4vw,4.5rem)] uppercase leading-none tracking-[0.06em] text-white">{primary || "GRAPHIC TITLE"}</p><p className="mt-1 font-ui text-[clamp(.5rem,1.2vw,1.25rem)] uppercase tracking-[0.1em] text-white/75">{secondary}</p></div>
+                      </div>
+                    ) : layoutMode === "ticker" ? (
+                      <div className="flex h-full min-h-10 w-full items-center border border-[#ff2c9f]/70 bg-black/90 px-[3%]"><strong className="mr-[3%] font-ui text-[clamp(.45rem,.9vw,.85rem)] uppercase text-[#ff3eaa]">{primary}</strong><span className="font-body text-[clamp(.4rem,.8vw,.8rem)] text-white">{secondary}</span></div>
                     ) : (
-                      <div className="absolute right-4 top-4 text-right font-headline text-2xl font-black leading-none text-[#5ca8ff]">
-                        300
-                        <span className="block font-ui text-[0.48rem] tracking-[0.16em] text-white">AWAKENING</span>
+                      <div className="flex h-full min-h-16 w-full overflow-hidden border border-[#ff2c9f]/70 bg-[linear-gradient(100deg,rgba(3,7,10,.96),rgba(8,12,18,.9))] shadow-2xl" style={{ borderRadius: themeDraft.cornerRadiusPx, padding: Math.max(4, themeDraft.paddingPx / 4), backgroundColor: `rgba(2,5,8,${themeDraft.backgroundOpacityPercent / 100})` }}>
+                        {imageUrl ? <div className="mr-[3%] flex w-[22%] shrink-0 items-center justify-center border-r border-[#ff2c9f]/50 bg-black/35 p-[2%]"><Image src={imageUrl} alt="" width={320} height={180} unoptimized className="max-h-full max-w-full object-contain" /></div> : null}
+                        <div className="flex min-w-0 flex-1 flex-col justify-center"><p className="truncate font-headline text-[clamp(.8rem,2.2vw,2.65rem)] uppercase leading-none tracking-[0.04em] text-white">{primary || "PRIMARY TEXT"}</p><p className="mt-[1%] truncate font-ui text-[clamp(.42rem,.75vw,.8rem)] uppercase tracking-[0.08em] text-white/75">{secondary}</p></div>
                       </div>
                     )}
-                    <div
-                      className="absolute cursor-move touch-none"
-                      onPointerDown={handlePreviewDragStart}
-                      onPointerMove={handlePreviewDragMove}
-                      onPointerUp={handlePreviewDragEnd}
-                      onPointerCancel={handlePreviewDragEnd}
-                      style={{ ...previewBoxStyle, zIndex }}
-                    >
-                      {isMediaBuilder ? (
-                        <div className="flex h-full min-h-20 w-full items-center justify-center overflow-hidden rounded-[6px] border border-cyan-300/35 bg-black">
-                          {mediaUrl.trim() ? (
-                            <video src={mediaUrl.trim()} muted loop playsInline controls className="h-full w-full object-cover" />
-                          ) : (
-                            <div className="text-center">
-                              <Film className="mx-auto mb-2 h-8 w-8 text-cyan-200" />
-                              <p className="font-ui text-xs uppercase tracking-[0.18em] text-white">Sanctuary Video</p>
-                            </div>
-                          )}
-                        </div>
-                      ) : layoutMode === "ticker" ? (
-                        <div className="overflow-hidden rounded-full border border-white/15 bg-black/70 px-5 py-3">
-                          <p className={`bg-gradient-to-r ${previewAccent(selectedKind)} bg-clip-text font-ui text-sm uppercase tracking-[0.18em] text-transparent`}>
-                            {primary || selectedHelp.placeholderPrimary} / {secondary || selectedHelp.placeholderSecondary}
-                          </p>
-                        </div>
-                      ) : (
-                        <div
-                          className="h-full border border-white/15 bg-black/70"
-                          style={{
-                            borderRadius: themeDraft.cornerRadiusPx,
-                            padding: themeDraft.paddingPx,
-                            backgroundColor: `rgba(0,0,0,${themeDraft.backgroundOpacityPercent / 100})`,
-                          }}
-                        >
-                          <div className={`mb-3 h-1.5 w-40 max-w-full rounded-full bg-gradient-to-r ${previewAccent(selectedKind)}`} />
-                          <h3 className="font-headline text-2xl uppercase tracking-[0.08em] text-white sm:text-3xl">
-                            {primary || selectedHelp.placeholderPrimary}
-                          </h3>
-                          <p className="mt-1 font-ui text-sm uppercase tracking-[0.16em] text-[#ff4eb7]">
-                            {secondary || selectedHelp.placeholderSecondary}
-                          </p>
-                        </div>
-                      )}
-                    </div>
+                    {["-left-1 -top-1", "-right-1 -top-1", "-bottom-1 -left-1", "-bottom-1 -right-1", "-bottom-1 left-1/2"].map((position) => <span key={position} className={`absolute h-2 w-2 rounded-[1px] bg-[#00bff8] ${position}`} />)}
                   </div>
                 </div>
+              </div>
+            </section>
+
+            <section className={`${panelClass} overflow-hidden`}>
+              <div className="flex items-end justify-between border-b border-white/10 px-4 py-3">
+                <div><h2 className="font-headline text-xl uppercase tracking-[0.05em] text-white/85">Master Graphics Catalog</h2><p className="mt-1 font-ui text-[0.55rem] uppercase tracking-[0.08em] text-white/45">Saved items: {presets.length} <span aria-hidden="true">/</span> 20+ supported</p></div>
+                <button type="button" onClick={() => void loadWorkspace()} className="inline-flex h-8 items-center gap-1 rounded-[2px] border border-white/15 px-2 font-ui text-[0.52rem] font-bold uppercase text-white/55 transition hover:text-white"><RotateCcw className="h-3 w-3" /> Refresh</button>
+              </div>
+              <div className="max-h-[31rem] overflow-auto p-2">
+                {presets.length === 0 ? (
+                  <div className="grid min-h-44 place-items-center rounded-[2px] border border-dashed border-white/15 text-center"><div><ImageIcon className="mx-auto h-7 w-7 text-white/25" /><p className="mt-2 font-ui text-[0.62rem] uppercase tracking-wider text-white/45">No graphics saved yet</p><p className="mt-1 font-body text-xs text-white/30">Build and save the first catalog item.</p></div></div>
+                ) : (
+                  <table className="w-full min-w-[680px] border-collapse text-left">
+                    <thead className="sticky top-0 z-10 bg-[#0c1113] font-ui text-[0.52rem] uppercase tracking-[0.07em] text-white/50"><tr><th className="px-2 py-2">ID</th><th className="px-2 py-2">Type</th><th className="px-2 py-2">Primary Text</th><th className="px-2 py-2">Secondary / Media</th><th className="px-2 py-2">Layout</th><th className="px-2 py-2">Duration</th><th className="px-2 py-2">Actions</th></tr></thead>
+                    <tbody>
+                      {presets.map((preset, index) => {
+                        const metadata = decodeGraphicsPresetMetadata(preset);
+                        return (
+                          <tr key={preset.id} className={`border-t border-white/[0.07] font-body text-[0.65rem] text-white/68 transition hover:bg-white/[0.025] ${preset.is_active_on_stream ? "bg-[#7ee92d]/[0.04]" : ""}`}>
+                            <td className="whitespace-nowrap px-2 py-2 font-ui text-white/60">{catalogId(preset, index)}</td>
+                            <td className="px-2 py-2"><span className={`inline-flex rounded-[2px] border px-1.5 py-1 font-ui text-[0.48rem] font-bold uppercase ${typeColor(metadata.builderKind)}`}>{builderLabel(metadata.builderKind)}</span></td>
+                            <td className="max-w-36 truncate px-2 py-2 text-white/80" title={preset.content_primary}>{preset.content_primary}</td>
+                            <td className="max-w-44 truncate px-2 py-2" title={metadata.secondaryText ?? metadata.mediaUrl ?? ""}>{metadata.secondaryText ?? metadata.mediaUrl ?? "—"}</td>
+                            <td className="whitespace-nowrap px-2 py-2 capitalize">{metadata.layoutMode.replaceAll("_", " ")}</td>
+                            <td className="whitespace-nowrap px-2 py-2">{preset.duration_seconds ? `${preset.duration_seconds} sec` : "Manual"}</td>
+                            <td className="px-2 py-2"><div className="flex items-center gap-2"><button type="button" onClick={() => editPreset(preset)} aria-label={`Edit ${preset.content_primary}`} className="text-white/65 transition hover:text-[#00bff8]"><Pencil className="h-4 w-4" /></button><button type="button" disabled={deletingPresetId === preset.id} onClick={() => void deletePreset(preset)} aria-label={`Delete ${preset.content_primary}`} className="text-red-500 transition hover:text-red-300 disabled:opacity-40">{deletingPresetId === preset.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</button><GripVertical className="h-4 w-4 text-white/20" /></div></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 )}
               </div>
-
-              <div className="rounded-[6px] border border-white/10 bg-black/30 p-4">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <p className="font-ui text-xs uppercase tracking-[0.16em] text-white/80">
-                    Master Graphics Catalog
-                  </p>
-                  <span className="rounded-full border border-white/10 px-3 py-1 font-ui text-[0.62rem] uppercase text-white/50">
-                    {presets.length} saved
-                  </span>
-                </div>
-                <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
-                  {presets.length === 0 ? (
-                    <div className="rounded-[6px] border border-dashed border-white/15 p-6 text-center font-body text-sm text-white/50">
-                      No graphics saved yet. Build the first preset on the left.
-                    </div>
-                  ) : (
-                    presets.map((preset, index) => {
-                      const metadata = decodeGraphicsPresetMetadata(preset);
-                      return (
-                        <article
-                          key={preset.id}
-                          className={`grid gap-3 rounded-[6px] border bg-[#06101f] p-3 sm:grid-cols-[0.8fr_1fr_2fr_0.8fr_auto] ${
-                            editingPresetId === preset.id
-                              ? "border-[#00DDEB] shadow-[0_0_18px_rgba(0,221,235,0.2)]"
-                              : "border-white/10"
-                          }`}
-                        >
-                          <p className="font-ui text-[0.68rem] uppercase text-white/55">
-                            {compactId(preset.id, index)}
-                          </p>
-                          <p className="font-ui text-[0.68rem] uppercase tracking-[0.1em] text-[#8eb6ff]">
-                            {builderLabel(metadata.builderKind)}
-                          </p>
-                          <div>
-                            <p className="font-ui text-xs uppercase text-white">{preset.content_primary}</p>
-                            <p className="mt-1 truncate font-body text-xs text-white/50">
-                              {metadata.mediaUrl || metadata.imageUrl || metadata.secondaryText || "No secondary copy"}
-                            </p>
-                          </div>
-                          <p className="font-ui text-[0.68rem] uppercase text-white/45">
-                            {metadata.layoutMode.replace("_", " ")}
-                            <span className="block text-[#00DDEB]/80">
-                              {preset.duration_seconds > 0 ? `${preset.duration_seconds}s` : "Manual"}
-                            </span>
-                          </p>
-                          <div className="grid grid-cols-2 gap-2 sm:w-24">
-                            <button
-                              type="button"
-                              onClick={() => handleEditPreset(preset)}
-                              className="inline-flex min-h-9 items-center justify-center rounded-[6px] border border-[#00DDEB]/40 bg-[#00DDEB]/10 text-[#9df8ff] transition hover:bg-[#00DDEB]/20"
-                              aria-label={`Edit ${preset.content_primary}`}
-                              title="Edit positioning and content"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              disabled={deletingPresetId === preset.id}
-                              onClick={() => void handleDeletePreset(preset)}
-                              className="inline-flex min-h-9 items-center justify-center rounded-[6px] border border-red-300/40 bg-red-500/10 text-red-200 transition hover:bg-red-500/20 disabled:opacity-50"
-                              aria-label={`Delete ${preset.content_primary}`}
-                              title="Delete graphic"
-                            >
-                              {deletingPresetId === preset.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Trash2 className="h-4 w-4" />
-                              )}
-                            </button>
-                          </div>
-                        </article>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            </div>
+            </section>
           </div>
-        )}
-
-        {error ? (
-          <div className="mt-4 rounded-[6px] border border-red-500/40 bg-red-500/10 p-3 font-body text-sm text-red-100">
-            {error}
-          </div>
-        ) : null}
-        {success ? (
-          <div className="mt-4 rounded-[6px] border border-emerald-400/40 bg-emerald-400/10 p-3 font-body text-sm text-emerald-100">
-            {success}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="grid gap-3 rounded-[6px] border border-white/10 bg-[#050814]/94 p-4 sm:grid-cols-3">
-        {[
-          ["Position controls", "Save X/Y placement, size, anchor, and layer for every graphic."],
-          ["Sanctuary video", "Pre-build a video roll-in that can be displayed on stream from the Cockpit deck."],
-          ["Duration timers", "Manual, 15s, 30s, and custom durations are saved with every preset."],
-        ].map(([title, copy]) => (
-          <div key={title} className="rounded-[6px] border border-white/10 bg-white/[0.03] p-4">
-            <MonitorPlay className="mb-3 h-5 w-5 text-[#00DDEB]" />
-            <p className="font-ui text-xs uppercase tracking-[0.14em] text-white">{title}</p>
-            <p className="mt-2 font-body text-sm text-white/50">{copy}</p>
-          </div>
-        ))}
-      </div>
-
-      <p className="text-center font-ui text-[0.65rem] uppercase tracking-[0.18em] text-white/35">
-        Theme synced: radius {theme.corner_radius_px}px / padding {theme.padding_px}px / opacity{" "}
-        {theme.background_opacity_percent}% / {theme.placement_anchor.replace("_", " ")}
-      </p>
-    </section>
+        </form>
+      )}
+    </div>
   );
 }
