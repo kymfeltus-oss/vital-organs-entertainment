@@ -1,13 +1,38 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Music2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Music2, Play } from "lucide-react";
 import { APPLE_MUSIC_SINGLE_URL } from "@/lib/music/assets";
 
-const APPLE_MUSIC_EMBED_URL =
-  "https://embed.music.apple.com/us/album/hallelujah-anyhow-single/1640220509";
+const LIVE_END_MUSIC_URL = "/intro-music.m4a";
 
 /** Attendee end card shown immediately after the operator ends the broadcast. */
 export default function LiveEndedThankYou() {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.volume = 0.82;
+    void audio.play().then(
+      () => setAutoplayBlocked(false),
+      () => setAutoplayBlocked(true),
+    );
+  }, []);
+
+  const startMusic = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    void audio.play().then(
+      () => setAutoplayBlocked(false),
+      () => setAutoplayBlocked(true),
+    );
+  };
+
   return (
     <main className="relative min-h-dvh overflow-x-hidden bg-[#020203] px-4 py-[max(1rem,env(safe-area-inset-top))] text-white sm:px-6 lg:grid lg:place-items-center lg:py-8">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_8%,rgba(0,168,255,0.22),transparent_34%),radial-gradient(circle_at_82%_78%,rgba(255,47,175,0.2),transparent_38%),linear-gradient(145deg,#070813_0%,#020203_52%,#09020a_100%)]" />
@@ -50,20 +75,33 @@ export default function LiveEndedThankYou() {
               </span>
               <div>
                 <p className="font-ui text-[0.58rem] font-black uppercase tracking-[0.14em] text-[#ff64bb]">
-                  Keep the praise going
+                  Thank-you soundtrack
                 </p>
-                <p className="font-body text-sm text-white/70">Play “Hallelujah Anyhow”</p>
+                <p className="font-body text-sm text-white/70">The Awakening intro song</p>
               </div>
             </div>
-            <iframe
-              title="Play Hallelujah Anyhow by Ian Craig and 300 on Apple Music"
-              src={APPLE_MUSIC_EMBED_URL}
-              allow="autoplay *; encrypted-media *; fullscreen *; clipboard-write"
-              sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation-by-user-activation"
-              className="h-[175px] w-full overflow-hidden rounded-xl border-0 bg-black"
+            <audio
+              ref={audioRef}
+              src={LIVE_END_MUSIC_URL}
+              autoPlay
+              controls
+              preload="auto"
+              className="h-12 w-full rounded-full accent-[#ff3da8]"
+              aria-label="The Awakening intro song"
+              onPlay={() => setAutoplayBlocked(false)}
             />
+            {autoplayBlocked ? (
+              <button
+                type="button"
+                onClick={startMusic}
+                className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-[#ff3da8]/45 bg-[#ff3da8]/10 px-4 font-ui text-[0.62rem] font-black uppercase tracking-[0.1em] text-[#ff75c1] transition hover:bg-[#ff3da8]/20"
+              >
+                <Play className="h-4 w-4 fill-current" aria-hidden="true" />
+                Play Thank-You Music
+              </button>
+            ) : null}
             <p className="mt-2 px-1 font-body text-[0.65rem] text-white/40">
-              Music preview provided courtesy of Apple Music. Press play if your browser blocks sound.
+              The song starts automatically when allowed by the viewer&apos;s browser.
             </p>
           </div>
 
