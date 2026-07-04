@@ -29,6 +29,7 @@ import {
   Upload,
 } from "lucide-react";
 import Image from "next/image";
+import { BroadcastLowerThirdPreset } from "@/components/owner/BroadcastGraphicPresets";
 import GraphicsMonetizationRemindersPanel from "@/components/owner/GraphicsMonetizationRemindersPanel";
 import {
   decodeGraphicsPresetMetadata,
@@ -617,32 +618,43 @@ export default function GraphicsSuitePrepClient() {
               </div>
               <div className="p-4">
                 <div ref={previewSurfaceRef} className="relative aspect-video overflow-hidden rounded-[2px] border border-[#006ca0]/45 bg-[#020508] shadow-[inset_0_0_36px_rgba(0,0,0,0.55)]">
-                  {isVideo && mediaUrl ? (
-                    <video src={mediaUrl} muted autoPlay loop playsInline className="absolute inset-0 h-full w-full object-cover" />
+                  {selectedKind === "LOWER_THIRD" && layoutMode === "lower_third" ? (
+                    <BroadcastLowerThirdPreset
+                      mainText={primary || selectedHelp.placeholderPrimary}
+                      subtitleText={secondary || selectedHelp.placeholderSecondary}
+                      logoUrl={imageUrl.trim() || null}
+                      className="h-full rounded-[2px]"
+                    />
                   ) : (
-                    <Image src="/effects/hero-audience-banner.png" alt="Broadcast preview audience" fill sizes="(min-width: 1024px) 50vw, 100vw" className="absolute inset-0 h-full w-full object-cover opacity-80" />
-                  )}
-                  <div className="absolute inset-[2.5%] border border-dashed border-[#00bff8]/35" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-[#0075ff]/10" />
+                    <>
+                      {isVideo && mediaUrl ? (
+                        <video src={mediaUrl} muted autoPlay loop playsInline className="absolute inset-0 h-full w-full object-cover" />
+                      ) : (
+                        <Image src="/effects/hero-audience-banner.png" alt="Broadcast preview audience" fill sizes="(min-width: 1024px) 50vw, 100vw" className="absolute inset-0 h-full w-full object-cover opacity-80" />
+                      )}
+                      <div className="absolute inset-[2.5%] border border-dashed border-[#00bff8]/35" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-[#0075ff]/10" />
 
-                  <div role="presentation" onPointerDown={beginDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} className={`absolute z-10 touch-none select-none border border-dashed border-[#00bff8]/60 ${layoutMode === "fullscreen" || layoutMode === "sanctuary_video" ? "cursor-default" : "cursor-move"}`} style={previewBoxStyle}>
-                    {layoutMode === "fullscreen" || layoutMode === "sanctuary_video" ? (
-                      <div className="grid h-full w-full place-items-center bg-black/45 p-[5%] text-center backdrop-blur-[1px]">
-                        {imageUrl ? (
-                          <Image src={imageUrl} alt="" width={480} height={270} unoptimized className="mb-3 max-h-[38%] max-w-[44%] object-contain" />
-                        ) : null}
-                        <div><p className="font-headline text-[clamp(1.4rem,4vw,4.5rem)] uppercase leading-none tracking-[0.06em] text-white">{primary || "GRAPHIC TITLE"}</p><p className="mt-1 font-ui text-[clamp(.5rem,1.2vw,1.25rem)] uppercase tracking-[0.1em] text-white/75">{secondary}</p></div>
+                      <div role="presentation" onPointerDown={beginDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} className={`absolute z-10 touch-none select-none border border-dashed border-[#00bff8]/60 ${layoutMode === "fullscreen" || layoutMode === "sanctuary_video" ? "cursor-default" : "cursor-move"}`} style={previewBoxStyle}>
+                        {layoutMode === "fullscreen" || layoutMode === "sanctuary_video" ? (
+                          <div className="grid h-full w-full place-items-center bg-black/45 p-[5%] text-center backdrop-blur-[1px]">
+                            {imageUrl ? (
+                              <Image src={imageUrl} alt="" width={480} height={270} unoptimized className="mb-3 max-h-[38%] max-w-[44%] object-contain" />
+                            ) : null}
+                            <div><p className="font-headline text-[clamp(1.4rem,4vw,4.5rem)] uppercase leading-none tracking-[0.06em] text-white">{primary || "GRAPHIC TITLE"}</p><p className="mt-1 font-ui text-[clamp(.5rem,1.2vw,1.25rem)] uppercase tracking-[0.1em] text-white/75">{secondary}</p></div>
+                          </div>
+                        ) : layoutMode === "ticker" ? (
+                          <div className="flex h-full min-h-10 w-full items-center border border-[#ff2c9f]/70 bg-black/90 px-[3%]"><strong className="mr-[3%] font-ui text-[clamp(.45rem,.9vw,.85rem)] uppercase text-[#ff3eaa]">{primary}</strong><span className="font-body text-[clamp(.4rem,.8vw,.8rem)] text-white">{secondary}</span></div>
+                        ) : (
+                          <div className="flex h-full min-h-16 w-full overflow-hidden border border-[#ff2c9f]/70 bg-[linear-gradient(100deg,rgba(3,7,10,.96),rgba(8,12,18,.9))] shadow-2xl" style={{ borderRadius: themeDraft.cornerRadiusPx, padding: Math.max(4, themeDraft.paddingPx / 4), backgroundColor: `rgba(2,5,8,${themeDraft.backgroundOpacityPercent / 100})` }}>
+                            {imageUrl ? <div className="mr-[3%] flex w-[22%] shrink-0 items-center justify-center border-r border-[#ff2c9f]/50 bg-black/35 p-[2%]"><Image src={imageUrl} alt="" width={320} height={180} unoptimized className="max-h-full max-w-full object-contain" /></div> : null}
+                            <div className="flex min-w-0 flex-1 flex-col justify-center"><p className="truncate font-headline text-[clamp(.8rem,2.2vw,2.65rem)] uppercase leading-none tracking-[0.04em] text-white">{primary || "PRIMARY TEXT"}</p><p className="mt-[1%] truncate font-ui text-[clamp(.42rem,.75vw,.8rem)] uppercase tracking-[0.08em] text-white/75">{secondary}</p></div>
+                          </div>
+                        )}
+                        {["-left-1 -top-1", "-right-1 -top-1", "-bottom-1 -left-1", "-bottom-1 -right-1", "-bottom-1 left-1/2"].map((position) => <span key={position} className={`absolute h-2 w-2 rounded-[1px] bg-[#00bff8] ${position}`} />)}
                       </div>
-                    ) : layoutMode === "ticker" ? (
-                      <div className="flex h-full min-h-10 w-full items-center border border-[#ff2c9f]/70 bg-black/90 px-[3%]"><strong className="mr-[3%] font-ui text-[clamp(.45rem,.9vw,.85rem)] uppercase text-[#ff3eaa]">{primary}</strong><span className="font-body text-[clamp(.4rem,.8vw,.8rem)] text-white">{secondary}</span></div>
-                    ) : (
-                      <div className="flex h-full min-h-16 w-full overflow-hidden border border-[#ff2c9f]/70 bg-[linear-gradient(100deg,rgba(3,7,10,.96),rgba(8,12,18,.9))] shadow-2xl" style={{ borderRadius: themeDraft.cornerRadiusPx, padding: Math.max(4, themeDraft.paddingPx / 4), backgroundColor: `rgba(2,5,8,${themeDraft.backgroundOpacityPercent / 100})` }}>
-                        {imageUrl ? <div className="mr-[3%] flex w-[22%] shrink-0 items-center justify-center border-r border-[#ff2c9f]/50 bg-black/35 p-[2%]"><Image src={imageUrl} alt="" width={320} height={180} unoptimized className="max-h-full max-w-full object-contain" /></div> : null}
-                        <div className="flex min-w-0 flex-1 flex-col justify-center"><p className="truncate font-headline text-[clamp(.8rem,2.2vw,2.65rem)] uppercase leading-none tracking-[0.04em] text-white">{primary || "PRIMARY TEXT"}</p><p className="mt-[1%] truncate font-ui text-[clamp(.42rem,.75vw,.8rem)] uppercase tracking-[0.08em] text-white/75">{secondary}</p></div>
-                      </div>
-                    )}
-                    {["-left-1 -top-1", "-right-1 -top-1", "-bottom-1 -left-1", "-bottom-1 -right-1", "-bottom-1 left-1/2"].map((position) => <span key={position} className={`absolute h-2 w-2 rounded-[1px] bg-[#00bff8] ${position}`} />)}
-                  </div>
+                    </>
+                  )}
                 </div>
               </div>
             </section>
