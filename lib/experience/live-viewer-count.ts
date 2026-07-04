@@ -1,8 +1,11 @@
 /** Initial display buffer, gradually reduced while the attendee remains on the live page. */
 export const LIVE_VIEWER_DISPLAY_BUFFER = 400;
 export const LIVE_VIEWER_DISPLAY_TARGET = 85;
-export const LIVE_VIEWER_DECAY_INTERVAL_MS = 2_000;
-export const LIVE_VIEWER_DECAY_STEP = 1;
+export const LIVE_VIEWER_DECAY_INTERVAL_MS = 3_000;
+const LIVE_VIEWER_DECAY_MIN_DROP = 4;
+const LIVE_VIEWER_DECAY_MAX_DROP = 12;
+const LIVE_VIEWER_UPTICK_CHANCE = 0.2;
+const LIVE_VIEWER_UPTICK_MAX = 3;
 
 export const LIVE_VIEWER_PRESENCE_CHANNEL = "live-viewer-presence";
 
@@ -13,6 +16,30 @@ export function applyLiveViewerDisplayBuffer(
   const safeActual = Number.isFinite(actualCount) ? Math.max(0, actualCount) : 0;
   const safeBuffer = Number.isFinite(displayBuffer) ? Math.max(0, displayBuffer) : 0;
   return Math.round(safeActual + safeBuffer);
+}
+
+/** Mostly trends downward, with occasional small upticks before settling at the target. */
+export function nextLiveViewerDisplayBuffer(
+  currentBuffer: number,
+  actualCount: number,
+  random: () => number = Math.random,
+): number {
+  const safeActual = Number.isFinite(actualCount) ? Math.max(0, actualCount) : 0;
+  const targetBuffer = Math.max(0, LIVE_VIEWER_DISPLAY_TARGET - safeActual);
+  const safeCurrent = Number.isFinite(currentBuffer)
+    ? Math.max(targetBuffer, Math.round(currentBuffer))
+    : LIVE_VIEWER_DISPLAY_BUFFER;
+
+  if (safeCurrent <= targetBuffer) return targetBuffer;
+
+  if (random() < LIVE_VIEWER_UPTICK_CHANCE) {
+    const increase = 1 + Math.floor(random() * LIVE_VIEWER_UPTICK_MAX);
+    return Math.min(LIVE_VIEWER_DISPLAY_BUFFER, safeCurrent + increase);
+  }
+
+  const dropRange = LIVE_VIEWER_DECAY_MAX_DROP - LIVE_VIEWER_DECAY_MIN_DROP + 1;
+  const decrease = LIVE_VIEWER_DECAY_MIN_DROP + Math.floor(random() * dropRange);
+  return Math.max(targetBuffer, safeCurrent - decrease);
 }
 
 export function formatLiveViewerCount(count: number): string {

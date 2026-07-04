@@ -6,10 +6,9 @@ import {
   countLiveViewerPresence,
   formatLiveViewerCount,
   LIVE_VIEWER_DECAY_INTERVAL_MS,
-  LIVE_VIEWER_DECAY_STEP,
   LIVE_VIEWER_DISPLAY_BUFFER,
-  LIVE_VIEWER_DISPLAY_TARGET,
   LIVE_VIEWER_PRESENCE_CHANNEL,
+  nextLiveViewerDisplayBuffer,
   resolveLiveViewerPresenceKey,
 } from "@/lib/experience/live-viewer-count";
 import { getSupabase } from "@/lib/supabase/client";
@@ -75,10 +74,7 @@ export function useLiveViewerCount({
     if (!enabled) return;
 
     const timer = window.setInterval(() => {
-      setDisplayBuffer((current) => {
-        const targetBuffer = Math.max(0, LIVE_VIEWER_DISPLAY_TARGET - actualCount);
-        return Math.max(targetBuffer, current - LIVE_VIEWER_DECAY_STEP);
-      });
+      setDisplayBuffer((current) => nextLiveViewerDisplayBuffer(current, actualCount));
     }, LIVE_VIEWER_DECAY_INTERVAL_MS);
 
     return () => window.clearInterval(timer);
