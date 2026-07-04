@@ -24,11 +24,11 @@ export const LIVE_REACTION_CATALOG: readonly LiveReactionDefinition[] = [
   { type: "seed", label: "Seed", emoji: "🌱" },
 ] as const;
 
-export const MAX_FLOATING_LIVE_REACTIONS = 25;
-export const LIVE_REACTION_CLIENT_COOLDOWN_MS = 500;
+export const MAX_FLOATING_LIVE_REACTIONS = 6;
+export const LIVE_REACTION_CLIENT_COOLDOWN_MS = 1_500;
 export const LIVE_REACTION_RATE_WINDOW_MS = 10_000;
-export const LIVE_REACTION_RATE_MAX_PER_WINDOW = 8;
-export const LIVE_REACTION_MIN_INTERVAL_MS = 500;
+export const LIVE_REACTION_RATE_MAX_PER_WINDOW = 4;
+export const LIVE_REACTION_MIN_INTERVAL_MS = 1_500;
 export const LIVE_REACTION_RETENTION_MS = 2 * 60 * 60 * 1_000;
 
 export type LiveReactionRow = {

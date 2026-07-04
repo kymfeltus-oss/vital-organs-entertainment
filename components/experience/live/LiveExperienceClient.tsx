@@ -86,6 +86,8 @@ const HLS_RECOVERY_BASE_MS = 1_500;
 const EMOJI_BURST_EVENT = "emoji_burst";
 const GLOBAL_OFFERING_ALERT_EVENT = "global_offering_alert";
 const QUICK_SOW_COST = 100;
+const CUSTOM_EMOJI_COOLDOWN_MS = 1_500;
+const MAX_CONCURRENT_CUSTOM_EMOJIS = 4;
 
 function resolveManifestPollMs(hasPlaybackUrl: boolean): number {
   const baseMs = hasPlaybackUrl ? MANIFEST_RETRY_STEADY_MS : MANIFEST_RETRY_FAST_MS;
@@ -96,6 +98,13 @@ type FloatingEmojiBurst = {
   id: string;
   assetId: string;
 };
+
+function appendFloatingEmoji(
+  current: FloatingEmojiBurst[],
+  incoming: FloatingEmojiBurst,
+): FloatingEmojiBurst[] {
+  return [...current, incoming].slice(-MAX_CONCURRENT_CUSTOM_EMOJIS);
+}
 
 type LedgerEntry = {
   id: string;
@@ -302,6 +311,7 @@ export default function LiveExperienceClient({
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
   const [buySeedsOpen, setBuySeedsOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
+  const lastCustomEmojiAtRef = useRef(0);
 
   const { playbackUrl } = useLiveManifestPoller(manifest);
   const {
@@ -924,7 +934,9 @@ export default function LiveExperienceClient({
             ? crypto.randomUUID()
             : `${Date.now()}-${Math.random()}`;
 
-        setFloatingEmojis((current) => [...current, { id: burstId, assetId: reaction.assetId }]);
+        setFloatingEmojis((current) =>
+          appendFloatingEmoji(current, { id: burstId, assetId: reaction.assetId }),
+        );
         setLedgerEntries((current) =>
           [
             {
@@ -1451,7 +1463,9 @@ export default function LiveExperienceClient({
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random()}`;
 
-    setFloatingEmojis((current) => [...current, { id: burstId, assetId: reaction.assetId }]);
+    setFloatingEmojis((current) =>
+      appendFloatingEmoji(current, { id: burstId, assetId: reaction.assetId }),
+    );
     setLedgerEntries((current) =>
       [
         {
@@ -1543,6 +1557,10 @@ export default function LiveExperienceClient({
 
   const handleCustomEmojiReaction = useCallback(
     (assetId: string) => {
+      const now = Date.now();
+      if (now - lastCustomEmojiAtRef.current < CUSTOM_EMOJI_COOLDOWN_MS) return;
+      lastCustomEmojiAtRef.current = now;
+
       const reaction = getLiveReactionDefinition(assetId);
 
       pushLocalEmojiBurst(reaction.assetId, `Sent ${reaction.label} reaction`);

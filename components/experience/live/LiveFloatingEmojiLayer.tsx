@@ -22,8 +22,9 @@ const AMBIENT_EMOJI_ASSETS: readonly LiveReactionAssetId[] = [
   "hallelujah",
   "awakening_glow",
 ];
-const AMBIENT_EMOJI_MIN_DELAY_MS = 3_000;
-const AMBIENT_EMOJI_MAX_DELAY_MS = 5_000;
+const AMBIENT_EMOJI_MIN_DELAY_MS = 8_000;
+const AMBIENT_EMOJI_MAX_DELAY_MS = 12_000;
+const MAX_AMBIENT_EMOJIS = 2;
 
 function nextAmbientEmojiDelayMs(): number {
   return (
@@ -54,12 +55,12 @@ export default function LiveFloatingEmojiLayer({
           id: `ambient-${variant}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           assetId,
         };
-        setAmbientBursts((current) => [...current, burst].slice(-4));
+        setAmbientBursts((current) => [...current, burst].slice(-MAX_AMBIENT_EMOJIS));
         scheduleNext(nextAmbientEmojiDelayMs());
       }, delayMs);
     };
 
-    scheduleNext(1_000 + Math.floor(Math.random() * 1_000));
+    scheduleNext(nextAmbientEmojiDelayMs());
     return () => {
       cancelled = true;
       if (timerId !== null) window.clearTimeout(timerId);

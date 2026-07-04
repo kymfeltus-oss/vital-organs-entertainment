@@ -28,7 +28,7 @@ import { getClientAppUrl } from "@/lib/client-api";
 import { getSupabase } from "@/lib/supabase/client";
 
 const LIVE_REACTIONS_CHANNEL = "live-stream-reactions";
-const FLOAT_DISMISS_MS = 1_500;
+const FLOAT_DISMISS_MS = 2_400;
 
 type LiveStreamReactionsContextValue = {
   enabled: boolean;

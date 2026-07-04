@@ -8,7 +8,7 @@ type CustomEmojiAnimatorProps = {
   onComplete: () => void;
 };
 
-const FLOAT_DURATION_MS = 2600;
+const FLOAT_DURATION_MS = 3_600;
 
 export default function CustomEmojiAnimator({ assetId, onComplete }: CustomEmojiAnimatorProps) {
   /** Narrow band along the right edge so bursts don't stack on one pixel. */
@@ -56,7 +56,7 @@ export default function CustomEmojiAnimator({ assetId, onComplete }: CustomEmoji
           }
         }
         .live-emoji-float-up {
-          animation: live-emoji-float-up 2.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          animation: live-emoji-float-up ${FLOAT_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
           will-change: transform, opacity;
         }
         @media (prefers-reduced-motion: reduce) {

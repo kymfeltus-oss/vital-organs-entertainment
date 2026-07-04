@@ -709,7 +709,7 @@ body::-webkit-scrollbar {
 }
 
 .live-reaction-burst {
-  animation: live-reaction-float 1.5s ease-out forwards;
+  animation: live-reaction-float 2.4s ease-out forwards;
   will-change: transform, opacity;
 }
 
