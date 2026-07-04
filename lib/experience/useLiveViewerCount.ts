@@ -5,6 +5,10 @@ import {
   applyLiveViewerDisplayBuffer,
   countLiveViewerPresence,
   formatLiveViewerCount,
+  LIVE_VIEWER_DECAY_INTERVAL_MS,
+  LIVE_VIEWER_DECAY_STEP,
+  LIVE_VIEWER_DISPLAY_BUFFER,
+  LIVE_VIEWER_DISPLAY_TARGET,
   LIVE_VIEWER_PRESENCE_CHANNEL,
   resolveLiveViewerPresenceKey,
 } from "@/lib/experience/live-viewer-count";
@@ -27,6 +31,7 @@ export function useLiveViewerCount({
   userId = null,
 }: UseLiveViewerCountOptions = {}): UseLiveViewerCountResult {
   const [actualCount, setActualCount] = useState(0);
+  const [displayBuffer, setDisplayBuffer] = useState(LIVE_VIEWER_DISPLAY_BUFFER);
 
   useEffect(() => {
     if (!enabled) return;
@@ -66,7 +71,20 @@ export function useLiveViewerCount({
     };
   }, [enabled, userId]);
 
-  const displayCount = applyLiveViewerDisplayBuffer(actualCount);
+  useEffect(() => {
+    if (!enabled) return;
+
+    const timer = window.setInterval(() => {
+      setDisplayBuffer((current) => {
+        const targetBuffer = Math.max(0, LIVE_VIEWER_DISPLAY_TARGET - actualCount);
+        return Math.max(targetBuffer, current - LIVE_VIEWER_DECAY_STEP);
+      });
+    }, LIVE_VIEWER_DECAY_INTERVAL_MS);
+
+    return () => window.clearInterval(timer);
+  }, [actualCount, enabled]);
+
+  const displayCount = applyLiveViewerDisplayBuffer(actualCount, displayBuffer);
 
   return {
     displayLabel: formatLiveViewerCount(displayCount),

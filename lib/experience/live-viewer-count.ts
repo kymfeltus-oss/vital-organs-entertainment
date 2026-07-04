@@ -1,11 +1,18 @@
-/** Always added on top of the realtime presence count shown to attendees. */
+/** Initial display buffer, gradually reduced while the attendee remains on the live page. */
 export const LIVE_VIEWER_DISPLAY_BUFFER = 400;
+export const LIVE_VIEWER_DISPLAY_TARGET = 85;
+export const LIVE_VIEWER_DECAY_INTERVAL_MS = 2_000;
+export const LIVE_VIEWER_DECAY_STEP = 1;
 
 export const LIVE_VIEWER_PRESENCE_CHANNEL = "live-viewer-presence";
 
-export function applyLiveViewerDisplayBuffer(actualCount: number): number {
+export function applyLiveViewerDisplayBuffer(
+  actualCount: number,
+  displayBuffer = LIVE_VIEWER_DISPLAY_BUFFER,
+): number {
   const safeActual = Number.isFinite(actualCount) ? Math.max(0, actualCount) : 0;
-  return Math.max(LIVE_VIEWER_DISPLAY_BUFFER, safeActual + LIVE_VIEWER_DISPLAY_BUFFER);
+  const safeBuffer = Number.isFinite(displayBuffer) ? Math.max(0, displayBuffer) : 0;
+  return Math.round(safeActual + safeBuffer);
 }
 
 export function formatLiveViewerCount(count: number): string {
