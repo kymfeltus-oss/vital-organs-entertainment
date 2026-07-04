@@ -55,7 +55,7 @@ export default function LiveMobileDock({
           onClick={onJoinConversation}
           aria-expanded="false"
           aria-controls="live-mobile-chat-composer"
-          className="touch-target flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 font-ui text-[0.62rem] font-bold uppercase tracking-[0.12em] text-white transition hover:border-brand-blue/35 hover:bg-brand-blue/10"
+          className="touch-target flex min-h-11 w-full min-w-0 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 font-ui text-[0.62rem] font-bold uppercase tracking-[0.12em] text-white transition hover:border-brand-blue/35 hover:bg-brand-blue/10"
         >
           <MessageCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span>Join Conversation</span>
@@ -131,9 +131,8 @@ export default function LiveMobileDock({
         </button>
       ) : null}
       <div className="px-3 pt-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        {chatOpen ? <div className="mb-2 w-full">{conversationSlot}</div> : null}
+        <div className="mb-2 w-full">{conversationSlot}</div>
         <div className="flex min-w-0 items-center gap-2">
-          {!chatOpen ? conversationSlot : null}
           <button
             type="button"
             onClick={onBuySeeds}
