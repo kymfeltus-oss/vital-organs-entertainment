@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useCallback, useMemo, useState, type CSSProperties } from "react";
 import { Check, Clock3, Copy, ExternalLink, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import HoldingRoomCountdownOverlay from "@/components/experience/holding-room/HoldingRoomCountdownOverlay";
 import OwnerProductionSideMenu from "@/components/owner/OwnerProductionSideMenu";
@@ -23,12 +23,7 @@ import {
   type EventCountdownConfig,
 } from "@/lib/live/countdown-config";
 
-const EVENT_NAME = "IAN CRAIG & 300";
-const PRESENTER_NAME = "IAN CRAIG";
-const EVENT_START_ISO = "2026-07-03T19:30:00-05:00";
 const EVENT_TIMEZONE: ScheduleTimezone = "America/Chicago";
-const EVENT_LOCATION = "New Orleans, LA";
-const LIVESTREAM_AVAILABILITY = "Available worldwide";
 
 type ShowSetupResponse = {
   state?: ShowSetupState;
@@ -42,74 +37,60 @@ type CountdownResponse = {
   error?: string;
 };
 
+type OwnerCountdownControlClientProps = {
+  initialState?: ShowSetupState;
+};
+
+function normalizeHostInputs(hostNames: string[] | undefined): string[] {
+  const cleaned = (hostNames ?? []).map((host) => host.trim()).filter(Boolean);
+  return cleaned.length ? cleaned : [""];
+}
+
 function buildPreviewEndIso(startIso: string): string {
   const startMs = new Date(startIso).getTime();
   if (Number.isNaN(startMs)) return DEFAULT_COUNTDOWN_CONFIG.end_time;
   return new Date(startMs + 4 * 60 * 60 * 1_000).toISOString();
 }
 
-export default function OwnerCountdownControlClient() {
-  const [setup, setSetup] = useState<ShowSetupState | null>(null);
-  const [eventName, setEventName] = useState(EVENT_NAME);
-  const [presenterName, setPresenterName] = useState(PRESENTER_NAME);
-  const [eventLocation, setEventLocation] = useState(EVENT_LOCATION);
-  const [livestreamAvailability, setLivestreamAvailability] = useState(LIVESTREAM_AVAILABILITY);
-  const [hostNames, setHostNames] = useState<string[]>([""]);
+export default function OwnerCountdownControlClient({
+  initialState,
+}: OwnerCountdownControlClientProps) {
   const timezone = EVENT_TIMEZONE;
-  const [dateTimeLocal, setDateTimeLocal] = useState(
-    isoToScheduleDatetimeLocal(EVENT_START_ISO, EVENT_TIMEZONE),
+  const initialDateTimeLocal = initialState?.targetDateTime
+    ? isoToScheduleDatetimeLocal(initialState.targetDateTime, timezone)
+    : "";
+  const [eventName, setEventName] = useState(initialState?.showTitle ?? "");
+  const [presenterName, setPresenterName] = useState(initialState?.presenterName ?? "");
+  const [eventLocation, setEventLocation] = useState(initialState?.eventLocation ?? "");
+  const [livestreamAvailability, setLivestreamAvailability] = useState(
+    initialState?.livestreamAvailability ?? "",
   );
+  const [hostNames, setHostNames] = useState<string[]>(
+    normalizeHostInputs(initialState?.hostNames),
+  );
+  const [dateTimeLocal, setDateTimeLocal] = useState(initialDateTimeLocal);
   const [previewReady] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const loading = false;
   const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState("Loading the live event schedule...");
+  const [message, setMessage] = useState(
+    initialState
+      ? "Saved countdown details loaded. Edit fields only when you are ready to update them."
+      : "Enter the event details, then save and publish the countdown.",
+  );
   const [tone, setTone] = useState<"info" | "success" | "error">("info");
 
   const targetIso = useMemo(
-    () => scheduleDatetimeLocalToIso(dateTimeLocal, timezone) ?? EVENT_START_ISO,
+    () => scheduleDatetimeLocalToIso(dateTimeLocal, timezone) ?? DEFAULT_COUNTDOWN_CONFIG.start_time,
     [dateTimeLocal, timezone],
   );
-  const loadSetup = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/owner/show-setup", { credentials: "include", cache: "no-store" });
-      const data = (await response.json()) as ShowSetupResponse;
-      if (!response.ok || !data.state) throw new Error(data.error ?? "Unable to load countdown setup.");
-
-      const savedDate = new Date(data.state.targetDateTime).getTime();
-      const useEventDefault = !Number.isFinite(savedDate) || savedDate < Date.now();
-      const nextIso = useEventDefault ? EVENT_START_ISO : data.state.targetDateTime;
-      setSetup(data.state);
-      setEventName(
-        !data.state.showTitle || data.state.showTitle === "The Awakening Experience"
-          ? EVENT_NAME
-          : data.state.showTitle,
-      );
-      setPresenterName(
-        !data.state.presenterName || data.state.presenterName === "Pastor David Jenkins"
-          ? PRESENTER_NAME
-          : data.state.presenterName,
-      );
-      setHostNames(data.state.hostNames.length ? data.state.hostNames : [""]);
-      setEventLocation(data.state.eventLocation || EVENT_LOCATION);
-      setLivestreamAvailability(data.state.livestreamAvailability || LIVESTREAM_AVAILABILITY);
-      setDateTimeLocal(isoToScheduleDatetimeLocal(nextIso, EVENT_TIMEZONE));
-      setTone("success");
-      setMessage(useEventDefault ? "July 3 event details preloaded. Save to publish the schedule." : "Countdown schedule loaded.");
-    } catch (error) {
-      setTone("error");
-      setMessage(error instanceof Error ? error.message : "Countdown setup failed to load.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    queueMicrotask(() => void loadSetup());
-  }, [loadSetup]);
 
   const saveSchedule = useCallback(async () => {
-    if (!setup || pending) return;
+    if (pending) return;
+    if (!eventName.trim()) {
+      setTone("error");
+      setMessage("Enter an event name before saving.");
+      return;
+    }
     const parsedIso = scheduleDatetimeLocalToIso(dateTimeLocal, timezone);
     if (!parsedIso) {
       setTone("error");
@@ -121,25 +102,46 @@ export default function OwnerCountdownControlClient() {
     setTone("info");
     setMessage("Publishing countdown schedule...");
     try {
-      const response = await fetch("/api/owner/show-setup", {
+      const submittedHosts = hostNames.map((host) => host.trim()).filter(Boolean);
+      const response = await fetch("/api/owner/countdown/update", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...setup,
-          showTitle: eventName,
+          title: eventName,
           presenterName,
           eventLocation,
           livestreamAvailability,
-          hostNames: hostNames.map((host) => host.trim()).filter(Boolean),
+          hostNames: submittedHosts,
           targetDateTime: parsedIso,
+          schedule_timezone: timezone,
         }),
       });
       const data = (await response.json()) as ShowSetupResponse;
       if (!response.ok || !data.state) throw new Error(data.error ?? "Unable to save countdown schedule.");
-      setSetup(data.state);
+
+      const persistedTime = new Date(data.state.targetDateTime).getTime();
+      const requestedTime = new Date(parsedIso).getTime();
+      const verified =
+        data.state.showTitle === eventName.trim() &&
+        persistedTime === requestedTime &&
+        (!presenterName.trim() || data.state.presenterName === presenterName.trim()) &&
+        (!eventLocation.trim() || data.state.eventLocation === eventLocation.trim()) &&
+        (!livestreamAvailability.trim() ||
+          data.state.livestreamAvailability === livestreamAvailability.trim()) &&
+        submittedHosts.every((host) => data.state?.hostNames.includes(host));
+      if (!verified) {
+        throw new Error("The countdown response did not match the submitted schedule. Nothing was assumed saved.");
+      }
+
+      setEventName(data.state.showTitle);
+      setPresenterName(data.state.presenterName);
+      setEventLocation(data.state.eventLocation);
+      setLivestreamAvailability(data.state.livestreamAvailability);
+      setHostNames(normalizeHostInputs(data.state.hostNames));
+      setDateTimeLocal(isoToScheduleDatetimeLocal(data.state.targetDateTime, timezone));
       setTone("success");
-      setMessage(data.message ?? "Countdown schedule is live across the app.");
+      setMessage("Countdown schedule saved, verified, and published across the app.");
     } catch (error) {
       setTone("error");
       setMessage(error instanceof Error ? error.message : "Countdown schedule failed to save.");
@@ -154,7 +156,6 @@ export default function OwnerCountdownControlClient() {
     livestreamAvailability,
     pending,
     presenterName,
-    setup,
     timezone,
   ]);
 
@@ -173,7 +174,6 @@ export default function OwnerCountdownControlClient() {
         });
         const data = (await response.json()) as CountdownResponse;
         if (!response.ok) throw new Error(data.error ?? "Countdown adjustment failed.");
-        await loadSetup();
         setTone("success");
         setMessage(data.message ?? "Countdown adjusted.");
       } catch (error) {
@@ -183,18 +183,18 @@ export default function OwnerCountdownControlClient() {
         setPending(false);
       }
     },
-    [loadSetup, pending],
+    [pending],
   );
 
-  const resetDefaults = () => {
-    setEventName(EVENT_NAME);
-    setPresenterName(PRESENTER_NAME);
-    setEventLocation(EVENT_LOCATION);
-    setLivestreamAvailability(LIVESTREAM_AVAILABILITY);
+  const clearEditor = () => {
+    setEventName("");
+    setPresenterName("");
+    setEventLocation("");
+    setLivestreamAvailability("");
     setHostNames([""]);
-    setDateTimeLocal(isoToScheduleDatetimeLocal(EVENT_START_ISO, EVENT_TIMEZONE));
+    setDateTimeLocal("");
     setTone("info");
-    setMessage("Event defaults restored in the editor. Save to publish them.");
+    setMessage("Editor cleared. The currently published countdown was not changed.");
   };
 
   const copyOverlay = async () => {
@@ -264,7 +264,6 @@ export default function OwnerCountdownControlClient() {
                   value={eventLocation}
                   onChange={(event) => setEventLocation(event.target.value)}
                   disabled={loading || pending}
-                  placeholder="New Orleans, LA"
                   maxLength={100}
                   className="mt-2 min-h-12 w-full rounded-lg border border-white/15 bg-[#050816] px-4 font-body text-white outline-none focus:border-[#00DDEB]"
                 />
@@ -275,7 +274,6 @@ export default function OwnerCountdownControlClient() {
                   value={livestreamAvailability}
                   onChange={(event) => setLivestreamAvailability(event.target.value)}
                   disabled={loading || pending}
-                  placeholder="Available worldwide"
                   maxLength={100}
                   className="mt-2 min-h-12 w-full rounded-lg border border-white/15 bg-[#050816] px-4 font-body text-white outline-none focus:border-[#00DDEB]"
                 />
@@ -310,7 +308,6 @@ export default function OwnerCountdownControlClient() {
                         )
                       }
                       disabled={loading || pending}
-                      placeholder={`Host ${index + 1} name`}
                       maxLength={80}
                       className="min-h-12 min-w-0 flex-1 rounded-lg border border-white/15 bg-[#050816] px-4 font-body text-white outline-none focus:border-[#00DDEB]"
                     />
@@ -354,11 +351,11 @@ export default function OwnerCountdownControlClient() {
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              <button type="button" disabled={loading || pending || !setup} onClick={() => void saveSchedule()} className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#D80A86] via-[#7B3DFF] to-[#00A7FF] px-5 font-ui text-xs uppercase tracking-[0.14em] disabled:opacity-45">
+              <button type="button" disabled={loading || pending} onClick={() => void saveSchedule()} className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#D80A86] via-[#7B3DFF] to-[#00A7FF] px-5 font-ui text-xs uppercase tracking-[0.14em] disabled:opacity-45">
                 <Save className="h-4 w-4" /> {pending ? "Saving..." : "Save & Publish"}
               </button>
-              <button type="button" disabled={pending} onClick={resetDefaults} className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-white/15 px-4 font-ui text-xs uppercase text-white/65">
-                <RotateCcw className="h-4 w-4" /> Defaults
+              <button type="button" disabled={pending} onClick={clearEditor} className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-white/15 px-4 font-ui text-xs uppercase text-white/65">
+                <RotateCcw className="h-4 w-4" /> Clear
               </button>
             </div>
             <p className={`mt-4 flex items-center gap-2 font-body text-sm ${tone === "error" ? "text-red-300" : tone === "success" ? "text-emerald-300" : "text-white/55"}`}>

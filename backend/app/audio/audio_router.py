@@ -95,18 +95,24 @@ def list_buses(x_internal_token: str | None = Header(default=None)):
 def mute_bus(bus_key: str, x_internal_token: str | None = Header(default=None)):
     _verify_token(x_internal_token)
     bus = next((b for b in audio_service.x32.buses() if b.key == bus_key), None)
-    if bus:
-        bus.muted = True
-    return {"ok": True}
+    if not bus:
+        raise HTTPException(status_code=404, detail="Unknown audio bus")
+    if not audio_service.x32.is_online():
+        raise HTTPException(status_code=503, detail="X32 is offline")
+    audio_service.set_bus_mute(bus_key, True)
+    return {"ok": True, "busKey": bus_key, "muted": True}
 
 
 @router.post("/buses/{bus_key}/unmute")
 def unmute_bus(bus_key: str, x_internal_token: str | None = Header(default=None)):
     _verify_token(x_internal_token)
     bus = next((b for b in audio_service.x32.buses() if b.key == bus_key), None)
-    if bus:
-        bus.muted = False
-    return {"ok": True}
+    if not bus:
+        raise HTTPException(status_code=404, detail="Unknown audio bus")
+    if not audio_service.x32.is_online():
+        raise HTTPException(status_code=503, detail="X32 is offline")
+    audio_service.set_bus_mute(bus_key, False)
+    return {"ok": True, "busKey": bus_key, "muted": False}
 
 
 @router.get("/health")
@@ -181,8 +187,12 @@ def patch_runtime_mappings(body: list[dict], x_internal_token: str | None = Head
 @router.post("/scenes/{scene_id}/recall")
 def recall_scene(scene_id: int, x_internal_token: str | None = Header(default=None)):
     _verify_token(x_internal_token)
+    if scene_id < 1 or scene_id > 100:
+        raise HTTPException(status_code=400, detail="Scene index must be between 1 and 100")
+    if not audio_service.x32.is_online():
+        raise HTTPException(status_code=503, detail="X32 is offline")
     audio_service.recall_scene(scene_id)
-    return {"ok": True}
+    return {"ok": True, "sceneId": scene_id}
 
 
 @router.get("/scenes")

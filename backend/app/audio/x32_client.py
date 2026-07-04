@@ -14,6 +14,18 @@ from pythonosc.osc_server import ThreadingOSCUDPServer
 from pythonosc.udp_client import SimpleUDPClient
 
 
+BUS_OSC_PREFIXES = {
+    "lr_master": "/lr",
+    "stream_mix": "/bus/01",
+    "monitor_mix": "/bus/02",
+    "choir_bus": "/bus/03",
+    "band_bus": "/bus/04",
+    "pastor_mic": "/bus/05",
+    "audience_mics": "/bus/06",
+    "recording_bus": "/bus/07",
+}
+
+
 def _fader_to_db(value: float) -> float:
     if value <= 0.0:
         return -90.0
@@ -96,14 +108,9 @@ class X32Client:
             self._dispatcher.map(f"/ch/{ch_str}/mix/solo", self._make_solo_handler(ch))
             self._dispatcher.map(f"/ch/{ch_str}/meter", self._make_meter_handler(ch))
 
-        self._dispatcher.map("/lr/mix/fader", self._bus_fader_handler("lr_master"))
-        self._dispatcher.map("/bus/01/mix/fader", self._bus_fader_handler("stream_mix"))
-        self._dispatcher.map("/bus/02/mix/fader", self._bus_fader_handler("monitor_mix"))
-        self._dispatcher.map("/bus/03/mix/fader", self._bus_fader_handler("choir_bus"))
-        self._dispatcher.map("/bus/04/mix/fader", self._bus_fader_handler("band_bus"))
-        self._dispatcher.map("/bus/05/mix/fader", self._bus_fader_handler("pastor_mic"))
-        self._dispatcher.map("/bus/06/mix/fader", self._bus_fader_handler("audience_mics"))
-        self._dispatcher.map("/bus/07/mix/fader", self._bus_fader_handler("recording_bus"))
+        for key, prefix in BUS_OSC_PREFIXES.items():
+            self._dispatcher.map(f"{prefix}/mix/fader", self._bus_fader_handler(key))
+            self._dispatcher.map(f"{prefix}/mix/on", self._bus_mute_handler(key))
         self._dispatcher.map("/scene/name", self._scene_name_handler)
         self._dispatcher.map("/-stat/sound/ctrl/chn/scene", self._scene_index_handler)
         self._dispatcher.map("/xinfo", self._xinfo_handler)
@@ -174,6 +181,15 @@ class X32Client:
 
         return handler
 
+    def _bus_mute_handler(self, key: str):
+        def handler(_address: str, value: float) -> None:
+            bus = self._buses[key]
+            bus.muted = float(value) == 0.0
+            bus.updated_at = time.time()
+            self._notify()
+
+        return handler
+
     def _scene_name_handler(self, _address: str, name: str) -> None:
         self._current_scene = str(name)
         self._notify()
@@ -209,7 +225,9 @@ class X32Client:
             self.client.send_message(f"/ch/{ch_str}/mix/on", [])
             self.client.send_message(f"/ch/{ch_str}/mix/solo", [])
             self.client.send_message(f"/ch/{ch_str}/meter", [])
-        self.client.send_message("/lr/mix/fader", [])
+        for prefix in BUS_OSC_PREFIXES.values():
+            self.client.send_message(f"{prefix}/mix/fader", [])
+            self.client.send_message(f"{prefix}/mix/on", [])
         self.client.send_message("/-stat/sound/ctrl/chn/scene", [])
         self.client.send_message("/scene/name", [])
         deadline = time.time() + 3.0
@@ -260,6 +278,15 @@ class X32Client:
         self.client.send_message(f"/ch/{ch_str}/mix/solo", [1 if solo else 0])
         self._channels[channel].solo = solo
         self._channels[channel].updated_at = time.time()
+        self._notify()
+
+    def set_bus_mute(self, key: str, muted: bool) -> None:
+        prefix = BUS_OSC_PREFIXES.get(key)
+        if not prefix or key not in self._buses:
+            raise ValueError(f"Unknown X32 bus: {key}")
+        self.client.send_message(f"{prefix}/mix/on", [0 if muted else 1])
+        self._buses[key].muted = muted
+        self._buses[key].updated_at = time.time()
         self._notify()
 
     def recall_scene(self, index: int) -> None:

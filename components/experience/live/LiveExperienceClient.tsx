@@ -26,9 +26,7 @@ import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { useIanCraigLiveSeedActions } from "@/lib/experience/useIanCraigLiveSeedActions";
 import { useLiveMonetizationReminder } from "@/lib/experience/useLiveMonetizationReminder";
 import { useLiveStreamGraphics } from "@/lib/experience/useLiveStreamGraphics";
-import { useLiveChatSimulation } from "@/lib/live/use-live-chat-simulation";
 import { useLiveViewerCount } from "@/lib/experience/useLiveViewerCount";
-import { formatChatDisplayName } from "@/lib/live/chat";
 import { fetchLiveAccessEvaluation, type LiveAccessEvaluation } from "@/lib/access";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import type { CountdownParts } from "@/lib/live/event-lobby";
@@ -317,22 +315,6 @@ export default function LiveExperienceClient({
   const { displayLabel: viewerCountLabel } = useLiveViewerCount({
     enabled: true,
     userId: initialProfile.userId ?? null,
-  });
-  const simulationExcludedNames = useMemo(() => {
-    const names = [
-      formatChatDisplayName({
-        firstName: initialProfile.firstName,
-        lastName: initialProfile.lastName,
-        email: initialProfile.email,
-      }),
-      initialProfile.headerDisplayName,
-      attendeeName,
-    ];
-    return names.filter((name): name is string => Boolean(name?.trim()));
-  }, [attendeeName, initialProfile]);
-  const { messages: simulatedChatMessages } = useLiveChatSimulation({
-    enabled: true,
-    excludedNames: simulationExcludedNames,
   });
   const streamIsLive = access?.streamIsLive === true;
   const { activeReminder, dismissActive } = useLiveMonetizationReminder({
@@ -1798,7 +1780,6 @@ export default function LiveExperienceClient({
                 seedBalance={seedBalance}
                 signInHref={EXPERIENCE_LIVE_PATH}
                 layout="responsive"
-                simulatedMessages={simulatedChatMessages}
                 className="min-h-0 flex-1 lg:border-t lg:border-white/10"
               />
 

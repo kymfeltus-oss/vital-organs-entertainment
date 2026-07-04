@@ -15,26 +15,23 @@ export default async function OwnerGraphicsPage() {
   }
 
   return (
-    <main className="min-h-dvh overflow-x-hidden overflow-y-auto bg-[#020203] bg-[radial-gradient(circle_at_22%_0%,rgba(0,168,255,0.13),transparent_28%),radial-gradient(circle_at_78%_4%,rgba(255,47,175,0.15),transparent_30%),linear-gradient(180deg,#050507_0%,#020203_54%,#010102_100%)] px-2 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-2 text-white">
-      <div className="mx-auto grid min-h-[calc(100dvh-2.5rem)] w-full max-w-[112rem] gap-2 xl:grid-cols-[12rem_minmax(0,1fr)]">
-        <OwnerProductionSideMenu active="graphics" />
+    <main className="min-h-dvh overflow-x-hidden bg-[#030607] text-white">
+      <div className="mx-auto grid min-h-dvh w-full max-w-[120rem] xl:grid-cols-[6.25rem_minmax(0,1fr)]">
+        <OwnerProductionSideMenu active="graphics" compact />
 
-        <div className="min-w-0">
-          <header className="rounded-[6px] border border-white/10 bg-[#050814]/94 px-3 py-3 shadow-[0_0_28px_rgba(0,168,255,0.08)] sm:px-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0 px-2 pb-2 xl:pt-0">
+          <header className="border-b border-white/10 bg-[linear-gradient(180deg,#0b1013,#06090b)] px-4 py-3 shadow-[0_6px_22px_rgba(0,0,0,0.34)]">
+            <div className="flex min-h-8 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
-                <p className="font-headline text-[1.45rem] uppercase leading-none tracking-[0.02em] sm:text-3xl lg:text-4xl">
-                  <span className="text-[#00a8ff]">BROADCAST GRAPHICS</span>{" "}
-                  <span className="text-[#ff2faf]">DATA PLANE</span>
-                </p>
-                <p className="mt-1 max-w-4xl font-ui text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-white/72 sm:text-[0.68rem]">
-                  Prepare lower thirds / scripture / offering / ticker / slate graphics before the cockpit takes them live
+                <p className="font-headline text-[1.55rem] uppercase leading-none tracking-[0.04em] text-white sm:text-[1.85rem]">
+                  Broadcast Graphics
+                  <span className="ml-4 align-middle font-ui text-[0.66rem] font-semibold tracking-[0.1em] text-white/45">Data Plane</span>
                 </p>
               </div>
 
               <Link
                 href="/owner/cockpit"
-                className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-md bg-[#096bff] px-4 font-ui text-xs uppercase tracking-[0.12em] text-white"
+                className="inline-flex min-h-9 shrink-0 items-center justify-center gap-2 rounded-[2px] border border-[#00b8f5]/65 bg-[#00a8ff]/5 px-4 font-ui text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#16c8ff] transition hover:bg-[#00a8ff]/15 active:translate-y-px"
               >
                 <MonitorPlay className="h-4 w-4" />
                 Open Cockpit

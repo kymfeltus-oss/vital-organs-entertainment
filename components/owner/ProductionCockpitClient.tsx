@@ -7,10 +7,12 @@ import {
   Database,
   Loader2,
   Lock,
+  Music2,
   MonitorDot,
   Play,
   Radio,
   RefreshCw,
+  ShieldCheck,
   Square,
   Timer,
   XCircle,
@@ -22,10 +24,13 @@ import {
   OWNER_GRAPHICS_EVENT_ID,
 } from "@/lib/owner/graphics-data-plane";
 import {
+  AUDIO_PRESET_SPECS,
   AUDIO_SILENCE_FLOOR_DB,
   COCKPIT_AUDIO_TRACK_SPECS,
   type AudioLevelTrack,
+  type AudioPresetStatus,
   type CockpitAudioTrackId,
+  type ConcertEqPreset,
   type OwnerAudioTelemetry,
 } from "@/lib/owner/audio-contracts";
 import type {
@@ -205,8 +210,14 @@ type AudioMixStateResponse = {
   ok?: boolean;
   success?: boolean;
   telemetry?: OwnerAudioTelemetry;
+  presets?: AudioPresetStatus[];
   error?: string;
+  message?: string;
 };
+
+const DEFAULT_AUDIO_PRESET_STATUSES: AudioPresetStatus[] = AUDIO_PRESET_SPECS.map(
+  (preset) => ({ ...preset, configured: false, active: false }),
+);
 
 const DEFAULT_RESTREAM_DESTINATIONS: RestreamDestinations = {
   youtube: true,
@@ -291,6 +302,10 @@ function meterActiveSegments(levelDb: number, offline: boolean): number {
 function formatMeterDbLabel(levelDb: number, offline: boolean): string {
   if (offline) return "--- dB";
   return `${levelDb.toFixed(1)} dB`;
+}
+
+function formatAudioMetric(value: number | null, suffix: string): string {
+  return value === null ? "---" : `${value.toFixed(1)} ${suffix}`;
 }
 
 function resolveCockpitAudioTrack(
@@ -441,15 +456,26 @@ function MeterRail({
 
 function AudioMonitorPanel({
   telemetry,
+  presets,
   loading,
   error,
+  commandPreset,
+  commandMessage,
+  commandError,
   onRefresh,
+  onApplyPreset,
 }: {
   telemetry: OwnerAudioTelemetry | null;
+  presets: AudioPresetStatus[];
   loading: boolean;
   error: string | null;
+  commandPreset: ConcertEqPreset | null;
+  commandMessage: string | null;
+  commandError: string | null;
   onRefresh: () => void;
+  onApplyPreset: (presetId: ConcertEqPreset) => void;
 }) {
+  const [armedPreset, setArmedPreset] = useState<ConcertEqPreset | null>(null);
   const status = telemetry?.mediaNodeStatus ?? "offline";
   const offline = status === "offline" || Boolean(error);
   const connected = !error && status === "online";
@@ -478,10 +504,17 @@ function AudioMonitorPanel({
       : degraded
         ? "bg-amber-300"
         : "bg-red-400";
+  const activePreset = presets.find((preset) => preset.active) ?? null;
+  const armedPresetStatus = presets.find((preset) => preset.id === armedPreset) ?? null;
+  const presetControlEnabled = connected && !loading && commandPreset === null;
+  const loudness = telemetry?.loudness;
+  const estimatedLoudness = loudness?.measurementMode === "estimated";
+  const limiterActive = telemetry?.streamSafety.limiterActive === true;
+  const streamMuted = telemetry?.streamSafety.muted === true;
 
   return (
-    <CockpitPanel title="AUDIO MONITOR (X32)" className="flex flex-col">
-      <div className="flex min-h-0 flex-1 flex-col p-2">
+    <CockpitPanel title="SOUND CONTROL & MONITOR" className="flex flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-2">
         <div className="flex items-center justify-between gap-2">
           <div className={`inline-flex min-w-0 items-center gap-1.5 truncate font-ui text-[0.5rem] font-black uppercase sm:text-[0.58rem] ${statusTone}`}>
             <span className={`h-2 w-2 shrink-0 rounded-full ${statusDot} ${connected ? "shadow-[0_0_12px_rgba(132,255,75,0.8)]" : ""}`} />
@@ -496,6 +529,107 @@ function AudioMonitorPanel({
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
           </button>
+        </div>
+
+        <div className="mt-2 border-y border-white/10 py-2">
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-1.5 font-ui text-[0.54rem] font-black uppercase text-white/72 sm:text-[0.6rem]">
+              <Music2 className="h-3.5 w-3.5 text-cyan-300" aria-hidden />
+              Mix Preset
+            </span>
+            <span className="truncate font-ui text-[0.48rem] font-bold uppercase text-cyan-200/80">
+              {activePreset?.label || telemetry?.consoleScene.name || "No mapped preset active"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-1.5" role="group" aria-label="Audio mix presets">
+            {presets.map((preset) => {
+              const mutating = commandPreset === preset.id;
+              const disabled = !presetControlEnabled || !preset.configured;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  disabled={disabled}
+                  aria-pressed={preset.active}
+                  title={preset.configured ? preset.detail : "Preset scene mapping is not configured"}
+                  onClick={() => setArmedPreset(preset.id)}
+                  className={`min-h-14 rounded-md border px-1.5 py-1.5 text-center transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                    preset.active
+                      ? "border-lime-300/70 bg-lime-300/14 text-lime-200"
+                      : "border-white/12 bg-white/5 text-white/72 hover:border-cyan-300/55 hover:text-white"
+                  }`}
+                >
+                  <span className="block font-ui text-[0.5rem] font-black uppercase leading-tight sm:text-[0.56rem]">
+                    {mutating ? "Recalling..." : preset.label}
+                  </span>
+                  <span className="mt-1 block font-body text-[0.46rem] leading-tight text-current opacity-60">
+                    {preset.active ? "Active" : preset.configured ? "Ready" : "Unmapped"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-1.5 min-h-8">
+            {armedPresetStatus ? (
+              <div className="flex items-center justify-between gap-2 border border-amber-300/35 bg-amber-300/8 px-2 py-1">
+                <span className="min-w-0 truncate font-ui text-[0.5rem] font-bold uppercase text-amber-200">
+                  Recall {armedPresetStatus.label}?
+                </span>
+                <span className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setArmedPreset(null)}
+                    className="h-6 rounded border border-white/15 px-2 font-ui text-[0.48rem] font-bold uppercase text-white/65"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!presetControlEnabled}
+                    onClick={() => {
+                      onApplyPreset(armedPresetStatus.id);
+                      setArmedPreset(null);
+                    }}
+                    className="h-6 rounded bg-amber-300 px-2 font-ui text-[0.48rem] font-black uppercase text-black disabled:opacity-45"
+                  >
+                    Confirm
+                  </button>
+                </span>
+              </div>
+            ) : (
+              <p
+                className={`truncate px-1 py-1 font-body text-[0.5rem] ${
+                  commandError ? "text-red-300" : commandMessage ? "text-lime-300" : "text-white/40"
+                }`}
+              >
+                {commandError || commandMessage || "Preset recall is locked to mapped X32 scenes."}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+          {[
+            [estimatedLoudness ? "Int. Est." : "Int. LUFS", formatAudioMetric(loudness?.integratedLufs ?? null, "LUFS")],
+            [estimatedLoudness ? "Short Est." : "Short LUFS", formatAudioMetric(loudness?.shortTermLufs ?? null, "LUFS")],
+            [estimatedLoudness ? "Peak Est." : "Peak", formatAudioMetric(loudness?.truePeakDb ?? null, estimatedLoudness ? "dB" : "dBTP")],
+            ["Limiter", streamMuted ? "Muted" : limiterActive ? "Reducing" : "Clear"],
+          ].map(([label, value]) => (
+            <div key={label} className="border border-white/10 bg-black/35 px-2 py-1.5">
+              <p className="font-ui text-[0.44rem] font-bold uppercase text-white/45">{label}</p>
+              <p
+                className={`mt-0.5 truncate font-ui text-[0.58rem] font-black ${
+                  label === "Limiter" && (limiterActive || streamMuted)
+                    ? "text-amber-300"
+                    : "text-white/85"
+                }`}
+              >
+                {value}
+              </p>
+            </div>
+          ))}
         </div>
 
         <div className="mt-2 flex-1 rounded-md border border-white/10 bg-black/35 p-2">
@@ -519,10 +653,9 @@ function AudioMonitorPanel({
           </p>
         </div>
 
-        <div className="mt-2 rounded-md border border-lime-300/20 bg-lime-300/8 px-2 py-1.5 text-center font-ui text-[0.48rem] font-black uppercase leading-tight text-lime-300 sm:text-[0.54rem]">
-          MONITOR MIX & HOUSE
-          <br />
-          CONTROLS LOCKED
+        <div className="mt-2 flex items-center justify-center gap-1.5 border border-lime-300/20 bg-lime-300/8 px-2 py-1.5 text-center font-ui text-[0.48rem] font-black uppercase leading-tight text-lime-300 sm:text-[0.54rem]">
+          <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
+          Edge audio remains authoritative
         </div>
       </div>
     </CockpitPanel>
@@ -1182,8 +1315,14 @@ export default function ProductionCockpitClient() {
   const [destinationsLoading, setDestinationsLoading] = useState(true);
   const [destinationSaving, setDestinationSaving] = useState<DestinationKey | null>(null);
   const [audioTelemetry, setAudioTelemetry] = useState<OwnerAudioTelemetry | null>(null);
+  const [audioPresets, setAudioPresets] = useState<AudioPresetStatus[]>(
+    DEFAULT_AUDIO_PRESET_STATUSES,
+  );
   const [audioLoading, setAudioLoading] = useState(true);
   const [audioError, setAudioError] = useState<string | null>(null);
+  const [audioCommandPreset, setAudioCommandPreset] = useState<ConcertEqPreset | null>(null);
+  const [audioCommandMessage, setAudioCommandMessage] = useState<string | null>(null);
+  const [audioCommandError, setAudioCommandError] = useState<string | null>(null);
   const [graphicsError, setGraphicsError] = useState<string | null>(null);
   const [graphicsSuccess, setGraphicsSuccess] = useState<string | null>(null);
   const [broadcastError, setBroadcastError] = useState<string | null>(null);
@@ -1313,9 +1452,12 @@ export default function ProductionCockpitClient() {
   }, []);
 
   useEffect(() => {
-    void loadBroadcastSnapshot();
+    const timer = window.setTimeout(() => void loadBroadcastSnapshot(), 0);
     const interval = window.setInterval(() => void loadBroadcastSnapshot(true), BROADCAST_SNAPSHOT_POLL_MS);
-    return () => window.clearInterval(interval);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearInterval(interval);
+    };
   }, [loadBroadcastSnapshot]);
 
   useEffect(() => {
@@ -1388,10 +1530,41 @@ export default function ProductionCockpitClient() {
       }
 
       setAudioTelemetry(json.telemetry);
+      if (json.presets) setAudioPresets(json.presets);
     } catch (audioLoadError) {
       setAudioError(audioLoadError instanceof Error ? audioLoadError.message : "Unable to load audio telemetry.");
     } finally {
       if (!silent) setAudioLoading(false);
+    }
+  }, []);
+
+  const applyAudioPreset = useCallback(async (presetId: ConcertEqPreset) => {
+    setAudioCommandPreset(presetId);
+    setAudioCommandMessage(null);
+    setAudioCommandError(null);
+
+    try {
+      const response = await fetch("/api/owner/audio/mix-state", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: "apply_preset", presetId }),
+      });
+      const json = (await response.json()) as AudioMixStateResponse;
+
+      if (!response.ok || json.ok === false || json.success === false) {
+        throw new Error(json.error || "Unable to apply audio preset.");
+      }
+
+      if (json.telemetry) setAudioTelemetry(json.telemetry);
+      if (json.presets) setAudioPresets(json.presets);
+      setAudioCommandMessage(json.message || "Audio preset recalled.");
+    } catch (presetError) {
+      setAudioCommandError(
+        presetError instanceof Error ? presetError.message : "Unable to apply audio preset.",
+      );
+    } finally {
+      setAudioCommandPreset(null);
     }
   }, []);
   const loadShowSetup = useCallback(async () => {
@@ -1996,9 +2169,14 @@ export default function ProductionCockpitClient() {
           <aside className="order-3 min-h-[28rem] xl:order-1 xl:min-h-0">
             <AudioMonitorPanel
               telemetry={audioTelemetry}
+              presets={audioPresets}
               loading={audioLoading}
               error={audioError}
+              commandPreset={audioCommandPreset}
+              commandMessage={audioCommandMessage}
+              commandError={audioCommandError}
               onRefresh={() => void loadAudioTelemetry()}
+              onApplyPreset={(presetId) => void applyAudioPreset(presetId)}
             />
           </aside>
         </div>

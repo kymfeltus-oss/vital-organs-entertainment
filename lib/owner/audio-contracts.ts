@@ -2,12 +2,62 @@
 
 export type ConcertEqPreset = "spoken_word" | "full_choir" | "acoustic_prayer";
 
-export type OwnerAudioConfig = {
-  aiGainGuardEnabled: boolean;
-  whiteNoiseSuppressor: number;
-  concertEqPreset: ConcertEqPreset;
-  masterLimiterCompressor: number;
+export type OwnerAudioBusKey =
+  | "lr_master"
+  | "stream_mix"
+  | "monitor_mix"
+  | "choir_bus"
+  | "pastor_mic";
+
+export type OwnerAudioBusTelemetry = {
+  key: OwnerAudioBusKey;
+  label: string;
+  levelDb: number;
+  peakDb: number | null;
+  muted: boolean;
+  limiterActive: boolean;
+  status: "healthy" | "warning" | "critical" | "offline";
+  lastUpdateAt: string | null;
 };
+
+export const OWNER_SOUND_BUS_SPECS: ReadonlyArray<{
+  key: OwnerAudioBusKey;
+  label: string;
+}> = [
+  { key: "lr_master", label: "Master L/R" },
+  { key: "stream_mix", label: "Stream Mix" },
+  { key: "choir_bus", label: "Choir Bus" },
+  { key: "pastor_mic", label: "Spoken Word" },
+  { key: "monitor_mix", label: "Monitor Mix" },
+];
+
+export type AudioPresetStatus = {
+  id: ConcertEqPreset;
+  label: string;
+  detail: string;
+  configured: boolean;
+  active: boolean;
+};
+
+export const AUDIO_PRESET_SPECS: ReadonlyArray<
+  Pick<AudioPresetStatus, "id" | "label" | "detail">
+> = [
+  {
+    id: "full_choir",
+    label: "Full Choir",
+    detail: "Choir, band, and room mix",
+  },
+  {
+    id: "spoken_word",
+    label: "Spoken Word",
+    detail: "Pastor and speech-forward mix",
+  },
+  {
+    id: "acoustic_prayer",
+    label: "Acoustic Prayer",
+    detail: "Acoustic and prayer mix",
+  },
+];
 
 export type AudioLevelTrack = {
   id: string;
@@ -42,30 +92,45 @@ export function buildBaselineAudioTracks(floorDb = AUDIO_SILENCE_FLOOR_DB): Audi
 }
 
 export type OwnerAudioTelemetry = {
+  edgeReachable: boolean;
   tracks: AudioLevelTrack[];
+  buses: OwnerAudioBusTelemetry[];
   capturedAt: string;
   mediaNodeStatus: "online" | "offline" | "degraded";
   mediaNodeDetail: string | null;
-};
-
-export type OwnerAudioConfigPatch = Partial<OwnerAudioConfig>;
-
-export type OwnerAudioWorkspaceState = {
-  config: OwnerAudioConfig;
-  telemetry: OwnerAudioTelemetry;
+  healthScore: number | null;
+  loudness: {
+    measurementMode: "measured" | "estimated" | "unavailable";
+    integratedLufs: number | null;
+    shortTermLufs: number | null;
+    momentaryLufs: number | null;
+    truePeakDb: number | null;
+    targetLufs: number | null;
+    inTarget: boolean | null;
+  };
+  streamSafety: {
+    limiterActive: boolean;
+    muted: boolean;
+  };
+  consoleScene: {
+    index: number | null;
+    name: string | null;
+  };
+  console: {
+    name: string | null;
+    online: boolean;
+    sampleRateHz: number | null;
+    clockSource: string | null;
+    firmwareVersion: string | null;
+    lastHeartbeatAt: string | null;
+    oscLatencyMs: number | null;
+  };
 };
 
 export const CONCERT_EQ_PRESET_LABELS: Record<ConcertEqPreset, string> = {
   spoken_word: "Spoken Word",
   full_choir: "Full Choir",
   acoustic_prayer: "Acoustic Prayer",
-};
-
-export const DEFAULT_OWNER_AUDIO_CONFIG: OwnerAudioConfig = {
-  aiGainGuardEnabled: false,
-  whiteNoiseSuppressor: 35,
-  concertEqPreset: "full_choir",
-  masterLimiterCompressor: 72,
 };
 
 /** Non-reactive silence baseline — never use simulated demo levels. */

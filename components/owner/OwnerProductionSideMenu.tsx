@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Menu, MonitorDot, Palette, Play, Timer, X } from "lucide-react";
+import { AudioLines, ChevronDown, Menu, MonitorDot, Palette, Play, Timer, X } from "lucide-react";
 
 const PRODUCTION_NAV_ITEMS = [
   {
@@ -18,6 +18,13 @@ const PRODUCTION_NAV_ITEMS = [
     eyebrow: "Build suite",
     href: "/owner/graphics",
     icon: Palette,
+  },
+  {
+    id: "sound",
+    label: "Sound",
+    eyebrow: "X32 control",
+    href: "/owner/sound",
+    icon: AudioLines,
   },
   {
     id: "countdown",
@@ -38,6 +45,7 @@ const PRODUCTION_NAV_ITEMS = [
 type OwnerProductionSideMenuProps = {
   active: (typeof PRODUCTION_NAV_ITEMS)[number]["id"];
   showEncoderProfile?: boolean;
+  compact?: boolean;
 };
 
 function EncoderProfileSidebarNote() {
@@ -68,6 +76,7 @@ function EncoderProfileSidebarNote() {
 export default function OwnerProductionSideMenu({
   active,
   showEncoderProfile = false,
+  compact = false,
 }: OwnerProductionSideMenuProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const activeItem = PRODUCTION_NAV_ITEMS.find((item) => item.id === active) ?? PRODUCTION_NAV_ITEMS[0];
@@ -179,9 +188,9 @@ export default function OwnerProductionSideMenu({
 
       <nav
         aria-label="Production side navigation"
-        className="hidden shrink-0 rounded-[6px] border border-white/10 bg-[#050814]/94 p-2 shadow-[0_0_28px_rgba(0,168,255,0.08)] xl:sticky xl:top-2 xl:flex xl:h-[calc(100dvh-1rem)] xl:w-48 xl:flex-col"
+        className={`hidden shrink-0 overflow-hidden rounded-[3px] border border-white/10 bg-[linear-gradient(180deg,#090e12,#05080a)] shadow-[0_0_28px_rgba(0,168,255,0.08)] xl:sticky xl:top-0 xl:flex xl:h-dvh xl:flex-col ${compact ? "xl:w-[6.25rem]" : "p-2 xl:w-48"}`}
       >
-        <div className="border-b border-white/10 px-2 pb-3">
+        <div className={`${compact ? "sr-only" : "border-b border-white/10 px-2 pb-3"}`}>
           <p className="font-ui text-[0.54rem] font-black uppercase tracking-[0.16em] text-[#00a8ff]">
             Production
           </p>
@@ -190,7 +199,7 @@ export default function OwnerProductionSideMenu({
           </p>
         </div>
 
-        <div className="mt-3 flex flex-col gap-2">
+        <div className={`${compact ? "flex flex-1 flex-col" : "mt-3 flex flex-col gap-2"}`}>
           {PRODUCTION_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = item.id === active;
@@ -199,26 +208,26 @@ export default function OwnerProductionSideMenu({
                 key={item.href}
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
-                className={`group flex min-h-12 items-center gap-2 rounded-md border px-2.5 py-2 transition ${
+                className={`group flex items-center transition ${compact ? "min-h-[7.5rem] flex-col justify-center gap-3 border-x-0 border-b border-t-0 px-1 py-3 text-center" : "min-h-12 gap-2 rounded-md border px-2.5 py-2"} ${
                   isActive
                     ? "border-[#00a8ff]/55 bg-[#00a8ff]/12 text-white shadow-[0_0_18px_rgba(0,168,255,0.18)]"
                     : "border-white/8 bg-black/24 text-white/70 hover:border-[#00a8ff]/35 hover:bg-[#00a8ff]/8 hover:text-white"
                 }`}
               >
                 <span
-                  className={`grid h-8 w-8 shrink-0 place-items-center rounded border ${
+                  className={`grid shrink-0 place-items-center ${compact ? "h-10 w-10 border-0" : "h-8 w-8 rounded border"} ${
                     isActive
                       ? "border-[#00a8ff]/55 bg-[#00a8ff]/15 text-[#00a8ff]"
                       : "border-white/10 bg-white/[0.03] text-white/55 group-hover:text-[#00a8ff]"
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate font-ui text-[0.63rem] font-black uppercase tracking-[0.1em]">
-                    {item.label}
+                    <Icon className={compact ? "h-8 w-8" : "h-4 w-4"} />
                   </span>
-                  <span className="mt-0.5 block truncate font-body text-[0.56rem] text-white/45">
+                  <span className="min-w-0">
+                    <span className={`block truncate font-ui font-black uppercase ${compact ? "text-[0.64rem] tracking-[0.08em]" : "text-[0.63rem] tracking-[0.1em]"}`}>
+                      {item.label}
+                    </span>
+                    <span className={`${compact ? "sr-only" : "mt-0.5 block truncate font-body text-[0.56rem] text-white/45"}`}>
                     {item.eyebrow}
                   </span>
                 </span>

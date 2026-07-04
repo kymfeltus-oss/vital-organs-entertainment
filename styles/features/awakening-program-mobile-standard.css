@@ -80,7 +80,7 @@
 .awakening-program-shell {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(6.25rem, 1fr);
-  align-items: start;
+  align-items: stretch;
   gap: 0.45rem;
   width: 100%;
   height: auto;
@@ -186,6 +186,8 @@
 .awakening-program-side {
   display: grid;
   grid-template-columns: 1fr;
+  grid-template-rows: auto auto auto minmax(8.5rem, 1fr);
+  align-self: stretch;
   gap: 0.45rem;
   margin-top: 0;
 }

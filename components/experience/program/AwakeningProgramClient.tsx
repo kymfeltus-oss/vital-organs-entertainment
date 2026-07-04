@@ -423,12 +423,20 @@ function ProgramModal({
   );
 }
 
-export default function AwakeningProgramClient() {
+type AwakeningProgramClientProps = {
+  initialCountdownDetails?: ProgramCountdownDetails;
+};
+
+export default function AwakeningProgramClient({
+  initialCountdownDetails,
+}: AwakeningProgramClientProps) {
   const [selectedSection, setSelectedSection] = useState<AwakeningProgramSection | null>(null);
   const [countdownDetails, setCountdownDetails] = useState<ProgramCountdownDetails>({
     ...DEFAULT_COUNTDOWN_CONFIG,
-    eventLocation: "New Orleans, LA",
-    livestreamAvailability: "Available worldwide",
+    ...initialCountdownDetails,
+    eventLocation: initialCountdownDetails?.eventLocation ?? "New Orleans, LA",
+    livestreamAvailability:
+      initialCountdownDetails?.livestreamAvailability ?? "Available worldwide",
   });
 
   const openSection = useCallback((section: AwakeningProgramSection) => {
@@ -556,13 +564,21 @@ export default function AwakeningProgramClient() {
                 <strong className="awakening-program-featured__name">Ian Craig &amp; 300</strong>
               </div>
             </section>
+            <section>
+              <h2>Program Guests</h2>
+              <div className="awakening-program-guest-grid">
+                {featuredPeople.map((person) => (
+                  <div key={person.name} className="awakening-program-guest">
+                    <PersonAvatar person={person} />
+                    <span>{person.name}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
             <section className="awakening-program-parable-promo">
-              <span className="awakening-program-parable-promo__eyebrow">Produced by</span>
-              <h2>Parable Entertainment</h2>
-              <p>
-                Faith-forward media, live experiences, and digital storytelling built to make
-                every moment feel unforgettable.
-              </p>
+              <span className="awakening-program-parable-promo__eyebrow">Brand Spotlight</span>
+              <h2>Parable</h2>
+              <p>Faith-forward media, live moments, and stories built to move the room.</p>
               <a
                 href="https://www.facebook.com/vitalorgansent/"
                 target="_blank"
@@ -579,17 +595,6 @@ export default function AwakeningProgramClient() {
                 <span>Connect with Vital Organs Ent</span>
                 <ExternalLink aria-hidden />
               </a>
-            </section>
-            <section>
-              <h2>Program Guests</h2>
-              <div className="awakening-program-guest-grid">
-                {featuredPeople.map((person) => (
-                  <div key={person.name} className="awakening-program-guest">
-                    <PersonAvatar person={person} />
-                    <span>{person.name}</span>
-                  </div>
-                ))}
-              </div>
             </section>
           </aside>
         </section>

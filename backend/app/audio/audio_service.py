@@ -186,6 +186,7 @@ class AudioService:
         integrated = round(-14 + (level + 20) * 0.08, 1) if level > -80 else None
         target = float(self._settings.get("lufsTarget", -14))
         return {
+            "measurementMode": "estimated",
             "integratedLufs": integrated,
             "shortTermLufs": round(integrated + 0.4, 1) if integrated is not None else None,
             "momentaryLufs": round(integrated + 0.8, 1) if integrated is not None else None,
@@ -382,6 +383,7 @@ class AudioService:
     def build_live_payload(self) -> dict[str, Any]:
         payload = {
             "status": self.build_status(),
+            "consoleState": self.x32.console_state(),
             "channels": self.build_channels(),
             "buses": self.build_buses(),
             "overview": self.build_overview(),
@@ -411,6 +413,9 @@ class AudioService:
 
     def unsolo_channel(self, channel: int) -> None:
         self.x32.set_solo(channel, False)
+
+    def set_bus_mute(self, bus_key: str, muted: bool) -> None:
+        self.x32.set_bus_mute(bus_key, muted)
 
     def recall_scene(self, index: int) -> None:
         self.x32.recall_scene(index)
