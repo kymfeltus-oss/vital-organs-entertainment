@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import ExperienceHoldingRoomPageClient from "@/components/experience/holding-room/ExperienceHoldingRoomPageClient";
 import LiveDataLoader from "@/components/experience/live/LiveDataLoader";
+import LiveEndedThankYou from "@/components/experience/live/LiveEndedThankYou";
 import type { AttendeeUiPhase } from "@/lib/live/attendee-ui-phase";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import type { CountdownParts } from "@/lib/live/event-lobby";
@@ -25,8 +25,6 @@ export default function LivePageRouterClient({
   initialCountdown,
   initialProfile,
 }: LivePageRouterClientProps) {
-  const [currentPhase, setCurrentPhase] = useState<AttendeeUiPhase>(initialPhase);
-
   const { config: syncedCountdownConfig } = useCountdownConfig({
     initialConfig,
   });
@@ -36,19 +34,13 @@ export default function LivePageRouterClient({
     initialAttendeeUiPhase: initialPhase,
   });
 
-  useEffect(() => {
-    if (forceHoldingRoom) return;
-
-    const promotedPhase: AttendeeUiPhase =
-      isLive || attendeeUiPhase === "live"
-        ? "live"
-        : attendeeUiPhase === "ended"
-          ? "ended"
-          : "pre_show";
-
-    if (promotedPhase === currentPhase) return;
-    setCurrentPhase(promotedPhase);
-  }, [attendeeUiPhase, currentPhase, forceHoldingRoom, isLive]);
+  const currentPhase: AttendeeUiPhase = forceHoldingRoom
+    ? "pre_show"
+    : isLive || attendeeUiPhase === "live"
+      ? "live"
+      : attendeeUiPhase === "ended"
+        ? "ended"
+        : "pre_show";
 
   if (currentPhase === "live") {
     return (
@@ -61,15 +53,7 @@ export default function LivePageRouterClient({
   }
 
   if (currentPhase === "ended") {
-    return (
-      <ExperienceHoldingRoomPageClient
-        initialCountdownConfig={syncedCountdownConfig}
-        initialCountdown={initialCountdown}
-        initialProfile={initialProfile}
-        attendeeUiPhase="pre_show"
-        showClock
-      />
-    );
+    return <LiveEndedThankYou />;
   }
 
   return (
