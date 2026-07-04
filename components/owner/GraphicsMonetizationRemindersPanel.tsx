@@ -8,6 +8,7 @@ import type {
 } from "@/lib/owner/graphics-monetization-reminders";
 import {
   DEFAULT_GRAPHICS_MONETIZATION_REMINDER_MESSAGES,
+  MAX_MONETIZATION_REMINDER_DISPLAY_SECONDS,
   MONETIZATION_REMINDER_CTA_KINDS,
 } from "@/lib/owner/graphics-monetization-reminders";
 
@@ -178,8 +179,8 @@ export default function GraphicsMonetizationRemindersPanel() {
               On-screen duration (sec):
               <input
                 type="number"
-                min={20}
-                max={180}
+                min={1}
+                max={MAX_MONETIZATION_REMINDER_DISPLAY_SECONDS}
                 value={draft.displaySeconds}
                 onChange={(event) => setDraft({ ...draft, displaySeconds: Number(event.target.value) })}
                 className="h-8 w-16 rounded-[2px] border border-white/15 bg-[#0b1012] px-2 text-white outline-none focus:border-[#00bff8]/65"

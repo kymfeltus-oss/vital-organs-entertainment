@@ -26,13 +26,14 @@ type UseLiveMonetizationReminderResult = {
 };
 
 const DEFAULT_POLL_MS = 10_000;
+const MAX_REMINDER_VISIBILITY_MS = 10_000;
 
 export function useLiveMonetizationReminder({
   enabled = true,
   pollMs = DEFAULT_POLL_MS,
 }: UseLiveMonetizationReminderOptions = {}): UseLiveMonetizationReminderResult {
   const [payload, setPayload] = useState<MonetizationReminderPayload | null>(null);
-  const [dismissedSlotIndex, setDismissedSlotIndex] = useState<number | null>(null);
+  const [dismissedSlotStartedAt, setDismissedSlotStartedAt] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const syncReminder = useCallback(async () => {
@@ -67,17 +68,19 @@ export function useLiveMonetizationReminder({
 
   useEffect(() => {
     if (!enabled) {
-      setPayload(null);
-      setDismissedSlotIndex(null);
+      abortRef.current?.abort();
       return;
     }
 
-    void syncReminder();
+    const initialTimer = window.setTimeout(() => {
+      void syncReminder();
+    }, 0);
     const timer = window.setInterval(() => {
       void syncReminder();
     }, pollMs);
 
     return () => {
+      window.clearTimeout(initialTimer);
       window.clearInterval(timer);
       abortRef.current?.abort();
     };
@@ -87,22 +90,27 @@ export function useLiveMonetizationReminder({
     payload?.enabled &&
     payload.isLive &&
     payload.active &&
-    payload.active.slotIndex !== dismissedSlotIndex
+    payload.active.slotStartedAt !== dismissedSlotStartedAt
       ? payload.active
       : null;
 
   const dismissActive = useCallback(() => {
     if (payload?.active) {
-      setDismissedSlotIndex(payload.active.slotIndex);
+      setDismissedSlotStartedAt(payload.active.slotStartedAt);
     }
-  }, [payload?.active]);
+  }, [payload]);
 
   useEffect(() => {
-    if (!payload?.active) return;
-    if (dismissedSlotIndex !== null && dismissedSlotIndex !== payload.active.slotIndex) {
-      setDismissedSlotIndex(null);
-    }
-  }, [dismissedSlotIndex, payload?.active]);
+    if (!activeReminder) return;
+
+    const serverRemainingMs = Date.parse(activeReminder.visibleUntil) - Date.now();
+    const visibleForMs = Math.max(0, Math.min(MAX_REMINDER_VISIBILITY_MS, serverRemainingMs));
+    const timer = window.setTimeout(() => {
+      setDismissedSlotStartedAt(activeReminder.slotStartedAt);
+    }, visibleForMs);
+
+    return () => window.clearTimeout(timer);
+  }, [activeReminder]);
 
   return {
     activeReminder,

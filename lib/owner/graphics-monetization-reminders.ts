@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { loadOwnerStreamState, updateOwnerStreamState } from "@/lib/owner/load-owner-state";
 
 export const GRAPHICS_MONETIZATION_REMINDERS_KEY = "graphics_monetization_reminders";
+export const MAX_MONETIZATION_REMINDER_DISPLAY_SECONDS = 10;
 
 export const MONETIZATION_REMINDER_CTA_KINDS = [
   "buy_seeds",
@@ -74,7 +75,7 @@ export const DEFAULT_GRAPHICS_MONETIZATION_REMINDER_SCHEDULE: GraphicsMonetizati
   {
     enabled: true,
     intervalMinutes: 25,
-    displaySeconds: 50,
+    displaySeconds: MAX_MONETIZATION_REMINDER_DISPLAY_SECONDS,
     scheduleAnchorAt: null,
     messages: DEFAULT_GRAPHICS_MONETIZATION_REMINDER_MESSAGES,
     updatedAt: null,
@@ -143,7 +144,7 @@ export function normalizeGraphicsMonetizationReminderSchedule(
       ? Math.min(120, Math.max(10, Math.round(intervalMinutes)))
       : DEFAULT_GRAPHICS_MONETIZATION_REMINDER_SCHEDULE.intervalMinutes,
     displaySeconds: Number.isFinite(displaySeconds)
-      ? Math.min(180, Math.max(20, Math.round(displaySeconds)))
+      ? Math.min(MAX_MONETIZATION_REMINDER_DISPLAY_SECONDS, Math.max(1, Math.round(displaySeconds)))
       : DEFAULT_GRAPHICS_MONETIZATION_REMINDER_SCHEDULE.displaySeconds,
     scheduleAnchorAt:
       typeof record.scheduleAnchorAt === "string" && record.scheduleAnchorAt.trim()

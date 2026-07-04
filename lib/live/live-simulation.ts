@@ -219,7 +219,6 @@ export const LIVE_CHAT_SIMULATED_BODIES = [
   "That's the word",
   "Speak Lord",
   "Have your way",
-  "We hear you",
   "Understood",
   "Amen to that",
   "Yes yes",
