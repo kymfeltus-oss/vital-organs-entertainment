@@ -2,84 +2,100 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Lock, Play } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import {
+  buildBrowseCategories,
   canAccessVodAsset,
+  lockedTierLabel,
   normalizeSubscriptionTier,
   requiredTierLabel,
-  VOD_CATALOG,
-  VOD_CATEGORIES,
-  type VodCatalogItem,
-  type VodCategoryId,
+  type BrowseCatalogItem,
 } from "@/lib/features/browse/vod-catalog";
 import type { SubscriptionTier } from "@/lib/admin/tiers";
+
+type VodBrowseClientProps = {
+  catalog: readonly BrowseCatalogItem[];
+};
 
 function resolveTenantTier(): SubscriptionTier {
   const fromEnv = process.env.NEXT_PUBLIC_ADMIN_TIER?.trim().toLowerCase();
   return normalizeSubscriptionTier(fromEnv);
 }
 
-export default function VodBrowseClient() {
+export default function VodBrowseClient({ catalog }: VodBrowseClientProps) {
   const { theme } = useTheme();
   const tenantTier = resolveTenantTier();
-  const accent = theme.colors.primary || "#00C2FF";
+  const primaryColor = theme.colors.primary || "#00C2FF";
 
-  const [activeCategory, setActiveCategory] = useState<VodCategoryId>("all");
+  const categories = useMemo(() => buildBrowseCategories(catalog), [catalog]);
+  const [activeCategory, setActiveCategory] = useState("All Media");
   const [lockedNotice, setLockedNotice] = useState<string | null>(null);
 
   const filteredCatalog = useMemo(() => {
-    if (activeCategory === "all") return VOD_CATALOG;
-    return VOD_CATALOG.filter((item) => item.category === activeCategory);
-  }, [activeCategory]);
+    if (activeCategory === "All Media") return catalog;
+    return catalog.filter((item) => item.category === activeCategory);
+  }, [activeCategory, catalog]);
 
-  const handleCardPress = (item: VodCatalogItem) => {
-    if (canAccessVodAsset(tenantTier, item.requiredTier)) {
+  const handleCardPress = (item: BrowseCatalogItem) => {
+    if (canAccessVodAsset(tenantTier, item.tierRequired)) {
       setLockedNotice(null);
       return;
     }
 
     setLockedNotice(
-      `${item.title} requires ${requiredTierLabel(item.requiredTier)} access. Upgrade your network pass to unlock this asset.`,
+      `${item.title} requires ${requiredTierLabel(item.tierRequired)} access. Upgrade your network pass to unlock this asset.`,
     );
   };
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-black pb-6 text-white">
+    <div className="relative min-h-dvh overflow-hidden bg-black pb-8 text-white">
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-72 opacity-70"
+        className="pointer-events-none absolute inset-x-0 top-0 h-80 opacity-70"
         style={{
-          background: `radial-gradient(circle at 20% 0%, ${accent}22, transparent 55%), radial-gradient(circle at 80% 10%, #6C4DFF18, transparent 45%)`,
+          background: `radial-gradient(circle at 20% 0%, ${primaryColor}22, transparent 55%), radial-gradient(circle at 80% 10%, #6C4DFF18, transparent 45%)`,
         }}
       />
 
-      <div className="relative z-10 px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))] md:px-8">
-        <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-neutral-500">
-          On-Demand Media Matrix
-        </p>
-        <h1 className="mt-2 text-2xl font-extrabold tracking-tight md:text-4xl">Browse Catalog</h1>
-        <p className="mt-2 max-w-2xl text-sm font-light leading-relaxed text-neutral-400">
-          Stream archived broadcasts, backstage sessions, and premium enterprise exclusives from your
-          network library.
-        </p>
+      <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 border-b border-neutral-900/60 px-8 pb-6 pt-12 md:flex-row md:items-center">
+        <div>
+          <span className="mb-2 block font-mono text-[9px] uppercase tracking-[0.4em] text-[#00C2FF]">
+            04 // ON-DEMΛND MEDIΛ MΛTRIX
+          </span>
+          <h1 className="select-none text-3xl font-light uppercase tracking-[0.2em] text-white">
+            P<span className="inline-block scale-x-[1.15] font-extralight text-neutral-400">Λ</span>R
+            <span className="inline-block scale-x-[1.15] font-extralight text-neutral-400">Λ</span>BLE
+            CATALOG
+          </h1>
+          <p className="mt-2 max-w-xl text-xs font-light leading-relaxed text-neutral-400">
+            Stream flagship platform keynotes, infrastructure telemetry documentations, and
+            architectural system tutorials directly from the core broadcast archive nodes.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5 rounded-xl border border-neutral-900 bg-neutral-950 px-4 py-2 font-mono text-xs">
+          <div className="h-1.5 w-1.5 rounded-full bg-[#00C2FF] shadow-[0_0_10px_#00C2FF]" />
+          <span className="text-[10px] uppercase tracking-wider text-neutral-400">
+            System Pipeline Secure
+          </span>
+        </div>
       </div>
 
-      <div className="relative z-10 mb-5 overflow-x-auto px-4 md:px-8">
-        <div className="flex min-w-max gap-2 pb-1">
-          {VOD_CATEGORIES.map((category) => {
-            const isActive = activeCategory === category.id;
+      <div className="relative z-10 mb-5 mt-6 overflow-x-auto px-4 md:px-8">
+        <div className="mx-auto flex min-w-max max-w-7xl gap-2 pb-1">
+          {categories.map((category) => {
+            const isActive = activeCategory === category;
             return (
               <button
-                key={category.id}
+                key={category}
                 type="button"
-                onClick={() => setActiveCategory(category.id)}
+                onClick={() => setActiveCategory(category)}
                 className="rounded-full border px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] transition-colors"
                 style={
                   isActive
                     ? {
-                        borderColor: `${accent}88`,
-                        backgroundColor: `${accent}18`,
-                        color: accent,
+                        borderColor: `${primaryColor}88`,
+                        backgroundColor: `${primaryColor}18`,
+                        color: primaryColor,
                       }
                     : {
                         borderColor: "#262626",
@@ -88,7 +104,7 @@ export default function VodBrowseClient() {
                       }
                 }
               >
-                {category.label}
+                {category}
               </button>
             );
           })}
@@ -96,7 +112,7 @@ export default function VodBrowseClient() {
       </div>
 
       {lockedNotice ? (
-        <div className="relative z-10 mx-4 mb-4 rounded-2xl border border-[#FF0F8E]/35 bg-[#FF0F8E]/10 px-4 py-3 text-xs leading-relaxed text-[#ffb8e8] md:mx-8">
+        <div className="relative z-10 mx-auto mb-4 max-w-7xl rounded-2xl border border-[#FF0F8E]/35 bg-[#FF0F8E]/10 px-4 py-3 text-xs leading-relaxed text-[#ffb8e8] md:mx-8">
           {lockedNotice}{" "}
           <Link href="/contact-us?intent=enterprise" className="font-semibold underline">
             Request upgrade pass
@@ -104,9 +120,9 @@ export default function VodBrowseClient() {
         </div>
       ) : null}
 
-      <div className="relative z-10 grid grid-cols-2 gap-3 px-4 md:grid-cols-3 md:gap-4 md:px-8 lg:grid-cols-4">
+      <div className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 sm:grid-cols-2 md:px-8 lg:grid-cols-3">
         {filteredCatalog.map((item) => {
-          const unlocked = canAccessVodAsset(tenantTier, item.requiredTier);
+          const passesSecurityGate = canAccessVodAsset(tenantTier, item.tierRequired);
 
           return (
             <button
@@ -115,53 +131,69 @@ export default function VodBrowseClient() {
               onClick={() => handleCardPress(item)}
               className="group relative overflow-hidden rounded-2xl border border-neutral-900 bg-neutral-950 text-left transition-transform duration-300 hover:-translate-y-0.5"
             >
-              <div
-                className="relative aspect-[2/3] w-full"
-                style={{
-                  background: `linear-gradient(160deg, ${item.posterFrom}, ${item.posterTo})`,
-                }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+              <div className="relative aspect-video w-full overflow-hidden border-b border-neutral-900/60 bg-gradient-to-br from-neutral-950 via-[#050816] to-black">
+                <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#0c0e1a_1px,transparent_1px),linear-gradient(to_bottom,#0c0e1a_1px,transparent_1px)] bg-[size:1.5rem_1.5rem] opacity-40 mix-blend-overlay" />
 
-                {item.isLive ? (
-                  <span
-                    className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-black"
-                    style={{ backgroundColor: accent }}
-                  >
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-black/70" />
-                    Live Replay
-                  </span>
+                <div
+                  className="pointer-events-none absolute -bottom-10 -right-10 z-0 h-32 w-32 rounded-full opacity-10 blur-[40px]"
+                  style={{ backgroundColor: primaryColor }}
+                />
+
+                {item.thumbnail ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={item.thumbnail}
+                    alt={item.title}
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
+                    className="absolute inset-0 z-10 h-full w-full object-cover opacity-30 transition-opacity duration-500 group-hover:opacity-40"
+                  />
                 ) : null}
 
-                <span className="absolute bottom-3 left-3 rounded-md bg-black/70 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-neutral-200">
-                  {item.runtime}
+                <span className="absolute left-3 top-3 z-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-neutral-200">
+                  {item.category}
                 </span>
 
-                {!unlocked ? (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/55 backdrop-blur-[2px]">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/50">
-                      <Lock className="size-5 text-white" aria-hidden="true" />
+                {!passesSecurityGate ? (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/75 p-4 text-center backdrop-blur-[2px]">
+                    <div
+                      className="mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-950 text-xs font-mono shadow-lg"
+                      style={{ color: primaryColor }}
+                    >
+                      🔒
                     </div>
-                    <span className="px-3 text-center font-mono text-[9px] uppercase tracking-[0.2em] text-neutral-300">
-                      {requiredTierLabel(item.requiredTier)} Required
-                    </span>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-300">
+                      {lockedTierLabel(item.tierRequired)}
+                    </p>
+                    <p className="mt-1 max-w-[220px] text-[9px] font-light leading-relaxed text-neutral-500">
+                      Upgrade your network configuration subscription clearance level to unlock
+                      access.
+                    </p>
                   </div>
                 ) : (
-                  <div
-                    className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full opacity-0 transition-opacity group-hover:opacity-100"
-                    style={{
-                      backgroundColor: accent,
-                      boxShadow: `0 0 18px ${accent}88`,
-                    }}
-                  >
-                    <Play className="size-4 fill-black text-black" aria-hidden="true" />
+                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/30 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <div
+                      className="flex h-11 w-11 translate-y-1 items-center justify-center rounded-full text-xs font-bold text-black shadow-[0_0_20px_rgba(0,0,0,0.4)] transition-all duration-300 group-hover:translate-y-0"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      ▶
+                    </div>
                   </div>
                 )}
+
+                <span className="absolute bottom-3 right-3 z-20 rounded border border-neutral-900 bg-neutral-950/90 px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-neutral-400">
+                  {item.duration}
+                </span>
               </div>
 
-              <div className="space-y-1 p-3">
-                <h2 className="line-clamp-2 text-sm font-bold tracking-tight text-white">{item.title}</h2>
-                <p className="line-clamp-1 text-[11px] text-neutral-400">{item.subtitle}</p>
+              <div className="space-y-1 p-4">
+                <h2 className="line-clamp-2 text-sm font-bold leading-snug tracking-tight text-white">
+                  {item.title}
+                </h2>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+                  {item.views}
+                </p>
               </div>
             </button>
           );

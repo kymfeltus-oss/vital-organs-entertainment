@@ -109,6 +109,11 @@ const nextConfig = {
         destination: "/owner/control",
         permanent: false,
       },
+      {
+        source: "/tenant-default/dashboard/hero-bg.png",
+        destination: "/tenant-default/dashboard/hero-bg.svg",
+        permanent: false,
+      },
     ];
   },
   experimental: {

@@ -1,28 +1,28 @@
 import type { TenantTheme } from "@/lib/theme/types";
 
-/** Neutral default palette — swap via tenant config later without code changes. */
+/** Flagship PΛRΛBLE STREAMING demo fallback — used when no tenant row resolves. */
 export const DEFAULT_TENANT_THEME: TenantTheme = {
-  appName: "Parable Streaming",
-  tagline: "Premium white-label media & community engine",
-  logoUrl: null,
-  logoUrlDark: null,
+  appName: "PΛRΛBLE STREAMING",
+  tagline: "Own Your Stream. Own Your Brand. Own Your Revenue.",
+  logoUrl: "/tenant-default/dashboard/flagship-logo.png",
+  logoUrlDark: "/tenant-default/dashboard/flagship-logo.png",
   faviconUrl: null,
   heroImageUrl: null,
   contact: {
-    email: "support@example.com",
-    website: "https://example.com",
-    mailSubjectPrefix: "Contact from Parable Streaming",
+    email: "ops@parablestream.com",
+    website: "https://parablestream.com",
+    mailSubjectPrefix: "Contact from PΛRΛBLE STREAMING",
   },
   socialLinks: [],
   colors: {
-    primary: "#2563eb",
-    secondary: "#64748b",
-    background: "#0f172a",
-    surface: "#1e293b",
-    text: "#f8fafc",
-    textMuted: "#94a3b8",
-    accent: "#3b82f6",
-    border: "rgba(148, 163, 184, 0.22)",
+    primary: "#00C2FF",
+    secondary: "#6C4DFF",
+    background: "#000000",
+    surface: "#000000",
+    text: "#ffffff",
+    textMuted: "#a3a3a3",
+    accent: "#6C4DFF",
+    border: "rgba(108, 77, 255, 0.28)",
   },
   fonts: {
     headline: "var(--font-inter)",
@@ -43,3 +43,5 @@ export const DEFAULT_TENANT_THEME: TenantTheme = {
     showLive: true,
   },
 };
+
+export const defaultTheme = DEFAULT_TENANT_THEME;

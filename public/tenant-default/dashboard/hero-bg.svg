@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1280" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#000000"/>
+      <stop offset="0.45" stop-color="#050816"/>
+      <stop offset="1" stop-color="#12082a"/>
+    </linearGradient>
+    <radialGradient id="cyanGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(280 120) rotate(90) scale(420 420)">
+      <stop stop-color="#00C2FF" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#00C2FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="violetGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(980 560) rotate(90) scale(380 380)">
+      <stop stop-color="#6C4DFF" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#6C4DFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="grid" x1="0" y1="0" x2="0" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <rect width="1280" height="720" fill="url(#cyanGlow)"/>
+  <rect width="1280" height="720" fill="url(#violetGlow)"/>
+  <g opacity="0.18" stroke="#1e293b" stroke-width="1">
+    <path d="M0 120H1280M0 240H1280M0 360H1280M0 480H1280M0 600H1280"/>
+    <path d="M160 0V720M320 0V720M480 0V720M640 0V720M800 0V720M960 0V720M1120 0V720"/>
+  </g>
+  <rect y="520" width="1280" height="200" fill="url(#grid)"/>
+  <text x="64" y="640" fill="#ffffff" font-family="Arial, sans-serif" font-size="42" font-weight="700" letter-spacing="0.08em">P›R›BLE STREAMING</text>
+  <text x="64" y="678" fill="#00C2FF" font-family="Arial, sans-serif" font-size="18" letter-spacing="0.24em">INFRASTRUCTURE LAB REPLAY</text>
+</svg>
