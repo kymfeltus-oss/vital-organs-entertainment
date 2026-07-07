@@ -86,6 +86,7 @@
   display: grid;
   grid-template-columns: 30.2% 39.8% 30%;
   align-items: stretch;
+  margin-bottom: 28px;
   border-bottom: 1px solid rgba(127, 31, 170, .28);
 }
 
@@ -201,25 +202,7 @@
 .wallet b { font-size: 13px; font-weight: 500; }
 .wallet button { align-self: center; height: 34px; display: flex; align-items: center; gap: 7px; padding: 0 13px; border: 0; border-radius: 6px; background: linear-gradient(100deg, #008cff, #4832ff, #e900a4); color: white; font-size: 10px; white-space: nowrap; }
 
-.featureStrip {
-  height: 156px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  padding: 25px 0 18px;
-  border: 1px solid #24213e;
-  border-radius: 11px;
-  background: rgba(2, 4, 13, .88);
-}
-.featureStrip article { display: grid; grid-template-columns: 92px 1fr; gap: 10px; padding: 0 25px; border-right: 1px solid #303243; }
-.featureStrip article:last-child { border-right: 0; }
-.featureIcon { width: 74px; height: 54px; display: grid; place-items: center; border: 1px solid currentColor; border-radius: 8px; color: var(--blue); box-shadow: 0 0 15px rgba(0, 166, 255, .17) inset, 0 0 10px rgba(0, 166, 255, .12); }
-.featureIcon svg { width: 35px; height: 35px; stroke-width: 1.35; }
-.featureIcon.purple { color: #a53cff; box-shadow: 0 0 15px rgba(151, 47, 255, .2) inset; }
-.featureIcon.pink { color: var(--pink); box-shadow: 0 0 15px rgba(255, 8, 150, .2) inset; }
-.featureStrip h2 { margin: 0 0 8px; font-size: 15px; line-height: 1.3; font-weight: 650; }
-.featureStrip p { margin: 0; color: #c0c1cb; font-size: 11px; line-height: 1.48; }
-
-.pricing { height: 274px; margin-top: 14px; overflow: hidden; border: 1px solid transparent; border-radius: 11px; background: linear-gradient(#03050e, #03050e) padding-box, linear-gradient(90deg, #0068a6, #6729a7 55%, #9d0a56) border-box; }
+.pricing { height: 274px; margin-top: 0; overflow: hidden; border: 1px solid transparent; border-radius: 11px; background: linear-gradient(#03050e, #03050e) padding-box, linear-gradient(90deg, #0068a6, #6729a7 55%, #9d0a56) border-box; }
 .pricingBanner { height: 35px; display: flex; align-items: center; justify-content: center; gap: 16px; border-bottom: 1px solid #31122a; font-size: 14px; letter-spacing: .28em; }
 .pricingBanner svg { color: #ffe200; }
 .pricingBanner b { color: transparent; background: linear-gradient(90deg, #22d9ff, #8e64ff, #ff18a0); background-clip: text; }
@@ -251,7 +234,7 @@
 .plan.pink > a svg,
 .plan.pink > button svg { color: var(--pink); }
 
-.trustStrip { height: 77px; display: grid; grid-template-columns: repeat(6, 1fr); align-items: center; }
+.trustStrip { height: 77px; margin-top: 18px; display: grid; grid-template-columns: repeat(6, 1fr); align-items: center; }
 .trustStrip > div { height: 36px; display: flex; align-items: center; justify-content: center; gap: 13px; border-right: 1px solid #1e2131; }
 .trustStrip > div:last-child { border-right: 0; }
 .trustStrip svg { width: 33px; height: 33px; color: #328bff; stroke-width: 1.45; }
@@ -267,8 +250,6 @@
   .heroCopy h1 { font-size: 34px; }
   .heroActions { gap: 8px; }
   .heroActions a { padding-inline: 10px; }
-  .featureStrip article { grid-template-columns: 62px 1fr; padding-inline: 14px; }
-  .featureIcon { width: 56px; }
 }
 
 @media (max-width: 900px) {
@@ -281,10 +262,7 @@
   .heroCopy { padding: 34px 8px; }
   .heroBrand { min-height: 400px; }
   .studio { width: 100%; margin: 10px 0 22px; }
-  .featureStrip, .plans, .trustStrip { height: auto; grid-template-columns: 1fr; }
-  .featureStrip { padding: 0 18px; }
-  .featureStrip article { min-height: 130px; align-items: center; border-right: 0; border-bottom: 1px solid #303243; }
-  .featureStrip article:last-child { border-bottom: 0; }
+  .plans, .trustStrip { height: auto; grid-template-columns: 1fr; }
   .pricing { height: auto; }
   .pricingBanner { height: auto; min-height: 58px; padding: 12px; text-align: center; line-height: 1.7; }
   .plans { padding: 20px 12px; }

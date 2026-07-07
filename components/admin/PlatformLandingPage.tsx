@@ -11,41 +11,10 @@ import {
   Headphones,
   Heart,
   LockKeyhole,
-  Monitor,
   ShieldCheck,
-  SlidersVertical,
-  Smartphone,
-  WalletCards,
   Zap,
 } from "lucide-react";
 import styles from "./PlatformLandingPage.module.css";
-
-const FEATURES = [
-  {
-    icon: Monitor,
-    tone: "blue",
-    title: <>Broadcast Control<br />&amp; CDN Probes</>,
-    copy: "Preflight HLS probes, multi-tenant CDN orchestration, WebRTC lanes, and dynamic phase routing for flawless live delivery.",
-  },
-  {
-    icon: SlidersVertical,
-    tone: "purple",
-    title: <>Telemetry &amp;<br />Hardware Mixers</>,
-    copy: "Native vMix API control for cameras & DVR. Real-time telemetry and preset recalls for Behringer X32 audio mixers.",
-  },
-  {
-    icon: WalletCards,
-    tone: "pink",
-    title: <>In-Stream Token<br />Economics</>,
-    copy: "0% transaction fees. Direct token wallets, live cheers, and digital commerce via secure, signature-verified PostgreSQL RPC.",
-  },
-  {
-    icon: Smartphone,
-    tone: "blue",
-    title: <>Multi-Tenant App<br />Container Delivery</>,
-    copy: "Native mobile packaging with Capacitor. Deploy to iOS App Store and Google Play under your own accounts with full brand ownership.",
-  },
-] as const;
 
 const PLANS = [
   {
@@ -171,9 +140,9 @@ export default function PlatformLandingPage() {
       <nav className={styles.nav} aria-label="Primary navigation">
         <Link href="/" className={styles.logoLink}><Wordmark /></Link>
         <div className={styles.navLinks}>
-          <a href="#features">Platform <ChevronDown size={14} /></a>
-          <a href="#features">Solutions <ChevronDown size={14} /></a>
-          <a href="#features">Technology <ChevronDown size={14} /></a>
+          <a href="#pricing">Platform <ChevronDown size={14} /></a>
+          <a href="#pricing">Solutions <ChevronDown size={14} /></a>
+          <a href="#pricing">Technology <ChevronDown size={14} /></a>
           <a href="#pricing">Resources <ChevronDown size={14} /></a>
           <a href="#pricing">Pricing</a>
           <a href="/contact-us">Company <ChevronDown size={14} /></a>
@@ -189,7 +158,7 @@ export default function PlatformLandingPage() {
             <p>Enterprise-grade infrastructure, hardware telemetry, and automated token economics — so you keep 100% of your monetization, 100% of your advertising inventory, and 100% of your brand identity.</p>
             <div className={styles.heroActions}>
               <Link href="/onboarding">Deploy Architecture <ArrowRight size={17} /></Link>
-              <a href="#features">Explore System Specs <ArrowDown size={16} /></a>
+              <a href="#pricing">View Pricing Plans <ArrowDown size={16} /></a>
             </div>
           </div>
 
@@ -212,15 +181,6 @@ export default function PlatformLandingPage() {
           </div>
 
           <LiveStudio />
-        </section>
-
-        <section id="features" className={styles.featureStrip}>
-          {FEATURES.map(({ icon: Icon, tone, title, copy }) => (
-            <article key={tone + copy}>
-              <div className={`${styles.featureIcon} ${styles[tone]}`}><Icon /></div>
-              <div><h2>{title}</h2><p>{copy}</p></div>
-            </article>
-          ))}
         </section>
 
         <section id="pricing" className={styles.pricing}>
