@@ -12,6 +12,14 @@ import {
 
 const EXIT_MS = 520;
 const ACCESS_TIMEOUT_MS = 600;
+const MOBILE_BREAKPOINT = "(max-width: 767px)";
+
+function resolveIntroVideoSrc(): string {
+  if (typeof window === "undefined") return INTRO_BG_LOOP_MOBILE;
+  return window.matchMedia(MOBILE_BREAKPOINT).matches
+    ? INTRO_BG_LOOP_MOBILE
+    : INTRO_BG_LOOP_DESKTOP;
+}
 
 async function resolveIntroDestination(): Promise<string> {
   try {
@@ -38,6 +46,7 @@ export default function IntroMediaSplash() {
   const isNavigatingRef = useRef(false);
   const [isExiting, setIsExiting] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  const [videoSrc, setVideoSrc] = useState(INTRO_BG_LOOP_MOBILE);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -48,8 +57,19 @@ export default function IntroMediaSplash() {
   }, []);
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia(MOBILE_BREAKPOINT);
+    const syncVideoSrc = () => setVideoSrc(resolveIntroVideoSrc());
+
+    syncVideoSrc();
+    mediaQuery.addEventListener("change", syncVideoSrc);
+    return () => mediaQuery.removeEventListener("change", syncVideoSrc);
+  }, []);
+
+  useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+
+    setVideoReady(false);
 
     const tryPlay = () => {
       void video.play().catch(() => {
@@ -62,6 +82,9 @@ export default function IntroMediaSplash() {
       tryPlay();
     };
 
+    video.src = videoSrc;
+    video.load();
+
     if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
       onReady();
     }
@@ -73,7 +96,7 @@ export default function IntroMediaSplash() {
       video.removeEventListener("loadeddata", onReady);
       video.removeEventListener("canplay", onReady);
     };
-  }, []);
+  }, [videoSrc]);
 
   const stopIntroVideo = useCallback(() => {
     const video = videoRef.current;
@@ -119,6 +142,7 @@ export default function IntroMediaSplash() {
       }`}
     >
       <video
+        key={videoSrc}
         ref={videoRef}
         className="h-full w-full object-cover"
         autoPlay
@@ -127,18 +151,7 @@ export default function IntroMediaSplash() {
         playsInline
         preload="auto"
         aria-hidden="true"
-      >
-        <source
-          src={INTRO_BG_LOOP_MOBILE}
-          type="video/mp4"
-          media="(max-width: 767px)"
-        />
-        <source
-          src={INTRO_BG_LOOP_DESKTOP}
-          type="video/mp4"
-          media="(min-width: 768px)"
-        />
-      </video>
+      />
 
       {!videoReady ? (
         <div

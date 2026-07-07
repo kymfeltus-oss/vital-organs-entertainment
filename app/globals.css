@@ -1005,6 +1005,40 @@ body::-webkit-scrollbar {
   }
 }
 
+/* Cinematic intro splash — compact enter CTA below video art */
+.intro-media-enter-btn.intro-flash-enter-btn {
+  bottom: max(2.75dvh, calc(env(safe-area-inset-bottom) + 0.55rem));
+  width: auto;
+  min-width: 10.75rem;
+  max-width: none;
+  min-height: 3.35rem;
+  padding: 0 2.75rem;
+}
+
+.intro-media-enter-btn__label {
+  font-family: var(--font-headline);
+  font-size: clamp(1.15rem, 5vw, 1.45rem);
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-shadow:
+    0 0 18px rgba(255, 47, 175, 0.45),
+    0 0 28px rgba(0, 168, 255, 0.25);
+}
+
+@media (max-width: 767px) {
+  .intro-media-enter-btn.intro-flash-enter-btn {
+    bottom: max(2.1dvh, calc(env(safe-area-inset-bottom) + 0.4rem));
+    min-width: 9.5rem;
+    min-height: 3.1rem;
+    padding: 0 2.25rem;
+  }
+
+  .intro-media-enter-btn__label {
+    font-size: clamp(1.05rem, 4.8vw, 1.25rem);
+    letter-spacing: 0.12em;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .intro-flash-motion {
     animation: none !important;
