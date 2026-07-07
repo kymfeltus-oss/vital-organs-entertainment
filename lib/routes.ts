@@ -17,6 +17,7 @@ const NAV_HIDDEN_PREFIXES = [
   "/intro/",
   "/login/",
   "/create-account/",
+  "/enterprise",
   "/live",
   "/watch",
   "/stream",
