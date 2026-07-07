@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SystemSpecsTable from "@/components/admin/SystemSpecsTable";
 import {
   Building2,
   ChevronDown,
@@ -308,7 +309,7 @@ export default function PlatformLandingPage() {
                   Provision Sanctuary Node →
                 </Link>
                 <a
-                  href="#features"
+                  href="#specification"
                   className="inline-flex h-11 items-center justify-center gap-1 rounded border border-white/14 bg-[rgba(255,255,255,0.04)] px-6 text-[10px] font-semibold tracking-[0.22em] text-[rgba(255,255,255,0.68)] uppercase transition-all duration-300 hover:border-white/25 hover:bg-white/[0.07] hover:text-white"
                 >
                   System Specs
@@ -351,6 +352,8 @@ export default function PlatformLandingPage() {
             ))}
           </div>
         </section>
+
+        <SystemSpecsTable />
 
         <section className="relative z-10 mx-auto max-w-7xl px-6 py-10 md:px-10" aria-label="Trusted ministries">
           <p className="text-center text-[9px] font-semibold tracking-[0.34em] text-[rgba(255,255,255,0.68)] uppercase">
