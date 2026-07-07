@@ -10,25 +10,20 @@ import {
 } from "@/lib/auth/routing";
 import { isE2EBypassEnabled } from "@/lib/access/e2e-bypass";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
+import { extractTenantSubdomain } from "@/lib/theme/platform-domains";
 
 /** Fail fast when Supabase is slow/unreachable — avoids 10s hangs on client navigation. */
 const PROXY_AUTH_LOOKUP_TIMEOUT_MS = 2_500;
 
-const BASE_DOMAINS = ["localhost:3000", "parablestreaming.com", "yourplatform.com"];
-
 function resolveRequestHeaders(request: NextRequest): Headers {
   const hostname = request.headers.get("host") || "";
-  const matchedBase = BASE_DOMAINS.find((domain) => hostname.includes(domain));
   const requestHeaders = new Headers(request.headers);
+  const tenantId = extractTenantSubdomain(hostname);
 
-  if (!matchedBase) return requestHeaders;
-
-  const subdomain = hostname.replace(`.${matchedBase}`, "").trim();
-  if (!subdomain || subdomain === "www" || subdomain === hostname) {
-    return requestHeaders;
+  if (tenantId) {
+    requestHeaders.set("x-tenant-id", tenantId);
   }
 
-  requestHeaders.set("x-tenant-id", subdomain);
   return requestHeaders;
 }
 

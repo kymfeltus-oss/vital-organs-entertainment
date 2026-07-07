@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Check, MessageCircle, Palette, Sparkles } from "lucide-react";
 import { PLATFORM_SAAS_TIERS } from "@/lib/platform/saas-tiers";
@@ -25,35 +24,13 @@ const STOREFRONT_FEATURES = [
 ] as const;
 
 export default function PlatformLandingClient() {
-  const [loadingTier, setLoadingTier] = useState<string | null>(null);
-  const [checkoutError, setCheckoutError] = useState<string | null>(null);
-
-  const startCheckout = async (tierId: string, contactSales?: boolean) => {
+  const startCheckout = (tierId: string, contactSales?: boolean) => {
     if (contactSales) {
       window.location.assign("/contact-us?intent=enterprise");
       return;
     }
 
-    setLoadingTier(tierId);
-    setCheckoutError(null);
-
-    try {
-      const response = await fetch("/api/billing/platform-checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier: tierId }),
-      });
-
-      const result = (await response.json()) as { url?: string; error?: string };
-      if (!response.ok || !result.url) {
-        throw new Error(result.error ?? "Unable to start checkout.");
-      }
-
-      window.location.assign(result.url);
-    } catch (error) {
-      setCheckoutError(error instanceof Error ? error.message : "Checkout failed.");
-      setLoadingTier(null);
-    }
+    window.location.assign(`/onboarding?tier=${tierId}`);
   };
 
   return (
@@ -128,12 +105,6 @@ export default function PlatformLandingClient() {
             </p>
           </div>
 
-          {checkoutError ? (
-            <p className="mb-6 rounded-xl border border-[#ff2faf]/35 bg-[#ff2faf]/10 px-4 py-3 text-center font-ui text-sm text-[#ffb8e8]">
-              {checkoutError}
-            </p>
-          ) : null}
-
           <div className="grid gap-5 lg:grid-cols-3">
             {PLATFORM_SAAS_TIERS.map((tier) => (
               <article
@@ -172,19 +143,14 @@ export default function PlatformLandingClient() {
 
                 <button
                   type="button"
-                  disabled={loadingTier !== null}
-                  onClick={() => void startCheckout(tier.id, tier.contactSales)}
-                  className={`mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 font-ui text-xs font-bold uppercase tracking-[0.14em] transition disabled:cursor-wait disabled:opacity-60 ${
+                  onClick={() => startCheckout(tier.id, tier.contactSales)}
+                  className={`mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 font-ui text-xs font-bold uppercase tracking-[0.14em] transition ${
                     tier.featured
                       ? "bg-gradient-to-r from-[#00a8ff] via-[#8a2eff] to-[#ff2faf] text-white shadow-[0_0_24px_rgba(0,168,255,0.25)] hover:brightness-110"
                       : "border border-white/20 bg-white/5 text-white hover:border-white/40 hover:bg-white/10"
                   }`}
                 >
-                  {loadingTier === tier.id
-                    ? "Redirecting…"
-                    : tier.contactSales
-                      ? "Request Access"
-                      : "Request Access / Start Trial"}
+                  {tier.contactSales ? "Request Access" : tier.ctaLabel}
                   {!tier.contactSales ? <ArrowRight className="size-4" aria-hidden="true" /> : null}
                 </button>
               </article>
@@ -202,11 +168,10 @@ export default function PlatformLandingClient() {
           </p>
           <button
             type="button"
-            disabled={loadingTier !== null}
-            onClick={() => void startCheckout("pro")}
-            className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00a8ff] via-[#8a2eff] to-[#ff2faf] px-8 font-ui text-xs font-bold uppercase tracking-[0.16em] text-white shadow-[0_0_28px_rgba(255,47,175,0.22)] transition hover:brightness-110 disabled:opacity-60"
+            onClick={() => startCheckout("pro")}
+            className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00a8ff] via-[#8a2eff] to-[#ff2faf] px-8 font-ui text-xs font-bold uppercase tracking-[0.16em] text-white shadow-[0_0_28px_rgba(255,47,175,0.22)] transition hover:brightness-110"
           >
-            {loadingTier === "pro" ? "Redirecting…" : "Request Access / Start Trial"}
+            Request Access / Start Trial
             <ArrowRight className="size-4" aria-hidden="true" />
           </button>
         </section>

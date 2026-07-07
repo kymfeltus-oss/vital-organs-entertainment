@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Check, Loader2, Upload } from "lucide-react";
+import type { PlatformTierId } from "@/components/admin/PlanSelectionCta";
 import { evaluatePasswordStrength } from "@/lib/auth/password-policy";
 import { isValidEmail } from "@/lib/auth/validation";
 import { isValidTenantId, sanitizeTenantIdInput } from "@/lib/onboarding/tenant-id";
@@ -12,7 +13,13 @@ type Step = 1 | 2 | 3;
 
 type SubdomainStatus = "idle" | "checking" | "available" | "taken" | "invalid";
 
-export default function OwnerOnboardingClient() {
+type OwnerOnboardingClientProps = {
+  selectedTier?: PlatformTierId;
+};
+
+export default function OwnerOnboardingClient({
+  selectedTier = "starter",
+}: OwnerOnboardingClientProps) {
   const platformHost = useMemo(() => getMarketingPlatformHost(), []);
 
   const [step, setStep] = useState<Step>(1);
@@ -29,6 +36,13 @@ export default function OwnerOnboardingClient() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successUrl, setSuccessUrl] = useState<string | null>(null);
+  const [isStartingCheckout, setIsStartingCheckout] = useState(false);
+
+  const tierLabel = useMemo(() => {
+    if (selectedTier === "pro") return "Network Pro";
+    if (selectedTier === "enterprise") return "Enterprise Stack";
+    return "Starter Node";
+  }, [selectedTier]);
 
   const passwordStrength = useMemo(() => evaluatePasswordStrength(password), [password]);
 
@@ -118,13 +132,52 @@ export default function OwnerOnboardingClient() {
         throw new Error(result.error ?? "Registration failed.");
       }
 
-      setSuccessUrl(result.tenantUrl);
+      const registeredTenantId = sanitizeTenantIdInput(tenantId);
+
+      if (selectedTier === "enterprise") {
+        window.location.href = `/contact-us?intent=enterprise&tenant=${encodeURIComponent(registeredTenantId)}`;
+        return;
+      }
+
+      setIsStartingCheckout(true);
+
+      const checkoutResponse = await fetch("/api/billing/platform-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tier: selectedTier,
+          tenantId: registeredTenantId,
+        }),
+      });
+
+      const checkoutResult = (await checkoutResponse.json()) as { url?: string; error?: string };
+      if (!checkoutResponse.ok || !checkoutResult.url) {
+        setSuccessUrl(result.tenantUrl);
+        throw new Error(checkoutResult.error ?? "Unable to start subscription checkout.");
+      }
+
+      window.location.href = checkoutResult.url;
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Registration failed.");
     } finally {
       setIsSubmitting(false);
+      setIsStartingCheckout(false);
     }
   };
+
+  if (isStartingCheckout) {
+    return (
+      <div className="mx-auto max-w-xl px-5 py-16 text-center">
+        <Loader2 className="mx-auto mb-5 size-10 animate-spin text-[#00a8ff]" aria-hidden="true" />
+        <h1 className="font-headline text-2xl uppercase tracking-[0.08em] text-white">
+          Starting secure checkout
+        </h1>
+        <p className="mt-3 font-body text-sm leading-relaxed text-white/70">
+          Your network is registered. Redirecting to Stripe for the {tierLabel} plan…
+        </p>
+      </div>
+    );
+  }
 
   if (successUrl) {
     return (
@@ -168,6 +221,9 @@ export default function OwnerOnboardingClient() {
         </h1>
         <p className="mt-2 font-body text-sm text-white/65">
           Three quick steps to claim your subdomain, brand assets, and owner credentials.
+        </p>
+        <p className="mt-3 inline-flex rounded-full border border-[#00a8ff]/35 bg-[#00a8ff]/10 px-3 py-1 font-ui text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9de8ff]">
+          Selected plan: {tierLabel}
         </p>
       </header>
 

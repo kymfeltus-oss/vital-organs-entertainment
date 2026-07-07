@@ -52,6 +52,7 @@ export async function insertTenantThemeRow(
     owner_email: ownerEmail,
     owner_user_id: payload.ownerUserId,
     app_name: companyName,
+    tier: "starter",
     tagline: DEFAULT_TENANT_THEME.tagline,
     logo_url: payload.logoUrl,
     primary_color: primaryColor,
