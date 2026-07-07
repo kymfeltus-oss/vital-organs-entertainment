@@ -86,3 +86,51 @@ export function applyEnterpriseOverrides(
     },
   };
 }
+
+/** Runtime streaming / platform limits enforced by billing tier. */
+export type SubscriptionTier = "starter" | "pro" | "enterprise";
+
+export interface TierFeatures {
+  maxResolution: "720p" | "1080p" | "4k";
+  customDomainAllowed: boolean;
+  customMobileAppsAllowed: boolean;
+  maxChatRooms: number;
+}
+
+export const TIER_CONFIGS: Record<SubscriptionTier, TierFeatures> = {
+  starter: {
+    maxResolution: "720p",
+    customDomainAllowed: false,
+    customMobileAppsAllowed: false,
+    maxChatRooms: 1,
+  },
+  pro: {
+    maxResolution: "1080p",
+    customDomainAllowed: true,
+    customMobileAppsAllowed: false,
+    maxChatRooms: 5,
+  },
+  enterprise: {
+    maxResolution: "4k",
+    customDomainAllowed: true,
+    customMobileAppsAllowed: true,
+    maxChatRooms: 999,
+  },
+};
+
+function normalizeSubscriptionTier(value: string | null | undefined): SubscriptionTier {
+  const normalized = value?.trim().toLowerCase();
+  if (normalized === "pro" || normalized === "enterprise") return normalized;
+  return "starter";
+}
+
+/**
+ * Safe feature-flag evaluator to guard premium interfaces without breaking execution loops.
+ */
+export function verifyFeatureAccess<F extends keyof TierFeatures>(
+  currentTier: string | null | undefined,
+  feature: F,
+): TierFeatures[F] {
+  const config = TIER_CONFIGS[normalizeSubscriptionTier(currentTier)];
+  return config[feature];
+}

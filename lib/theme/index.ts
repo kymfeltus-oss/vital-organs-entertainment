@@ -28,6 +28,7 @@ export {
   setServerTenantThemePayload,
   clearServerTenantTheme,
 } from "@/lib/theme/theme-server-store";
+export { getTenantTheme, defaultTheme } from "@/lib/theme/tenant-resolver";
 export type {
   DashboardAction,
   TenantTheme,

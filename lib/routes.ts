@@ -9,6 +9,7 @@ const NAV_HIDDEN_EXACT = [
   "/countdown",
   "/program",
   "/story",
+  "/onboarding",
 ] as const;
 
 const NAV_HIDDEN_PREFIXES = [

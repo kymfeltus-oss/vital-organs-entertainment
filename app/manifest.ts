@@ -1,23 +1,31 @@
 import type { MetadataRoute } from "next";
-import { PLATFORM_APP_NAME, PLATFORM_SHORT_NAME, PLATFORM_TAGLINE } from "@/lib/theme/brand";
-import { DEFAULT_TENANT_THEME } from "@/lib/theme/default-theme";
+import { headers } from "next/headers";
+import { getTenantTheme } from "@/lib/theme/tenant-resolver";
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const headerStore = await headers();
+  const tenantId = headerStore.get("x-tenant-id") || "default";
+  const theme = await getTenantTheme(tenantId);
+  const logoSrc = theme.logoUrl || "/tenant-default/dashboard/logo.png";
+
   return {
-    name: PLATFORM_APP_NAME,
-    short_name: PLATFORM_SHORT_NAME,
-    description: PLATFORM_TAGLINE,
-    start_url: "/attendee-dashboard",
-    scope: "/",
+    name: theme.appName,
+    short_name: theme.appName,
+    description: `Access live streams and video content on the ${theme.appName} framework.`,
+    start_url: "/",
     display: "standalone",
-    background_color: DEFAULT_TENANT_THEME.colors.background,
-    theme_color: DEFAULT_TENANT_THEME.colors.primary,
+    background_color: "#0a0a0a",
+    theme_color: theme.colors.primary,
     icons: [
       {
-        src: "/images/logo.png",
-        sizes: "1024x1024",
+        src: logoSrc,
+        sizes: "192x192",
         type: "image/png",
-        purpose: "any",
+      },
+      {
+        src: logoSrc,
+        sizes: "512x512",
+        type: "image/png",
       },
     ],
   };

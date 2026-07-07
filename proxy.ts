@@ -14,6 +14,24 @@ import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
 /** Fail fast when Supabase is slow/unreachable — avoids 10s hangs on client navigation. */
 const PROXY_AUTH_LOOKUP_TIMEOUT_MS = 2_500;
 
+const BASE_DOMAINS = ["localhost:3000", "parablestreaming.com", "yourplatform.com"];
+
+function resolveRequestHeaders(request: NextRequest): Headers {
+  const hostname = request.headers.get("host") || "";
+  const matchedBase = BASE_DOMAINS.find((domain) => hostname.includes(domain));
+  const requestHeaders = new Headers(request.headers);
+
+  if (!matchedBase) return requestHeaders;
+
+  const subdomain = hostname.replace(`.${matchedBase}`, "").trim();
+  if (!subdomain || subdomain === "www" || subdomain === hostname) {
+    return requestHeaders;
+  }
+
+  requestHeaders.set("x-tenant-id", subdomain);
+  return requestHeaders;
+}
+
 function isAuthTransportError(message: string): boolean {
   return /ENOTFOUND|fetch failed|Failed to fetch|ECONNREFUSED|ETIMEDOUT|timeout|UND_ERR_CONNECT_TIMEOUT/i.test(
     message,
@@ -57,6 +75,7 @@ async function getProxyAuthUser(
 }
 
 export async function proxy(request: NextRequest) {
+  const requestHeaders = resolveRequestHeaders(request);
   const { pathname } = request.nextUrl;
 
   if (/^\/countdown/i.test(pathname)) {
@@ -76,7 +95,11 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/auth/") ||
     pathname === "/"
   ) {
-    return NextResponse.next();
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   }
 
   const isAttendeeRoute = isAttendeeProtectedPath(pathname);
@@ -84,16 +107,24 @@ export async function proxy(request: NextRequest) {
 
   if (isE2EBypassEnabled() && isTeamRoute) {
     console.info("⚡ [E2E BYPASS] Allowing team route without browser session:", pathname);
-    return NextResponse.next();
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   }
 
   if (!isAttendeeRoute && !isTeamRoute) {
-    return NextResponse.next();
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   }
 
   let response = NextResponse.next({
     request: {
-      headers: request.headers,
+      headers: requestHeaders,
     },
   });
 
@@ -109,7 +140,7 @@ export async function proxy(request: NextRequest) {
 
         response = NextResponse.next({
           request: {
-            headers: request.headers,
+            headers: requestHeaders,
           },
         });
 
@@ -161,17 +192,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/countdown",
-    "/countdown/:path*",
-    "/COUNTDOWN",
-    "/COUNTDOWN/:path*",
-    "/dashboard",
-    "/dashboard/:path*",
-    "/attendee-dashboard",
-    "/experience",
-    "/experience/:path*",
-    "/owner",
-    "/owner/:path*",
-  ],
+  matcher: ["/((?!api|_next/static|_next/image|assets|favicon.ico|sw.js|tenant-default).*)"],
 };

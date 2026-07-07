@@ -9,10 +9,16 @@ import {
   INTRO_BG_LOOP_DESKTOP,
   INTRO_BG_LOOP_MOBILE,
 } from "@/lib/features/intro/intro-assets";
+import { applyThemeToElement } from "@/lib/theme/apply-theme-vars";
+import type { TenantTheme } from "@/lib/theme/types";
 
 const EXIT_MS = 520;
 const ACCESS_TIMEOUT_MS = 600;
 const MOBILE_BREAKPOINT = "(max-width: 767px)";
+
+type IntroMediaSplashProps = {
+  tenantTheme?: TenantTheme;
+};
 
 function resolveIntroVideoSrc(): string {
   if (typeof window === "undefined") return INTRO_BG_LOOP_MOBILE;
@@ -41,12 +47,17 @@ async function resolveIntroDestination(): Promise<string> {
   }
 }
 
-export default function IntroMediaSplash() {
+export default function IntroMediaSplash({ tenantTheme }: IntroMediaSplashProps = {}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const isNavigatingRef = useRef(false);
   const [isExiting, setIsExiting] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const [videoSrc, setVideoSrc] = useState(INTRO_BG_LOOP_MOBILE);
+
+  useEffect(() => {
+    if (!tenantTheme) return;
+    applyThemeToElement(document.documentElement, tenantTheme);
+  }, [tenantTheme]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;

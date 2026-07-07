@@ -4,6 +4,7 @@ import Stripe from "stripe";
 import { createClient, type PostgrestError } from "@supabase/supabase-js";
 import { getEventTicketTier, isEventTicketTierId } from "@/lib/merch/catalog";
 import { parseSeedPackCheckoutCount } from "@/lib/billing-config";
+import { syncTenantTierFromSubscription } from "@/lib/billing/tenant-tier-sync";
 import { getSupabaseServiceRoleKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 function getStripeClient(): Stripe {
@@ -305,6 +306,36 @@ export async function POST(request: Request) {
         { error: "Server transactional processing lock failed." },
         { status: 500 },
       );
+    }
+  }
+
+  if (
+    event.type === "customer.subscription.created" ||
+    event.type === "customer.subscription.updated" ||
+    event.type === "invoice.payment_succeeded"
+  ) {
+    try {
+      let subscriptionObject: Stripe.Subscription | null = null;
+
+      if (event.type === "invoice.payment_succeeded") {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subscriptionRef = invoice.subscription;
+
+        if (typeof subscriptionRef === "string") {
+          subscriptionObject = await getStripeClient().subscriptions.retrieve(subscriptionRef);
+        } else if (subscriptionRef && typeof subscriptionRef === "object") {
+          subscriptionObject = subscriptionRef;
+        }
+      } else {
+        subscriptionObject = event.data.object as Stripe.Subscription;
+      }
+
+      if (subscriptionObject) {
+        await syncTenantTierFromSubscription(subscriptionObject);
+      }
+    } catch (error) {
+      console.error("❌ [TENANT_TIER_SYNC_FAILED]:", error);
+      return NextResponse.json({ error: "Failed to update tenant tier." }, { status: 500 });
     }
   }
 
