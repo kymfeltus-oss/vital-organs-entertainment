@@ -6,7 +6,6 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import {
   buildBrowseCategories,
   canAccessVodAsset,
-  lockedTierLabel,
   normalizeSubscriptionTier,
   requiredTierLabel,
   type BrowseCatalogItem,
@@ -131,7 +130,7 @@ export default function VodBrowseClient({ catalog }: VodBrowseClientProps) {
               onClick={() => handleCardPress(item)}
               className="group relative overflow-hidden rounded-2xl border border-neutral-900 bg-neutral-950 text-left transition-transform duration-300 hover:-translate-y-0.5"
             >
-              <div className="relative aspect-video w-full overflow-hidden border-b border-neutral-900/60 bg-gradient-to-br from-neutral-950 via-[#050816] to-black">
+              <div className="group/thumb relative aspect-video w-full overflow-hidden border-b border-neutral-900/60 bg-gradient-to-br from-neutral-950 via-[#050816] to-black">
                 <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#0c0e1a_1px,transparent_1px),linear-gradient(to_bottom,#0c0e1a_1px,transparent_1px)] bg-[size:1.5rem_1.5rem] opacity-40 mix-blend-overlay" />
 
                 <div
@@ -147,38 +146,78 @@ export default function VodBrowseClient({ catalog }: VodBrowseClientProps) {
                     onError={(event) => {
                       event.currentTarget.style.display = "none";
                     }}
-                    className="absolute inset-0 z-10 h-full w-full object-cover opacity-30 transition-opacity duration-500 group-hover:opacity-40"
+                    className="absolute inset-0 z-10 h-full w-full object-cover opacity-20 transition-opacity duration-500 group-hover/thumb:opacity-10"
                   />
                 ) : null}
 
-                <span className="absolute left-3 top-3 z-20 rounded-md border border-white/10 bg-black/60 px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-neutral-200">
+                <span className="absolute left-3 top-3 z-30 rounded-md border border-white/10 bg-black/60 px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-neutral-200">
                   {item.category}
                 </span>
 
-                {!passesSecurityGate ? (
-                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/75 p-4 text-center backdrop-blur-[2px]">
+                {passesSecurityGate ? (
+                  <div className="pointer-events-none absolute inset-0 z-[15] flex flex-col justify-end overflow-hidden bg-black/40 p-3 opacity-0 transition-opacity duration-500 group-hover/thumb:opacity-100">
+                    <div className="animate-scrolling-chat space-y-1.5 translate-y-2 transform select-none text-left font-mono text-[9px] transition-transform duration-700 group-hover/thumb:translate-y-0">
+                      <div className="flex max-w-[85%] items-center gap-1.5 rounded border border-neutral-900/60 bg-neutral-950/80 px-2 py-1 backdrop-blur-sm">
+                        <span className="font-bold text-[#00C2FF]">alex_mercer:</span>
+                        <span className="text-neutral-300">
+                          This 4K bitrate stream is absolutely flawless.
+                        </span>
+                      </div>
+                      <div
+                        className="flex max-w-[90%] items-center gap-1.5 rounded border border-neutral-900/60 bg-neutral-950/80 px-2 py-1 backdrop-blur-sm"
+                        style={{ borderColor: `${primaryColor}30` }}
+                      >
+                        <span className="rounded bg-[#6C4DFF]/10 px-1 text-[8px] font-bold uppercase tracking-wider text-[#6C4DFF]">
+                          SYSTEM
+                        </span>
+                        <span className="text-neutral-400">
+                          <strong className="text-white">vanguard_media</strong> sent a Virtual
+                          Token! 🪙
+                        </span>
+                      </div>
+                      <div className="flex max-w-[80%] items-center gap-1.5 rounded border border-neutral-900/60 bg-neutral-950/80 px-2 py-1 backdrop-blur-sm">
+                        <span className="font-bold text-[#FF0F8E]">crypto_vince:</span>
+                        <span className="text-neutral-300">
+                          Unbelievable audio clarity. X32 mixers are wild.
+                        </span>
+                      </div>
+                      <div
+                        className="flex max-w-[85%] items-center gap-1.5 rounded border border-neutral-900/60 bg-neutral-950/80 px-2 py-1 backdrop-blur-sm"
+                        style={{ borderColor: `${primaryColor}40` }}
+                      >
+                        <span className="text-neutral-300">
+                          <strong style={{ color: primaryColor }}>elena_r</strong> supported the
+                          network stage!
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="pointer-events-auto absolute inset-0 flex items-center justify-center">
+                      <div
+                        className="flex h-11 w-11 scale-90 items-center justify-center rounded-full text-xs font-bold text-black opacity-0 shadow-[0_0_25px_rgba(0,0,0,0.5)] transition-all duration-300 group-hover/thumb:scale-100 group-hover/thumb:opacity-100"
+                        style={{ backgroundColor: primaryColor }}
+                      >
+                        ▶
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 p-4 text-center backdrop-blur-[2px]">
                     <div
-                      className="mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-950 text-xs font-mono shadow-lg"
+                      className="mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-950 text-xs shadow-lg"
                       style={{ color: primaryColor }}
                     >
                       🔒
                     </div>
                     <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-300">
-                      {lockedTierLabel(item.tierRequired)}
+                      {item.tierRequired === "enterprise"
+                        ? "Enterprise Stack Required"
+                        : "Network Pro Required"}
                     </p>
                     <p className="mt-1 max-w-[220px] text-[9px] font-light leading-relaxed text-neutral-500">
                       Upgrade your network configuration subscription clearance level to unlock
                       access.
                     </p>
-                  </div>
-                ) : (
-                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/30 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                    <div
-                      className="flex h-11 w-11 translate-y-1 items-center justify-center rounded-full text-xs font-bold text-black shadow-[0_0_20px_rgba(0,0,0,0.4)] transition-all duration-300 group-hover:translate-y-0"
-                      style={{ backgroundColor: primaryColor }}
-                    >
-                      ▶
-                    </div>
                   </div>
                 )}
 

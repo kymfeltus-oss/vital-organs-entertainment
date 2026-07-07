@@ -7886,7 +7886,28 @@ body::-webkit-scrollbar {
 
 @media (prefers-reduced-motion: reduce) {
   .live-chat-float-in,
-  .live-heart-float {
+  .live-heart-float,
+  .animate-scrolling-chat {
     animation: none !important;
   }
+}
+
+/* Core dynamic scrolling engine animation loop for white-label live VOD covers */
+@keyframes scrollingChat {
+  0% {
+    transform: translateY(10px);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-15px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-40px);
+    opacity: 0;
+  }
+}
+
+.animate-scrolling-chat {
+  animation: scrollingChat 12s infinite linear;
 }

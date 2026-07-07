@@ -1,28 +1,28 @@
 import type { TenantTheme } from "@/lib/theme/types";
 
-/** Flagship PΛRΛBLE STREAMING demo fallback — used when no tenant row resolves. */
+/** Premium PΛRΛBLE OS faith infrastructure fallback — used when no tenant row resolves. */
 export const DEFAULT_TENANT_THEME: TenantTheme = {
-  appName: "PΛRΛBLE STREAMING",
-  tagline: "Own Your Stream. Own Your Brand. Own Your Revenue.",
+  appName: "PΛRΛBLE OS // FAITH INFRASTRUCTURE",
+  tagline: "Own Your Sanctuary. Own Your Stream. Own Your Ministry.",
   logoUrl: "/tenant-default/dashboard/flagship-logo.png",
   logoUrlDark: "/tenant-default/dashboard/flagship-logo.png",
   faviconUrl: null,
   heroImageUrl: null,
   contact: {
-    email: "ops@parablestream.com",
-    website: "https://parablestream.com",
-    mailSubjectPrefix: "Contact from PΛRΛBLE STREAMING",
+    email: "sanctuary@parableos.faith",
+    website: "https://parableos.faith",
+    mailSubjectPrefix: "Contact from PΛRΛBLE OS // FAITH INFRASTRUCTURE",
   },
   socialLinks: [],
   colors: {
-    primary: "#00C2FF",
-    secondary: "#6C4DFF",
+    primary: "#FFB800",
+    secondary: "#7A00FF",
     background: "#000000",
     surface: "#000000",
     text: "#ffffff",
     textMuted: "#a3a3a3",
-    accent: "#6C4DFF",
-    border: "rgba(108, 77, 255, 0.28)",
+    accent: "#7A00FF",
+    border: "rgba(122, 0, 255, 0.28)",
   },
   fonts: {
     headline: "var(--font-inter)",
