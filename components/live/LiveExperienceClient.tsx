@@ -1,1 +1,1 @@
-export { default } from "@/components/experience/live/LiveExperienceClient";
+export { default } from "@/components/features/live/LiveExperienceClient";

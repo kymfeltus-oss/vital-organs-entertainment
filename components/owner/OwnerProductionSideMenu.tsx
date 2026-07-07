@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AudioLines, ChevronDown, Menu, MonitorDot, Palette, Play, Timer, X } from "lucide-react";
+import { AudioLines, ChevronDown, Menu, MonitorDot, Palette, Play, Settings2, Timer, X } from "lucide-react";
 
 const PRODUCTION_NAV_ITEMS = [
   {
@@ -39,6 +39,13 @@ const PRODUCTION_NAV_ITEMS = [
     eyebrow: "Publisher",
     href: "/owner/publish/camera",
     icon: Play,
+  },
+  {
+    id: "branding",
+    label: "Branding",
+    eyebrow: "White-label",
+    href: "/owner/settings/branding",
+    icon: Settings2,
   },
 ] as const;
 

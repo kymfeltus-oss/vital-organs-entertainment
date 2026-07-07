@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
-import AttendeeAuthAwakeningCallout from "@/components/auth/AttendeeAuthAwakeningCallout";
-import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
+import TenantAuthCallout from "@/components/features/auth/TenantAuthCallout";
+import BrandLogo from "@/components/ui/layout/BrandLogo";
+import PageContainer from "@/components/ui/layout/PageContainer";
 
 type AttendeeAuthLoginPlateProps = {
   createAccountHref: string;
@@ -48,31 +48,30 @@ export default function AttendeeAuthLoginPlate({
   const messageIsError = Boolean(formError);
 
   return (
-    <div className="auth-login-page flex min-h-0 w-full flex-1 flex-col items-center overflow-y-auto py-8 pt-safe pb-safe sm:py-12">
-      <div className="auth-login-page__glow pointer-events-none" aria-hidden="true" />
-
-      <div className="relative z-[1] w-[var(--mobile-app-track-w)] max-w-[100vw]">
+    <div
+      className="flex min-h-0 w-full flex-1 flex-col items-center overflow-y-auto py-8 pt-safe pb-safe sm:py-12"
+      style={{ background: "var(--theme-app-gradient)" }}
+    >
+      <PageContainer maxWidth="sm" className="py-0">
         <header className="mb-8 text-center">
-          <div className="relative aspect-[3/2] w-full">
-            <Image
-              src={EXPERIENCE_BRAND_ASSETS.lockup}
-              alt="300 Awakening"
-              fill
-              priority
-              sizes="min(100vw, calc(100dvh * 1080 / 1920))"
-              className="object-contain object-[center_top]"
-            />
+          <div className="flex justify-center">
+            <BrandLogo size="lg" />
           </div>
-          <h1 className="mt-6 px-4 font-headline text-[clamp(1.75rem,7vw,2.5rem)] uppercase leading-none tracking-[0.1em] text-white sm:px-6">
+          <h1
+            className="mt-6 text-[clamp(1.75rem,7vw,2.5rem)] font-semibold leading-none"
+            style={{ fontFamily: "var(--theme-font-headline)", color: "var(--theme-text)" }}
+          >
             Welcome Back
           </h1>
-          <p className="mx-auto mt-3 max-w-[18rem] px-4 font-body text-sm leading-relaxed text-brand-muted sm:px-6">
+          <p
+            className="mx-auto mt-3 max-w-[18rem] text-sm leading-relaxed"
+            style={{ color: "var(--theme-text-muted)" }}
+          >
             Sign in to pick up your journey where you left off.
           </p>
         </header>
 
-        <div className="px-4 sm:px-6">
-        <div className="glass-panel rounded-[1.25rem] border border-brand-border p-5 shadow-[0_0_40px_rgba(0,168,255,0.06)] sm:p-7">
+        <div className="glass-panel rounded-[1.25rem] p-5 sm:p-7">
           <form onSubmit={onSubmit} aria-label="Log in" autoComplete="on" noValidate className="space-y-4">
             <label className="block">
               <span className="mb-1.5 block font-ui text-[0.62rem] font-bold uppercase tracking-[0.18em] text-brand-muted">
@@ -188,7 +187,7 @@ export default function AttendeeAuthLoginPlate({
             </button>
           </form>
 
-          <AttendeeAuthAwakeningCallout variant="login" />
+          <TenantAuthCallout variant="login" />
         </div>
 
         <div className="mt-6 space-y-3 text-center">
@@ -209,8 +208,7 @@ export default function AttendeeAuthLoginPlate({
             Join the movement
           </Link>
         </div>
-        </div>
-      </div>
+      </PageContainer>
     </div>
   );
 }

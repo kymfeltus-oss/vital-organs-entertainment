@@ -6,11 +6,12 @@ import {
   DEFAULT_ATTENDEE_NEXT,
   resolveAttendeeDestination,
 } from "@/lib/auth/routing";
+import { PLATFORM_APP_NAME } from "@/lib/theme/brand";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Log In | 300 Awakening",
-  description: "Log in to continue your 300 Awakening journey.",
+  title: `Log In | ${PLATFORM_APP_NAME}`,
+  description: `Log in to continue on ${PLATFORM_APP_NAME}.`,
 };
 
 type LoginPageProps = {

@@ -1,4 +1,4 @@
-/** Awakening — canonical design tokens (source of truth) */
+/** @deprecated Prefer `lib/theme` — legacy Awakening tokens kept for owner/production surfaces. */
 
 export const BRAND_COLORS = {
   black: "#020203",

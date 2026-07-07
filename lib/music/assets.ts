@@ -10,7 +10,7 @@ export const APPLE_MUSIC_SINGLE_URL =
   "https://music.apple.com/us/artist/ian-craig-300/1643247247";
 
 export const MUSIC_ASSETS = {
-  mobileBackground: "/music/background%20image%20mobile.png",
+  mobileBackground: "/music/background-image-mobile.png",
 } as const;
 
 export const MUSIC_MOBILE_ART = MOBILE_ARTBOARD_REF;
@@ -61,7 +61,7 @@ export const MUSIC_PAGE_ACTIONS: readonly MusicPageAction[] = [
   },
 ] as const;
 
-/** Hotspots aligned to `background image mobile.png` — back handled by MobileArtboardTabHeader. */
+/** Hotspots aligned to `background-image-mobile.png` — back handled by MobileArtboardTabHeader. */
 export const MUSIC_MOBILE_VISIBLE_ACTION_IDS = [
   "apple-music-cover",
   "apple-music",

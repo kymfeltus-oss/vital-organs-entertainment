@@ -244,8 +244,8 @@ export async function loadShowSetupState(): Promise<ShowSetupState> {
   const row = initialRow;
   const encoderDefaults = resolveDefaultEncoderConfigFromEnv();
   const base: ShowSetupState = {
-    showTitle: row?.concert_title ?? "IAN CRAIG & 300",
-    presenterName: row?.headliner_name ?? "IAN CRAIG",
+    showTitle: row?.concert_title ?? "Live Event",
+    presenterName: row?.headliner_name ?? "Host",
     hostNames: [],
     eventLocation: "New Orleans, LA",
     livestreamAvailability: "Available worldwide",

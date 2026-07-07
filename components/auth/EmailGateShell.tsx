@@ -4,6 +4,7 @@ import type { ReactNode, Ref } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
+import { PLATFORM_APP_NAME } from "@/lib/theme/brand";
 import { cn } from "@/lib/utils";
 
 type EmailGateShellProps = {
@@ -58,7 +59,7 @@ export default function EmailGateShell({
           <div className="relative mx-auto aspect-[3/2] w-full max-w-[20rem] sm:max-w-[26rem]">
             <Image
               src={EXPERIENCE_BRAND_ASSETS.lockup}
-              alt="300 Awakening"
+              alt={PLATFORM_APP_NAME}
               fill
               priority
               sizes="(max-width: 640px) 80vw, 416px"

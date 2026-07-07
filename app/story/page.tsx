@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PLATFORM_APP_NAME, PLATFORM_TAGLINE } from "@/lib/theme/brand";
 
-const STORY_PREVIEW_SRC = "/awakening/vital-seed-story-preview-9x16.mp4";
+const STORY_PREVIEW_SRC = "/tenant-default/vital-seed-story-preview-9x16.mp4";
 
 export const metadata: Metadata = {
-  title: "The Journey of Ian Craig — Coming Soon",
-  description: "A preview of The Journey of Ian Craig, coming soon from 300 Awakening.",
+  title: `Featured Story | ${PLATFORM_APP_NAME}`,
+  description: `A featured story preview from ${PLATFORM_APP_NAME}. ${PLATFORM_TAGLINE}`,
 };
 
 export default function StoryPage() {

@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import PublicCountdownExperience from "@/components/countdown/PublicCountdownExperience";
 import { computeCountdown } from "@/lib/live/event-lobby";
 import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
+import { PLATFORM_APP_NAME } from "@/lib/theme/brand";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "300 Awakening Countdown Overlay",
+  title: `Countdown Overlay | ${PLATFORM_APP_NAME}`,
   description: "OBS / stream browser-source overlay — synced to the live event schedule.",
   robots: { index: false, follow: false },
 };

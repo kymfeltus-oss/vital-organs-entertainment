@@ -4,16 +4,16 @@ import { hydrateAuthMetadataFromAttendee } from "@/lib/auth/sync-attendee-profil
 import { getUserFromSession } from "@/lib/auth/session";
 import { fetchAttendeeProfileRecord } from "@/lib/experience/fetch-attendee-profile";
 import { buildAttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
-import { AWAKENING_PRELOAD_ASSETS } from "@/lib/experience/awakening-dashboard-assets";
 import { computeCountdown } from "@/lib/live/event-lobby";
 import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
 import AttendeeInstallPrompt from "@/components/pwa/AttendeeInstallPrompt";
+import { DEFAULT_TENANT_THEME } from "@/lib/theme/default-theme";
 
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "Attendee Dashboard | 300 Awakening",
-  description: "Tap Into The Awakening — your premium attendee experience hub.",
+  title: `Dashboard | ${DEFAULT_TENANT_THEME.appName}`,
+  description: DEFAULT_TENANT_THEME.tagline,
 };
 
 export default async function AttendeeDashboardPage() {
@@ -33,15 +33,6 @@ export default async function AttendeeDashboardPage() {
 
   return (
     <>
-      {AWAKENING_PRELOAD_ASSETS.map((asset) => (
-        <link
-          key={asset.href}
-          rel="preload"
-          as={asset.as}
-          href={asset.href}
-          fetchPriority="high"
-        />
-      ))}
       <main id="main-content" className="min-h-dvh w-full">
         <ExperienceAttendeeDashboard
           initialProfile={profile}

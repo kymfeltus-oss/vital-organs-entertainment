@@ -11,6 +11,7 @@ import {
   getStripeSecretKey,
   resolveAuthenticatedBuyer,
 } from "@/lib/checkout/server";
+import { PLATFORM_APP_NAME } from "@/lib/theme/brand";
 import { stagePendingCheckoutOrder } from "@/lib/checkout/stage-pending-order";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
@@ -81,8 +82,8 @@ export async function POST(request: NextRequest) {
               currency: "usd",
               unit_amount: amountCents,
               product_data: {
-                name: `${targetPack.count.toLocaleString("en-US")} Vital Seeds`,
-                description: `300 Awakening seed bundle — ${targetPack.count.toLocaleString("en-US")} seeds for the live experience.`,
+                name: `${targetPack.count.toLocaleString("en-US")} Seeds`,
+                description: `${PLATFORM_APP_NAME} seed bundle — ${targetPack.count.toLocaleString("en-US")} seeds for the live experience.`,
               },
             },
           },

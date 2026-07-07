@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useMemo, useState, type CSSProperties } from "react";
 import { Check, Clock3, Copy, ExternalLink, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
-import HoldingRoomCountdownOverlay from "@/components/experience/holding-room/HoldingRoomCountdownOverlay";
+import HoldingRoomCountdownOverlay from "@/components/features/live/holding-room/HoldingRoomCountdownOverlay";
 import OwnerProductionSideMenu from "@/components/owner/OwnerProductionSideMenu";
 import {
   HOLDING_ROOM_ART_NATIVE,
@@ -13,6 +13,7 @@ import {
   mobileArtboardStageStyle,
 } from "@/lib/responsive";
 import type { ShowSetupState } from "@/lib/owner/show-setup-state";
+import { PLATFORM_APP_NAME } from "@/lib/theme/brand";
 import {
   isoToScheduleDatetimeLocal,
   scheduleDatetimeLocalToIso,
@@ -376,8 +377,8 @@ export default function OwnerCountdownControlClient({
                   <div className="mobile-artboard-art-fit holding-room-page__art-fit">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src="/holding page/holding-room.png"
-                      alt="300 Awakening holding room"
+                      src="/holding-room/holding-room.png"
+                      alt={`${PLATFORM_APP_NAME} holding room preview`}
                       width={HOLDING_ROOM_ART_NATIVE.width}
                       height={HOLDING_ROOM_ART_NATIVE.height}
                       className="holding-room-page__bg"

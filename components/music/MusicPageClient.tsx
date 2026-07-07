@@ -1,16 +1,11 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
-import MusicOverlay from "@/components/music/MusicOverlay";
-import MobileArtboardTabHeader from "@/components/navigation/MobileArtboardTabHeader";
-import { MUSIC_ASSETS, MUSIC_MOBILE_ART_NATIVE } from "@/lib/music/assets";
+import { useState } from "react";
+import Link from "next/link";
+import { ExternalLink } from "lucide-react";
+import GenericTabShell from "@/components/ui/shell/GenericTabShell";
+import { APPLE_MUSIC_SINGLE_URL } from "@/lib/music/assets";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
-import {
-  MOBILE_ARTBOARD_ART_FIT,
-  MOBILE_ARTBOARD_TAB_SHELL,
-  MOBILE_ARTBOARD_TAB_STAGE,
-  mobileArtboardStageStyle,
-} from "@/lib/responsive";
 
 type MusicPageClientProps = {
   initialProfile: AttendeeProfileSnapshot;
@@ -20,27 +15,41 @@ export default function MusicPageClient({ initialProfile }: MusicPageClientProps
   const [profile, setProfile] = useState(initialProfile);
 
   return (
-    <div className={`music-page ${MOBILE_ARTBOARD_TAB_SHELL}`}>
-      <div
-        className={`music-page__stage ${MOBILE_ARTBOARD_TAB_STAGE}`}
-        style={mobileArtboardStageStyle({ native: MUSIC_MOBILE_ART_NATIVE }) as CSSProperties}
-      >
-        <div className={MOBILE_ARTBOARD_ART_FIT}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={MUSIC_ASSETS.mobileBackground}
-            alt="Hallelujah Anyhow — Ian Craig and 300 Awakening"
-            width={MUSIC_MOBILE_ART_NATIVE.width}
-            height={MUSIC_MOBILE_ART_NATIVE.height}
-            className="music-page__bg"
-            loading="eager"
-            decoding="async"
-            draggable={false}
-          />
-          <MobileArtboardTabHeader profile={profile} onProfileChange={setProfile} />
-          <MusicOverlay />
+    <GenericTabShell
+      title="Music"
+      subtitle="Listen and download"
+      profile={profile}
+      onProfileChange={setProfile}
+    >
+      <section className="space-y-4">
+        <div
+          className="rounded-2xl border p-5"
+          style={{
+            borderColor: "var(--theme-border)",
+            backgroundColor: "var(--theme-surface)",
+          }}
+        >
+          <h2
+            className="text-lg font-semibold"
+            style={{ fontFamily: "var(--theme-font-headline)", color: "var(--theme-text)" }}
+          >
+            Featured Release
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--theme-text-muted)" }}>
+            Stream or purchase the latest single from your event catalog.
+          </p>
+          <Link
+            href={APPLE_MUSIC_SINGLE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white touch-target"
+            style={{ backgroundColor: "var(--theme-primary)" }}
+          >
+            Open in Apple Music
+            <ExternalLink className="size-4" aria-hidden="true" />
+          </Link>
         </div>
-      </div>
-    </div>
+      </section>
+    </GenericTabShell>
   );
 }

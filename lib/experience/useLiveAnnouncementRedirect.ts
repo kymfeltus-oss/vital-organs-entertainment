@@ -1,6 +1,2 @@
-"use client";
-
-/** No-op — announcement/countdown redirects removed from attendee live flow. */
-export function useLiveAnnouncementRedirect(_enabled = true): void {
-  /* intentionally empty */
-}
+/** @deprecated Import from `@/lib/features/live/useLiveAnnouncementRedirect` instead. */
+export * from "@/lib/features/live/useLiveAnnouncementRedirect";

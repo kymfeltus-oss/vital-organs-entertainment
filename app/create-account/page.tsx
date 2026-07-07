@@ -10,9 +10,11 @@ import {
 
 export const dynamic = "force-dynamic";
 
+import { PLATFORM_APP_NAME } from "@/lib/theme/brand";
+
 export const metadata: Metadata = {
-  title: "Create Account | 300 Awakening",
-  description: "Create your 300 Awakening account.",
+  title: `Create Account | ${PLATFORM_APP_NAME}`,
+  description: `Create your ${PLATFORM_APP_NAME} account.`,
 };
 
 type CreateAccountPageProps = {

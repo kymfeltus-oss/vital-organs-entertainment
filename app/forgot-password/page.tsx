@@ -10,9 +10,11 @@ import {
 
 export const dynamic = "force-dynamic";
 
+import { PLATFORM_APP_NAME } from "@/lib/theme/brand";
+
 export const metadata: Metadata = {
-  title: "Reset Password | 300 Awakening",
-  description: "Request a password reset link for your 300 Awakening account.",
+  title: `Reset Password | ${PLATFORM_APP_NAME}`,
+  description: `Request a password reset link for your ${PLATFORM_APP_NAME} account.`,
 };
 
 type ForgotPasswordPageProps = {

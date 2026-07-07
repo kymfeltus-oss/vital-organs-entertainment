@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Shield, Users } from "lucide-react";
 import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
+import { PLATFORM_APP_NAME } from "@/lib/theme/brand";
 
 type EmailGatePersonaPlateProps = {
   attendeeHref: string;
@@ -25,7 +26,7 @@ export default function EmailGatePersonaPlate({
           <div className="relative aspect-[3/2] w-full">
             <Image
               src={EXPERIENCE_BRAND_ASSETS.lockup}
-              alt="300 Awakening"
+              alt={PLATFORM_APP_NAME}
               fill
               priority
               sizes="(max-width: 640px) 72vw, 304px"
@@ -39,7 +40,7 @@ export default function EmailGatePersonaPlate({
             Choose Your Path
           </h1>
           <p className="mx-auto mt-3 max-w-[18rem] font-body text-sm leading-relaxed text-brand-muted">
-            Select how you&apos;re joining the 300 Awakening experience.
+            Select how you&apos;re joining the {PLATFORM_APP_NAME} experience.
           </p>
         </header>
 

@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
 import { isE2EBypassEnabled } from "@/lib/access/e2e-bypass";
 import { isAdminPrepAccessOverrideEmail } from "@/lib/access/admin-prep-override";
+import { DEFAULT_TENANT_THEME } from "@/lib/theme/default-theme";
 
 export type OwnerAuthSuccess = {
   ok: true;
@@ -23,7 +24,7 @@ export async function requireOwnerUser(): Promise<OwnerAuthResult> {
     return {
       ok: true,
       userId: "e2e-test-synthetic-owner-uuid",
-      email: process.env.E2E_ADMIN_EMAIL?.trim().toLowerCase() || "info@vitalorgansent.com",
+      email: process.env.E2E_ADMIN_EMAIL?.trim().toLowerCase() || DEFAULT_TENANT_THEME.contact.email,
     };
   }
 

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import { PLATFORM_APP_NAME } from "@/lib/theme/brand";
 
 export const metadata: Metadata = {
-  title: "Owner | Vital Organs Entertainment",
+  title: `Owner | ${PLATFORM_APP_NAME}`,
   robots: { index: false, follow: false },
 };
 

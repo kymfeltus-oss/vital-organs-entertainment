@@ -10,7 +10,8 @@ import {
   COUNTDOWN_STARTING_SHORTLY_LABEL,
   isCountdownStartingShortly,
 } from "@/lib/experience/countdown-display";
-import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
+import { PLATFORM_APP_NAME } from "@/lib/theme/brand";
+import { DEFAULT_TENANT_THEME } from "@/lib/theme/default-theme";
 import type { EventCountdownConfig } from "@/lib/live/countdown-config";
 import type { CountdownParts } from "@/lib/live/event-lobby";
 
@@ -110,17 +111,26 @@ export default function PublicCountdownExperience({
 
       {!isObs ? (
         <div className="public-countdown__lockup-wrap">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={EXPERIENCE_BRAND_ASSETS.lockup}
-            alt="300 Awakening"
-            width={1536}
-            height={1024}
-            className="public-countdown__lockup"
-            loading="eager"
-            decoding="async"
-            draggable={false}
-          />
+          {DEFAULT_TENANT_THEME.logoUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={DEFAULT_TENANT_THEME.logoUrl}
+              alt={PLATFORM_APP_NAME}
+              width={1536}
+              height={1024}
+              className="public-countdown__lockup"
+              loading="eager"
+              decoding="async"
+              draggable={false}
+            />
+          ) : (
+            <p
+              className="public-countdown__lockup font-semibold uppercase tracking-[0.2em]"
+              style={{ color: "var(--theme-text)" }}
+            >
+              {PLATFORM_APP_NAME}
+            </p>
+          )}
         </div>
       ) : null}
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PLATFORM_APP_NAME } from "@/lib/theme/brand";
 
 const DISMISSAL_KEY = "awakening:pwa-install-dismissed:v1";
 const DISMISSAL_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
@@ -120,7 +121,7 @@ export default function AttendeeInstallPrompt() {
 
   return (
     <aside
-      aria-label="Install 300 Awakening"
+      aria-label={`Install ${PLATFORM_APP_NAME}`}
       className="fixed bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] left-1/2 z-[70] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-2xl border border-white/15 bg-black/90 p-4 font-ui text-white shadow-2xl backdrop-blur-xl"
     >
       <button

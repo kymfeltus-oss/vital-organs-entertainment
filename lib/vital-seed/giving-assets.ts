@@ -6,13 +6,13 @@ export const VITAL_SEED_GIVING_ASSET_VERSION = "20260622-5";
 
 export const VITAL_SEED_GIVING_ASSETS = {
   /** Header-only plate — logo, GIVING lettering, waveforms (no form panel). */
-  mobileBackground: `/vital seed/mobile-main-background.png?v=${VITAL_SEED_GIVING_ASSET_VERSION}`,
+  mobileBackground: `/vital-seed/mobile-main-background.png?v=${VITAL_SEED_GIVING_ASSET_VERSION}`,
 } as const;
 
 export const VITAL_SEED_GIVING_MOBILE_ART = MOBILE_ARTBOARD_REF;
 
 /**
- * Native header crop — top of `/vital seed/mobile-main-background.png`.
+ * Native header crop — top of `/vital-seed/mobile-main-background.png`.
  * Stops above baked preset rows (~53% of full 1672px plate) so taps hit the native form.
  */
 export const VITAL_SEED_GIVING_MOBILE_ART_NATIVE = {

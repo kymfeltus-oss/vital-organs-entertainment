@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import AwakeningMenuButton from "@/components/AwakeningMenuButton";
+import TenantMenuButton from "@/components/ui/shell/TenantMenuButton";
 import ProfileOrbEditor from "@/components/profile/ProfileOrbEditor";
 import {
   MOBILE_ARTBOARD_TAB_CHROME,
@@ -44,7 +44,7 @@ export default function MobileArtboardTopChrome({
           onProfileChange={onProfileChange}
           size={profileOrbSize}
         />
-        <AwakeningMenuButton className="mobile-artboard-top-chrome__menu shrink-0" />
+        <TenantMenuButton className="mobile-artboard-top-chrome__menu shrink-0" />
       </div>
     </header>
   );

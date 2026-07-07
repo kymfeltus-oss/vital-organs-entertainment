@@ -8,6 +8,7 @@ import PasswordStrengthMeter from "@/components/auth/PasswordStrengthMeter";
 import { evaluatePasswordStrength, PASSWORD_MIN_LENGTH } from "@/lib/auth/password-policy";
 import { AUTH_NEXT_COOKIE } from "@/lib/auth/routing";
 import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
+import { PLATFORM_APP_NAME } from "@/lib/theme/brand";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
 type ResetPasswordClientProps = {
@@ -156,7 +157,7 @@ export default function ResetPasswordClient({
           <div className="relative mx-auto aspect-[3/2] w-full max-w-md">
             <Image
               src={EXPERIENCE_BRAND_ASSETS.lockup}
-              alt="300 Awakening"
+              alt={PLATFORM_APP_NAME}
               fill
               priority
               sizes="min(100vw, calc(100dvh * 1080 / 1920))"

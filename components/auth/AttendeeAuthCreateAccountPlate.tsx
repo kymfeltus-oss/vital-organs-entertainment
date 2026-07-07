@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import PasswordStrengthMeter from "@/components/auth/PasswordStrengthMeter";
 import TurnstileWidget from "@/components/auth/TurnstileWidget";
-import AttendeeAuthAwakeningCallout from "@/components/auth/AttendeeAuthAwakeningCallout";
+import TenantAuthCallout from "@/components/features/auth/TenantAuthCallout";
+import { PLATFORM_APP_NAME } from "@/lib/theme/brand";
 import {
   CREATE_ACCOUNT_PRIVACY_URL,
   CREATE_ACCOUNT_TERMS_URL,
@@ -80,7 +81,7 @@ export default function AttendeeAuthCreateAccountPlate({
           <div className="relative aspect-[3/2] w-full">
             <Image
               src={EXPERIENCE_BRAND_ASSETS.lockup}
-              alt="300 Awakening"
+              alt={PLATFORM_APP_NAME}
               fill
               priority
               sizes="(max-width: 640px) 64vw, 352px"
@@ -350,7 +351,7 @@ export default function AttendeeAuthCreateAccountPlate({
             </button>
           </form>
 
-          <AttendeeAuthAwakeningCallout variant="signup" />
+          <TenantAuthCallout variant="signup" />
         </div>
 
         <p className="mt-6 text-center font-body text-sm text-brand-muted">

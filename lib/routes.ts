@@ -20,6 +20,7 @@ const NAV_HIDDEN_PREFIXES = [
   "/stream",
   "/studio",
   "/owner",
+  "/admin",
   "/email-gate",
   "/experience/live",
   "/dashboard/live",

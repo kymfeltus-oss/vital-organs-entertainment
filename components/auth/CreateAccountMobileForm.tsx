@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
-import { AWAKENING_AUTH_SIGNUP_PANELS } from "@/lib/experience/awakening-auth-assets";
+import { TENANT_AUTH_SIGNUP_PANELS } from "@/lib/features/auth/tenant-auth-assets";
 import { authRectStyle } from "@/lib/experience/auth-layout-slots";
 import {
   applyFullNameInput,
@@ -44,7 +44,7 @@ export default function CreateAccountMobileForm({
   onToggleShowConfirmPassword,
   onSubmit,
 }: CreateAccountMobileFormProps) {
-  const panels = AWAKENING_AUTH_SIGNUP_PANELS;
+  const panels = TENANT_AUTH_SIGNUP_PANELS;
   const fullName = formatFullName(values);
 
   return (

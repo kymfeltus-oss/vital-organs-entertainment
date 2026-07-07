@@ -37,7 +37,7 @@ def measure_strip(im: np.ndarray, cx_pct: float, half_w_pct: float = 8.0):
 
 
 def main() -> None:
-    im = np.array(Image.open("public/holding page/holding-room.png").convert("RGB"))
+    im = np.array(Image.open("public/holding-room/holding-room.png").convert("RGB"))
     print("HOLDING_ROOM_COUNTDOWN_CIRCLES = [")
     for name, cx in STRIP_CENTERS:
         m = measure_strip(im, cx)

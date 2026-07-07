@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
-import LivePageRouterClient from "@/components/experience/live/LivePageRouterClient";
+import LivePageRouterClient from "@/components/features/live/LivePageRouterClient";
 import { loadTabPageProfile } from "@/lib/experience/load-tab-page-profile";
 import { loadAttendeeUiPhase } from "@/lib/live/load-attendee-ui-phase";
 import { computeCountdown } from "@/lib/live/event-lobby";
 import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
+import { PLATFORM_APP_NAME } from "@/lib/theme/brand";
 
 /** Dynamic — countdown schedule and live phase resolve per request. */
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "300 Awakening Experience",
-  description: "Join the 300 Awakening live experience.",
+  title: `Live Experience | ${PLATFORM_APP_NAME}`,
+  description: `Join the live experience on ${PLATFORM_APP_NAME}.`,
 };
 
 export default async function LivePage() {

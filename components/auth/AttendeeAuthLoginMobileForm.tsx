@@ -5,10 +5,10 @@ import { Check, Loader2, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import {
-  AWAKENING_AUTH_LOGIN_COMPONENTS,
-  AWAKENING_AUTH_LOGIN_FORM,
-  awakeningAuthAssetUrl,
-} from "@/lib/experience/awakening-auth-assets";
+  TENANT_AUTH_LOGIN_COMPONENTS,
+  TENANT_AUTH_LOGIN_FORM,
+  tenantAuthAssetUrl,
+} from "@/lib/features/auth/tenant-auth-assets";
 
 type AttendeeAuthLoginMobileFormProps = {
   createAccountHref: string;
@@ -28,7 +28,7 @@ type AttendeeAuthLoginMobileFormProps = {
 };
 
 type LoginPlateProps = {
-  component: (typeof AWAKENING_AUTH_LOGIN_COMPONENTS)[keyof typeof AWAKENING_AUTH_LOGIN_COMPONENTS];
+  component: (typeof TENANT_AUTH_LOGIN_COMPONENTS)[keyof typeof TENANT_AUTH_LOGIN_COMPONENTS];
   className?: string;
   children: ReactNode;
 };
@@ -38,7 +38,7 @@ function LoginPlate({ component, className = "", children }: LoginPlateProps) {
     <div className={`auth-attendee-login-form__plate ${className}`.trim()}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={awakeningAuthAssetUrl(component.src)}
+        src={tenantAuthAssetUrl(component.src)}
         alt=""
         width={component.width}
         height={component.height}
@@ -68,8 +68,8 @@ export default function AttendeeAuthLoginMobileForm({
   onRememberMeChange,
   onSubmit,
 }: AttendeeAuthLoginMobileFormProps) {
-  const formAnchor = AWAKENING_AUTH_LOGIN_FORM;
-  const components = AWAKENING_AUTH_LOGIN_COMPONENTS;
+  const formAnchor = TENANT_AUTH_LOGIN_FORM;
+  const components = TENANT_AUTH_LOGIN_COMPONENTS;
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
 

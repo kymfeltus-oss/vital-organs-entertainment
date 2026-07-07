@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ArrowLeft, ArrowRight, Loader2, Mail } from "lucide-react";
 import { useState } from "react";
 import { EXPERIENCE_BRAND_ASSETS } from "@/lib/experience/brand-assets";
+import { PLATFORM_APP_NAME } from "@/lib/theme/brand";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
 import { isValidEmail } from "@/lib/auth/validation";
 
@@ -70,7 +71,7 @@ export default function ForgotPasswordClient({
           <div className="relative mx-auto aspect-[3/2] w-full max-w-md">
             <Image
               src={EXPERIENCE_BRAND_ASSETS.lockup}
-              alt="300 Awakening"
+              alt={PLATFORM_APP_NAME}
               fill
               priority
               sizes="min(100vw, calc(100dvh * 1080 / 1920))"

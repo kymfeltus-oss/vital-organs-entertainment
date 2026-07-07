@@ -17,7 +17,7 @@ CIRCLES = [
 ANCHOR_VALUE = (8.4, 48.5, 12.8, 9.2)
 ANCHOR_LABEL = (8.4, 54.4, 13.0, 3.5)
 
-im = np.array(Image.open("public/holding page/holding-room.png").convert("RGB"))
+im = np.array(Image.open("public/holding-room/holding-room.png").convert("RGB"))
 failures = 0
 
 anchor = CIRCLES[0]
