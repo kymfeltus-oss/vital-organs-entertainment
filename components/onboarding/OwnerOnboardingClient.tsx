@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Check, Loader2, Upload } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import type { PlatformTierId } from "@/components/admin/PlanSelectionCta";
 import { evaluatePasswordStrength } from "@/lib/auth/password-policy";
 import { isValidEmail } from "@/lib/auth/validation";
@@ -10,11 +9,16 @@ import { isValidTenantId, sanitizeTenantIdInput } from "@/lib/onboarding/tenant-
 import { getMarketingPlatformHost } from "@/lib/theme/platform-domains";
 
 type Step = 1 | 2 | 3;
-
 type SubdomainStatus = "idle" | "checking" | "available" | "taken" | "invalid";
 
 type OwnerOnboardingClientProps = {
   selectedTier?: PlatformTierId;
+};
+
+const TIER_ALLOCATION_LABEL: Record<PlatformTierId, string> = {
+  starter: "Ministry Mission Node",
+  pro: "Sanctuary Pro Engine",
+  enterprise: "Global Ministry Cluster",
 };
 
 export default function OwnerOnboardingClient({
@@ -23,43 +27,26 @@ export default function OwnerOnboardingClient({
   const platformHost = useMemo(() => getMarketingPlatformHost(), []);
 
   const [step, setStep] = useState<Step>(1);
-  const [companyName, setCompanyName] = useState("");
-  const [ownerEmail, setOwnerEmail] = useState("");
+  const [ministryName, setMinistryName] = useState("Alpha Worship Collective");
+  const [leaderEmail, setLeaderEmail] = useState("leader@yourministry.org");
   const [password, setPassword] = useState("");
-  const [tenantId, setTenantId] = useState("");
-  const [primaryColor, setPrimaryColor] = useState("#00a8ff");
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
+  const [subdomain, setSubdomain] = useState("");
+  const [primaryColor, setPrimaryColor] = useState("#FFB800");
 
   const [subdomainStatus, setSubdomainStatus] = useState<SubdomainStatus>("idle");
   const [subdomainMessage, setSubdomainMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successUrl, setSuccessUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [isStartingCheckout, setIsStartingCheckout] = useState(false);
-
-  const tierLabel = useMemo(() => {
-    if (selectedTier === "pro") return "Network Pro";
-    if (selectedTier === "enterprise") return "Enterprise Stack";
-    return "Starter Node";
-  }, [selectedTier]);
+  const [successUrl, setSuccessUrl] = useState<string | null>(null);
 
   const passwordStrength = useMemo(() => evaluatePasswordStrength(password), [password]);
-
-  useEffect(() => {
-    if (!logoFile) {
-      setLogoPreviewUrl(null);
-      return;
-    }
-    const objectUrl = URL.createObjectURL(logoFile);
-    setLogoPreviewUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [logoFile]);
+  const tierLabel = TIER_ALLOCATION_LABEL[selectedTier];
 
   useEffect(() => {
     if (step !== 2) return;
 
-    const normalized = sanitizeTenantIdInput(tenantId);
+    const normalized = sanitizeTenantIdInput(subdomain);
     if (!normalized) {
       setSubdomainStatus("idle");
       setSubdomainMessage(null);
@@ -93,29 +80,35 @@ export default function OwnerOnboardingClient({
     }, 350);
 
     return () => window.clearTimeout(timer);
-  }, [tenantId, step]);
+  }, [subdomain, step]);
 
   const canContinueStep1 =
-    companyName.trim().length >= 2 && isValidEmail(ownerEmail) && passwordStrength.isValid;
+    ministryName.trim().length >= 2 && isValidEmail(leaderEmail) && passwordStrength.isValid;
 
   const canContinueStep2 =
-    isValidTenantId(sanitizeTenantIdInput(tenantId)) && subdomainStatus === "available";
+    isValidTenantId(sanitizeTenantIdInput(subdomain)) && subdomainStatus === "available";
 
-  const goNext = () => setStep((current) => Math.min(3, current + 1) as Step);
-  const goBack = () => setStep((current) => Math.max(1, current - 1) as Step);
-
-  const handleSubmit = async () => {
+  const handleMinistryDeployment = async (event: React.FormEvent) => {
+    event.preventDefault();
     setSubmitError(null);
-    setIsSubmitting(true);
+
+    if (step < 3) {
+      if (step === 1 && !canContinueStep1) return;
+      if (step === 2 && !canContinueStep2) return;
+      setStep((current) => Math.min(3, current + 1) as Step);
+      return;
+    }
+
+    setLoading(true);
 
     try {
+      const cleanSubdomain = sanitizeTenantIdInput(subdomain);
       const formData = new FormData();
-      formData.append("companyName", companyName.trim());
-      formData.append("ownerEmail", ownerEmail.trim().toLowerCase());
+      formData.append("companyName", ministryName.trim());
+      formData.append("ownerEmail", leaderEmail.trim().toLowerCase());
       formData.append("password", password);
-      formData.append("tenantId", sanitizeTenantIdInput(tenantId));
+      formData.append("tenantId", cleanSubdomain);
       formData.append("primaryColor", primaryColor);
-      if (logoFile) formData.append("logo", logoFile);
 
       const response = await fetch("/api/onboarding/register", {
         method: "POST",
@@ -129,13 +122,11 @@ export default function OwnerOnboardingClient({
       };
 
       if (!response.ok || !result.ok || !result.tenantUrl) {
-        throw new Error(result.error ?? "Registration failed.");
+        throw new Error(result.error ?? "Infrastructure provisioning timeout. Please retry.");
       }
 
-      const registeredTenantId = sanitizeTenantIdInput(tenantId);
-
       if (selectedTier === "enterprise") {
-        window.location.href = `/contact-us?intent=enterprise&tenant=${encodeURIComponent(registeredTenantId)}`;
+        window.location.href = `/contact-us?intent=enterprise&tenant=${encodeURIComponent(cleanSubdomain)}`;
         return;
       }
 
@@ -146,7 +137,7 @@ export default function OwnerOnboardingClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tier: selectedTier,
-          tenantId: registeredTenantId,
+          tenantId: cleanSubdomain,
         }),
       });
 
@@ -158,309 +149,323 @@ export default function OwnerOnboardingClient({
 
       window.location.href = checkoutResult.url;
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "Registration failed.");
+      console.error("Sanctuary node deployment failure:", error);
+      setSubmitError(
+        error instanceof Error ? error.message : "Infrastructure provisioning timeout. Please retry.",
+      );
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
       setIsStartingCheckout(false);
     }
   };
 
   if (isStartingCheckout) {
     return (
-      <div className="mx-auto max-w-xl px-5 py-16 text-center">
-        <Loader2 className="mx-auto mb-5 size-10 animate-spin text-[#00a8ff]" aria-hidden="true" />
-        <h1 className="font-headline text-2xl uppercase tracking-[0.08em] text-white">
-          Starting secure checkout
-        </h1>
-        <p className="mt-3 font-body text-sm leading-relaxed text-white/70">
-          Your network is registered. Redirecting to Stripe for the {tierLabel} plan…
-        </p>
+      <div className="flex min-h-screen items-center justify-center bg-[#000000] px-6 text-center text-white">
+        <div>
+          <div className="mx-auto mb-5 h-10 w-10 animate-spin rounded-full border-2 border-[#FFB800]/25 border-t-[#FFB800]" />
+          <h1 className="text-xl font-bold tracking-wide uppercase">Deploying Sanctuary Nodes</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Redirecting to secure checkout for {tierLabel}…
+          </p>
+        </div>
       </div>
     );
   }
 
   if (successUrl) {
     return (
-      <div className="mx-auto max-w-xl px-5 py-16 text-center">
-        <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-300">
-          <Check className="size-7" aria-hidden="true" />
+      <div className="flex min-h-screen items-center justify-center bg-[#000000] px-6 text-center text-white">
+        <div className="max-w-md">
+          <div className="mx-auto mb-5 h-2 w-2 rounded-full bg-[#FFB800] shadow-[0_0_14px_#FFB800]" />
+          <h1 className="text-2xl font-extrabold tracking-tight uppercase">Sanctuary Node Registered</h1>
+          <p className="mt-3 text-sm text-white/65">
+            Your ministry theme row is saved. Open your branded subdomain to launch the sanctuary
+            experience.
+          </p>
+          <a
+            href={successUrl}
+            className="mt-8 inline-flex h-11 items-center justify-center rounded bg-[#FFB800] px-6 text-[10px] font-bold tracking-[0.22em] text-black uppercase"
+          >
+            Open Sanctuary Node →
+          </a>
         </div>
-        <h1 className="font-headline text-3xl uppercase tracking-[0.08em] text-white">
-          Network registered
-        </h1>
-        <p className="mt-3 font-body text-sm leading-relaxed text-white/70">
-          Your tenant theme row is saved and your owner account is ready. Visit your branded
-          subdomain to launch the viewer experience.
-        </p>
-        <a
-          href={successUrl}
-          className="mt-8 inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-[#00a8ff] via-[#8a2eff] to-[#ff2faf] px-6 font-ui text-xs font-bold uppercase tracking-[0.14em] text-white"
-        >
-          Open your network
-        </a>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-5 py-10">
-      <Link
-        href="/"
-        className="mb-8 inline-flex items-center gap-2 font-ui text-xs uppercase tracking-[0.12em] text-white/55 transition hover:text-white"
-      >
-        <ArrowLeft className="size-4" aria-hidden="true" />
-        Back to storefront
-      </Link>
+    <div className="relative flex min-h-screen flex-col justify-between overflow-y-auto bg-[#000000] pb-16 font-sans text-white selection:bg-[#FFB800] selection:text-black">
+      <style>{`
+        @keyframes sanctuary-fade-in {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .sanctuary-fade-in { animation: sanctuary-fade-in 0.45s ease-out both; }
+        @media (prefers-reduced-motion: reduce) {
+          .sanctuary-fade-in { animation: none; }
+        }
+      `}</style>
 
-      <header className="mb-8">
-        <p className="font-ui text-xs font-semibold uppercase tracking-[0.24em] text-[#00a8ff]">
-          Business owner onboarding
-        </p>
-        <h1 className="mt-2 font-headline text-3xl uppercase tracking-[0.06em] text-white md:text-4xl">
-          Register your network
-        </h1>
-        <p className="mt-2 font-body text-sm text-white/65">
-          Three quick steps to claim your subdomain, brand assets, and owner credentials.
-        </p>
-        <p className="mt-3 inline-flex rounded-full border border-[#00a8ff]/35 bg-[#00a8ff]/10 px-3 py-1 font-ui text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9de8ff]">
-          Selected plan: {tierLabel}
-        </p>
-      </header>
+      <div
+        className="pointer-events-none absolute left-1/2 top-[5%] z-0 h-[350px] w-[600px] -translate-x-1/2 rounded-full bg-gradient-to-b from-[#FFB800]/10 to-transparent blur-[120px]"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(to_right,#0c0e1a_1px,transparent_1px),linear-gradient(to_bottom,#0c0e1a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_30%,#000_85%,transparent_100%)] opacity-30"
+        aria-hidden="true"
+      />
 
-      <ol className="mb-8 grid grid-cols-3 gap-2">
-        {[
-          { id: 1, label: "Account" },
-          { id: 2, label: "Subdomain" },
-          { id: 3, label: "Branding" },
-        ].map((item) => (
-          <li
-            key={item.id}
-            className={`rounded-xl border px-3 py-2 text-center font-ui text-[11px] font-semibold uppercase tracking-[0.14em] ${
-              step === item.id
-                ? "border-[#8a2eff]/70 bg-[#8a2eff]/10 text-white"
-                : step > item.id
-                  ? "border-emerald-400/35 bg-emerald-400/10 text-emerald-200"
-                  : "border-white/10 bg-white/[0.03] text-white/45"
-            }`}
-          >
-            Step {item.id}: {item.label}
-          </li>
-        ))}
-      </ol>
+      <nav className="relative z-20 mx-auto flex w-full max-w-7xl items-center justify-between border-b border-neutral-900/40 bg-black/10 px-8 py-6 backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#FFB800] shadow-[0_0_12px_#FFB800]" />
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-neutral-400">
+            PΛRΛBLE FAITH REGISTRY
+          </span>
+        </div>
+        <Link
+          href="/"
+          className="font-mono text-[10px] uppercase tracking-widest text-neutral-500 transition-colors hover:text-white"
+        >
+          ← Back to Storefront
+        </Link>
+      </nav>
 
-      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 md:p-8">
-        {step === 1 ? (
-          <div className="space-y-5">
-            <h2 className="font-card-title text-xl uppercase tracking-[0.08em] text-white">
-              Account details
-            </h2>
-            <label className="block space-y-2">
-              <span className="font-ui text-xs uppercase tracking-[0.12em] text-white/55">
-                Company name
-              </span>
-              <input
-                value={companyName}
-                onChange={(event) => setCompanyName(event.target.value)}
-                className="w-full rounded-xl border border-white/15 bg-black/30 px-4 py-3 font-body text-sm text-white outline-none transition focus:border-[#00a8ff]/60"
-                placeholder="Alpha Worship Collective"
-              />
-            </label>
-            <label className="block space-y-2">
-              <span className="font-ui text-xs uppercase tracking-[0.12em] text-white/55">
-                Owner email
-              </span>
-              <input
-                type="email"
-                value={ownerEmail}
-                onChange={(event) => setOwnerEmail(event.target.value)}
-                className="w-full rounded-xl border border-white/15 bg-black/30 px-4 py-3 font-body text-sm text-white outline-none transition focus:border-[#00a8ff]/60"
-                placeholder="owner@yourcompany.com"
-              />
-            </label>
-            <label className="block space-y-2">
-              <span className="font-ui text-xs uppercase tracking-[0.12em] text-white/55">
-                Password
-              </span>
-              <input
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="w-full rounded-xl border border-white/15 bg-black/30 px-4 py-3 font-body text-sm text-white outline-none transition focus:border-[#00a8ff]/60"
-                placeholder="Create a secure password"
-              />
-            </label>
-            <ul className="grid gap-1.5 sm:grid-cols-2">
-              {passwordStrength.checks.map((check) => (
-                <li
-                  key={check.id}
-                  className={`font-ui text-xs ${check.passed ? "text-emerald-300" : "text-white/45"}`}
-                >
-                  {check.passed ? "✓" : "○"} {check.label}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
+      <main className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center px-6 py-12">
+        <div className="relative w-full rounded-3xl border border-neutral-900/80 bg-neutral-950/40 p-10 shadow-2xl backdrop-blur-xl md:p-12">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FFB800]/30 to-transparent" />
 
-        {step === 2 ? (
-          <div className="space-y-5">
-            <h2 className="font-card-title text-xl uppercase tracking-[0.08em] text-white">
-              Choose your subdomain
-            </h2>
-            <label className="block space-y-2">
-              <span className="font-ui text-xs uppercase tracking-[0.12em] text-white/55">
-                Desired web address
-              </span>
-              <div className="flex overflow-hidden rounded-xl border border-white/15 bg-black/30">
-                <input
-                  value={tenantId}
-                  onChange={(event) => setTenantId(sanitizeTenantIdInput(event.target.value))}
-                  className="min-w-0 flex-1 bg-transparent px-4 py-3 font-body text-sm text-white outline-none"
-                  placeholder="alpha"
-                />
-                <span className="flex items-center border-l border-white/10 px-3 font-mono text-xs text-white/45">
-                  .{platformHost}
-                </span>
-              </div>
-            </label>
-            {subdomainMessage ? (
-              <p
-                className={`font-ui text-xs ${
-                  subdomainStatus === "available"
-                    ? "text-emerald-300"
-                    : subdomainStatus === "checking"
-                      ? "text-white/55"
-                      : "text-[#ff8fd9]"
+          <header className="mb-8 text-left">
+            <p className="mb-2 font-mono text-[9px] uppercase tracking-[0.4em] text-[#FFB800]">
+              Ministry Operator Onboarding
+            </p>
+            <h1 className="mb-2 text-3xl font-extrabold tracking-tight text-white">
+              Provision Your Sanctuary Node
+            </h1>
+            <p className="text-xs font-light leading-relaxed text-neutral-400">
+              Three quick infrastructure configuration steps to claim your dedicated ministry
+              subdomain, sync brand assets, and activate leader credentials.
+            </p>
+            <div className="mt-4 inline-block rounded-full border border-neutral-800 bg-neutral-900 px-3 py-1 font-mono text-[9px] uppercase tracking-wider text-[#FFB800]">
+              Selected Allocation: {tierLabel}
+            </div>
+          </header>
+
+          <div className="mb-10 grid grid-cols-3 gap-3 text-center font-mono text-[10px] uppercase tracking-widest">
+            {[
+              { id: 1, label: "Step 1: Account" },
+              { id: 2, label: "Step 2: Domain" },
+              { id: 3, label: "Step 3: Theme" },
+            ].map((item) => (
+              <div
+                key={item.id}
+                className={`rounded border py-2 transition-colors ${
+                  step === item.id
+                    ? "border-[#FFB800] bg-[#FFB800]/5 font-bold text-[#FFB800]"
+                    : "border-neutral-900 text-neutral-500"
                 }`}
               >
-                {subdomainStatus === "checking" ? "Checking availability…" : subdomainMessage}
-              </p>
-            ) : null}
+                {item.label}
+              </div>
+            ))}
           </div>
-        ) : null}
 
-        {step === 3 ? (
-          <div className="space-y-6">
-            <h2 className="font-card-title text-xl uppercase tracking-[0.08em] text-white">
-              Branding preview
-            </h2>
-            <div className="grid gap-5 md:grid-cols-2">
-              <label className="block space-y-2">
-                <span className="font-ui text-xs uppercase tracking-[0.12em] text-white/55">
-                  Primary color
-                </span>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    value={primaryColor}
-                    onChange={(event) => setPrimaryColor(event.target.value)}
-                    className="h-12 w-14 cursor-pointer rounded-lg border border-white/15 bg-transparent"
-                  />
-                  <input
-                    value={primaryColor}
-                    onChange={(event) => setPrimaryColor(event.target.value)}
-                    className="flex-1 rounded-xl border border-white/15 bg-black/30 px-4 py-3 font-mono text-sm text-white outline-none"
-                  />
-                </div>
-              </label>
-              <label className="block space-y-2">
-                <span className="font-ui text-xs uppercase tracking-[0.12em] text-white/55">
-                  Logo image
-                </span>
-                <div className="flex items-center gap-3">
-                  <label className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-black/20 px-4 font-ui text-xs uppercase tracking-[0.12em] text-white/75 transition hover:border-white/40">
-                    <Upload className="size-4" aria-hidden="true" />
-                    Upload logo
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                      className="sr-only"
-                      onChange={(event) => setLogoFile(event.target.files?.[0] ?? null)}
-                    />
+          <form onSubmit={(event) => void handleMinistryDeployment(event)} className="space-y-6">
+            {step === 1 ? (
+              <div className="sanctuary-fade-in space-y-5">
+                <h2 className="border-b border-neutral-900 pb-2 text-sm font-bold uppercase tracking-wide text-neutral-300">
+                  Ministry Leader Details
+                </h2>
+                <div>
+                  <label
+                    htmlFor="ministry-name"
+                    className="mb-2 block font-mono text-[10px] uppercase tracking-widest text-neutral-500"
+                  >
+                    Church / Ministry Title
                   </label>
-                </div>
-              </label>
-            </div>
-
-            <div
-              className="rounded-2xl border p-5"
-              style={{
-                borderColor: `${primaryColor}55`,
-                background: `linear-gradient(180deg, ${primaryColor}22 0%, rgba(2,2,3,0.92) 100%)`,
-              }}
-            >
-              <p className="font-ui text-[10px] uppercase tracking-[0.2em] text-white/50">
-                Live preview
-              </p>
-              <div className="mt-4 flex items-center gap-4">
-                <div
-                  className="flex size-16 items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-black/35"
-                >
-                  {logoPreviewUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={logoPreviewUrl} alt="Logo preview" className="h-full w-full object-contain" />
-                  ) : (
-                    <span className="font-headline text-lg text-white/35">LOGO</span>
-                  )}
+                  <input
+                    id="ministry-name"
+                    type="text"
+                    value={ministryName}
+                    onChange={(event) => setMinistryName(event.target.value)}
+                    required
+                    className="w-full rounded-xl border border-neutral-900 bg-black px-4 py-3 text-xs text-white transition-colors focus:border-[#FFB800] focus:outline-none"
+                  />
                 </div>
                 <div>
-                  <p className="font-headline text-2xl uppercase tracking-[0.08em] text-white">
-                    {companyName || "Your Network"}
+                  <label
+                    htmlFor="leader-email"
+                    className="mb-2 block font-mono text-[10px] uppercase tracking-widest text-neutral-500"
+                  >
+                    Administrative Email
+                  </label>
+                  <input
+                    id="leader-email"
+                    type="email"
+                    value={leaderEmail}
+                    onChange={(event) => setLeaderEmail(event.target.value)}
+                    required
+                    className="w-full rounded-xl border border-neutral-900 bg-black px-4 py-3 text-xs text-white transition-colors focus:border-[#FFB800] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="access-password"
+                    className="mb-2 block font-mono text-[10px] uppercase tracking-widest text-neutral-500"
+                  >
+                    Secure Access Password
+                  </label>
+                  <input
+                    id="access-password"
+                    type="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    required
+                    placeholder="••••••••••••"
+                    className="w-full rounded-xl border border-neutral-900 bg-black px-4 py-3 text-xs text-white placeholder-neutral-800 transition-colors focus:border-[#FFB800] focus:outline-none"
+                  />
+                </div>
+                <ul className="grid gap-1.5 sm:grid-cols-2">
+                  {passwordStrength.checks.map((check) => (
+                    <li
+                      key={check.id}
+                      className={`text-[10px] ${check.passed ? "text-[#FFB800]" : "text-neutral-600"}`}
+                    >
+                      {check.passed ? "✓" : "○"} {check.label}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {step === 2 ? (
+              <div className="sanctuary-fade-in space-y-5">
+                <h2 className="border-b border-neutral-900 pb-2 text-sm font-bold uppercase tracking-wide text-neutral-300">
+                  Subdomain Allocation
+                </h2>
+                <div>
+                  <label
+                    htmlFor="sanctuary-prefix"
+                    className="mb-2 block font-mono text-[10px] uppercase tracking-widest text-neutral-500"
+                  >
+                    Desired Sanctuary Prefix
+                  </label>
+                  <div className="flex overflow-hidden rounded-xl border border-neutral-900 bg-black transition-colors focus-within:border-[#FFB800]">
+                    <input
+                      id="sanctuary-prefix"
+                      type="text"
+                      value={subdomain}
+                      onChange={(event) => setSubdomain(sanitizeTenantIdInput(event.target.value))}
+                      required
+                      placeholder="vanguard"
+                      className="flex-1 bg-transparent px-4 py-3 text-xs text-white placeholder-neutral-700 focus:outline-none"
+                    />
+                    <span className="flex items-center border-l border-neutral-900 bg-neutral-950 px-4 py-3 font-mono text-xs text-neutral-500">
+                      .{platformHost}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-[10px] font-light text-neutral-500">
+                    This establishes your isolated data network lane. Viewers will navigate here
+                    directly for live sanctuary streams.
                   </p>
-                  <p className="font-ui text-xs uppercase tracking-[0.16em]" style={{ color: primaryColor }}>
-                    {sanitizeTenantIdInput(tenantId) || "yourbrand"}.{platformHost}
-                  </p>
+                  {subdomainMessage ? (
+                    <p
+                      className={`mt-2 text-[10px] ${
+                        subdomainStatus === "available"
+                          ? "text-[#FFB800]"
+                          : subdomainStatus === "checking"
+                            ? "text-neutral-500"
+                            : "text-neutral-400"
+                      }`}
+                    >
+                      {subdomainStatus === "checking" ? "Checking availability…" : subdomainMessage}
+                    </p>
+                  ) : null}
                 </div>
               </div>
-            </div>
-
-            {submitError ? (
-              <p className="rounded-xl border border-[#ff2faf]/35 bg-[#ff2faf]/10 px-4 py-3 font-ui text-sm text-[#ffb8e8]">
-                {submitError}
-              </p>
             ) : null}
-          </div>
-        ) : null}
 
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={goBack}
-            disabled={step === 1 || isSubmitting}
-            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/15 px-5 font-ui text-xs font-semibold uppercase tracking-[0.12em] text-white/75 transition hover:border-white/35 disabled:opacity-40"
-          >
-            Back
-          </button>
+            {step === 3 ? (
+              <div className="sanctuary-fade-in space-y-5">
+                <h2 className="border-b border-neutral-900 pb-2 text-sm font-bold uppercase tracking-wide text-neutral-300">
+                  Sanctuary Interface Theming
+                </h2>
+                <div>
+                  <label
+                    htmlFor="liturgical-accent"
+                    className="mb-2 block font-mono text-[10px] uppercase tracking-widest text-neutral-500"
+                  >
+                    Primary Liturgical Accent Color
+                  </label>
+                  <div className="flex items-center gap-4 rounded-xl border border-neutral-900 bg-black p-4">
+                    <input
+                      id="liturgical-accent"
+                      type="color"
+                      value={primaryColor}
+                      onChange={(event) => setPrimaryColor(event.target.value)}
+                      className="h-12 w-12 cursor-pointer rounded-xl border-0 bg-transparent"
+                    />
+                    <div>
+                      <span className="block font-mono text-xs uppercase tracking-widest text-neutral-200">
+                        {primaryColor}
+                      </span>
+                      <span className="text-[10px] font-light text-neutral-500">
+                        This color highlights your play keys, donation sliders, and community chat
+                        accents natively.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                {submitError ? (
+                  <p className="rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-3 text-xs text-neutral-300">
+                    {submitError}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
 
-          {step < 3 ? (
-            <button
-              type="button"
-              onClick={goNext}
-              disabled={(step === 1 && !canContinueStep1) || (step === 2 && !canContinueStep2)}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00a8ff] via-[#8a2eff] to-[#ff2faf] px-6 font-ui text-xs font-bold uppercase tracking-[0.14em] text-white disabled:opacity-45"
-            >
-              Continue
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => void handleSubmit()}
-              disabled={isSubmitting}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00a8ff] via-[#8a2eff] to-[#ff2faf] px-6 font-ui text-xs font-bold uppercase tracking-[0.14em] text-white disabled:opacity-60"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                  Registering…
-                </>
+            <div className="mt-8 flex items-center justify-between gap-4 border-t border-neutral-900/60 pt-4">
+              {step > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => setStep((current) => Math.max(1, current - 1) as Step)}
+                  disabled={loading}
+                  className="inline-flex h-11 items-center justify-center rounded-xl border border-neutral-900 bg-neutral-950 px-6 font-mono text-xs uppercase tracking-widest text-neutral-400 transition-all hover:border-neutral-800 hover:text-white disabled:opacity-50"
+                >
+                  ← Back
+                </button>
               ) : (
-                "Launch network"
+                <span />
               )}
-            </button>
-          )}
+
+              <button
+                type="submit"
+                disabled={
+                  loading ||
+                  (step === 1 && !canContinueStep1) ||
+                  (step === 2 && !canContinueStep2)
+                }
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[#FFB800] px-6 font-mono text-xs font-bold uppercase tracking-widest text-black transition-all hover:opacity-90 hover:shadow-[0_0_24px_rgba(255,184,0,0.22)] disabled:opacity-50"
+              >
+                {loading
+                  ? "Deploying Sanctuary Nodes..."
+                  : step === 3
+                    ? "Initialize Infrastructure"
+                    : "Continue →"}
+              </button>
+            </div>
+          </form>
         </div>
-      </section>
+      </main>
+
+      <footer className="relative z-10 border-t border-neutral-900/50 px-8 py-5">
+        <div className="mx-auto flex max-w-7xl items-center gap-2.5 font-mono text-[8px] uppercase tracking-[0.28em] text-neutral-600">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#FFB800] shadow-[0_0_10px_#FFB800]" aria-hidden="true" />
+          <p>
+            PΛRΛBLE INFRASTRUCTURE CORE PLATFORM SYSTEMS ONLINE // SOVEREIGN SECURITY ACTIVE
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

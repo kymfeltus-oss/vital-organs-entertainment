@@ -1,276 +1,386 @@
-'use client';
+import Link from "next/link";
+import {
+  Building2,
+  ChevronDown,
+  Globe2,
+  ShieldCheck,
+  Wallet,
+} from "lucide-react";
 
-import Image from 'next/image';
-import PlanSelectionCta from '@/components/admin/PlanSelectionCta';
-
-const MINISTRY_PLANS = [
+const FEATURE_STRIP = [
   {
-    id: 'starter' as const,
-    name: 'SANCTUARY STARTER',
-    price: '$149',
-    tone: 'gold',
-    cta: 'Provision Node',
-    featured: false,
-    features: [
-      'Shared sanctuary subdomain',
-      'Basic congregation analytics',
-      '720p HD sermon distribution',
-      'Email pastoral support',
-      '1 active altar prayer room',
-    ],
+    icon: Globe2,
+    label: "SOVEREIGN INFRASTRUCTURE",
+    description: "Independent broadcast nodes under your ministry domain.",
   },
   {
-    id: 'pro' as const,
-    name: 'MINISTRY NETWORK PRO',
-    price: '$499',
-    tone: 'purple',
-    cta: 'Deploy Sanctuary',
-    featured: true,
-    features: [
-      'Custom domain under your church name',
-      'Embedded tithe & offering checkout',
-      '1080p high-bitrate broadcast pipelines',
-      'Advanced ministry analytics',
-      'vMix & X32 hardware integrations',
-      'Priority media-team support',
-    ],
+    icon: Wallet,
+    label: "ZERO PLATFORM TAXES",
+    description: "Flat infrastructure fees. No offering commission.",
   },
   {
-    id: 'enterprise' as const,
-    name: 'DIOCESE ENTERPRISE',
-    price: '$1,499',
-    tone: 'gold',
-    cta: 'Contact Diocese Sales',
-    featured: false,
-    features: [
-      'Native mobile app (App Store & Google Play)',
-      'Custom enterprise faith codebase',
-      '4K extreme bitrate distribution',
-      'Dedicated sanctuary infrastructure',
-      'Uncapped intercessor chat grids',
-      '24/7 priority bishop support',
-    ],
+    icon: ShieldCheck,
+    label: "MAXIMUM SECURITY & CONTROL",
+    description: "End-to-end ownership of message, data, and revenue.",
+  },
+  {
+    icon: Building2,
+    label: "BUILT FOR MINISTRIES AT SCALE",
+    description: "Enterprise-grade systems for global congregation reach.",
   },
 ] as const;
 
-export default function PlatformLandingPage() {
+const TRUSTED_MARKS = ["MSM", "GCC", "LWC", "HBC", "RSM", "NCM"] as const;
+
+function ParableWordmark({ size = "nav" }: { size?: "nav" | "phone" }) {
+  if (size === "phone") {
+    return (
+      <p className="text-[11px] font-semibold tracking-[0.42em] text-white uppercase">
+        P<span className="font-light text-white/80">Λ</span>R
+        <span className="font-light text-white/80">Λ</span>BLE
+      </p>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#000000] text-white font-sans selection:bg-[#7A00FF] overflow-y-auto relative pb-16">
+    <div className="flex items-baseline gap-2">
+      <span className="text-sm font-semibold tracking-[0.38em] text-white uppercase">
+        P<span className="font-light text-white/85">Λ</span>R
+        <span className="font-light text-white/85">Λ</span>BLE
+      </span>
+      <span className="text-[10px] font-bold tracking-[0.55em] text-[#FFB800] uppercase">
+        F<span className="font-light">Λ</span>ITH OS
+      </span>
+    </div>
+  );
+}
 
-      {/* Studio Backlight Atmospheric Glow Matrix */}
-      <div className="absolute top-[5%] right-[15%] w-[550px] h-[400px] bg-gradient-to-br from-[#FFB800]/10 via-[#7A00FF]/10 to-transparent rounded-full blur-[120px] pointer-events-none z-0" />
+function SanctuaryArchIcon() {
+  return (
+    <svg
+      viewBox="0 0 120 120"
+      className="relative z-10 h-[58%] w-[58%] text-white/90"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M18 92 V52 A42 42 0 0 1 102 52 V92"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <path d="M60 34 V92" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  );
+}
 
-      {/* Modern Wireframe Grid Layout Overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#0c0e1a_1px,transparent_1px),linear-gradient(to_bottom,#0c0e1a_1px,transparent_1px)] bg-[size:4rem_4rem] mask-image-[radial-gradient(ellipse_60%_50%_at_50%_30%,#000_85%,transparent_100%)] opacity-40 pointer-events-none z-0" />
+function TabletMockup() {
+  return (
+    <div
+      className="faith-device-float relative w-[min(100%,440px)] rounded-[1.45rem] border border-white/14 bg-[rgba(255,255,255,0.05)] p-3.5 shadow-[0_50px_140px_rgba(0,0,0,0.85),0_0_80px_rgba(255,184,0,0.08)] backdrop-blur-2xl"
+      aria-hidden="true"
+    >
+      <div className="pointer-events-none absolute -inset-px rounded-[1.45rem] bg-[linear-gradient(135deg,rgba(255,184,0,0.22),transparent_38%,transparent_62%,rgba(255,255,255,0.08))] opacity-70" />
 
-      {/* Global Framework Header Shell */}
-      <nav className="max-w-7xl mx-auto px-8 py-6 flex justify-between items-center relative z-20 border-b border-neutral-900/50 backdrop-blur-md bg-black/10">
-        <div className="flex items-center gap-3">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#FFB800] shadow-[0_0_12px_#FFB800]" />
-          <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-neutral-400">PΛRΛBLE FAITH ENGINE</span>
+      <div className="relative mb-2.5 flex items-center justify-between px-1">
+        <div className="flex items-center gap-2.5">
+          <span className="faith-live-pulse rounded-full border border-[#FFB800]/35 bg-[#FFB800] px-2.5 py-0.5 text-[9px] font-bold tracking-[0.22em] text-black uppercase shadow-[0_0_18px_rgba(255,184,0,0.45)]">
+            Live
+          </span>
+          <span className="text-[9px] tracking-[0.2em] text-white/50 uppercase">
+            12,482 Viewers
+          </span>
         </div>
-        <a href="/onboarding" className="text-[11px] font-mono tracking-widest uppercase bg-neutral-950 border border-neutral-800 text-[#D9E2EC] px-5 py-2.5 rounded hover:border-[#FFB800] hover:text-white transition-all duration-300">
-          Console Registry →
-        </a>
-      </nav>
+        <span className="faith-signal-dot h-2 w-2 rounded-full bg-[#FFB800] shadow-[0_0_14px_#FFB800]" />
+      </div>
 
-      {/* SECTION 1: FAITH-TECH ASYMMETRICAL HERO GRID */}
-      <header className="max-w-7xl mx-auto px-8 pt-16 lg:pt-24 pb-20 relative z-10 grid lg:grid-cols-12 gap-12 items-center min-h-[75vh]">
-
-        {/* Left Side: Authoritative Ministry Value Copy */}
-        <div className="lg:col-span-6 flex flex-col items-start text-left">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter leading-[1.05] mb-6">
-            The Digital Sanctuary <br />
-            Infrastructure for <br />
-            Global Ministries. <br />
-          </h1>
-          <p className="text-sm md:text-base text-neutral-400 font-light leading-relaxed max-w-xl mb-10">
-            Deploy a completely independent, white-labeled streaming network under your church&apos;s name. Complete with frictionless in-stream tithe plates, real-time altar prayer panels, and 0% transaction taxes.
-          </p>
-          <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto">
-            <a href="/onboarding" className="w-full sm:w-auto h-12 px-8 inline-flex items-center justify-center rounded bg-[#FFB800] hover:opacity-90 text-xs font-bold tracking-widest uppercase text-black transition-all duration-300 shadow-[0_0_30px_rgba(255,184,0,0.15)]">
-              Provision Sanctuary Node →
-            </a>
-            <a href="#specification" className="w-full sm:w-auto h-12 px-8 inline-flex items-center justify-center rounded border border-neutral-800 bg-neutral-950/40 text-xs font-semibold tracking-widest uppercase text-neutral-400 transition-colors hover:bg-neutral-900 duration-300">
-              System Specs ↓
-            </a>
-          </div>
+      <div className="relative mb-3 overflow-hidden rounded-xl border border-white/12 bg-black">
+        <div className="faith-stage-glow absolute inset-0" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_42%,rgba(255,184,0,0.34),transparent_58%)]" />
+        <div className="faith-light-sweep absolute inset-0 opacity-40" />
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(180deg,transparent,rgba(255,184,0,0.14))]" />
+        <div className="relative flex aspect-[16/10] items-center justify-center">
+          <div className="absolute h-[72%] w-[72%] rounded-full bg-[radial-gradient(circle,rgba(255,184,0,0.16)_0%,transparent_68%)]" />
+          <SanctuaryArchIcon />
         </div>
+      </div>
 
-        {/* Right Side: Showcase Device Mockup Card */}
-        <div className="lg:col-span-6 flex flex-col items-center justify-center relative w-full">
-          <div className="relative flex flex-col items-center w-full max-w-md bg-neutral-950/20 border border-neutral-900/60 rounded-3xl p-10 backdrop-blur-xl shadow-[0_0_60px_rgba(0,0,0,0.8)] overflow-hidden">
-            <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-[#7A00FF]/30 to-transparent" />
-
-            <div className="relative w-44 h-44 mb-6">
-              <Image
-                src="/tenant-default/dashboard/flagship-logo.png"
-                alt="PΛRΛBLE Faith OS emblem"
-                fill
-                priority
-                sizes="176px"
-                className="object-contain"
-              />
-            </div>
-
-            <div className="text-center select-none mb-6">
-              <h2 className="text-3xl tracking-[0.4em] font-light text-white uppercase ml-[0.4em]">
-                P<span className="inline-block scale-x-[1.15] font-extralight text-neutral-300">Λ</span>R<span className="inline-block scale-x-[1.15] font-extralight text-neutral-300">Λ</span>BLE
-              </h2>
-              <h3 className="text-[10px] tracking-[0.65em] text-[#FFB800] uppercase font-bold mt-1.5 ml-[0.65em]">
-                FAITH OS
-              </h3>
-            </div>
-
-            <div className="w-full bg-black/60 border border-neutral-900 rounded-xl py-3 px-4 flex flex-wrap justify-center items-center gap-x-3 text-[9px] font-mono tracking-wider uppercase text-neutral-400">
-              <span>Own Your Sanctuary</span>
-              <span className="text-neutral-800">|</span>
-              <span>Own Your Stream</span>
-              <span className="text-neutral-800">|</span>
-              <span className="text-[#FFB800] font-medium">Own Your Ministry</span>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* SECTION 1.5: THE GENEROSITY & AD AUTONOMY MANIFESTO */}
-      <section className="max-w-7xl mx-auto px-8 py-20 relative z-10 border-t border-neutral-900 bg-black">
-        <div className="max-w-3xl mb-16">
-          <p className="font-mono text-[10px] tracking-[0.4em] uppercase text-[#FFB800] mb-3">Sovereign Generosity Engine</p>
-          <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white leading-none mb-4">
-            0% Offering Taxes. <br />
-            <span className="text-transparent bg-gradient-to-r from-[#FFB800] to-[#7A00FF] bg-clip-text">100% Retained Generosity.</span>
-          </h2>
-          <p className="text-sm text-neutral-400 font-light leading-relaxed max-w-2xl">
-            Stop sacrificing a 30% digital platform tax to secular application marketplace containers. Parable Faith operates strictly on flat-rate infrastructure fees, routing tithes, offerings, and seed tokens directly to your ministry&apos;s secure bank account.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-12 items-stretch">
-          <div className="p-8 rounded-2xl bg-neutral-950/60 border border-neutral-900 flex flex-col justify-between hover:border-[#FFB800]/20 transition-all duration-300">
-            <div className="space-y-4">
-              <div className="w-10 h-10 rounded-xl bg-[#FFB800]/5 border border-[#FFB800]/10 flex items-center justify-center text-sm">🏺</div>
-              <h3 className="text-lg font-bold tracking-tight text-white">In-Stream Tithe Plate</h3>
-              <p className="text-xs text-neutral-400 leading-relaxed font-light">
-                Congregants can submit one-time tithes or configure automated recurring building-fund options directly over the active video timeline. Giving sheets process natively inside the broadcast layout layer without ever interrupting the sermon or forcing users to open external web browser links.
-              </p>
-            </div>
-            <div className="text-[10px] font-mono tracking-widest text-[#FFB800] uppercase mt-6">0% GIVING COMMISSION TAX</div>
-          </div>
-
-          <div className="p-8 rounded-2xl bg-neutral-950/60 border border-neutral-900 flex flex-col justify-between hover:border-[#7A00FF]/20 transition-all duration-300">
-            <div className="space-y-4">
-              <div className="w-10 h-10 rounded-xl bg-[#7A00FF]/5 border border-[#7A00FF]/10 flex items-center justify-center text-sm">🌾</div>
-              <h3 className="text-lg font-bold tracking-tight text-white">Vital Seed Sowing Economics</h3>
-              <p className="text-xs text-neutral-400 leading-relaxed font-light">
-                Incorporate a thriving virtual token economy based on biblical generosity concepts. Members can fund an internal Seed Wallet and execute one-tap seed sowing transactions during high-impact moments in the message, instantly triggering scrolling chat announcements to drive communal support.
-              </p>
-            </div>
-            <div className="text-[10px] font-mono tracking-widest text-[#7A00FF] uppercase mt-6">100% INDEPENDENT BANK ROUTING</div>
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 2: MINISTRY SPECIFICATION BLOCKS */}
-      <section id="specification" className="max-w-7xl mx-auto px-8 py-20 relative z-10 border-t border-neutral-900 bg-black grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="p-6 rounded-2xl bg-neutral-950 border border-neutral-900 flex flex-col gap-4 hover:border-[#FFB800]/20 transition-colors">
-          <span className="font-mono text-xs font-bold text-[#FFB800]">01</span>
-          <div>
-            <h4 className="text-xs font-bold tracking-wide uppercase text-white mb-1.5">Sanctuary Control Plane</h4>
-            <p className="text-[11px] text-neutral-400 leading-relaxed font-light">Media team dashboards equipped with preflight stream manifest reachability probes and dynamic phase routers shifting users from pre-service countdowns onto the live stage.</p>
-          </div>
-        </div>
-
-        <div className="p-6 rounded-2xl bg-neutral-950 border border-neutral-900 flex flex-col gap-4 hover:border-[#7A00FF]/20 transition-colors">
-          <span className="font-mono text-xs font-bold text-[#7A00FF]">02</span>
-          <div>
-            <h4 className="text-xs font-bold tracking-wide uppercase text-white mb-1.5">Altar Prayer Telemetry</h4>
-            <p className="text-[11px] text-neutral-400 leading-relaxed font-light">Interactive prayer-request sheets embedded in the video player. Viewers can submit intercession requests which pin instantly onto backstage intercessor dashboards.</p>
-          </div>
-        </div>
-
-        <div className="p-6 rounded-2xl bg-neutral-950 border border-neutral-900 flex flex-col gap-4 hover:border-[#FFB800]/20 transition-colors">
-          <span className="font-mono text-xs font-bold text-[#FFB800]">03</span>
-          <div>
-            <h4 className="text-xs font-bold tracking-wide uppercase text-white mb-1.5">Sermon Archive Catalog</h4>
-            <p className="text-[11px] text-neutral-400 leading-relaxed font-light">A luxury Netflix-style browse catalog displaying recorded message loops, complete with interactive scrolling chat replay covers that breathe life into past events.</p>
-          </div>
-        </div>
-
-        <div className="p-6 rounded-2xl bg-neutral-950 border border-neutral-900 flex flex-col gap-4 hover:border-[#7A00FF]/20 transition-colors">
-          <span className="font-mono text-xs font-bold text-[#7A00FF]">04</span>
-          <div>
-            <h4 className="text-xs font-bold tracking-wide uppercase text-white mb-1.5">Hardware Sound Integrations</h4>
-            <p className="text-[11px] text-neutral-400 leading-relaxed font-light">Websocket communication pipelines syncing remote dashboard operators to on-site hardware layers, tracking vMix DVR recorders and Behringer X32 mixer channels.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 3: MINISTRY RESOURCE ALLOCATIONS (PRICING GRID) */}
-      <section id="pricing" className="max-w-7xl mx-auto px-8 py-20 relative z-10 border-t border-neutral-900 bg-black">
-        <div className="max-w-3xl mb-16">
-          <p className="font-mono text-[10px] tracking-[0.4em] uppercase text-[#7A00FF] mb-3">Ministry Resource Allocations</p>
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white leading-none mb-4">
-            Flat-Rate Sanctuary Nodes. <br />
-            <span className="text-transparent bg-gradient-to-r from-[#FFB800] to-[#7A00FF] bg-clip-text">No Tithe Commission.</span>
-          </h2>
-          <p className="text-sm text-neutral-400 font-light leading-relaxed max-w-2xl">
-            Provision the right infrastructure tier for your congregation size — from single-campus sanctuaries to multi-site diocese networks. Every plan routes offerings directly to your ministry account with zero platform withholding.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          {MINISTRY_PLANS.map((plan) => (
-            <article
-              key={plan.id}
-              className={`relative p-8 rounded-2xl bg-neutral-950 border flex flex-col gap-6 transition-all duration-300 ${
-                plan.featured
-                  ? 'border-[#7A00FF]/40 shadow-[0_0_40px_rgba(122,0,255,0.12)]'
-                  : 'border-neutral-900 hover:border-neutral-700'
-              }`}
-            >
-              {plan.featured ? (
-                <span className="absolute -top-3 left-6 text-[9px] font-mono tracking-widest uppercase bg-[#7A00FF] text-white px-3 py-1 rounded">
-                  Most Deployed
-                </span>
-              ) : null}
-              <div>
-                <h3 className="text-xs font-bold tracking-widest uppercase text-neutral-300 mb-2">{plan.name}</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className={`text-3xl font-extrabold ${plan.tone === 'purple' ? 'text-[#7A00FF]' : 'text-[#FFB800]'}`}>
-                    {plan.price}
-                  </span>
-                  <span className="text-xs text-neutral-500 font-mono">/mo</span>
-                </div>
-              </div>
-              <ul className="flex flex-col gap-2.5 flex-1">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="text-[11px] text-neutral-400 font-light leading-relaxed flex items-start gap-2">
-                    <span className={`mt-0.5 shrink-0 ${plan.tone === 'purple' ? 'text-[#7A00FF]' : 'text-[#FFB800]'}`}>✓</span>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <PlanSelectionCta
-                tierId={plan.id}
-                className={`w-full h-11 inline-flex items-center justify-center gap-2 rounded text-[10px] font-bold tracking-widest uppercase transition-all duration-300 ${
-                  plan.featured
-                    ? 'bg-[#FFB800] text-black hover:opacity-90'
-                    : 'bg-neutral-900 border border-neutral-800 text-neutral-300 hover:border-[#FFB800]/40 hover:text-white'
+      <div className="grid grid-cols-2 gap-2.5">
+        <div className="rounded-lg border border-white/12 bg-[rgba(255,255,255,0.03)] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+          <p className="mb-1.5 text-[8px] tracking-[0.24em] text-white/45 uppercase">Tithe Plate</p>
+          <p className="text-xl font-semibold tracking-tight text-white">$250.00</p>
+          <div className="mt-2.5 flex gap-1.5">
+            {["$50", "$100", "$250"].map((amount) => (
+              <span
+                key={amount}
+                className={`rounded px-2 py-0.5 text-[8px] tracking-wide transition-colors ${
+                  amount === "$250"
+                    ? "border border-[#FFB800]/55 bg-[#FFB800]/14 text-[#FFB800] shadow-[0_0_12px_rgba(255,184,0,0.18)]"
+                    : "border border-white/10 text-white/55"
                 }`}
               >
-                {plan.cta}
-              </PlanSelectionCta>
-            </article>
-          ))}
+                {amount}
+              </span>
+            ))}
+          </div>
+          <p className="mt-2.5 text-[8px] font-bold tracking-[0.2em] text-[#FFB800] uppercase">
+            Give Now →
+          </p>
+          <p className="mt-1 text-[7px] tracking-[0.16em] text-white/38 uppercase">0% Transaction Fee</p>
         </div>
-      </section>
 
-      {/* Global Framework Status Footer */}
-      <footer className="max-w-7xl mx-auto px-8 py-8 relative z-10 border-t border-neutral-900">
-        <p className="text-[9px] font-mono tracking-[0.35em] uppercase text-neutral-600 text-center">
-          PΛRΛBLE FAITH INFRASTRUCTURE SYSTEM NODES ENGINE RUNNING STABLE // SOVEREIGN ACCOUNT PROTECTION ACTIVE
+        <div className="rounded-lg border border-white/12 bg-[rgba(255,255,255,0.03)] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+          <p className="mb-1.5 text-[8px] tracking-[0.24em] text-white/45 uppercase">Prayer Request</p>
+          <div className="space-y-2">
+            <div className="h-7 rounded border border-white/10 bg-black/70 shadow-[inset_0_1px_8px_rgba(0,0,0,0.55)]" />
+            <div className="h-7 rounded border border-white/10 bg-black/70 shadow-[inset_0_1px_8px_rgba(0,0,0,0.55)]" />
+          </div>
+          <p className="mt-3 text-[8px] tracking-[0.18em] text-white/52 uppercase">Submit Intercession</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PhoneMockup() {
+  return (
+    <div
+      className="faith-device-float-delayed relative w-[178px] rounded-[2.1rem] border border-white/14 bg-[rgba(255,255,255,0.05)] p-3 shadow-[0_40px_100px_rgba(0,0,0,0.82),0_0_50px_rgba(255,184,0,0.1)] backdrop-blur-2xl"
+      aria-hidden="true"
+    >
+      <div className="pointer-events-none absolute -inset-px rounded-[2.1rem] bg-[linear-gradient(160deg,rgba(255,184,0,0.18),transparent_45%)] opacity-80" />
+      <div className="mx-auto mb-3 h-1 w-11 rounded-full bg-white/18" />
+      <div className="relative overflow-hidden rounded-[1.35rem] border border-white/12 bg-black px-4 py-7 text-center">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_18%,rgba(255,184,0,0.12),transparent_55%)]" />
+        <ParableWordmark size="phone" />
+        <p className="relative mt-6 text-[9px] font-semibold tracking-[0.36em] text-white/72 uppercase">
+          Welcome Home
         </p>
+        <div className="relative mt-5 space-y-1.5">
+          <p className="text-[10px] tracking-[0.3em] text-white/88 uppercase">True Worship</p>
+          <p className="text-[10px] tracking-[0.3em] text-white/88 uppercase">True Community</p>
+        </div>
+        <div className="faith-cta-glow relative mt-6 rounded border border-[#FFB800]/45 bg-[#FFB800]/10 px-2.5 py-2.5 text-[8px] font-bold tracking-[0.22em] text-[#FFB800] uppercase">
+          Enter Sanctuary →
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DeviceHeroComposition() {
+  return (
+    <div className="relative mx-auto flex min-h-[380px] w-full max-w-[580px] items-center justify-center sm:min-h-[460px] [perspective:1400px]">
+      <div className="faith-aurora pointer-events-none absolute left-1/2 top-1/2 h-[280px] w-[280px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,184,0,0.16)_0%,transparent_68%)] blur-2xl sm:h-[340px] sm:w-[340px]" />
+      <div className="faith-aurora-delayed pointer-events-none absolute right-[8%] top-[18%] h-[180px] w-[180px] rounded-full bg-[radial-gradient(circle,rgba(255,184,0,0.1)_0%,transparent_70%)] blur-3xl sm:h-[220px] sm:w-[220px]" />
+
+      <div className="absolute left-[6%] top-[12%] z-0 h-20 w-20 rounded-full border border-[#FFB800]/10 bg-[#FFB800]/5 blur-sm sm:h-28 sm:w-28" />
+      <div className="absolute bottom-[10%] right-[4%] z-0 h-16 w-16 rounded-full border border-white/8 bg-white/[0.02] sm:h-20 sm:w-20" />
+
+      <div className="relative z-10 w-full scale-[0.88] sm:scale-100 [transform-style:preserve-3d]">
+        <div className="absolute -right-3 top-4 z-30 sm:-right-1 sm:top-8 md:right-2 md:top-8 [transform:rotateY(18deg)_rotateX(6deg)_rotateZ(14deg)_translateZ(40px)]">
+          <PhoneMockup />
+        </div>
+        <div className="relative z-20 mx-auto w-fit [transform:rotateY(-14deg)_rotateX(8deg)_rotateZ(-6deg)_translateZ(20px)]">
+          <TabletMockup />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function PlatformLandingPage() {
+  return (
+    <div className="faith-landing min-h-screen overflow-x-hidden bg-[#000000] text-white antialiased">
+      <style>{`
+        @keyframes faith-float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        @keyframes faith-aurora-pulse {
+          0%, 100% { opacity: 0.45; transform: scale(1); }
+          50% { opacity: 0.85; transform: scale(1.06); }
+        }
+        @keyframes faith-live-pulse {
+          0%, 100% { box-shadow: 0 0 12px rgba(255,184,0,0.35); }
+          50% { box-shadow: 0 0 22px rgba(255,184,0,0.65); }
+        }
+        @keyframes faith-signal-dot {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.55; transform: scale(0.88); }
+        }
+        @keyframes faith-light-sweep {
+          0% { transform: translateX(-120%) skewX(-12deg); opacity: 0; }
+          35% { opacity: 0.35; }
+          100% { transform: translateX(140%) skewX(-12deg); opacity: 0; }
+        }
+        @keyframes faith-stage-glow {
+          0%, 100% { opacity: 0.55; }
+          50% { opacity: 0.95; }
+        }
+        @keyframes faith-cta-glow {
+          0%, 100% { box-shadow: inset 0 0 0 rgba(255,184,0,0); }
+          50% { box-shadow: inset 0 0 18px rgba(255,184,0,0.12); }
+        }
+        @keyframes faith-hero-reveal {
+          from { opacity: 0; transform: translateY(18px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .faith-device-float { animation: faith-float 7s ease-in-out infinite; }
+        .faith-device-float-delayed { animation: faith-float 7s ease-in-out infinite 1.2s; }
+        .faith-aurora { animation: faith-aurora-pulse 8s ease-in-out infinite; }
+        .faith-aurora-delayed { animation: faith-aurora-pulse 10s ease-in-out infinite 2s; }
+        .faith-live-pulse { animation: faith-live-pulse 2.4s ease-in-out infinite; }
+        .faith-signal-dot { animation: faith-signal-dot 1.8s ease-in-out infinite; }
+        .faith-light-sweep {
+          background: linear-gradient(105deg, transparent 0%, rgba(255,184,0,0.18) 48%, transparent 100%);
+          animation: faith-light-sweep 6.5s ease-in-out infinite;
+        }
+        .faith-stage-glow {
+          background: radial-gradient(circle at 50% 45%, rgba(255,184,0,0.28) 0%, transparent 62%);
+          animation: faith-stage-glow 4.5s ease-in-out infinite;
+        }
+        .faith-cta-glow { animation: faith-cta-glow 3.2s ease-in-out infinite; }
+        .faith-hero-copy > * { animation: faith-hero-reveal 0.9s ease-out both; }
+        .faith-hero-copy > *:nth-child(2) { animation-delay: 0.08s; }
+        .faith-hero-copy > *:nth-child(3) { animation-delay: 0.16s; }
+        .faith-hero-copy > *:nth-child(4) { animation-delay: 0.24s; }
+        .faith-hero-copy > *:nth-child(5) { animation-delay: 0.32s; }
+        .faith-hero-copy > *:nth-child(6) { animation-delay: 0.4s; }
+        @media (prefers-reduced-motion: reduce) {
+          .faith-device-float, .faith-device-float-delayed, .faith-aurora, .faith-aurora-delayed,
+          .faith-live-pulse, .faith-signal-dot, .faith-light-sweep, .faith-stage-glow,
+          .faith-cta-glow, .faith-hero-copy > * { animation: none !important; }
+        }
+      `}</style>
+
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_55%_at_72%_0%,rgba(255,184,0,0.11),transparent_62%)]"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:5rem_5rem] [mask-image:radial-gradient(ellipse_70%_55%_at_50%_35%,#000_72%,transparent_100%)] opacity-25"
+        aria-hidden="true"
+      />
+
+      <header className="relative z-20 border-b border-white/10">
+        <nav
+          className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 md:px-10"
+          aria-label="Primary"
+        >
+          <ParableWordmark />
+          <Link
+            href="/onboarding"
+            className="inline-flex items-center rounded border border-[#FFB800]/55 bg-transparent px-4 py-2 text-[10px] font-semibold tracking-[0.28em] text-[#FFB800] uppercase transition-all duration-300 hover:border-[#FFB800] hover:bg-[#FFB800]/8 hover:text-white"
+          >
+            Console Registry →
+          </Link>
+        </nav>
+      </header>
+
+      <main id="main-content">
+        <section className="relative z-10 mx-auto max-w-7xl px-6 pt-14 pb-10 md:px-10 md:pt-20 md:pb-16">
+          <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-10">
+            <div className="faith-hero-copy lg:col-span-6">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#FFB800]/30 bg-[#FFB800]/8 px-3 py-1.5 shadow-[0_0_24px_rgba(255,184,0,0.12)]">
+                <span className="faith-signal-dot h-1.5 w-1.5 rounded-full bg-[#FFB800] shadow-[0_0_10px_#FFB800]" />
+                <span className="text-[9px] font-medium tracking-[0.32em] text-[#FFB800] uppercase">
+                  Faith Infrastructure System Core
+                </span>
+              </div>
+
+              <h1 className="max-w-2xl text-4xl font-extrabold leading-[0.98] tracking-tight uppercase md:text-5xl lg:text-[3.35rem]">
+                The Digital Sanctuary Infrastructure for{" "}
+                <span className="text-[#FFB800]">Global Ministries.</span>
+              </h1>
+
+              <p className="mt-6 max-w-xl text-sm leading-relaxed text-[rgba(255,255,255,0.68)] md:text-[15px]">
+                Deploy a completely independent, white-labeled streaming network under your
+                church&apos;s name. Complete with frictionless in-stream tithe plates, real-time altar
+                prayer panels, and 0% transaction taxes.
+              </p>
+
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Link
+                  href="/onboarding"
+                  className="inline-flex h-11 items-center justify-center rounded bg-[#FFB800] px-6 text-[10px] font-bold tracking-[0.24em] text-black uppercase transition-all duration-300 hover:opacity-90 hover:shadow-[0_0_28px_rgba(255,184,0,0.22)]"
+                >
+                  Provision Sanctuary Node →
+                </Link>
+                <a
+                  href="#features"
+                  className="inline-flex h-11 items-center justify-center gap-1 rounded border border-white/14 bg-[rgba(255,255,255,0.04)] px-6 text-[10px] font-semibold tracking-[0.22em] text-[rgba(255,255,255,0.68)] uppercase transition-all duration-300 hover:border-white/25 hover:bg-white/[0.07] hover:text-white"
+                >
+                  System Specs
+                  <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+                </a>
+              </div>
+
+              <p className="mt-8 text-[9px] font-mono tracking-[0.28em] text-[rgba(255,255,255,0.68)] uppercase">
+                Own Your Sanctuary <span className="text-white/20">|</span> Own Your Stream{" "}
+                <span className="text-white/20">|</span>{" "}
+                <span className="text-[#FFB800]">Own Your Ministry</span>
+              </p>
+            </div>
+
+            <div className="relative lg:col-span-6">
+              <DeviceHeroComposition />
+            </div>
+          </div>
+        </section>
+
+        <section
+          id="features"
+          className="relative z-10 border-y border-white/10 bg-[rgba(255,255,255,0.02)]"
+          aria-label="Platform capabilities"
+        >
+          <div className="mx-auto grid max-w-7xl gap-px bg-white/10 md:grid-cols-2 lg:grid-cols-4">
+            {FEATURE_STRIP.map(({ icon: Icon, label, description }) => (
+              <article
+                key={label}
+                className="group relative overflow-hidden bg-[rgba(255,255,255,0.04)] px-6 py-7 backdrop-blur-md transition-all duration-500 hover:bg-[rgba(255,255,255,0.07)] hover:shadow-[inset_0_1px_0_rgba(255,184,0,0.25)]"
+              >
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,184,0,0.45),transparent)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                <Icon
+                  className="mb-4 h-5 w-5 stroke-[1.5] text-white/55 transition-colors duration-300 group-hover:text-[#FFB800]"
+                  aria-hidden="true"
+                />
+                <h2 className="text-[10px] font-bold tracking-[0.26em] text-white uppercase">{label}</h2>
+                <p className="mt-2 text-xs leading-relaxed text-[rgba(255,255,255,0.68)]">{description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="relative z-10 mx-auto max-w-7xl px-6 py-10 md:px-10" aria-label="Trusted ministries">
+          <p className="text-center text-[9px] font-semibold tracking-[0.34em] text-[rgba(255,255,255,0.68)] uppercase">
+            Trusted by Ministries Worldwide
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-4 md:gap-6">
+            {TRUSTED_MARKS.map((mark) => (
+              <div
+                key={mark}
+                className="flex h-10 min-w-[72px] items-center justify-center rounded border border-white/10 bg-white/[0.03] px-4 text-[10px] font-semibold tracking-[0.22em] text-white/30 uppercase"
+                aria-hidden="true"
+              >
+                {mark}
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+
+      <footer className="relative z-10 border-t border-white/10">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-5 text-[8px] font-mono tracking-[0.28em] text-[rgba(255,255,255,0.68)] uppercase md:flex-row md:items-center md:justify-between md:px-10">
+          <div className="flex items-center gap-2.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#FFB800] shadow-[0_0_10px_#FFB800]" aria-hidden="true" />
+            <p>
+              PΛRΛBLE FAITH INFRASTRUCTURE SYSTEM NODES ENGINE RUNNING STABLE // SOVEREIGN ACCOUNT
+              PROTECTION ACTIVE
+            </p>
+          </div>
+          <p className="text-white/45">SECURE. SOVEREIGN. SANCTIFIED.</p>
+        </div>
       </footer>
     </div>
   );

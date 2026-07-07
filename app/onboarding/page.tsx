@@ -15,9 +15,5 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
   const params = await searchParams;
   const selectedTier = resolveSelectedTier(params.tier);
 
-  return (
-    <main className="min-h-dvh bg-[#020203] text-white">
-      <OwnerOnboardingClient selectedTier={selectedTier} />
-    </main>
-  );
+  return <OwnerOnboardingClient selectedTier={selectedTier} />;
 }
