@@ -1,17 +1,12 @@
 import { Suspense } from "react";
-import ContactUsPageClient from "@/components/features/contact/ContactPageClient";
-import { loadTabPageProfile } from "@/lib/experience/load-tab-page-profile";
+import EnterpriseContactPage from "@/components/admin/EnterpriseContactPage";
 
 export const dynamic = "force-dynamic";
 
-export default async function ContactUsPage() {
-  const profile = await loadTabPageProfile();
-
+export default function ContactUsPage() {
   return (
-    <main id="main-content" className="flex min-h-0 w-full flex-1 flex-col overflow-hidden" aria-label="Contact us">
-      <Suspense fallback={null}>
-        <ContactUsPageClient initialProfile={profile} />
-      </Suspense>
-    </main>
+    <Suspense fallback={null}>
+      <EnterpriseContactPage />
+    </Suspense>
   );
 }

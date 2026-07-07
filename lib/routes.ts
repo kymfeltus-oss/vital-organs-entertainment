@@ -10,6 +10,7 @@ const NAV_HIDDEN_EXACT = [
   "/program",
   "/story",
   "/onboarding",
+  "/contact-us",
 ] as const;
 
 const NAV_HIDDEN_PREFIXES = [
@@ -36,6 +37,7 @@ function matchesHiddenPrefix(pathname: string, prefix: string): boolean {
 
 const MOBILE_ARTBOARD_TAB_EXACT = [
   "/music",
+  "/browse",
   "/giving",
   "/experience/giving",
   "/buy-seeds",

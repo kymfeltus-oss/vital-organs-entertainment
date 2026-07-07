@@ -34,7 +34,7 @@ export default function AppNavigation({ tenantTier, featureVisibility }: AppNavi
     },
     {
       label: "Browse",
-      path: "/music",
+      path: "/browse",
       visible: featureVisibility.showOnDemandCatalog,
     },
     {
