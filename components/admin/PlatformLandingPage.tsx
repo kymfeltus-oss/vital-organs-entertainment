@@ -80,6 +80,67 @@ export default function PlatformLandingPage() {
         </div>
       </header>
 
+      <section className="relative z-10 mx-auto max-w-7xl border-t border-neutral-900 bg-black px-8 py-20">
+        <div className="mb-16 max-w-3xl">
+          <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.4em] text-[#00C2FF]">
+            Financial Autonomy Engine
+          </p>
+          <h2 className="mb-4 text-3xl font-extrabold leading-none tracking-tight text-white md:text-5xl">
+            Your Bandwidth. Your Ads. <br />
+            <span className="bg-gradient-to-r from-[#00C2FF] via-[#6C4DFF] to-[#FF0F8E] bg-clip-text text-transparent">
+              100% Retained Revenue.
+            </span>
+          </h2>
+          <p className="max-w-2xl text-sm font-light leading-relaxed text-neutral-400">
+            Stop paying a 30% platform tax to mobile ecosystems or traditional streaming middle-men.
+            Parable OS provides the foundational broadcast infrastructure while your organization
+            retains full sovereign ownership over cash flows.
+          </p>
+        </div>
+
+        <div className="grid items-stretch gap-12 border-b border-neutral-900 pb-16 md:grid-cols-2">
+          <div className="group flex flex-col justify-between rounded-2xl border border-neutral-900 bg-neutral-950/60 p-8 transition-all duration-300 hover:border-[#00C2FF]/30">
+            <div className="space-y-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#00C2FF]/10 bg-[#00C2FF]/5 text-sm">
+                📺
+              </div>
+              <h3 className="text-lg font-bold tracking-tight text-white">
+                Sovereign Ad Server Injection
+              </h3>
+              <p className="text-xs font-light leading-relaxed text-neutral-400">
+                Inject your own native VAST/VMAP programmatic ad tags, custom sponsor slates, or direct
+                video placement blocks seamlessly into the live stream layout. We deliver the optimized
+                player runtime nodes, but you control 100% of the media inventory. Sell directly to your
+                corporate partners and retain every cent of CPM value.
+              </p>
+            </div>
+            <div className="mt-6 font-mono text-[10px] uppercase tracking-widest text-[#00C2FF]">
+              0% AD COMMISSION TAX
+            </div>
+          </div>
+
+          <div className="group flex flex-col justify-between rounded-2xl border border-neutral-900 bg-neutral-950/60 p-8 transition-all duration-300 hover:border-[#FF0F8E]/30">
+            <div className="space-y-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#FF0F8E]/10 bg-[#FF0F8E]/5 text-sm">
+                🪙
+              </div>
+              <h3 className="text-lg font-bold tracking-tight text-white">
+                Direct Virtual Token Commerce
+              </h3>
+              <p className="text-xs font-light leading-relaxed text-neutral-400">
+                Route virtual fan-cheer tips, audience applause tokens, backstage access passes, and
+                subscription billing tiers straight through your standalone connected merchant gate.
+                Because Parable charges a flat platform subscription fee and 0% per-transaction cuts,
+                your token economics run at peak mathematical margins.
+              </p>
+            </div>
+            <div className="mt-6 font-mono text-[10px] uppercase tracking-widest text-[#FF0F8E]">
+              100% TRANSACTION RETENTION
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section
         id="specification"
         className="relative z-10 mx-auto max-w-6xl border-t border-neutral-900 bg-black px-8 py-24"
@@ -156,26 +217,40 @@ export default function PlatformLandingPage() {
       </section>
 
       <section className="relative z-10 mx-auto max-w-6xl border-t border-neutral-900 bg-black px-8 py-20">
-        <p className="mb-16 text-center font-mono text-[10px] uppercase tracking-[0.4em] text-neutral-500">
-          Global Resource Allocations
-        </p>
+        <div className="mx-auto mb-16 max-w-2xl text-center">
+          <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.4em] text-neutral-500">
+            Global Resource Allocations
+          </p>
+          <h3 className="mb-2 text-2xl font-bold tracking-tight">Predictable Infrastructure Pricing</h3>
+          <p className="mt-2 inline-block rounded-full border border-[#00C2FF]/10 bg-[#00C2FF]/5 px-4 py-1.5 font-mono text-xs uppercase tracking-wider text-[#00C2FF]">
+            ⚡️ 0% Transaction Fees — Retain 100% of Your Revenue
+          </p>
+        </div>
 
         <div className="grid items-stretch gap-8 md:grid-cols-3">
           <div className="flex flex-col justify-between rounded-xl border border-neutral-900 bg-neutral-950 p-8">
             <div>
-              <div className="mb-1 font-mono text-xs text-neutral-500">01 / NODE TIER</div>
-              <h3 className="mb-6 text-lg font-bold tracking-wide">Starter Node</h3>
-              <ul className="space-y-4 text-xs font-light text-[#D9E2EC]">
+              <div className="mb-1 font-mono text-xs text-neutral-500">01 / ENTRY MODULE</div>
+              <h4 className="mb-2 text-lg font-bold tracking-wide">Starter Node</h4>
+              <div className="mb-6 flex items-baseline gap-1">
+                <span className="text-3xl font-extrabold tracking-tight">$149</span>
+                <span className="font-mono text-xs text-neutral-500">/ mo</span>
+              </div>
+              <p className="mb-6 text-xs leading-relaxed text-neutral-400">
+                Retain 100% of virtual token gifting. Run your independent network on our shared
+                platform domain layer.
+              </p>
+              <ul className="space-y-4 border-t border-neutral-950 pt-4 text-xs font-light text-[#D9E2EC]">
                 <li className="flex items-start gap-3">
-                  <span className="font-mono text-[#00C2FF]">→</span>
-                  <span>Shared platform subdomain mapping</span>
+                  <span className="text-[#00C2FF]">→</span>
+                  <span>Shared platform subdomain routing</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="font-mono text-[#00C2FF]">→</span>
-                  <span>720p HD live video distribution</span>
+                  <span className="text-[#00C2FF]">→</span>
+                  <span>720p HD live broadcast player limits</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="font-mono text-[#00C2FF]">→</span>
+                  <span className="text-[#00C2FF]">→</span>
                   <span>Live community chat (1 channel instance)</span>
                 </li>
               </ul>
@@ -184,64 +259,72 @@ export default function PlatformLandingPage() {
               href="/onboarding?tier=starter"
               className="mt-12 block w-full rounded border border-neutral-800 bg-neutral-900 py-3 text-center font-mono text-xs uppercase tracking-widest text-neutral-400 transition-colors hover:border-neutral-700 hover:text-white"
             >
-              Request Platform Trial
+              Provision Starter
             </a>
           </div>
 
           <div className="relative flex flex-col justify-between rounded-xl border border-[#6C4DFF] bg-[#050816]/30 p-8 shadow-[0_0_50px_rgba(108,77,255,0.08)]">
             <span className="absolute -top-3 right-6 rounded bg-gradient-to-r from-[#00C2FF] via-[#6C4DFF] to-[#FF0F8E] px-3 py-0.5 text-[9px] font-bold uppercase tracking-widest text-white">
-              Standard Spec
+              Scale Standard
             </span>
             <div>
-              <div className="mb-1 font-mono text-xs text-[#6C4DFF]">02 / PRO ENGINE</div>
-              <h3 className="mb-6 text-lg font-bold tracking-wide">Network Pro</h3>
-              <ul className="space-y-4 text-xs font-light text-[#D9E2EC]">
+              <div className="mb-1 font-mono text-xs text-[#6C4DFF]">02 / PRO VOLUME</div>
+              <h4 className="mb-2 text-lg font-bold tracking-wide">Network Pro</h4>
+              <div className="mb-6 flex items-baseline gap-1">
+                <span className="text-3xl font-extrabold tracking-tight text-white">$499</span>
+                <span className="font-mono text-xs text-[#6C4DFF]">/ mo</span>
+              </div>
+              <p className="mb-6 text-xs leading-relaxed text-neutral-300">
+                Direct deployment to your own custom domain. Complete Stripe mapping for embedded
+                ticket, merch, and token sales.
+              </p>
+              <ul className="space-y-4 border-t border-neutral-900 pt-4 text-xs font-light text-[#D9E2EC]">
                 <li className="flex items-start gap-3">
-                  <span className="font-mono text-[#6C4DFF]">→</span>
-                  <span>Custom domain integration (brand.com)</span>
+                  <span className="text-[#6C4DFF]">→</span>
+                  <span>Custom domain integration (yourbrand.com)</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="font-mono text-[#6C4DFF]">→</span>
+                  <span className="text-[#6C4DFF]">→</span>
                   <span>1080p high-bitrate distribution nodes</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="font-mono text-[#6C4DFF]">→</span>
-                  <span>5 concurrent automated community chat nodes</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="font-mono text-[#6C4DFF]">→</span>
+                  <span className="text-[#6C4DFF]">→</span>
                   <span>vMix API hardware triggers & broadcast overlays</span>
                 </li>
               </ul>
             </div>
             <a
               href="/onboarding?tier=pro"
-              className="mt-12 block w-full rounded bg-[#6C4DFF] py-3 text-center font-mono text-xs font-bold uppercase tracking-widest text-white shadow-[0_0_20px_rgba(108,77,255,0.25)] transition-opacity hover:opacity-90"
+              className="mt-12 block w-full rounded bg-gradient-to-r from-[#00C2FF] via-[#6C4DFF] to-[#FF0F8E] py-3 text-center text-xs font-bold uppercase tracking-widest text-white transition-opacity hover:opacity-90"
             >
-              Provision Engine
+              Deploy Pro Engine
             </a>
           </div>
 
           <div className="flex flex-col justify-between rounded-xl border border-neutral-900 bg-neutral-950 p-8">
             <div>
-              <div className="mb-1 font-mono text-xs text-neutral-500">03 / FABRIC CLUSTER</div>
-              <h3 className="mb-6 text-lg font-bold tracking-wide">Enterprise Stack</h3>
-              <ul className="space-y-4 text-xs font-light text-[#D9E2EC]">
+              <div className="mb-1 font-mono text-xs text-neutral-500">03 / HIGH RESOURCE</div>
+              <h4 className="mb-2 text-lg font-bold tracking-wide">Enterprise Stack</h4>
+              <div className="mb-6 flex items-baseline gap-1">
+                <span className="text-3xl font-extrabold tracking-tight">$1,499</span>
+                <span className="font-mono text-xs text-neutral-500">/ mo</span>
+              </div>
+              <p className="mb-6 text-xs leading-relaxed text-neutral-400">
+                Full standalone custom application distribution into native mobile marketplaces,
+                matching enterprise agreements.
+              </p>
+              <ul className="space-y-4 border-t border-neutral-950 pt-4 text-xs font-light text-[#D9E2EC]">
                 <li className="flex items-start gap-3">
-                  <span className="font-mono text-[#FF0F8E]">→</span>
-                  <span>Dedicated mobile App Store delivery (Capacitor)</span>
+                  <span className="text-[#FF0F8E]">→</span>
+                  <span>Dedicated mobile App Store submissions (Capacitor)</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="font-mono text-[#FF0F8E]">→</span>
-                  <span>4K extreme bitrate network nodes</span>
+                  <span className="text-[#FF0F8E]">→</span>
+                  <span>4K ultra-low latency extreme bitrate streams</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="font-mono text-[#FF0F8E]">→</span>
+                  <span className="text-[#FF0F8E]">→</span>
                   <span>X32 hardware audio mixer telemetry mapping</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="font-mono text-[#FF0F8E]">→</span>
-                  <span>Full enterprise template codebase overrides</span>
                 </li>
               </ul>
             </div>
