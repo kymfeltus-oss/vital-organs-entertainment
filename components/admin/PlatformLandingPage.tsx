@@ -162,7 +162,9 @@ function PhoneMockup() {
           <p className="text-[10px] tracking-[0.3em] text-white/88 uppercase">True Community</p>
         </div>
         <div className="faith-cta-glow relative mt-6 rounded border border-[#FFB800]/45 bg-[#FFB800]/10 px-2.5 py-2.5 text-[8px] font-bold tracking-[0.22em] text-[#FFB800] uppercase">
-          Enter Sanctuary →
+          <Link href="/onboarding" className="block">
+            Enter Sanctuary →
+          </Link>
         </div>
       </div>
     </div>

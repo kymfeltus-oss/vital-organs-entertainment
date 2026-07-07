@@ -36,6 +36,7 @@ export default function OwnerOnboardingClient({
   const [subdomainStatus, setSubdomainStatus] = useState<SubdomainStatus>("idle");
   const [subdomainMessage, setSubdomainMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [stepValidationError, setStepValidationError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isStartingCheckout, setIsStartingCheckout] = useState(false);
   const [successUrl, setSuccessUrl] = useState<string | null>(null);
@@ -82,20 +83,63 @@ export default function OwnerOnboardingClient({
     return () => window.clearTimeout(timer);
   }, [subdomain, step]);
 
-  const canContinueStep1 =
-    ministryName.trim().length >= 2 && isValidEmail(leaderEmail) && passwordStrength.isValid;
+  useEffect(() => {
+    setStepValidationError(null);
+  }, [ministryName, leaderEmail, password, subdomain, step]);
 
-  const canContinueStep2 =
-    isValidTenantId(sanitizeTenantIdInput(subdomain)) && subdomainStatus === "available";
+  const resolveStepValidationError = (currentStep: Step): string | null => {
+    if (currentStep === 1) {
+      if (ministryName.trim().length < 2) {
+        return "Enter your church or ministry title to continue.";
+      }
+      if (!isValidEmail(leaderEmail)) {
+        return "Enter a valid administrative email address to continue.";
+      }
+      if (!passwordStrength.isValid) {
+        return passwordStrength.message ?? "Complete all password security requirements to continue.";
+      }
+      return null;
+    }
+
+    if (currentStep === 2) {
+      const normalized = sanitizeTenantIdInput(subdomain);
+      if (!normalized) {
+        return "Enter a sanctuary subdomain prefix to continue.";
+      }
+      if (!isValidTenantId(normalized)) {
+        return "Use 3–32 lowercase letters, numbers, or hyphens for your subdomain.";
+      }
+      if (subdomainStatus === "checking") {
+        return "Checking subdomain availability. Please wait a moment.";
+      }
+      if (subdomainStatus !== "available") {
+        return subdomainMessage ?? "Choose an available subdomain before continuing.";
+      }
+      return null;
+    }
+
+    return null;
+  };
+
+  const handleContinue = () => {
+    setSubmitError(null);
+    const validationError = resolveStepValidationError(step);
+    if (validationError) {
+      setStepValidationError(validationError);
+      return;
+    }
+
+    setStepValidationError(null);
+    setStep((current) => Math.min(3, current + 1) as Step);
+  };
 
   const handleMinistryDeployment = async (event: React.FormEvent) => {
     event.preventDefault();
     setSubmitError(null);
+    setStepValidationError(null);
 
     if (step < 3) {
-      if (step === 1 && !canContinueStep1) return;
-      if (step === 2 && !canContinueStep2) return;
-      setStep((current) => Math.min(3, current + 1) as Step);
+      handleContinue();
       return;
     }
 
@@ -270,7 +314,7 @@ export default function OwnerOnboardingClient({
             ))}
           </div>
 
-          <form onSubmit={(event) => void handleMinistryDeployment(event)} className="space-y-6">
+          <form onSubmit={(event) => void handleMinistryDeployment(event)} className="space-y-6" noValidate>
             {step === 1 ? (
               <div className="sanctuary-fade-in space-y-5">
                 <h2 className="border-b border-neutral-900 pb-2 text-sm font-bold uppercase tracking-wide text-neutral-300">
@@ -335,6 +379,11 @@ export default function OwnerOnboardingClient({
                     </li>
                   ))}
                 </ul>
+                {!passwordStrength.isValid ? (
+                  <p className="text-[10px] text-neutral-500">
+                    Complete the password requirements above, then press Continue.
+                  </p>
+                ) : null}
               </div>
             ) : null}
 
@@ -424,11 +473,23 @@ export default function OwnerOnboardingClient({
               </div>
             ) : null}
 
+            {stepValidationError ? (
+              <p
+                role="alert"
+                className="rounded-xl border border-[#FFB800]/30 bg-[#FFB800]/8 px-4 py-3 text-xs text-[#FFB800]"
+              >
+                {stepValidationError}
+              </p>
+            ) : null}
+
             <div className="mt-8 flex items-center justify-between gap-4 border-t border-neutral-900/60 pt-4">
               {step > 1 ? (
                 <button
                   type="button"
-                  onClick={() => setStep((current) => Math.max(1, current - 1) as Step)}
+                  onClick={() => {
+                    setStepValidationError(null);
+                    setStep((current) => Math.max(1, current - 1) as Step);
+                  }}
                   disabled={loading}
                   className="inline-flex h-11 items-center justify-center rounded-xl border border-neutral-900 bg-neutral-950 px-6 font-mono text-xs uppercase tracking-widest text-neutral-400 transition-all hover:border-neutral-800 hover:text-white disabled:opacity-50"
                 >
@@ -438,21 +499,24 @@ export default function OwnerOnboardingClient({
                 <span />
               )}
 
-              <button
-                type="submit"
-                disabled={
-                  loading ||
-                  (step === 1 && !canContinueStep1) ||
-                  (step === 2 && !canContinueStep2)
-                }
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[#FFB800] px-6 font-mono text-xs font-bold uppercase tracking-widest text-black transition-all hover:opacity-90 hover:shadow-[0_0_24px_rgba(255,184,0,0.22)] disabled:opacity-50"
-              >
-                {loading
-                  ? "Deploying Sanctuary Nodes..."
-                  : step === 3
-                    ? "Initialize Infrastructure"
-                    : "Continue →"}
-              </button>
+              {step < 3 ? (
+                <button
+                  type="button"
+                  onClick={handleContinue}
+                  disabled={loading || (step === 2 && subdomainStatus === "checking")}
+                  className="inline-flex h-11 items-center justify-center rounded-xl bg-[#FFB800] px-6 font-mono text-xs font-bold uppercase tracking-widest text-black transition-all hover:opacity-90 hover:shadow-[0_0_24px_rgba(255,184,0,0.22)] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {step === 2 && subdomainStatus === "checking" ? "Checking Subdomain…" : "Continue →"}
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="inline-flex h-11 items-center justify-center rounded-xl bg-[#FFB800] px-6 font-mono text-xs font-bold uppercase tracking-widest text-black transition-all hover:opacity-90 hover:shadow-[0_0_24px_rgba(255,184,0,0.22)] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {loading ? "Deploying Sanctuary Nodes..." : "Initialize Infrastructure"}
+                </button>
+              )}
             </div>
           </form>
         </div>
