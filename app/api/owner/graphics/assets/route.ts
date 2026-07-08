@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { isOwnerAuthed, ownerAuthFailureResponse, ownerJsonResponse } from "@/lib/owner/api-response";
+import { asMultipartForm } from "@/lib/server/multipart-form";
 import { requireOwnerUser } from "@/lib/owner/auth";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +32,8 @@ export async function POST(request: Request) {
 
   try {
     const formData = await request.formData();
-    const file = formData.get("file");
+    const form = asMultipartForm(formData);
+    const file = form.get("file");
 
     if (!(file instanceof File)) {
       return ownerJsonResponse({ success: false, error: "Choose an image or video file to upload." }, 400);
@@ -46,7 +48,7 @@ export async function POST(request: Request) {
       return ownerJsonResponse({ success: false, error: "Use a PNG, JPG, WEBP, SVG, MP4, WEBM, or MOV file." }, 400);
     }
 
-    const label = cleanAssetLabel(formData.get("slot"));
+    const label = cleanAssetLabel(form.get("slot"));
     const uploadDirectory = path.join(process.cwd(), "public", "owner-graphics");
     const fileName = `${label}-${Date.now()}.${extension}`;
     const filePath = path.join(uploadDirectory, fileName);

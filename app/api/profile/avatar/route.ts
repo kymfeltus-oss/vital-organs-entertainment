@@ -13,6 +13,7 @@ import {
   normalizeProfileName,
   persistAttendeeProfileUpdate,
 } from "@/lib/profile/persist-attendee-profile";
+import { asMultipartForm } from "@/lib/server/multipart-form";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
 
 export async function POST(request: Request) {
@@ -23,7 +24,8 @@ export async function POST(request: Request) {
     }
 
     const formData = await request.formData();
-    const file = formData.get("avatar");
+    const form = asMultipartForm(formData);
+    const file = form.get("avatar");
 
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "Profile photo file is required." }, { status: 400 });

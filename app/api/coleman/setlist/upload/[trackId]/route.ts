@@ -6,6 +6,7 @@ import {
 } from "@/app/enterprise/coleman/lib/db-mappers";
 import { prisma } from "@/app/enterprise/coleman/lib/prisma";
 import { saveUploadedFile } from "@/app/enterprise/coleman/lib/storage";
+import { asMultipartForm } from "@/lib/server/multipart-form";
 import { validateAudioUpload } from "@/app/enterprise/coleman/lib/validation";
 
 type RouteContext = {
@@ -21,9 +22,8 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const formData = await request.formData();
-    const stem = (formData as unknown as { get(name: string): File | string | null }).get(
-      "stem",
-    );
+    const form = asMultipartForm(formData);
+    const stem = form.get("stem");
 
     if (!(stem instanceof File)) {
       return NextResponse.json(
@@ -38,7 +38,7 @@ export async function POST(request: Request, context: RouteContext) {
       stem.size,
     );
 
-    if (!validation.ok) {
+    if (validation.ok === false) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
@@ -52,7 +52,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     const buffer = Buffer.from(await stem.arrayBuffer());
     const filename = saveUploadedFile(stem.name, buffer);
-    const stemTypeField = formData.get("stemType");
+    const stemTypeField = form.get("stemType");
     const stemType =
       typeof stemTypeField === "string" && stemTypeField.trim()
         ? stemTypeField.trim()

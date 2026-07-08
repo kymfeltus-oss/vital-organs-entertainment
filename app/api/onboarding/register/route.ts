@@ -8,6 +8,7 @@ import {
   uploadTenantLogo,
 } from "@/lib/onboarding/tenant-themes-repository";
 import { isValidTenantId, normalizeTenantId } from "@/lib/onboarding/tenant-id";
+import { asMultipartForm } from "@/lib/server/multipart-form";
 import { getMarketingPlatformHost } from "@/lib/theme/platform-domains";
 
 const HEX_COLOR_PATTERN = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
@@ -26,13 +27,14 @@ function normalizeHexColor(value: string): string | null {
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
+    const form = asMultipartForm(formData);
 
-    const companyName = formData.get("companyName")?.toString().trim() ?? "";
-    const ownerEmail = formData.get("ownerEmail")?.toString().trim().toLowerCase() ?? "";
-    const password = formData.get("password")?.toString() ?? "";
-    const tenantIdRaw = formData.get("tenantId")?.toString() ?? "";
-    const primaryColorRaw = formData.get("primaryColor")?.toString() ?? "#2563eb";
-    const logoEntry = formData.get("logo");
+    const companyName = form.get("companyName")?.toString().trim() ?? "";
+    const ownerEmail = form.get("ownerEmail")?.toString().trim().toLowerCase() ?? "";
+    const password = form.get("password")?.toString() ?? "";
+    const tenantIdRaw = form.get("tenantId")?.toString() ?? "";
+    const primaryColorRaw = form.get("primaryColor")?.toString() ?? "#2563eb";
+    const logoEntry = form.get("logo");
     const logoFile = logoEntry instanceof File && logoEntry.size > 0 ? logoEntry : null;
 
     if (!companyName || companyName.length < 2) {

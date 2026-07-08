@@ -8,8 +8,16 @@ export function isSinkSelectionSupported(): boolean {
   return "setSinkId" in HTMLAudioElement.prototype;
 }
 
+type SinkCapableAudioContext = AudioContext & {
+  setSinkId?: (sinkId: string) => Promise<void>;
+};
+
+function asSinkCapable(context: AudioContext): SinkCapableAudioContext {
+  return context as SinkCapableAudioContext;
+}
+
 export function isAudioContextSinkSupported(context: AudioContext): boolean {
-  return typeof context.setSinkId === "function";
+  return typeof asSinkCapable(context).setSinkId === "function";
 }
 
 export async function applySinkToMediaElement(
@@ -32,12 +40,13 @@ export async function applySinkToAudioContext(
   context: AudioContext,
   sinkId: string,
 ): Promise<boolean> {
-  if (typeof context.setSinkId !== "function") {
+  const sinkContext = asSinkCapable(context);
+  if (typeof sinkContext.setSinkId !== "function") {
     return false;
   }
 
   try {
-    await context.setSinkId(sinkId);
+    await sinkContext.setSinkId(sinkId);
     return true;
   } catch {
     return false;

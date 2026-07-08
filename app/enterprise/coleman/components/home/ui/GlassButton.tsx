@@ -27,10 +27,8 @@ export default function GlassButton({
   const classes = `coleman-glass-btn inline-flex items-center justify-center transition ${sizeMap[size]} ${shape} ${className}`;
 
   if (href) {
-    const { disabled: _disabled, form: _form, formAction: _formAction, ...linkProps } = props;
-
     return (
-      <Link href={href} className={classes} {...linkProps}>
+      <Link href={href} className={classes}>
         {children}
       </Link>
     );

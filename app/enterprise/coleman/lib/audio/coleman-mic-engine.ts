@@ -26,7 +26,7 @@ function micErrorMessage(error: unknown): string {
 }
 
 async function ensureAudioContextRunning(context: AudioContext): Promise<void> {
-  if (context.state === "running") {
+  if (String(context.state) === "running") {
     return;
   }
 
@@ -36,7 +36,7 @@ async function ensureAudioContextRunning(context: AudioContext): Promise<void> {
     // Resume may require a fresh user gesture on some browsers.
   }
 
-  if (context.state === "running") {
+  if (String(context.state) === "running") {
     return;
   }
 
