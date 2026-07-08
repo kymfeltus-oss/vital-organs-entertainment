@@ -13,6 +13,7 @@ import HeroBanner from "@/components/ui/layout/HeroBanner";
 import PageContainer from "@/components/ui/layout/PageContainer";
 import TenantMenuButton from "@/components/ui/shell/TenantMenuButton";
 import ProfileOrbEditor from "@/components/profile/ProfileOrbEditor";
+import { useVocabulary } from "@/hooks/useVocabulary";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { useAttendeeLiveNavTarget } from "@/lib/experience/useAttendeeLiveNavTarget";
@@ -35,6 +36,7 @@ export default function GenericDashboardView({
   initialCountdown,
 }: GenericDashboardViewProps) {
   const { theme } = useTheme();
+  const { vocabulary } = useVocabulary();
   const welcomeName = !profile.isGuest ? profile.firstName.trim() : "";
 
   useLobbyCountdown({
@@ -68,7 +70,7 @@ export default function GenericDashboardView({
     theme.features.showGiving
       ? {
           id: "giving",
-          label: "Giving",
+          label: vocabulary.supportLabel,
           description: "Support the mission",
           href: "/giving",
           icon: HeartHandshake,
@@ -86,7 +88,7 @@ export default function GenericDashboardView({
     theme.features.showBuySeeds
       ? {
           id: "buy-seeds",
-          label: "Buy Seeds",
+          label: vocabulary.tokenShopLabel,
           description: "Get seed packs",
           href: "/buy-seeds",
           icon: Sprout,

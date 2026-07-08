@@ -6,6 +6,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useMemo,
   useState,
   type MouseEvent,
 } from "react";
@@ -15,6 +16,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { PERSONA_HUB_PATH } from "@/lib/auth/routing";
 import { isAttendeeLiveSurfacePath, EXPERIENCE_LIVE_PATH } from "@/lib/experience/live-routes";
 import { ATTENDEE_DASHBOARD_PATH } from "@/lib/navigation/back-to-dashboard";
+import { useVocabulary } from "@/hooks/useVocabulary";
 import { cn } from "@/lib/utils";
 
 export type TenantMenuItem = {
@@ -60,6 +62,7 @@ export default function TenantMenuButton({
   items = TENANT_MENU_ITEMS,
 }: TenantMenuButtonProps) {
   const { theme } = useTheme();
+  const { vocabulary } = useVocabulary();
   const panelId = useId();
   const pathname = usePathname();
   const router = useRouter();
@@ -68,6 +71,17 @@ export default function TenantMenuButton({
   const [mounted, setMounted] = useState(false);
 
   const closeMenu = useCallback(() => setOpen(false), []);
+
+  const menuItems = useMemo(
+    () =>
+      items.map((item) => {
+        if (item.id === "home") return { ...item, label: vocabulary.homeLabel };
+        if (item.id === "seed") return { ...item, label: vocabulary.supportLabel };
+        if (item.id === "live") return { ...item, label: vocabulary.liveStageLabel };
+        return item;
+      }),
+    [items, vocabulary],
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -179,7 +193,7 @@ export default function TenantMenuButton({
 
                 <nav aria-label="Main menu" className="awakening-menu-nav">
                   <ul className="flex flex-col gap-1">
-                    {items.map((item) => {
+                    {menuItems.map((item) => {
                       const active = isMenuItemActive(pathname, item);
                       const linkClassName = cn(
                         "awakening-menu-link font-ui",

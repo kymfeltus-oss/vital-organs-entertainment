@@ -1,5 +1,5 @@
-import ExecutiveCommandCenter from "./ExecutiveCommandCenter";
+import LivGolfLanding from "./LivGolfLanding";
 
-export default function LivGolfExecutivePage() {
-  return <ExecutiveCommandCenter />;
+export default function LivGolfLandingPage() {
+  return <LivGolfLanding />;
 }

@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./liv-golf.css";
 
 export const metadata: Metadata = {
-  title: "PARABLE Enterprise × LIV Golf — Executive Command Center",
+  title: "PARABLE Enterprise × LIV Golf",
   description:
-    "Unified visibility across streaming, commerce, sponsorship, tournaments, and fan engagement.",
+    "One platform for streaming, fan engagement, commerce, sponsorship, and audience ownership.",
 };
 
 export default function LivGolfLayout({
@@ -17,8 +17,6 @@ export default function LivGolfLayout({
       className="min-h-dvh w-full text-white antialiased"
       style={{
         fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
-        background:
-          "radial-gradient(ellipse 120% 80% at 50% -20%, #00030d 0%, transparent 55%), #000000",
       }}
     >
       {children}

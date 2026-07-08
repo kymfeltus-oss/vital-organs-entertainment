@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import GenericTabShell from "@/components/ui/shell/GenericTabShell";
+import { useVocabulary } from "@/hooks/useVocabulary";
 import { isValidEmail } from "@/lib/auth/validation";
 import { getClientAppUrl } from "@/lib/client-api";
 import { givingAmounts } from "@/lib/vital-seed/giving-assets";
@@ -25,6 +26,7 @@ type GivingPageContentProps = {
 function GivingPageContent({
   initialProfile,
 }: GivingPageContentProps) {
+  const { vocabulary } = useVocabulary();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const successParam = searchParams.get("success") === "true";
@@ -107,7 +109,7 @@ function GivingPageContent({
   return (
     <>
       <GenericTabShell
-        title="Giving"
+        title={vocabulary.supportLabel}
         subtitle="Support the mission"
         profile={profile}
         onProfileChange={setProfile}

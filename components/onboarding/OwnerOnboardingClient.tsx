@@ -27,8 +27,8 @@ export default function OwnerOnboardingClient({
   const platformHost = useMemo(() => getMarketingPlatformHost(), []);
 
   const [step, setStep] = useState<Step>(1);
-  const [ministryName, setMinistryName] = useState("Alpha Worship Collective");
-  const [leaderEmail, setLeaderEmail] = useState("leader@yourministry.org");
+  const [ministryName, setMinistryName] = useState("");
+  const [leaderEmail, setLeaderEmail] = useState("");
   const [password, setPassword] = useState("");
   const [subdomain, setSubdomain] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#FFB800");
@@ -166,7 +166,14 @@ export default function OwnerOnboardingClient({
       };
 
       if (!response.ok || !result.ok || !result.tenantUrl) {
-        throw new Error(result.error ?? "Infrastructure provisioning timeout. Please retry.");
+        const message = result.error ?? "Infrastructure provisioning timeout. Please retry.";
+        setSubmitError(message);
+        if (/already registered|administrative email/i.test(message)) {
+          setStep(1);
+        } else if (step !== 3) {
+          setStep(3);
+        }
+        return;
       }
 
       if (selectedTier === "enterprise") {
@@ -188,7 +195,8 @@ export default function OwnerOnboardingClient({
       const checkoutResult = (await checkoutResponse.json()) as { url?: string; error?: string };
       if (!checkoutResponse.ok || !checkoutResult.url) {
         setSuccessUrl(result.tenantUrl);
-        throw new Error(checkoutResult.error ?? "Unable to start subscription checkout.");
+        setSubmitError(checkoutResult.error ?? "Unable to start subscription checkout.");
+        return;
       }
 
       window.location.href = checkoutResult.url;
@@ -197,6 +205,9 @@ export default function OwnerOnboardingClient({
       setSubmitError(
         error instanceof Error ? error.message : "Infrastructure provisioning timeout. Please retry.",
       );
+      if (step !== 3) {
+        setStep(3);
+      }
     } finally {
       setLoading(false);
       setIsStartingCheckout(false);
@@ -333,6 +344,7 @@ export default function OwnerOnboardingClient({
                     value={ministryName}
                     onChange={(event) => setMinistryName(event.target.value)}
                     required
+                    placeholder="Alpha Worship Collective"
                     className="w-full rounded-xl border border-neutral-900 bg-black px-4 py-3 text-xs text-white transition-colors focus:border-[#FFB800] focus:outline-none"
                   />
                 </div>
@@ -349,6 +361,7 @@ export default function OwnerOnboardingClient({
                     value={leaderEmail}
                     onChange={(event) => setLeaderEmail(event.target.value)}
                     required
+                    placeholder="leader@yourministry.org"
                     className="w-full rounded-xl border border-neutral-900 bg-black px-4 py-3 text-xs text-white transition-colors focus:border-[#FFB800] focus:outline-none"
                   />
                 </div>
@@ -466,8 +479,34 @@ export default function OwnerOnboardingClient({
                   </div>
                 </div>
                 {submitError ? (
-                  <p className="rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-3 text-xs text-neutral-300">
-                    {submitError}
+                  <div
+                    role="alert"
+                    className="rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-3 text-xs text-neutral-300"
+                  >
+                    <p>{submitError}</p>
+                    {/already registered/i.test(submitError) ? (
+                      <p className="mt-2">
+                        <Link href="/login" className="text-[#FFB800] underline underline-offset-2">
+                          Sign in to your existing operator account →
+                        </Link>
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {submitError && step !== 3 ? (
+              <div
+                role="alert"
+                className="rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-3 text-xs text-neutral-300"
+              >
+                <p>{submitError}</p>
+                {/already registered/i.test(submitError) ? (
+                  <p className="mt-2">
+                    <Link href="/login" className="text-[#FFB800] underline underline-offset-2">
+                      Sign in to your existing operator account →
+                    </Link>
                   </p>
                 ) : null}
               </div>

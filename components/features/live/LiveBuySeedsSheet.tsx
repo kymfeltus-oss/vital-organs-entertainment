@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import Link from "next/link";
 import { Gem, X } from "lucide-react";
 import BuySeedsNativeForm from "@/components/buy-seeds/BuySeedsNativeForm";
+import { useVocabulary } from "@/hooks/useVocabulary";
 import { buildAttendeeGateUrl } from "@/lib/auth/routing";
 import { formatChatDisplayName } from "@/lib/live/chat";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
@@ -28,6 +29,7 @@ export default function LiveBuySeedsSheet({
   seedBalance,
   signInHref = "/live",
 }: LiveBuySeedsSheetProps) {
+  const { vocabulary } = useVocabulary();
   const [selectedPackageId, setSelectedPackageId] =
     useState<SeedPackageId>(BUY_SEEDS_DEFAULT_PACKAGE_ID);
 
@@ -70,13 +72,13 @@ export default function LiveBuySeedsSheet({
         <div className="flex items-start justify-between border-b border-white/10 px-4 py-4 sm:px-5">
           <div className="min-w-0 pr-3">
             <p className="font-ui text-[0.58rem] font-bold uppercase tracking-[0.18em] text-brand-blue">
-              Vital Seeds
+              {vocabulary.tokenShopLabel}
             </p>
             <h2
               id="live-buy-seeds-title"
               className="mt-1 font-headline text-lg uppercase tracking-[0.08em] text-white"
             >
-              Buy Seeds
+              {vocabulary.tokenShopLabel}
             </h2>
             <p className="mt-1 font-body text-sm text-brand-muted">
               Choose a package and continue to secure checkout. Returning buyers may see saved

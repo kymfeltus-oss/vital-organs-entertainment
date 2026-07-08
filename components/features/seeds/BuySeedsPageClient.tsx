@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import GenericTabShell from "@/components/ui/shell/GenericTabShell";
+import { useVocabulary } from "@/hooks/useVocabulary";
 import { getClientAppUrl } from "@/lib/client-api";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import {
@@ -20,6 +21,7 @@ type BuySeedsPageContentProps = {
 };
 
 function BuySeedsPageContent({ initialProfile }: BuySeedsPageContentProps) {
+  const { vocabulary } = useVocabulary();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const successParam = searchParams.get("success") === "true";
@@ -158,7 +160,7 @@ function BuySeedsPageContent({ initialProfile }: BuySeedsPageContentProps) {
   return (
     <>
       <GenericTabShell
-        title="Buy Seeds"
+        title={vocabulary.tokenShopLabel}
         subtitle="Credits for live interactions"
         profile={profile}
         onProfileChange={setProfile}

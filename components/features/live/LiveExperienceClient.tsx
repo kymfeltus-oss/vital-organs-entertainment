@@ -21,6 +21,7 @@ import { IgLiveChatProvider } from "@/components/features/live/ig/IgLiveChatCont
 import LiveExperienceHeader from "@/components/features/live/LiveExperienceHeader";
 import LiveFeatureErrorBoundary from "@/components/features/live/LiveFeatureErrorBoundary";
 import LiveReactionTray from "@/components/features/live/LiveReactionTray";
+import { useVocabulary } from "@/hooks/useVocabulary";
 import type { AttendeeProfileSnapshot } from "@/lib/profile/attendee-profile";
 import { EXPERIENCE_LIVE_PATH } from "@/lib/features/live/live-routes";
 import { useIanCraigLiveSeedActions } from "@/lib/features/live/useIanCraigLiveSeedActions";
@@ -255,6 +256,7 @@ export default function LiveExperienceClient({
   initialProfile,
 }: LiveExperienceClientProps) {
   const router = useRouter();
+  const { vocabulary } = useVocabulary();
   const attendeeName = initialProfile.headerDisplayName || initialProfile.email || "Guest";
   const videoRef = useRef<HTMLVideoElement>(null);
   const directVideoRef = useRef<HTMLVideoElement>(null);
@@ -1744,7 +1746,7 @@ export default function LiveExperienceClient({
                 onClick={openBuySeedsSheet}
                 className="touch-target inline-flex min-h-11 items-center justify-center rounded-full border border-brand-pink/45 bg-brand-pink/10 px-4 font-ui text-[0.68rem] font-bold uppercase tracking-[0.12em] text-brand-pink"
               >
-                Buy Seeds
+                {vocabulary.tokenShopLabel}
               </button>
             </div>
 

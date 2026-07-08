@@ -1,0 +1,64 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/enterprise/coleman/lib/generated/prisma"
+}
+
+model Track {
+  id          String   @id @default(uuid())
+  title       String
+  artist      String?
+  musicalKey  String   @default("—")
+  bpm         Int      @default(0)
+  serviceName String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  /// Production stems (maps to Stem in API docs — stored as AudioAsset rows)
+  audioFiles  AudioAsset[]
+  historyLogs PlaybackHistory[]
+}
+
+model AudioAsset {
+  id         String   @id @default(uuid())
+  filename   String   @unique
+  originName String
+  stemType   String
+  fileSize   Int
+  uploadedAt DateTime @default(now())
+
+  trackId String
+  track   Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+}
+
+model TheoryProgression {
+  id          String   @id @default(uuid())
+  name        String
+  numbers     String
+  chords      String
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model WorshipLookup {
+  id        String @id @default(uuid())
+  songTitle String @unique
+  artist    String
+  targetKey String
+  targetBpm Int
+  roadmap   String
+}
+
+model PlaybackHistory {
+  id       String   @id @default(uuid())
+  playedAt DateTime @default(now())
+
+  trackId String
+  track   Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+}

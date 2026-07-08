@@ -46,10 +46,17 @@ const METRICS = [
 
 export default function ExecutiveCommandCenter() {
   return (
-    <main
-      id="main-content"
-      className="mx-auto w-full max-w-[1600px] px-5 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12"
+    <div
+      className="min-h-dvh w-full"
+      style={{
+        background:
+          "radial-gradient(ellipse 120% 80% at 50% -20%, #00030d 0%, transparent 55%), #000000",
+      }}
     >
+      <main
+        id="main-content"
+        className="mx-auto w-full max-w-[1600px] px-5 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12"
+      >
       {/* Header */}
       <header className="flex flex-col gap-8 border-b border-[#2A2A2A]/80 pb-10 lg:flex-row lg:items-start lg:justify-between">
         <div>
@@ -141,5 +148,6 @@ export default function ExecutiveCommandCenter() {
         <ModuleNav />
       </div>
     </main>
+    </div>
   );
 }

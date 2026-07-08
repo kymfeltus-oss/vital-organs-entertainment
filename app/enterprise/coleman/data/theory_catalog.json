@@ -1,0 +1,34 @@
+[
+  {
+    "id": "theory-1",
+    "title": "I - IV - V - I (Major Worship)",
+    "key": "Any Major",
+    "nashvilleNumbers": "1  -  4  -  5  -  1",
+    "progressionLabel": "I - IV - V - I",
+    "churchMovement": "Up-tempo Praise"
+  },
+  {
+    "id": "theory-2",
+    "title": "Im - IV - I - V (Ballad Minor)",
+    "key": "Relative Minor",
+    "nashvilleNumbers": "6  -  4  -  1  -  5",
+    "progressionLabel": "Im - IV - I - V",
+    "churchMovement": "Worship Ballad"
+  },
+  {
+    "id": "theory-3",
+    "title": "1 - 6m - 4 - 5 (Pop Worship)",
+    "key": "Major",
+    "nashvilleNumbers": "1  -  6  -  4  -  5",
+    "progressionLabel": "I - vi - IV - V",
+    "churchMovement": "Modern Worship"
+  },
+  {
+    "id": "theory-4",
+    "title": "2 - 5 - 1 Turnaround",
+    "key": "Any",
+    "nashvilleNumbers": "2  -  5  -  1",
+    "progressionLabel": "ii - V - I",
+    "churchMovement": "Gospel Turn"
+  }
+]

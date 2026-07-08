@@ -14,6 +14,7 @@ import type {
 
 type TenantThemeRow = {
   tenant_id: string;
+  company_name?: string | null;
   app_name?: string | null;
   tagline?: string | null;
   logo_url?: string | null;
@@ -21,6 +22,10 @@ type TenantThemeRow = {
   favicon_url?: string | null;
   hero_image_url?: string | null;
   primary_color?: string | null;
+  secondary_color?: string | null;
+  custom_giving_title?: string | null;
+  custom_token_title?: string | null;
+  accent_glow?: string | null;
   contact?: unknown;
   social_links?: unknown;
   colors?: unknown;
@@ -125,7 +130,12 @@ function mapTenantThemeRow(row: TenantThemeRow): TenantTheme {
   const patch: TenantThemePatch = {
     appName:
       readString(row.app_name) ??
-      (embeddedTheme ? readString(embeddedTheme.appName) ?? readString(embeddedTheme.app_name) : undefined),
+      readString(row.company_name) ??
+      (embeddedTheme
+        ? readString(embeddedTheme.appName) ??
+          readString(embeddedTheme.app_name) ??
+          readString(embeddedTheme.companyName)
+        : undefined),
     tagline: readString(row.tagline) ?? (embeddedTheme ? readString(embeddedTheme.tagline) : undefined),
     logoUrl:
       readNullableString(row.logo_url) ??
@@ -157,8 +167,13 @@ function mapTenantThemeRow(row: TenantThemeRow): TenantTheme {
     colors:
       mapColors(row.colors) ??
       (embeddedTheme ? mapColors(embeddedTheme.colors) : undefined) ??
-      (readString(row.primary_color)
-        ? { primary: readString(row.primary_color) }
+      (readString(row.primary_color) || readString(row.secondary_color)
+        ? {
+            ...(readString(row.primary_color) ? { primary: readString(row.primary_color) } : {}),
+            ...(readString(row.secondary_color)
+              ? { secondary: readString(row.secondary_color), accent: readString(row.secondary_color) }
+              : {}),
+          }
         : undefined),
     fonts: mapFonts(row.fonts) ?? (embeddedTheme ? mapFonts(embeddedTheme.fonts) : undefined),
     layout: mapLayout(row.layout) ?? (embeddedTheme ? mapLayout(embeddedTheme.layout) : undefined),
