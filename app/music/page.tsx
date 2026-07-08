@@ -1,6 +1,8 @@
 import MusicPageClient from "@/components/music/MusicPageClient";
 import { loadTabPageProfile } from "@/lib/experience/load-tab-page-profile";
 
+export const dynamic = "force-dynamic";
+
 export default async function MusicPage() {
   const profile = await loadTabPageProfile();
 

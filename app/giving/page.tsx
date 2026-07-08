@@ -1,6 +1,8 @@
 import GivingPageClient from "@/components/features/giving/GivingPageClient";
 import { loadTabPageProfile } from "@/lib/experience/load-tab-page-profile";
 
+export const dynamic = "force-dynamic";
+
 export default async function GivingPage() {
   const profile = await loadTabPageProfile();
 
