@@ -12,6 +12,7 @@ import {
   Square,
 } from "lucide-react";
 
+import colemanLogo from "@/app/enterprise/coleman/coleman_logo.png";
 import { COLEMAN_ROUTES } from "@/app/enterprise/coleman/lib/routes";
 
 type ColemanMobileChromeProps = {
@@ -47,11 +48,12 @@ export default function ColemanMobileChrome({
         <div className="coleman-dash-logo-wrap">
           <Link href={COLEMAN_ROUTES.home} aria-label="COLEMAN home">
             <Image
-              src="/enterprise/coleman/coleman_logo.png"
+              src={colemanLogo}
               alt=""
               width={220}
               height={72}
               className="coleman-dash-logo"
+              style={{ width: "auto" }}
               priority
             />
           </Link>

@@ -29,7 +29,7 @@ export default function ColemanAppShell() {
 
   if (!isClientRouterReady) {
     return (
-      <div className="coleman-app-shell h-full min-h-0">
+      <div className="coleman-app-shell">
         <ColemanHomeBootLoader />
       </div>
     );
@@ -40,7 +40,7 @@ export default function ColemanAppShell() {
   }
 
   return (
-    <div className="coleman-app-shell h-full min-h-0">
+    <div className="coleman-app-shell">
       <ColemanIntroFlash />
     </div>
   );

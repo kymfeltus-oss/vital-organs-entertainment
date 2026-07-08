@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 
+import colemanLogo from "@/app/enterprise/coleman/coleman_logo.png";
 import { COLEMAN_ROUTES } from "@/app/enterprise/coleman/lib/routes";
 
 function ProfileAvatar() {
@@ -32,22 +33,25 @@ export default function HomeHeader() {
           aria-label="COLEMAN home"
         >
           <Image
-            src="/enterprise/coleman/coleman_logo.png"
+            src={colemanLogo}
             alt=""
             width={220}
             height={72}
             className="coleman-header-logo"
+            style={{ width: "auto" }}
             priority
           />
         </Link>
 
-        <Link
-          href={COLEMAN_ROUTES.library}
-          className="coleman-header-control coleman-avatar"
-          aria-label="Open profile and library"
-        >
-          <ProfileAvatar />
-        </Link>
+        <div className="coleman-header-actions">
+          <Link
+            href={COLEMAN_ROUTES.library}
+            className="coleman-header-control coleman-avatar"
+            aria-label="Open profile and library"
+          >
+            <ProfileAvatar />
+          </Link>
+        </div>
       </div>
     </header>
   );

@@ -33,7 +33,7 @@ function toDraft(record: AudioRoutingConfigRecord): RoutingDraft {
   };
 }
 
-export default function InEarsController() {
+export default function InEarsController({ active = true }: { active?: boolean }) {
   const userId = useMemo(() => getRoutingUserId(), []);
   const { routingBusy, routingError, applyPersistedRoutingConfig, clearRoutingError } =
     useStageAudioRouting();
@@ -76,8 +76,11 @@ export default function InEarsController() {
   }, [applyHardware, userId]);
 
   useEffect(() => {
+    if (!active) {
+      return;
+    }
     void fetchLiveRoutingState();
-  }, [fetchLiveRoutingState]);
+  }, [active, fetchLiveRoutingState]);
 
   const persistStateUpdate = useCallback(
     async (updatedFields: Partial<RoutingDraft>) => {
@@ -111,7 +114,7 @@ export default function InEarsController() {
       : "🎤 INT. MIC GATE ACTIVE";
 
   return (
-    <div className="coleman-in-ears mb-3">
+    <div className="coleman-in-ears">
       <div className="coleman-in-ears__header">
         <div>
           <span className="coleman-label !text-[9px]">STAGE MONITORING ENGINE</span>

@@ -44,9 +44,9 @@
   --palette-system-black: #070707;
 
   /* Background system */
-  --bg-primary: var(--palette-cream-fog);
-  --bg-secondary: var(--palette-champagne-ivory);
-  --bg-tertiary: var(--palette-pearl-sand);
+  --bg-primary: var(--coleman-app-canvas, #d9c8b5);
+  --bg-secondary: var(--coleman-app-canvas, #d9c8b5);
+  --bg-tertiary: var(--coleman-app-canvas, #d9c8b5);
   --bg-light-bloom: rgba(255, 253, 250, 0.82);
   --bg-ambient-warm: rgba(226, 210, 195, 0.54);
   --bg-ambient-sand: rgba(185, 154, 126, 0.22);
@@ -150,21 +150,16 @@
   --cp-divider: rgba(109, 92, 81, 0.18);
 }
 
-/* Primary and secondary background layers */
+/* Primary and secondary background layers — flat app canvas */
 .coleman-reference-home,
 .coleman-reference-home .coleman-premium-bg {
-  background-color: var(--bg-primary);
+  background-color: var(--coleman-app-canvas, var(--bg-primary));
+  background-image: none;
 }
 
-.coleman-reference-home .coleman-premium-bg {
-  background-image: var(--coleman-bg-noise), var(--gradient-canvas);
-}
-
+.coleman-reference-home .coleman-premium-bg::before,
 .coleman-reference-home .coleman-premium-bg::after {
-  background:
-    radial-gradient(100% 46% at 50% 52%, var(--bg-light-bloom), transparent 72%),
-    linear-gradient(90deg, var(--bg-vignette), transparent 18%, transparent 82%, var(--bg-vignette));
-  opacity: 0.58;
+  display: none;
 }
 
 /* Shared Vision-Pro glass material */

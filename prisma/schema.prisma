@@ -62,3 +62,14 @@ model PlaybackHistory {
   trackId String
   track   Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
 }
+
+model AudioRoutingConfig {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  selectedMode    String   @default("SPEAKER")
+  inputSource     String   @default("ACOUSTIC_AIR")
+  noiseGateDb     Float    @default(-45.0)
+  lowPassCutoffHz Float    @default(800.0)
+  latencyOffsetMs Int      @default(0)
+  updatedAt       DateTime @updatedAt
+}

@@ -17,12 +17,16 @@ export default function RootLayoutShell({ children }: RootLayoutShellProps) {
 
   return (
     <div
-      className="flex min-h-dvh w-full flex-col"
+      className={cn(
+        "flex w-full flex-col",
+        hideNav ? "h-dvh max-h-dvh overflow-hidden" : "min-h-dvh",
+      )}
       style={{ background: "var(--theme-app-gradient)", color: "var(--theme-text)" }}
     >
       <div
         className={cn(
           "flex min-h-0 w-full flex-1 flex-col",
+          hideNav && "overflow-hidden",
           !hideNav && !isDashboard && "pb-[calc(3.25rem+env(safe-area-inset-bottom))]",
         )}
       >

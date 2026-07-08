@@ -1,0 +1,27 @@
+---
+description: Do not modify the Coleman home page logo — locked asset and header markup
+globs: app/enterprise/coleman/components/home/ui/HomeHeader.tsx,app/enterprise/coleman/coleman_logo.png,public/enterprise/coleman/coleman_logo.png
+alwaysApply: false
+---
+
+# Coleman Home Logo — Locked
+
+**Do not edit, replace, restyle, or remove the Coleman home header logo** unless the operator explicitly requests a logo change in the same message.
+
+## Locked implementation
+
+- **Asset:** `/enterprise/coleman/coleman_logo.png` (source: `app/enterprise/coleman/coleman_logo.png`)
+- **Component:** `app/enterprise/coleman/components/home/ui/HomeHeader.tsx`
+- **Markup:** centered `Image` inside `.coleman-home-logo-wrap` with class `.coleman-header-logo` (72px height, 220×72 intrinsic)
+
+## Forbidden without explicit operator request
+
+- Swapping the image for a text wordmark (`COLEMAN`, `C O L E M A N`, etc.)
+- Changing logo dimensions, asset path, or alt/aria labeling pattern
+- Typography overrides that target `.coleman-wordmark` on the home header
+- Replacing or deleting `coleman_logo.png` copies under `public/enterprise/coleman/` or `app/enterprise/coleman/`
+
+## Allowed nearby work
+
+- Other home page sections (KeyOrb, In-Ears, intelligence card, nav)
+- Header layout for menu/avatar controls — **without** touching the logo link or image

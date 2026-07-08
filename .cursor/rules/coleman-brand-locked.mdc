@@ -1,0 +1,50 @@
+---
+description: Coleman brand palette and materials are locked — require passcode 4778 to change
+globs: app/enterprise/coleman/**/*.css,app/enterprise/coleman/lib/coleman-brand-classes.ts,app/enterprise/coleman/coleman-home-material-system.css,app/enterprise/coleman/coleman.css,app/enterprise/coleman/coleman-home-premium.css
+alwaysApply: false
+---
+
+# Coleman Brand — Locked (4778 Required)
+
+**Do not change Coleman colors, materials, shadows, glows, gradients, typography tokens, or glass values** unless the operator’s message includes passcode **`4778`** and clearly describes the brand change.
+
+This applies to the entire Coleman enterprise zone: home, dashboard, intro, stage audio, and shared CSS.
+
+## Source of truth (read-only unless 4778)
+
+| Layer | File | Role |
+|-------|------|------|
+| Root tokens | `app/enterprise/coleman/coleman.css` | Global `--coleman-*` variables, luxury canvas, dashboard shell |
+| Home premium | `app/enterprise/coleman/coleman-home-premium.css` | Key orb, nav dock, glass panels, component geometry |
+| Home material system | `app/enterprise/coleman/coleman-home-material-system.css` | **Authoritative palette** on `.coleman-reference-home` — 40-step neutral scale + semantic tokens |
+| Tailwind bridge | `app/enterprise/coleman/lib/coleman-brand-classes.ts` | Class fragments bound to CSS variables — never hardcode hex in UI |
+| Logo | `coleman_logo.png` + `HomeHeader.tsx` | See `coleman-home-logo-locked.mdc` |
+
+## Forbidden without 4778
+
+- Editing HEX/RGBA values in Coleman CSS token blocks
+- Replacing CSS variables with inline Tailwind hex (e.g. `text-[#2C2520]`) in Coleman components
+- “Refreshing”, “modernizing”, or “matching reference” palette tweaks
+- Duplicating conflicting token sets in new files
+- Changing `--coleman-font`, tracking, blur, shadow, or glow scales
+
+## Allowed without 4778
+
+- Layout, spacing, component wiring, API logic
+- New components that **consume existing** `--coleman-*` / `--cp-*` / material-system variables via `coleman-brand-classes.ts`
+- Bug fixes that restore values to the documented spec below (not redesign)
+
+## Canonical home palette (`.coleman-reference-home`)
+
+Use `coleman-home-material-system.css` variables — do not invent alternate creams/taupes.
+
+**Background primary:** `#EEE3D9` (Cream Fog)  
+**Text headline:** `#291A11` (Deep Espresso)  
+**Text primary:** `#332217` (Espresso)  
+**Glass fill:** `rgba(255, 253, 250, 0.29)`  
+**Glass border:** `rgba(255, 255, 255, 0.82)`  
+**Accent bronze:** `#785538`  
+**Champagne gold:** `#AA8968`  
+**Glass blur:** `28px` / deep `36px`
+
+Full 16-section brand spec is maintained in operator docs; agents must read CSS files above before any Coleman UI work.

@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 
-import InEarsController from "@/app/enterprise/coleman/components/InEarsController";
+import InEarsModal from "@/app/enterprise/coleman/components/InEarsModal";
 import ColemanHomeBootLoader from "@/app/enterprise/coleman/components/home/ColemanHomeBootLoader";
 import BottomNav from "@/app/enterprise/coleman/components/home/ui/BottomNav";
 import HomeHeader from "@/app/enterprise/coleman/components/home/ui/HomeHeader";
 import IntelligenceCard from "@/app/enterprise/coleman/components/home/ui/IntelligenceCard";
 import KeyOrb from "@/app/enterprise/coleman/components/home/ui/KeyOrb";
+import StageOutputLauncher from "@/app/enterprise/coleman/components/home/ui/StageOutputLauncher";
 import { useClientMountGate } from "@/app/enterprise/coleman/lib/hooks/useClientMountGate";
 import { formatKeyDisplay } from "@/app/enterprise/coleman/lib/live-display";
 import { useLiveColemanState } from "@/app/enterprise/coleman/lib/useLiveColemanState";
@@ -35,6 +36,7 @@ function ColemanHomePageMounted() {
     selectSpelling,
   } = useLiveColemanState({ audioEnabled: true });
   const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const [outputSettingsOpen, setOutputSettingsOpen] = useState(false);
   const bannerMessage = micError ?? playbackError;
 
   const isListening =
@@ -66,7 +68,7 @@ function ColemanHomePageMounted() {
       <HomeHeader />
 
       <div className="coleman-home-content relative z-10 min-h-0 flex-1 overflow-y-auto overscroll-contain px-3.5 pb-[92px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <InEarsController />
+        <StageOutputLauncher onOpenSettings={() => setOutputSettingsOpen(true)} />
 
         {bannerMessage ? (
           <div
@@ -109,6 +111,10 @@ function ColemanHomePageMounted() {
       </div>
 
       <BottomNav onPlaybackError={setPlaybackError} />
+
+      {outputSettingsOpen ? (
+        <InEarsModal onClose={() => setOutputSettingsOpen(false)} />
+      ) : null}
     </div>
   );
 }
