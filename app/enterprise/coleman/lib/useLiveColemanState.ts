@@ -56,23 +56,33 @@ export function useLiveColemanState(options: UseLiveColemanStateOptions = {}) {
   const sessionTrackerRef = useRef(new LiveSessionTonicTracker());
   const chordTrackerRef = useRef(new LiveChordTracker());
   const activeChordIndexRef = useRef<number>(0);
+  const sessionTonicRef = useRef<string | null>(null);
 
   const { startLiveWebAudioTracking, killWebAudioTracking } = useWebAudioPitchTracker({
     onFrame: ({ currentKey, currentCents, isStable }) => {
-      if (currentKey && isStable) {
-        setIsLiveEngaged(true);
+      if (currentKey) {
+        setIsLiveEngaged((prev) => (prev ? prev : true));
+      } else if (isStable) {
+        setIsLiveEngaged((prev) => (prev ? prev : true));
       }
 
       const nextSessionTonic = sessionTrackerRef.current.tick(currentKey);
       const chordProgression = chordTrackerRef.current.tick(currentKey, nextSessionTonic);
 
       if (chordProgression.length > 0) {
-        setIsLiveEngaged(true);
+        setIsLiveEngaged((prev) => (prev ? prev : true));
       }
 
-      setSessionTonic(nextSessionTonic);
+      if (nextSessionTonic !== sessionTonicRef.current) {
+        sessionTonicRef.current = nextSessionTonic;
+        setSessionTonic(nextSessionTonic);
+      }
 
       setLiveData((prev) => {
+        if (prev.currentKey === currentKey && prev.currentCents === currentCents) {
+          return prev;
+        }
+
         const next = buildLivePatch(
           prev,
           { currentKey, currentCents },

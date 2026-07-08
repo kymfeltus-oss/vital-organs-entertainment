@@ -47,7 +47,9 @@ export function applyPersistedCaptureSettings(
     ...base,
     inputMode,
     noiseGateDb: Math.max(-160, Math.min(0, noiseGateDb)),
-    lowPassCutoffHz: inputSource === "ACOUSTIC_AIR" ? lowPassCutoffHz : null,
+    highPassCutoffHz: inputSource === "ACOUSTIC_AIR" ? base.highPassCutoffHz : null,
+    lowPassCutoffHz:
+      inputSource === "ACOUSTIC_AIR" ? Math.min(500, lowPassCutoffHz) : null,
   });
 
   return inputMode;

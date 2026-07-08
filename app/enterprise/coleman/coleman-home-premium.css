@@ -64,6 +64,7 @@
   overflow: hidden;
   background-color: var(--coleman-app-canvas);
   background-image: none;
+  contain: layout paint;
 }
 
 .coleman-premium-bg::before,
@@ -107,11 +108,41 @@
   transform: scale(0.94);
 }
 
+.coleman-key-finder-result {
+  min-width: 1px;
+  min-height: 1px;
+}
+
+#coleman-key-finder-live-root {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.coleman-premium-wave,
+.coleman-silk-field {
+  contain: layout paint;
+}
+
+.coleman-glass-btn:focus-visible,
+.coleman-voicing-add:focus-visible,
+.coleman-primary-btn:focus-visible {
+  outline: 2px solid #5c4033;
+  outline-offset: 2px;
+  box-shadow: 0 0 8px #d4af37;
+}
+
 .coleman-header-logo {
   display: block;
-  height: 72px;
+  height: 90px;
   width: auto;
-  max-width: min(220px, 52vw);
+  max-width: min(275px, 58vw);
   object-fit: contain;
   background: transparent;
 }
@@ -123,7 +154,7 @@
   z-index: 5;
   transform: translate(-50%, -50%);
   display: flex;
-  max-width: min(220px, 52vw);
+  max-width: min(275px, 58vw);
   align-items: center;
   justify-content: center;
 }
@@ -507,8 +538,8 @@
 .coleman-home-header {
   position: relative;
   z-index: 30;
-  height: 72px;
-  flex: 0 0 72px;
+  height: 84px;
+  flex: 0 0 84px;
   padding: 8px 16px 0;
 }
 
@@ -523,7 +554,7 @@
 
 .coleman-status-time {
   font-family: Arial, sans-serif;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: -.04em;
   line-height: 18px;
@@ -659,7 +690,8 @@
 
 .coleman-home-alert { display: none !important; }
 
-.coleman-home-content > div:has(.coleman-key-orb) {
+.coleman-home-content > :is(div, section):has(.coleman-key-orb),
+.coleman-home-content > .coleman-key-finder-shell {
   width: 100%;
   max-width: none;
   height: 333px;
@@ -739,6 +771,25 @@
   gap: 3px;
 }
 
+.coleman-key-orb__lens .coleman-key-waveform span {
+  width: 2px;
+  background: rgba(126, 91, 62, 0.3);
+}
+
+.coleman-key-badge {
+  border: 1px solid rgba(128, 93, 66, 0.22);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: none;
+}
+
+.coleman-spelling-toggle.is-active > span:first-child,
+.coleman-spelling-toggle[aria-pressed="true"] > span:first-child {
+  border-color: rgba(146, 97, 52, 0.65);
+  background: rgba(255, 255, 255, 0.52);
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 2px rgba(212, 175, 55, 0.45),
+    0 7px 13px rgba(90, 62, 41, 0.16);
+}
+
 .coleman-key-orb__lens .coleman-label + div span {
   width: 2px;
   background: rgba(126,91,62,.3);
@@ -749,11 +800,16 @@
   font-weight: 500 !important;
   line-height: .84 !important;
   letter-spacing: -.075em !important;
-  color: #2e1d10;
-  text-shadow: 0 2px 7px rgba(94,62,37,.1);
 }
 
-.coleman-key-orb__lens .coleman-heading + span {
+.coleman-key-orb__lens .coleman-heading.coleman-key-letter:not(.coleman-key-listening) {
+  color: #c93636 !important;
+  font-weight: 800 !important;
+  text-shadow: 0 3px 16px rgba(201, 54, 54, 0.32), 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.coleman-key-orb__lens .coleman-heading + span,
+.coleman-key-orb__lens .coleman-key-subline {
   margin-top: 20px;
   color: #4a392c;
   font-size: 10px;
@@ -770,7 +826,8 @@
   box-shadow: none;
 }
 
-.coleman-home-content > div:has(.coleman-key-orb) > .coleman-glass-btn {
+.coleman-key-finder-shell > .coleman-glass-btn,
+.coleman-home-content > :is(div, section):has(.coleman-key-orb) > .coleman-glass-btn {
   top: 50% !important;
   width: 54px !important;
   height: 64px !important;
@@ -783,7 +840,8 @@
   backdrop-filter: none;
 }
 
-.coleman-home-content > div:has(.coleman-key-orb) > .coleman-glass-btn > span:first-child {
+.coleman-key-finder-shell > .coleman-glass-btn > span:first-child,
+.coleman-home-content > :is(div, section):has(.coleman-key-orb) > .coleman-glass-btn > span:first-child {
   display: grid;
   width: 34px;
   height: 34px;
@@ -796,7 +854,8 @@
   font-size: 18px;
 }
 
-.coleman-home-content > div:has(.coleman-key-orb) > .coleman-glass-btn > .coleman-label {
+.coleman-key-finder-shell > .coleman-glass-btn > .coleman-label,
+.coleman-home-content > :is(div, section):has(.coleman-key-orb) > .coleman-glass-btn > .coleman-label {
   color: #4d3b2f;
   font-size: 7px !important;
   letter-spacing: .13em;
@@ -887,9 +946,10 @@
 .coleman-progression > div:last-child span:first-child { width: 5px; background: white; }
 
 .coleman-intelligence-card {
-  height: 266px;
+  min-height: 266px;
+  height: auto;
   margin: 3px 2px 0;
-  padding: 14px 18px !important;
+  padding: 14px 18px 16px !important;
   border-radius: 26px !important;
   background: rgba(255,255,255,.33);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 15px 30px rgba(98,68,47,.12);
@@ -899,29 +959,43 @@
 .coleman-intelligence-card > div:first-child svg { width: 13px; height: 13px; color: #8e785f; }
 .coleman-intelligence-card > div:first-child .coleman-heading { font-size: 8px; letter-spacing: .15em; font-weight: 500; }
 .coleman-intelligence-card > div:first-child > span { padding: 3px 9px; font-size: 8px; }
-.coleman-intelligence-card > div:first-child > span::before { content:""; width:5px; height:5px; border-radius:50%; background:#b7a38d; }
 
+.coleman-intelligence-card > .coleman-intelligence-grid,
 .coleman-intelligence-card > .grid {
   grid-template-columns: 1fr 128px 1fr;
-  height: 135px;
+  min-height: 148px;
+  height: auto;
   gap: 5px;
-  align-items: center;
+  align-items: stretch;
+  padding-bottom: 4px;
 }
 
+.coleman-intelligence-card > .coleman-intelligence-grid > .coleman-intelligence-col,
 .coleman-intelligence-card > .grid > div:first-child,
 .coleman-intelligence-card > .grid > div:last-child {
   display: flex;
-  height: 119px;
+  min-height: 132px;
+  height: auto;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 14px;
 }
 
+.coleman-intelligence-card > .coleman-intelligence-grid > .coleman-intelligence-col:last-child,
 .coleman-intelligence-card > .grid > div:last-child { text-align: left; padding-left: 10px; border-left: 1px solid rgba(255,255,255,.68); }
 .coleman-intelligence-card .coleman-label { color: #67574a; font-size: 7px; letter-spacing: .14em; }
-.coleman-intelligence-card > .grid .coleman-heading { margin-top: 7px; color: #322217; font-size: 13px; font-weight: 500; letter-spacing: .04em; }
-.coleman-intelligence-card > .grid > div:last-child .coleman-heading { font-size: 18px; }
+.coleman-intelligence-card > .grid .coleman-heading { margin-top: 4px; color: #322217; font-size: 13px; font-weight: 500; letter-spacing: .04em; line-height: 1.15; }
+.coleman-intelligence-card > .coleman-intelligence-grid .coleman-heading { margin-top: 4px; color: #322217; font-size: 13px; font-weight: 500; letter-spacing: .04em; line-height: 1.15; }
+.coleman-intelligence-card > .coleman-intelligence-grid > .coleman-intelligence-col:last-child > div:first-child .coleman-heading,
+.coleman-intelligence-card > .grid > div:last-child > div:first-child .coleman-heading { font-size: 18px; }
+.coleman-intelligence-card > .coleman-intelligence-grid > .coleman-intelligence-col:last-child > div:last-child .coleman-heading,
 .coleman-intelligence-card > .grid > div:last-child .coleman-heading:last-child { font-size: 16px; }
 .coleman-intelligence-card > .grid > div:last-child .flex { justify-content: flex-start; }
+
+.coleman-intelligence-card > .coleman-intelligence-grid > .coleman-dashboard-knob,
+.coleman-intelligence-card > .grid > .coleman-dashboard-knob {
+  align-self: center;
+}
 .coleman-intelligence-card .coleman-glass-btn { padding: 2px 9px; border-color: rgba(112,79,54,.22); background: rgba(255,255,255,.16); }
 
 .coleman-dashboard-knob {
@@ -931,6 +1005,58 @@
 }
 
 .coleman-dashboard-knob__glow { inset: 10px; background: radial-gradient(circle, rgba(255,255,255,.85), rgba(218,196,174,.25) 55%, transparent 72%); }
+
+.coleman-intelligence-card .coleman-dashboard-knob__img {
+  display: block !important;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: auto;
+  max-width: none;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 22px rgba(80, 55, 35, 0.14));
+}
+
+.coleman-intelligence-card .coleman-dashboard-knob__frame {
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.coleman-intelligence-card .coleman-dashboard-knob__frame::before,
+.coleman-intelligence-card .coleman-dashboard-knob__frame::after {
+  content: none;
+  display: none;
+}
+
+.coleman-intelligence-card .coleman-dashboard-knob__readout {
+  padding-top: 0;
+}
+
+.coleman-intelligence-card .coleman-dashboard-knob__readout-mask {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 0;
+  width: 34%;
+  height: 34%;
+  transform: translate(-50%, -52%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 42% 36%,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(248, 241, 233, 0.96) 58%,
+    rgba(236, 224, 210, 0.94) 100%
+  );
+  box-shadow: inset 0 1px 4px rgba(255, 255, 255, 0.95);
+}
+
+.coleman-intelligence-card .coleman-dashboard-knob__readout .coleman-heading {
+  margin-top: -2px;
+  color: #2e2620;
+}
+
 .coleman-dashboard-knob__img { display: none; }
 
 .coleman-dashboard-knob__frame {
@@ -962,36 +1088,70 @@
 .coleman-dashboard-knob__readout .coleman-heading { font-size: 23px !important; font-weight: 500; letter-spacing: -.05em; }
 .coleman-dashboard-knob__readout .coleman-heading + span { font-size: 6px; letter-spacing: .14em; }
 
+.coleman-intelligence-card > .coleman-intelligence-divider,
 .coleman-intelligence-card > .grid + div {
-  margin: 5px 0 13px;
+  flex-shrink: 0;
+  margin: 10px 0 12px;
   background: rgba(255,255,255,.58);
 }
 
-.coleman-intelligence-card > p { margin-bottom: 8px; }
-
-.coleman-intelligence-card > .flex:last-child {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+.coleman-intelligence-voicings-label {
+  margin-bottom: 8px;
 }
 
-.coleman-voicing-pill,
-.coleman-voicing-add {
-  display: grid !important;
-  min-width: 0;
-  height: 24px;
-  place-items: center;
-  padding: 0 4px !important;
-  border: 1px solid rgba(255,255,255,.82);
+.coleman-intelligence-voicings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.coleman-intelligence-card .coleman-voicing-pill {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  height: auto;
+  padding: 6px 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.82);
   border-radius: 12px !important;
-  background: rgba(255,255,255,.23);
+  background: rgba(255, 255, 255, 0.36);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.88);
   color: #4b392b !important;
-  font-size: 7px !important;
-  font-weight: 500;
+  font-size: 10px !important;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
-.coleman-voicing-add { border-style: dashed; font-size: 16px !important; font-weight: 300; }
+.coleman-intelligence-card .coleman-voicing-add {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  min-width: 36px;
+  height: 28px;
+  padding: 0 !important;
+  border: 1px dashed rgba(255, 255, 255, 0.78);
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.16);
+  color: rgba(75, 57, 43, 0.62) !important;
+  font-size: 18px !important;
+  font-weight: 300;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.coleman-intelligence-card .coleman-voicing-add:hover {
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.92);
+}
+
+.coleman-intelligence-card .coleman-voicing-add span {
+  display: block;
+  transform: translateY(-1px);
+}
 
 .coleman-nav-dock {
   left: 15px !important;
@@ -1007,13 +1167,14 @@
 .coleman-nav-dock .grid { height: 42px; align-items: end; }
 .coleman-nav-dock a { gap: 4px; }
 .coleman-nav-dock a svg { width: 20px; height: 20px; }
-.coleman-nav-dock a span { font-size: 6px; letter-spacing: .13em; }
+.coleman-nav-dock a span { font-size: 8px; letter-spacing: .13em; }
 .coleman-nav-dock .-mt-8 { margin-top: -16px; }
 .coleman-nav-play { width: 60px !important; height: 60px !important; min-width:60px; min-height:60px; background: rgba(255,255,255,.42); }
 
 @media (max-height: 860px) {
   .coleman-home-content { padding-bottom: 88px !important; }
-  .coleman-home-content > div:has(.coleman-key-orb) { height: 320px; }
+  .coleman-home-content > :is(div, section):has(.coleman-key-orb),
+  .coleman-home-content > .coleman-key-finder-shell { height: 320px; }
   .coleman-key-orb { width: 310px; height: 310px; }
   .coleman-progression { height: 122px; }
 }
@@ -1021,7 +1182,7 @@
 /* Reference home typography — same typeface, bolder and slightly larger */
 .coleman-reference-home .coleman-label {
   font-weight: 700;
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .coleman-reference-home .coleman-heading {
@@ -1048,100 +1209,125 @@
   font-weight: 700;
 }
 
-.coleman-reference-home .coleman-home-content > div:has(.coleman-key-orb) > .coleman-glass-btn > .coleman-label {
+.coleman-reference-home .coleman-key-finder-shell > .coleman-glass-btn > .coleman-label,
+.coleman-reference-home .coleman-home-content > :is(div, section):has(.coleman-key-orb) > .coleman-glass-btn > .coleman-label {
   font-size: 8px !important;
   font-weight: 700;
 }
 
-.coleman-reference-home .coleman-home-content > div:has(.coleman-key-orb) > .coleman-glass-btn > span:first-child {
+.coleman-reference-home .coleman-key-finder-shell > .coleman-glass-btn > span:first-child,
+.coleman-reference-home .coleman-home-content > :is(div, section):has(.coleman-key-orb) > .coleman-glass-btn > span:first-child {
   font-size: 20px;
 }
 
 .coleman-reference-home .coleman-progression .coleman-label {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
 }
 
 .coleman-reference-home .coleman-chord-cell .coleman-heading {
-  font-size: 19px;
+  font-size: 21px;
   font-weight: 700;
 }
 
 .coleman-reference-home .coleman-chord-cell .coleman-heading + span {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
 }
 
 .coleman-reference-home .coleman-intelligence-card > div:first-child .coleman-heading {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
 }
 
 .coleman-reference-home .coleman-intelligence-card > div:first-child > span {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
 }
 
 .coleman-reference-home .coleman-intelligence-card .coleman-label {
-  font-size: 8px;
-  font-weight: 700;
-}
-
-.coleman-reference-home .coleman-intelligence-card > .grid .coleman-heading {
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.coleman-reference-home .coleman-intelligence-card > .grid > div:last-child .coleman-heading {
-  font-size: 20px;
-}
-
-.coleman-reference-home .coleman-intelligence-card > .grid > div:last-child .coleman-heading:last-child {
-  font-size: 18px;
-}
-
-.coleman-reference-home .coleman-dashboard-knob__readout .coleman-heading {
-  font-size: 26px !important;
-  font-weight: 700 !important;
-}
-
-.coleman-reference-home .coleman-dashboard-knob__readout .coleman-heading + span {
-  font-size: 7px;
-  font-weight: 700;
-}
-
-.coleman-reference-home .coleman-voicing-pill,
-.coleman-reference-home .coleman-voicing-add {
-  font-size: 8px !important;
-  font-weight: 700;
-}
-
-.coleman-reference-home .coleman-voicing-add {
-  font-size: 18px !important;
-  font-weight: 700;
-}
-
-.coleman-reference-home .coleman-nav-dock a span {
-  font-size: 7px;
-  font-weight: 700;
-}
-
-.coleman-reference-home .coleman-stage-input-pill {
-  font-size: 9px;
-  font-weight: 700;
-}
-
-.coleman-reference-home .coleman-stage-routing-chip {
   font-size: 10px;
   font-weight: 700;
 }
 
-.coleman-reference-home .coleman-stage-audio-chrome p {
-  font-size: 9px !important;
+.coleman-reference-home .coleman-intelligence-card > .coleman-intelligence-grid .coleman-heading,
+.coleman-reference-home .coleman-intelligence-card > .grid .coleman-heading {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-intelligence-card > .coleman-intelligence-grid > .coleman-intelligence-col:last-child > div:first-child .coleman-heading,
+.coleman-reference-home .coleman-intelligence-card > .grid > div:last-child > div:first-child .coleman-heading,
+.coleman-reference-home .coleman-intelligence-card > .grid > div:last-child .coleman-heading {
+  font-size: 23px;
+}
+
+.coleman-reference-home .coleman-intelligence-card > .coleman-intelligence-grid > .coleman-intelligence-col:last-child > div:last-child .coleman-heading,
+.coleman-reference-home .coleman-intelligence-card > .grid > div:last-child .coleman-heading:last-child {
+  font-size: 21px;
+}
+
+.coleman-reference-home .coleman-dashboard-knob__readout .coleman-heading {
+  font-size: 28px !important;
   font-weight: 700 !important;
+}
+
+.coleman-reference-home .coleman-dashboard-knob__readout .coleman-heading + span {
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-intelligence-card .coleman-voicing-pill {
+  font-size: 11px !important;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-intelligence-card .coleman-voicing-add {
+  font-size: 20px !important;
+  font-weight: 300;
+}
+
+.coleman-reference-home .coleman-nav-dock a span {
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-stage-input-pill {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-stage-routing-chip {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-stage-audio-chrome p {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.coleman-reference-home .coleman-key-orb__lens .coleman-heading.coleman-key-letter:not(.coleman-key-listening) {
+  color: #c93636 !important;
+  font-weight: 800 !important;
+  text-shadow: 0 3px 16px rgba(201, 54, 54, 0.32), 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .coleman-key-orb-wrap,
-  .coleman-dashboard-knob { animation: none !important; }
+  .coleman-dashboard-knob,
+  .coleman-premium-wave,
+  .coleman-premium-wave--1,
+  .coleman-premium-wave--2,
+  .coleman-premium-wave--3,
+  .coleman-premium-wave--4,
+  .coleman-premium-wave--5 {
+    animation: none !important;
+  }
+
+  .coleman-glass-panel,
+  .coleman-home-alert {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }

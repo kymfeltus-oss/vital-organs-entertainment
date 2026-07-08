@@ -1,6 +1,6 @@
 import { normalizeNoteName } from "./live-theory";
 
-const SESSION_STABLE_FRAMES = 72;
+const SESSION_STABLE_FRAMES = 20;
 
 export class LiveSessionTonicTracker {
   private candidate: string | null = null;

@@ -55,6 +55,30 @@ export function isPercussiveTransient(
   return metrics.crestFactor >= config.maxCrestFactor;
 }
 
+/** Single-pole IIR high-pass — sub-bass / organ rumble rejection fallback path. */
+export function applyHighPassInPlace(
+  buffer: Float32Array,
+  sampleRate: number,
+  cutoffHz: number,
+): void {
+  if (buffer.length === 0 || sampleRate <= 0 || cutoffHz <= 0) {
+    return;
+  }
+
+  const rc = 1 / (2 * Math.PI * cutoffHz);
+  const alpha = rc / (rc + 1 / sampleRate);
+  let previousInput = buffer[0] ?? 0;
+  let previousOutput = 0;
+
+  for (let i = 0; i < buffer.length; i += 1) {
+    const input = buffer[i];
+    const output = alpha * (previousOutput + input - previousInput);
+    buffer[i] = output;
+    previousInput = input;
+    previousOutput = output;
+  }
+}
+
 /** Single-pole IIR low-pass — stage bleed rejection for acoustic air mode. */
 export function applyLowPassInPlace(
   buffer: Float32Array,
@@ -80,15 +104,27 @@ export function prepareCaptureBuffer(
   sampleRate: number,
   config: StageCaptureConfig,
 ): Float32Array {
-  if (!config.lowPassCutoffHz) {
+  const needsHpf = Boolean(config.highPassCutoffHz);
+  const needsLpf = Boolean(config.lowPassCutoffHz);
+
+  if (!needsHpf && !needsLpf) {
     return buffer;
   }
 
   const filtered = new Float32Array(buffer);
-  applyLowPassInPlace(filtered, sampleRate, config.lowPassCutoffHz);
+
+  if (needsHpf && config.highPassCutoffHz) {
+    applyHighPassInPlace(filtered, sampleRate, config.highPassCutoffHz);
+    applyHighPassInPlace(filtered, sampleRate, config.highPassCutoffHz);
+  }
+
+  if (needsLpf && config.lowPassCutoffHz) {
+    applyLowPassInPlace(filtered, sampleRate, config.lowPassCutoffHz);
+  }
+
   return filtered;
 }
 
 export function isVocalRangeFrequency(frequency: number): boolean {
-  return frequency >= 80 && frequency <= 1200;
+  return frequency >= 80 && frequency <= 500;
 }

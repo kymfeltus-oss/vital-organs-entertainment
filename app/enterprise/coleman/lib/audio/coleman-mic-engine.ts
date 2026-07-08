@@ -1,7 +1,11 @@
 import type { MicEngineOptions, MicPitchFrame } from "./coleman-mic-engine.types";
 import { getStageCaptureConfig } from "./stage-capture-config";
 import { getStageRoutingManager } from "./stage-routing-manager";
-import { micConstraintsForInputMode } from "./stage-audio-types";
+import {
+  CAPTURE_ANALYSER_FFT_SIZE,
+  CAPTURE_ANALYSER_SMOOTHING,
+  micConstraintsForInputMode,
+} from "./stage-audio-types";
 import { analyzePitchBuffer, resetPitchAnalyzer } from "./pitch-pipeline";
 import { dbToLinearGain } from "./stage-signal-processing";
 
@@ -97,12 +101,42 @@ function connectCaptureChain(
   compressor.attack.value = 0.006;
   compressor.release.value = 0.14;
 
+  let output: AudioNode = compressor;
+
+  if (captureConfig.highPassCutoffHz) {
+    const highPassStageOne = context.createBiquadFilter();
+    highPassStageOne.type = "highpass";
+    highPassStageOne.frequency.value = captureConfig.highPassCutoffHz;
+    highPassStageOne.Q.value = 1.414;
+
+    const highPassStageTwo = context.createBiquadFilter();
+    highPassStageTwo.type = "highpass";
+    highPassStageTwo.frequency.value = captureConfig.highPassCutoffHz;
+    highPassStageTwo.Q.value = 0.707;
+
+    output.connect(highPassStageOne);
+    highPassStageOne.connect(highPassStageTwo);
+    output = highPassStageTwo;
+  }
+
+  if (captureConfig.lowPassCutoffHz) {
+    const lowPass = context.createBiquadFilter();
+    lowPass.type = "lowpass";
+    lowPass.frequency.value = captureConfig.lowPassCutoffHz;
+    lowPass.Q.value = 0.707;
+    output.connect(lowPass);
+    output = lowPass;
+  }
+
   const analyser = context.createAnalyser();
-  analyser.fftSize = 2048;
+  analyser.fftSize = CAPTURE_ANALYSER_FFT_SIZE;
+  analyser.minDecibels = -90;
+  analyser.maxDecibels = -10;
+  analyser.smoothingTimeConstant = CAPTURE_ANALYSER_SMOOTHING;
 
   source.connect(gain);
   gain.connect(compressor);
-  compressor.connect(analyser);
+  output.connect(analyser);
 
   return analyser;
 }
@@ -119,6 +153,7 @@ export function startColemanMicEngine(options: MicEngineOptions): () => void {
   let context: AudioContext | null = null;
   let pauseCapture = false;
   let unregisterOutputRef: (() => void) | null = null;
+  let unregisterRoutingRef: (() => void) | null = null;
 
   const stop = () => {
     disposed = true;
@@ -129,6 +164,8 @@ export function startColemanMicEngine(options: MicEngineOptions): () => void {
     resetPitchAnalyzer();
     unregisterOutputRef?.();
     unregisterOutputRef = null;
+    unregisterRoutingRef?.();
+    unregisterRoutingRef = null;
     stream?.getTracks().forEach((track) => track.stop());
     void context?.close();
     stream = null;
@@ -141,30 +178,47 @@ export function startColemanMicEngine(options: MicEngineOptions): () => void {
       await routingManager.initialize();
       routingManager.setHeadphoneUnplugHandler(() => {
         pauseCapture = true;
+        resetPitchAnalyzer();
         options.onFrame({ currentKey: null, currentCents: 0, isStable: false });
+      });
+
+      unregisterRoutingRef = routingManager.subscribe((state) => {
+        if (state.headphonesConnected) {
+          pauseCapture = false;
+        }
       });
 
       const routingState = routingManager.getState();
       const preferredDeviceId = routingManager.getPreferredInputDeviceId();
 
-      stream = await openMicStream(routingState.inputMode, preferredDeviceId);
+      void routingManager.refreshInputSources();
+
+      const [micStream, audioContext] = await Promise.all([
+        openMicStream(routingState.inputMode, preferredDeviceId),
+        (async () => {
+          const ctx = new AudioContext({ latencyHint: "interactive" });
+          await ensureAudioContextRunning(ctx);
+          return ctx;
+        })(),
+      ]);
 
       if (disposed) {
+        micStream.getTracks().forEach((track) => track.stop());
+        void audioContext.close();
         stop();
         return;
       }
 
-      await routingManager.refreshInputSources();
-
-      context = new AudioContext();
-      await ensureAudioContextRunning(context);
+      stream = micStream;
+      context = audioContext;
       resetPitchAnalyzer();
 
       const unregisterOutput = routingManager.registerAudioContext(context);
       unregisterOutputRef = unregisterOutput;
 
       const analyser = connectCaptureChain(context, stream);
-      const buffer = new Float32Array(analyser.fftSize);
+      const timeBuffer = new Float32Array(analyser.fftSize);
+      const frequencyBuffer = new Float32Array(analyser.frequencyBinCount);
 
       const tick = () => {
         if (disposed || !context) {
@@ -180,8 +234,15 @@ export function startColemanMicEngine(options: MicEngineOptions): () => void {
           void context.resume();
         }
 
-        analyser.getFloatTimeDomainData(buffer);
-        options.onFrame(analyzePitchBuffer(buffer, context.sampleRate));
+        analyser.getFloatTimeDomainData(timeBuffer);
+        analyser.getFloatFrequencyData(frequencyBuffer);
+        options.onFrame(
+          analyzePitchBuffer(timeBuffer, context.sampleRate, {
+            magnitudeDb: frequencyBuffer,
+            fftSize: analyser.fftSize,
+            preFiltered: true,
+          }),
+        );
         rafId = requestAnimationFrame(tick);
       };
 

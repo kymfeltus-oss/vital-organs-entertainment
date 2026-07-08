@@ -13,6 +13,7 @@ export type StageCaptureConfig = {
   inputMode: InputSourceMode;
   noiseGateDb: number;
   speechFloorDb: number;
+  highPassCutoffHz: number | null;
   lowPassCutoffHz: number | null;
   inputGainDb: number;
   maxCrestFactor: number;
@@ -22,7 +23,7 @@ export type StageCaptureConfig = {
 export const ACOUSTIC_MIC_CONSTRAINTS: MicProcessingConstraints = {
   echoCancellation: false,
   noiseSuppression: false,
-  autoGainControl: true,
+  autoGainControl: false,
 };
 
 export const DIRECT_LINE_MIC_CONSTRAINTS: MicProcessingConstraints = {
@@ -34,17 +35,28 @@ export const DIRECT_LINE_MIC_CONSTRAINTS: MicProcessingConstraints = {
 export const ACOUSTIC_CAPTURE_CONFIG: StageCaptureConfig = {
   inputMode: "acoustic",
   noiseGateDb: -38,
-  speechFloorDb: -46,
-  lowPassCutoffHz: 800,
+  speechFloorDb: -50,
+  highPassCutoffHz: 100,
+  lowPassCutoffHz: 500,
   inputGainDb: 14,
   maxCrestFactor: 6.5,
-  minPitchCorrelation: 0.12,
+  minPitchCorrelation: 0.08,
 };
+
+/** Analyser FFT — 1024 samples ≈ 23 ms @ 44.1 kHz (enough for 80 Hz YIN). */
+export const CAPTURE_ANALYSER_FFT_SIZE = 1024;
+
+/** Zero smoothing keeps spectral peaks responsive (no AnalyserNode lag). */
+export const CAPTURE_ANALYSER_SMOOTHING = 0;
+
+/** Frames required before median / note-lock publish (lower = faster, noisier). */
+export const CAPTURE_STABILITY_FRAMES = 3;
 
 export const DIRECT_LINE_CAPTURE_CONFIG: StageCaptureConfig = {
   inputMode: "directLine",
   noiseGateDb: -52,
   speechFloorDb: -58,
+  highPassCutoffHz: null,
   lowPassCutoffHz: null,
   inputGainDb: 0,
   maxCrestFactor: 8,

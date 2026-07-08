@@ -1,7 +1,7 @@
 /** Production referee between raw FFT pitch and the stage UI. */
 export class PitchPerfectFilter {
   private noteHistoryBuffer: string[] = [];
-  private readonly bufferStabilityThreshold = 3;
+  private readonly bufferStabilityThreshold: number;
   private noiseGateLinear = 0.18;
 
   private readonly pitchClasses = [
@@ -19,6 +19,10 @@ export class PitchPerfectFilter {
     "B",
   ];
 
+  constructor(stabilityFrames = 3) {
+    this.bufferStabilityThreshold = Math.max(2, stabilityFrames);
+  }
+
   public setNoiseGateLinear(threshold: number): void {
     this.noiseGateLinear = Math.max(0, threshold);
   }
@@ -34,7 +38,7 @@ export class PitchPerfectFilter {
       return null;
     }
 
-    if (rawFrequency < 80 || rawFrequency > 1200) {
+    if (rawFrequency < 80 || rawFrequency > 500) {
       this.noteHistoryBuffer = [];
       return null;
     }

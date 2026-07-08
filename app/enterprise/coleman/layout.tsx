@@ -27,6 +27,9 @@ export default function ColemanLayout({
       <div className="coleman-mobile-shell">
         <div className="coleman-mobile-frame coleman-luxury-canvas">
           <main id="main-content" className="coleman-mobile-screen">
+            <div id="coleman-key-finder-live-root" aria-live="polite" aria-atomic="true" role="status">
+              <span id="coleman-key-finder-status">Key Finder ready</span>
+            </div>
             {children}
           </main>
         </div>

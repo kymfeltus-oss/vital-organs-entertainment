@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import ColemanIntroFlash from "./ColemanIntroFlash";
 import ColemanHomeBootLoader from "./components/home/ColemanHomeBootLoader";
+import { preloadColemanMicEngine } from "./lib/audio/preload-mic-engine";
 import { useClientMountGate } from "./lib/hooks/useClientMountGate";
 import { hasEnteredColemanSession } from "./lib/intro-session";
 import { COLEMAN_ROUTES } from "./lib/routes";
@@ -18,6 +19,8 @@ export default function ColemanAppShell() {
     if (!isClientRouterReady) {
       return;
     }
+
+    void preloadColemanMicEngine();
 
     const entered = hasEnteredColemanSession();
     if (entered) {

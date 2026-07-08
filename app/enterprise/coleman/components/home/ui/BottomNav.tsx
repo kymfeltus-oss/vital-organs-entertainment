@@ -76,7 +76,7 @@ export default function BottomNav({ onPlaybackError }: BottomNavProps) {
                 className={active ? "text-[var(--cp-champagne)]" : "text-[var(--cp-muted)]"}
               />
               <span
-                className={`text-[7px] font-normal tracking-[0.16em] ${
+                className={`text-[9px] font-normal tracking-[0.16em] ${
                   active ? "text-[var(--cp-champagne)]" : "text-[var(--cp-muted)]"
                 }`}
               >
@@ -122,7 +122,7 @@ export default function BottomNav({ onPlaybackError }: BottomNavProps) {
                 className={active ? "text-[var(--cp-champagne)]" : "text-[var(--cp-muted)]"}
               />
               <span
-                className={`text-[7px] font-normal tracking-[0.16em] ${
+                className={`text-[9px] font-normal tracking-[0.16em] ${
                   active ? "text-[var(--cp-champagne)]" : "text-[var(--cp-muted)]"
                 }`}
               >

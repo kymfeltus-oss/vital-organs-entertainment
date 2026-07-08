@@ -46,9 +46,11 @@ export function formatKeyDisplay(
   }
 
   const keyLabel = liveFallback(spellNote(currentKey, noteSpelling));
-  const spelledTonic = sessionTonic ? spellNote(sessionTonic, noteSpelling) : null;
+  const spelledKey = currentKey ? spellNote(currentKey, noteSpelling) : null;
+  const spelledTonic = sessionTonic ? spellNote(sessionTonic, noteSpelling) : spelledKey;
   const qualityLabel = liveFallback(formatKeyQuality(spelledTonic));
-  const badgeLabel = formatCentsBadge(cents) ?? keySignatureBadge(spelledTonic);
+  const badgeLabel =
+    formatCentsBadge(cents) ?? keySignatureBadge(spelledTonic ?? spelledKey);
 
   return {
     keyLabel,
@@ -80,7 +82,7 @@ export function resolveDisplayLiveState(
   activeChordIndex: number | null,
   isLiveEngaged: boolean,
 ): LiveColemanState {
-  if (isLiveEngaged) {
+  if (isLiveEngaged || liveData.currentKey) {
     return liveData;
   }
 

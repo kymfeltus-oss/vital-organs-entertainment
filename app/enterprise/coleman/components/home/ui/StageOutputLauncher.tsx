@@ -83,27 +83,27 @@ export default function StageOutputLauncher({ onOpenSettings }: StageOutputLaunc
         </button>
       </div>
 
-      <p className="text-center text-[8px] font-normal tracking-[0.12em] text-[var(--cp-muted)]">
+      <p className="text-center text-[10px] font-normal tracking-[0.12em] text-[var(--cp-muted)]">
         {routingBusy
           ? "Switching output…"
           : `Output · ${activeOutputLabel}${headphonesConnected ? " · IEM detected" : ""} · Tap to configure`}
       </p>
 
       {speakerHint ? (
-        <p className="text-center text-[8px] leading-relaxed tracking-[0.06em] text-[var(--cp-taupe)]">
+        <p className="text-center text-[10px] leading-relaxed tracking-[0.06em] text-[var(--cp-taupe)]">
           {speakerHint}
         </p>
       ) : null}
 
       {routingError ? (
         <div
-          className="coleman-stage-routing-error flex items-start justify-between gap-2 rounded-xl px-2.5 py-2 text-[9px] text-[var(--cp-espresso)]"
+          className="coleman-stage-routing-error flex items-start justify-between gap-2 rounded-xl px-2.5 py-2 text-[11px] text-[var(--cp-espresso)]"
           role="alert"
         >
           <span>{routingError}</span>
           <button
             type="button"
-            className="shrink-0 text-[8px] tracking-[0.1em] text-[var(--cp-muted)]"
+            className="shrink-0 text-[10px] tracking-[0.1em] text-[var(--cp-muted)]"
             onClick={clearRoutingError}
           >
             DISMISS

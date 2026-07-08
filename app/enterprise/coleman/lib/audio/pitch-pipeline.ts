@@ -1,10 +1,13 @@
+import { AdaptiveSanctuaryVAD } from "./adaptive-vad";
 import { PitchPerfectFilter } from "./pitch-perfect-filter";
 import {
   analyzeFrequency,
   centsFromFrequency,
-  estimateFrequencyWithConfidence,
+  estimateHybridPitch,
+  midiToFrequency,
 } from "./pitch-core";
 import { getStageCaptureConfig } from "./stage-capture-config";
+import { CAPTURE_STABILITY_FRAMES } from "./stage-audio-types";
 import {
   dbToLinearMagnitude,
   isPercussiveTransient,
@@ -19,87 +22,167 @@ export type PitchFrame = {
   isStable: boolean;
 };
 
-/** Stateful analyzer: VAD + transient rejection + PitchPerfectFilter. */
+export type PitchAnalysisContext = {
+  magnitudeDb?: Float32Array;
+  fftSize?: number;
+  /** When true, hardware HPF/LPF already applied — skip software filter pass. */
+  preFiltered?: boolean;
+};
+
+const MEDIAN_WINDOW = CAPTURE_STABILITY_FRAMES;
+const MEDIAN_STABILITY_SEMITONES = 0.5;
+
+class MedianPitchStabilizer {
+  private readonly midiHistory: number[] = [];
+
+  reset(): void {
+    this.midiHistory.length = 0;
+  }
+
+  push(midi: number): number | null {
+    this.midiHistory.push(midi);
+    if (this.midiHistory.length > MEDIAN_WINDOW) {
+      this.midiHistory.shift();
+    }
+    if (this.midiHistory.length < MEDIAN_WINDOW) {
+      return null;
+    }
+    const sorted = [...this.midiHistory].sort((a, b) => a - b);
+    return sorted[Math.floor(MEDIAN_WINDOW / 2)];
+  }
+
+  isStable(): boolean {
+    if (this.midiHistory.length < MEDIAN_WINDOW) {
+      return false;
+    }
+    const sorted = [...this.midiHistory].sort((a, b) => a - b);
+    const median = sorted[Math.floor(MEDIAN_WINDOW / 2)];
+    return this.midiHistory.every(
+      (value) => Math.abs(value - median) <= MEDIAN_STABILITY_SEMITONES,
+    );
+  }
+}
+
+/** Stateful analyzer: adaptive VAD + hybrid pitch + median + note lock. */
 export class PitchFrameAnalyzer {
-  private readonly filter = new PitchPerfectFilter();
-  private heldKey: string | null = null;
-  private heldCents = 0;
+  private readonly filter: PitchPerfectFilter;
+  private readonly medianStabilizer = new MedianPitchStabilizer();
+  private readonly vad = new AdaptiveSanctuaryVAD();
+  private lastStableKey: string | null = null;
+  private lastStableCents = 0;
   private lastGateLinear = 0.18;
+
+  constructor(stabilityFrames = CAPTURE_STABILITY_FRAMES) {
+    this.filter = new PitchPerfectFilter(stabilityFrames);
+  }
 
   reset(): void {
     this.filter.reset();
-    this.heldKey = null;
-    this.heldCents = 0;
+    this.medianStabilizer.reset();
+    this.vad.reset();
+    this.lastStableKey = null;
+    this.lastStableCents = 0;
   }
 
-  analyze(buffer: Float32Array, sampleRate: number): PitchFrame {
+  analyze(
+    buffer: Float32Array,
+    sampleRate: number,
+    context: PitchAnalysisContext = {},
+  ): PitchFrame {
     const captureConfig = getStageCaptureConfig();
-    const gateLinear = dbToLinearMagnitude(captureConfig.noiseGateDb);
-    const speechFloorLinear = dbToLinearMagnitude(captureConfig.speechFloorDb);
+    const configuredGateLinear = dbToLinearMagnitude(captureConfig.noiseGateDb);
 
-    if (gateLinear !== this.lastGateLinear) {
-      this.filter.setNoiseGateLinear(gateLinear);
-      this.lastGateLinear = gateLinear;
+    if (configuredGateLinear !== this.lastGateLinear) {
+      this.filter.setNoiseGateLinear(configuredGateLinear);
+      this.lastGateLinear = configuredGateLinear;
     }
 
-    const processed = prepareCaptureBuffer(buffer, sampleRate, captureConfig);
+    const processed = context.preFiltered
+      ? buffer
+      : prepareCaptureBuffer(buffer, sampleRate, captureConfig);
     const metrics = measureSignal(processed);
-    const { frequency: rawFrequency, correlation } = estimateFrequencyWithConfidence(
+
+    const hybrid = estimateHybridPitch(
       processed,
       sampleRate,
+      context.magnitudeDb,
+      context.fftSize,
+    );
+
+    const rawFrequency = hybrid.frequency;
+    const hasPitchConfidence =
+      hybrid.validated &&
+      hybrid.confidence >= captureConfig.minPitchCorrelation &&
+      isVocalRangeFrequency(rawFrequency);
+
+    const adaptiveThresholdLinear = this.vad.activationThresholdLinear(
+      metrics.rms,
+      hasPitchConfidence,
+      captureConfig.noiseGateDb,
     );
 
     const isTransient = isPercussiveTransient(metrics, captureConfig);
-    const hasSpeechEnergy = metrics.rms >= speechFloorLinear;
-    const hasPitchConfidence =
-      correlation >= captureConfig.minPitchCorrelation &&
-      isVocalRangeFrequency(rawFrequency);
+    const hasSpeechEnergy = metrics.rms >= adaptiveThresholdLinear;
 
     if (isTransient || !hasSpeechEnergy || !hasPitchConfidence) {
-      if (metrics.rms < speechFloorLinear * 0.45) {
-        this.heldKey = null;
-        this.heldCents = 0;
+      if (metrics.rms < adaptiveThresholdLinear * 0.45) {
         this.filter.reset();
+        this.medianStabilizer.reset();
+        this.lastStableKey = null;
+        this.lastStableCents = 0;
       }
       return {
-        currentKey: this.heldKey,
-        currentCents: this.heldCents,
+        currentKey: null,
+        currentCents: 0,
         isStable: false,
       };
     }
 
-    const stableNote = this.filter.processRawAudioSignal(rawFrequency, metrics.rms);
+    const reading = analyzeFrequency(rawFrequency);
+    const medianMidi = this.medianStabilizer.push(reading.midi);
+    const medianStable = this.medianStabilizer.isStable();
 
-    if (stableNote) {
-      const cents =
-        rawFrequency > 0
-          ? Math.max(-50, Math.min(50, centsFromFrequency(rawFrequency)))
-          : analyzeFrequency(rawFrequency).cents;
-
-      this.heldKey = stableNote;
-      this.heldCents = cents;
-      return { currentKey: stableNote, currentCents: cents, isStable: true };
-    }
-
-    if (metrics.rms < gateLinear) {
+    if (medianMidi === null || !medianStable) {
+      if (this.lastStableKey) {
+        return {
+          currentKey: this.lastStableKey,
+          currentCents: this.lastStableCents,
+          isStable: true,
+        };
+      }
       return {
-        currentKey: this.heldKey,
-        currentCents: this.heldCents,
+        currentKey: null,
+        currentCents: 0,
         isStable: false,
       };
     }
 
-    const preview = analyzeFrequency(rawFrequency);
-    const previewKey = preview.note === "—" ? this.heldKey : preview.note;
-    const previewCents =
-      preview.note === "—"
-        ? this.heldCents
-        : Math.max(-50, Math.min(50, preview.cents));
+    const medianFrequency = midiToFrequency(medianMidi);
+    const stableNote = this.filter.processRawAudioSignal(medianFrequency, metrics.rms);
+
+    if (!stableNote) {
+      if (this.lastStableKey) {
+        return {
+          currentKey: this.lastStableKey,
+          currentCents: this.lastStableCents,
+          isStable: true,
+        };
+      }
+      return {
+        currentKey: null,
+        currentCents: 0,
+        isStable: false,
+      };
+    }
+
+    const cents = Math.max(-50, Math.min(50, centsFromFrequency(rawFrequency)));
+    this.lastStableKey = stableNote;
+    this.lastStableCents = cents;
 
     return {
-      currentKey: previewKey,
-      currentCents: previewCents,
-      isStable: false,
+      currentKey: stableNote,
+      currentCents: cents,
+      isStable: true,
     };
   }
 }
@@ -109,11 +192,12 @@ let sharedAnalyzer: PitchFrameAnalyzer | null = null;
 export function analyzePitchBuffer(
   buffer: Float32Array,
   sampleRate: number,
+  context: PitchAnalysisContext = {},
 ): PitchFrame {
   if (!sharedAnalyzer) {
     sharedAnalyzer = new PitchFrameAnalyzer();
   }
-  return sharedAnalyzer.analyze(buffer, sampleRate);
+  return sharedAnalyzer.analyze(buffer, sampleRate, context);
 }
 
 export function resetPitchAnalyzer(): void {

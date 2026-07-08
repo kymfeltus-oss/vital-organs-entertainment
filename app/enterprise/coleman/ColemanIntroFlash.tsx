@@ -71,17 +71,18 @@ export default function ColemanIntroFlash() {
 
   return (
     <div className="coleman-intro-root">
-      <video
-        ref={videoRef}
-        className="coleman-intro-video"
-        src={INTRO_VIDEO_SRC}
-        autoPlay
-        loop
-        muted={isMuted}
-        playsInline
-        preload="auto"
-        aria-hidden
-      />
+      <div className="coleman-intro-media" aria-hidden>
+        <video
+          ref={videoRef}
+          className="coleman-intro-video"
+          src={INTRO_VIDEO_SRC}
+          autoPlay
+          loop
+          muted={isMuted}
+          playsInline
+          preload="auto"
+        />
+      </div>
 
       {soundBlocked ? (
         <button

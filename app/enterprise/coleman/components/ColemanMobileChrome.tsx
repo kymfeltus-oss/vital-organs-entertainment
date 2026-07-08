@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -12,7 +11,7 @@ import {
   Square,
 } from "lucide-react";
 
-import colemanLogo from "@/app/enterprise/coleman/coleman_logo.png";
+import ColemanLogo from "@/app/enterprise/coleman/components/home/ui/ColemanLogo";
 import { COLEMAN_ROUTES } from "@/app/enterprise/coleman/lib/routes";
 
 type ColemanMobileChromeProps = {
@@ -46,16 +45,8 @@ export default function ColemanMobileChrome({
           <Menu size={20} strokeWidth={1.25} aria-hidden />
         </Link>
         <div className="coleman-dash-logo-wrap">
-          <Link href={COLEMAN_ROUTES.home} aria-label="COLEMAN home">
-            <Image
-              src={colemanLogo}
-              alt=""
-              width={220}
-              height={72}
-              className="coleman-dash-logo"
-              style={{ width: "auto" }}
-              priority
-            />
+          <Link href={COLEMAN_ROUTES.home} aria-label="Home">
+            <ColemanLogo className="coleman-dash-logo" priority />
           </Link>
         </div>
         <Link href={COLEMAN_ROUTES.library} className="coleman-avatar" aria-label="Open library">

@@ -74,10 +74,10 @@ export default function ChordProgression({
                       isActive ? "coleman-chord-active" : ""
                     }`}
                   >
-                    <span className="coleman-heading block text-[14px] font-semibold leading-tight">
+                    <span className="coleman-heading block text-[16px] font-semibold leading-tight">
                       {chord}
                     </span>
-                    <span className="mt-0.5 block text-[9px] font-normal tracking-wide text-[var(--cp-taupe)]">
+                    <span className="mt-0.5 block text-[11px] font-normal tracking-wide text-[var(--cp-taupe)]">
                       {liveFallback(roman)}
                     </span>
                   </button>

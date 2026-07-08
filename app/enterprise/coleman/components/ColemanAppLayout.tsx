@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
+import { preloadColemanMicEngine } from "@/app/enterprise/coleman/lib/audio/preload-mic-engine";
 import { COLEMAN_ROUTES } from "@/app/enterprise/coleman/lib/routes";
 
 import { ColemanAudioProvider } from "./ColemanAudioProvider";
@@ -20,6 +22,10 @@ export default function ColemanAppLayout({
 }) {
   const pathname = usePathname();
   const isHomeStudio = pathname === COLEMAN_ROUTES.home;
+
+  useEffect(() => {
+    void preloadColemanMicEngine();
+  }, []);
 
   return (
     <ColemanAudioProvider>

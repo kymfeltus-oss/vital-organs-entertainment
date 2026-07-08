@@ -36,7 +36,7 @@ export function resolveRoutingUserId(raw: string | null | undefined): string {
 }
 
 export function lowPassForInputSource(inputSource: RoutingInputSource): number {
-  return inputSource === "ACOUSTIC_AIR" ? 800 : 20000;
+  return inputSource === "ACOUSTIC_AIR" ? 500 : 20000;
 }
 
 export function labelForInputSource(inputSource: RoutingInputSource): string {
