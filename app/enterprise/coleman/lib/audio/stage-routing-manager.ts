@@ -4,7 +4,12 @@ import {
   enumerateStageAudioDevices,
   pickPreferredInput,
 } from "./input-source-detector";
-import { applyInputModeCapture } from "./stage-capture-config";
+import { applyInputModeCapture, applyPersistedCaptureSettings } from "./stage-capture-config";
+import {
+  labelForInputSource,
+  type RoutingInputSource,
+  type RoutingSelectedMode,
+} from "../routing-persistence";
 import {
   applySinkToAudioContext,
   applySinkToMediaElement,
@@ -208,6 +213,32 @@ export class StageRoutingManager {
     const clamped = Math.max(-160, Math.min(0, db));
     applyInputModeCapture(this.state.inputMode, clamped);
     this.patchState({ noiseGateDb: clamped });
+  }
+
+  async applyPersistedRoutingConfig(config: {
+    selectedMode: RoutingSelectedMode;
+    inputSource: RoutingInputSource;
+    noiseGateDb: number;
+    lowPassCutoffHz: number;
+    latencyOffsetMs: number;
+  }): Promise<void> {
+    const inputMode = applyPersistedCaptureSettings(
+      config.inputSource,
+      config.noiseGateDb,
+      config.lowPassCutoffHz,
+      config.latencyOffsetMs,
+    );
+
+    this.patchState({
+      inputMode,
+      externalLineConnected: config.inputSource !== "ACOUSTIC_AIR",
+      activeInputLabel: labelForInputSource(config.inputSource),
+      noiseGateDb: Math.max(-160, Math.min(0, config.noiseGateDb)),
+    });
+
+    const profile: StageRoutingProfile =
+      config.selectedMode === "HEADPHONES" ? "headphones" : "speaker";
+    await this.setRoutingProfile(profile);
   }
 
   async refreshInputSources(): Promise<void> {

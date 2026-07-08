@@ -2,15 +2,14 @@
 
 import { useState } from "react";
 
+import InEarsController from "@/app/enterprise/coleman/components/InEarsController";
 import ColemanHomeBootLoader from "@/app/enterprise/coleman/components/home/ColemanHomeBootLoader";
 import BottomNav from "@/app/enterprise/coleman/components/home/ui/BottomNav";
 import HomeHeader from "@/app/enterprise/coleman/components/home/ui/HomeHeader";
 import IntelligenceCard from "@/app/enterprise/coleman/components/home/ui/IntelligenceCard";
 import KeyOrb from "@/app/enterprise/coleman/components/home/ui/KeyOrb";
-import StageAudioChrome from "@/app/enterprise/coleman/components/home/ui/StageAudioChrome";
 import { useClientMountGate } from "@/app/enterprise/coleman/lib/hooks/useClientMountGate";
 import { formatKeyDisplay } from "@/app/enterprise/coleman/lib/live-display";
-import { useStageAudioRouting } from "@/app/enterprise/coleman/lib/hooks/useStageAudioRouting";
 import { useLiveColemanState } from "@/app/enterprise/coleman/lib/useLiveColemanState";
 
 export default function ColemanHomePage() {
@@ -35,17 +34,6 @@ function ColemanHomePageMounted() {
     noteSpelling,
     selectSpelling,
   } = useLiveColemanState({ audioEnabled: true });
-  const {
-    externalLineConnected,
-    routingProfile,
-    routingBusy,
-    routingError,
-    headphonesConnected,
-    sinkSelectionSupported,
-    activeOutputLabel,
-    setRoutingProfile,
-    clearRoutingError,
-  } = useStageAudioRouting();
   const [playbackError, setPlaybackError] = useState<string | null>(null);
   const bannerMessage = micError ?? playbackError;
 
@@ -78,19 +66,7 @@ function ColemanHomePageMounted() {
       <HomeHeader />
 
       <div className="coleman-home-content relative z-10 min-h-0 flex-1 overflow-y-auto overscroll-contain px-3.5 pb-[92px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <StageAudioChrome
-          externalLineConnected={externalLineConnected}
-          routingProfile={routingProfile}
-          routingBusy={routingBusy}
-          routingError={routingError}
-          headphonesConnected={headphonesConnected}
-          sinkSelectionSupported={sinkSelectionSupported}
-          activeOutputLabel={activeOutputLabel}
-          onRoutingProfileChange={(profile) => {
-            void setRoutingProfile(profile);
-          }}
-          onDismissRoutingError={clearRoutingError}
-        />
+        <InEarsController />
 
         {bannerMessage ? (
           <div
@@ -103,7 +79,6 @@ function ColemanHomePageMounted() {
               className="text-[9px] tracking-[0.1em] text-[var(--cp-muted)]"
               onClick={() => {
                 dismissMicError();
-                clearRoutingError();
                 setPlaybackError(null);
               }}
             >

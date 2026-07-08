@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 
@@ -27,10 +28,17 @@ export default function HomeHeader() {
 
         <Link
           href={COLEMAN_ROUTES.home}
-          className="coleman-wordmark"
+          className="coleman-home-logo-wrap"
           aria-label="COLEMAN home"
         >
-          COLEMAN
+          <Image
+            src="/enterprise/coleman/coleman_logo.png"
+            alt=""
+            width={220}
+            height={72}
+            className="coleman-header-logo"
+            priority
+          />
         </Link>
 
         <Link

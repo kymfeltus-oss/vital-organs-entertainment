@@ -7,6 +7,10 @@ import type {
   StageAudioState,
   StageRoutingProfile,
 } from "@/app/enterprise/coleman/lib/audio/stage-audio-types";
+import type {
+  RoutingInputSource,
+  RoutingSelectedMode,
+} from "@/app/enterprise/coleman/lib/routing-persistence";
 
 export function useStageAudioRouting() {
   const [state, setState] = useState<StageAudioState>(() =>
@@ -35,11 +39,25 @@ export function useStageAudioRouting() {
     getStageRoutingManager().clearRoutingError();
   }, []);
 
+  const applyPersistedRoutingConfig = useCallback(
+    async (config: {
+      selectedMode: RoutingSelectedMode;
+      inputSource: RoutingInputSource;
+      noiseGateDb: number;
+      lowPassCutoffHz: number;
+      latencyOffsetMs: number;
+    }) => {
+      await getStageRoutingManager().applyPersistedRoutingConfig(config);
+    },
+    [],
+  );
+
   return {
     ...state,
     setRoutingProfile,
     refreshInputSources,
     setNoiseGateDb,
     clearRoutingError,
+    applyPersistedRoutingConfig,
   };
 }

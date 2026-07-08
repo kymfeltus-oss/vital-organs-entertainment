@@ -91,3 +91,22 @@ export async function fetchTheoryCatalog(): Promise<TheoryEntry[]> {
 export function audioStreamUrl(filename: string): string {
   return COLEMAN_API.audioStream(filename);
 }
+
+export async function fetchRoutingConfig(userId: string) {
+  const response = await fetch(
+    `${COLEMAN_API.routing}?userId=${encodeURIComponent(userId)}`,
+    { cache: "no-store" },
+  );
+  return parseResponse<import("./routing-persistence").AudioRoutingConfigRecord>(response);
+}
+
+export async function saveRoutingConfig(
+  payload: import("./routing-persistence").AudioRoutingConfigWrite,
+) {
+  const response = await fetch(COLEMAN_API.routing, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return parseResponse<import("./routing-persistence").AudioRoutingConfigRecord>(response);
+}

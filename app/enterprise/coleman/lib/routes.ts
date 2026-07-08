@@ -28,4 +28,5 @@ export const COLEMAN_API = {
   theory: "/api/coleman/theory",
   recognize: "/api/coleman/recognize",
   health: "/api/coleman/health",
+  routing: "/api/coleman/routing",
 } as const;

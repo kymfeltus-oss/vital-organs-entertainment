@@ -210,11 +210,23 @@
 
 .coleman-header-logo {
   display: block;
-  width: 200px;
-  height: auto;
-  max-width: min(200px, 52vw);
+  height: 72px;
+  width: auto;
+  max-width: min(220px, 52vw);
   object-fit: contain;
   background: transparent;
+}
+
+.coleman-home-logo-wrap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 5;
+  transform: translate(-50%, -50%);
+  display: flex;
+  max-width: min(220px, 52vw);
+  align-items: center;
+  justify-content: center;
 }
 
 .coleman-label {
@@ -1168,11 +1180,6 @@
 }
 
 .coleman-reference-home .coleman-heading {
-  font-weight: 700;
-}
-
-.coleman-reference-home .coleman-wordmark {
-  font-size: 20px;
   font-weight: 700;
 }
 
