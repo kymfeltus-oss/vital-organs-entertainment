@@ -1161,6 +1161,134 @@
   .coleman-progression { height: 122px; }
 }
 
+/* Reference home typography — same typeface, bolder and slightly larger */
+.coleman-reference-home .coleman-label {
+  font-weight: 700;
+  font-size: 8px;
+}
+
+.coleman-reference-home .coleman-heading {
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-wordmark {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-key-orb__lens .coleman-label {
+  font-size: 9px !important;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-key-orb__lens .coleman-heading {
+  font-size: clamp(90px, 26vw, 114px) !important;
+  font-weight: 700 !important;
+}
+
+.coleman-reference-home .coleman-key-orb__lens .coleman-heading + span {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-key-orb__lens .coleman-glass-btn {
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-home-content > div:has(.coleman-key-orb) > .coleman-glass-btn > .coleman-label {
+  font-size: 8px !important;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-home-content > div:has(.coleman-key-orb) > .coleman-glass-btn > span:first-child {
+  font-size: 20px;
+}
+
+.coleman-reference-home .coleman-progression .coleman-label {
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-chord-cell .coleman-heading {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-chord-cell .coleman-heading + span {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-intelligence-card > div:first-child .coleman-heading {
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-intelligence-card > div:first-child > span {
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-intelligence-card .coleman-label {
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-intelligence-card > .grid .coleman-heading {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-intelligence-card > .grid > div:last-child .coleman-heading {
+  font-size: 20px;
+}
+
+.coleman-reference-home .coleman-intelligence-card > .grid > div:last-child .coleman-heading:last-child {
+  font-size: 18px;
+}
+
+.coleman-reference-home .coleman-dashboard-knob__readout .coleman-heading {
+  font-size: 26px !important;
+  font-weight: 700 !important;
+}
+
+.coleman-reference-home .coleman-dashboard-knob__readout .coleman-heading + span {
+  font-size: 7px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-voicing-pill,
+.coleman-reference-home .coleman-voicing-add {
+  font-size: 8px !important;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-voicing-add {
+  font-size: 18px !important;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-nav-dock a span {
+  font-size: 7px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-stage-input-pill {
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-stage-routing-chip {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.coleman-reference-home .coleman-stage-audio-chrome p {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .coleman-key-orb-wrap,
   .coleman-dashboard-knob { animation: none !important; }
