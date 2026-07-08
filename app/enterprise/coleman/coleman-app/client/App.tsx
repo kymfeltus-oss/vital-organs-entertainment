@@ -30,6 +30,7 @@ import {
   type TrackItem,
 } from "./api/coleman-api";
 import { COLEMAN_WEB_ROUTES } from "./config/environment";
+import { getStageRoutingManager } from "./lib/audio/stage-routing-manager";
 import IntroScreen from "./IntroScreen";
 import ColemanHomeScreen from "./screens/ColemanHomeScreen";
 import { COLEMAN_BRAND, COLEMAN_CANVAS_GRADIENT } from "./theme/homeTokens";
@@ -220,16 +221,25 @@ export default function App() {
     try {
       setApiError(null);
 
+      await getStageRoutingManager().initialize();
+      await getStageRoutingManager().setRoutingProfile(
+        getStageRoutingManager().getState().routingProfile,
+      );
+      getStageRoutingManager().setHeadphoneUnplugHandler(() => {
+        void (async () => {
+          if (activePlaybackSound) {
+            await activePlaybackSound.pauseAsync();
+          }
+        })();
+      });
+
       if (activePlaybackSound) {
         await activePlaybackSound.unloadAsync();
       }
 
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        playsInSilentModeIOS: true,
-        shouldRouteThroughEarpieceIOS: false,
-        staysActiveInBackground: true,
-      });
+      await getStageRoutingManager().setRoutingProfile(
+        getStageRoutingManager().getState().routingProfile,
+      );
 
       const { COLEMAN_API } = await import("./config/environment");
       const remoteResourceTarget = COLEMAN_API.audioStream(track.audioFiles[0]);

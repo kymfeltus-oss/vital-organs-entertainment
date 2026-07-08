@@ -9,6 +9,7 @@ type KeyOrbProps = {
   keyQuality: string | null;
   keyBadge: string | null;
   isMicActive: boolean;
+  isListening?: boolean;
   isStandby?: boolean;
   noteSpelling: NoteSpelling;
   onSelectSpelling: (spelling: NoteSpelling) => void;
@@ -33,11 +34,12 @@ export default function KeyOrb({
   keyQuality,
   keyBadge,
   isMicActive,
+  isListening = false,
   isStandby = false,
   noteSpelling,
   onSelectSpelling,
 }: KeyOrbProps) {
-  const listening = isMicActive && !currentKey && !isStandby;
+  const listening = isListening || (isMicActive && !currentKey && !isStandby);
   const spellingActiveClass =
     "ring-1 ring-[var(--cp-champagne)] shadow-[0_0_0_1px_rgba(146,97,52,0.25)]";
 

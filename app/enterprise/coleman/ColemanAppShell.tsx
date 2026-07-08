@@ -4,37 +4,44 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import ColemanIntroFlash from "./ColemanIntroFlash";
+import ColemanHomeBootLoader from "./components/home/ColemanHomeBootLoader";
+import { useClientMountGate } from "./lib/hooks/useClientMountGate";
+import { hasEnteredColemanSession } from "./lib/intro-session";
 import { COLEMAN_ROUTES } from "./lib/routes";
-
-const ENTERED_KEY = "coleman-entered";
 
 export default function ColemanAppShell() {
   const router = useRouter();
-  const [ready, setReady] = useState(false);
-  const [hasEntered, setHasEntered] = useState(false);
+  const isClientRouterReady = useClientMountGate();
+  const [showIntro, setShowIntro] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const entered = sessionStorage.getItem(ENTERED_KEY) === "1";
+    if (!isClientRouterReady) {
+      return;
+    }
+
+    const entered = hasEnteredColemanSession();
     if (entered) {
       router.replace(COLEMAN_ROUTES.home);
       return;
     }
-    setReady(true);
-  }, [router]);
+    setShowIntro(true);
+  }, [isClientRouterReady, router]);
 
-  const handleEnter = () => {
-    sessionStorage.setItem(ENTERED_KEY, "1");
-    setHasEntered(true);
-    router.push(COLEMAN_ROUTES.home);
-  };
+  if (!isClientRouterReady) {
+    return (
+      <div className="coleman-app-shell h-full min-h-0">
+        <ColemanHomeBootLoader />
+      </div>
+    );
+  }
 
-  if (!ready || hasEntered) {
+  if (showIntro !== true) {
     return null;
   }
 
   return (
-    <div className="coleman-app-shell h-full">
-      <ColemanIntroFlash onEnter={handleEnter} />
+    <div className="coleman-app-shell h-full min-h-0">
+      <ColemanIntroFlash />
     </div>
   );
 }

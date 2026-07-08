@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { startColemanMicEngine } from "@/app/enterprise/coleman/lib/audio/coleman-mic-engine";
+import { useWebAudioPitchTracker } from "@/app/enterprise/coleman/lib/hooks/useWebAudioPitchTracker";
 import { isLiveEngagedFromState } from "@/app/enterprise/coleman/lib/default-standby-session";
 import { LiveChordTracker } from "@/app/enterprise/coleman/lib/live-chord-tracker";
 import { resolveDisplayLiveState } from "@/app/enterprise/coleman/lib/live-display";
@@ -38,7 +38,14 @@ function buildLivePatch(
   };
 }
 
-export function useLiveColemanState() {
+type UseLiveColemanStateOptions = {
+  /** When false, mic engine stays offline (SSR / pre-mount gate). */
+  audioEnabled?: boolean;
+};
+
+export function useLiveColemanState(options: UseLiveColemanStateOptions = {}) {
+  const { audioEnabled = true } = options;
+
   const [liveData, setLiveData] = useState<LiveColemanState>(createInitialLiveColemanState);
   const [micError, setMicError] = useState<string | null>(null);
   const [activeChordIndex, setActiveChordIndex] = useState<number>(0);
@@ -50,6 +57,55 @@ export function useLiveColemanState() {
   const chordTrackerRef = useRef(new LiveChordTracker());
   const activeChordIndexRef = useRef<number>(0);
 
+  const { startLiveWebAudioTracking, killWebAudioTracking } = useWebAudioPitchTracker({
+    onFrame: ({ currentKey, currentCents, isStable }) => {
+      if (currentKey && isStable) {
+        setIsLiveEngaged(true);
+      }
+
+      const nextSessionTonic = sessionTrackerRef.current.tick(currentKey);
+      const chordProgression = chordTrackerRef.current.tick(currentKey, nextSessionTonic);
+
+      if (chordProgression.length > 0) {
+        setIsLiveEngaged(true);
+      }
+
+      setSessionTonic(nextSessionTonic);
+
+      setLiveData((prev) => {
+        const next = buildLivePatch(
+          prev,
+          { currentKey, currentCents },
+          nextSessionTonic,
+          chordProgression,
+          activeChordIndexRef.current,
+        );
+
+        if (chordProgression.length > 0 && !isLiveEngagedFromState(prev)) {
+          activeChordIndexRef.current = chordProgression.length - 1;
+          setActiveChordIndex(chordProgression.length - 1);
+          return buildLivePatch(
+            next,
+            { currentKey, currentCents },
+            nextSessionTonic,
+            chordProgression,
+            chordProgression.length - 1,
+          );
+        }
+
+        return next;
+      });
+    },
+    onError: (message) => {
+      setMicError(message);
+      setLiveData((prev) => ({
+        ...prev,
+        isMicActive: false,
+        intelligence: { ...prev.intelligence, status: "OFFLINE" },
+      }));
+    },
+  });
+
   useEffect(() => {
     activeChordIndexRef.current = activeChordIndex;
   }, [activeChordIndex]);
@@ -60,7 +116,8 @@ export function useLiveColemanState() {
   );
 
   useEffect(() => {
-    if (!liveData.isMicActive) {
+    if (!audioEnabled || !liveData.isMicActive) {
+      killWebAudioTracking();
       return undefined;
     }
 
@@ -71,57 +128,17 @@ export function useLiveColemanState() {
     setActiveChordIndex(0);
     activeChordIndexRef.current = 0;
 
-    const stopMic = startColemanMicEngine({
-      onFrame: ({ currentKey, currentCents }) => {
-        if (currentKey) {
-          setIsLiveEngaged(true);
-        }
+    startLiveWebAudioTracking();
 
-        const nextSessionTonic = sessionTrackerRef.current.tick(currentKey);
-        const chordProgression = chordTrackerRef.current.tick(currentKey, nextSessionTonic);
-
-        if (chordProgression.length > 0) {
-          setIsLiveEngaged(true);
-        }
-
-        setSessionTonic(nextSessionTonic);
-
-        setLiveData((prev) => {
-          const next = buildLivePatch(
-            prev,
-            { currentKey, currentCents },
-            nextSessionTonic,
-            chordProgression,
-            activeChordIndexRef.current,
-          );
-
-          if (chordProgression.length > 0 && !isLiveEngagedFromState(prev)) {
-            activeChordIndexRef.current = chordProgression.length - 1;
-            setActiveChordIndex(chordProgression.length - 1);
-            return buildLivePatch(
-              next,
-              { currentKey, currentCents },
-              nextSessionTonic,
-              chordProgression,
-              chordProgression.length - 1,
-            );
-          }
-
-          return next;
-        });
-      },
-      onError: (message) => {
-        setMicError(message);
-        setLiveData((prev) => ({
-          ...prev,
-          isMicActive: false,
-          intelligence: { ...prev.intelligence, status: "OFFLINE" },
-        }));
-      },
-    });
-
-    return stopMic;
-  }, [liveData.isMicActive]);
+    return () => {
+      killWebAudioTracking();
+    };
+  }, [
+    audioEnabled,
+    liveData.isMicActive,
+    startLiveWebAudioTracking,
+    killWebAudioTracking,
+  ]);
 
   const selectChord = useCallback(
     (index: number) => {
@@ -145,7 +162,14 @@ export function useLiveColemanState() {
     [isLiveEngaged],
   );
 
-  const dismissMicError = useCallback(() => setMicError(null), []);
+  const dismissMicError = useCallback(() => {
+    setMicError(null);
+    setLiveData((prev) => ({
+      ...prev,
+      isMicActive: true,
+      intelligence: { ...prev.intelligence, status: "LIVE" },
+    }));
+  }, []);
 
   const selectSpelling = useCallback((spelling: NoteSpelling) => {
     setNoteSpelling(spelling);

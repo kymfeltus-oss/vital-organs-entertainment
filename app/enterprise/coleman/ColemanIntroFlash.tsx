@@ -1,21 +1,24 @@
 "use client";
 
+import Link from "next/link";
 import { Volume2, VolumeX } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type ColemanIntroFlashProps = {
-  onEnter: () => void;
-};
+import { markColemanSessionEntered } from "@/app/enterprise/coleman/lib/intro-session";
+import { COLEMAN_ROUTES } from "@/app/enterprise/coleman/lib/routes";
 
-export default function ColemanIntroFlash({ onEnter }: ColemanIntroFlashProps) {
+const INTRO_VIDEO_SRC = "/enterprise/coleman/coleman_intro.mp4";
+
+export default function ColemanIntroFlash() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [visible, setVisible] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [soundBlocked, setSoundBlocked] = useState(false);
 
   const enableSound = useCallback(async () => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video) {
+      return;
+    }
 
     video.muted = false;
     video.volume = 1;
@@ -30,9 +33,16 @@ export default function ColemanIntroFlash({ onEnter }: ColemanIntroFlashProps) {
     }
   }, []);
 
+  const handleEnter = useCallback(() => {
+    markColemanSessionEntered();
+    void enableSound();
+  }, [enableSound]);
+
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video) {
+      return undefined;
+    }
 
     const start = async () => {
       video.muted = false;
@@ -50,50 +60,28 @@ export default function ColemanIntroFlash({ onEnter }: ColemanIntroFlashProps) {
         try {
           await video.play();
         } catch {
-          // Still blocked — user must tap to play.
+          // User must tap to unlock playback.
         }
       }
     };
 
-    start();
-    const timer = window.setTimeout(() => setVisible(true), 600);
-    return () => window.clearTimeout(timer);
+    void start();
+    return undefined;
   }, []);
 
-  const handleIntroTap = async () => {
-    if (isMuted) {
-      await enableSound();
-    }
-  };
-
-  const handleEnter = async () => {
-    if (isMuted) {
-      await enableSound();
-    }
-    onEnter();
-  };
-
   return (
-    <div
-      className="coleman-intro-root coleman-luxury-canvas"
-      onClick={handleIntroTap}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") handleIntroTap();
-      }}
-      role="presentation"
-    >
+    <div className="coleman-intro-root">
       <video
         ref={videoRef}
         className="coleman-intro-video"
-        src="/enterprise/coleman/coleman_intro.mp4"
+        src={INTRO_VIDEO_SRC}
         autoPlay
         loop
         muted={isMuted}
         playsInline
         preload="auto"
+        aria-hidden
       />
-
-      <div className="coleman-intro-overlay" aria-hidden />
 
       {soundBlocked ? (
         <button
@@ -118,28 +106,14 @@ export default function ColemanIntroFlash({ onEnter }: ColemanIntroFlashProps) {
         </button>
       ) : null}
 
-      <div className="coleman-intro-content">
-        <div
-          className={`coleman-intro-enter-wrap${visible ? " is-visible" : ""}`}
-        >
-          <button
-            type="button"
-            className="coleman-intro-enter-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              void handleEnter();
-            }}
-          >
-            <span className="coleman-intro-enter-label">ENTER</span>
-            <span className="coleman-intro-enter-icon" aria-hidden>
-              →
-            </span>
-          </button>
-          <p className="coleman-intro-enter-hint">
-            {isMuted ? "Tap anywhere for sound · Enter for dashboard" : "Tap to open your dashboard"}
-          </p>
-        </div>
-      </div>
+      <Link
+        href={COLEMAN_ROUTES.home}
+        prefetch
+        scroll={false}
+        className="coleman-intro-enter-layer"
+        aria-label="Enter dashboard"
+        onClick={handleEnter}
+      />
     </div>
   );
 }

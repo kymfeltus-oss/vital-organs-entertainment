@@ -46,20 +46,30 @@ export function analyzeFrequency(frequency: number): PitchAnalysis {
   };
 }
 
-export function detectPitch(buffer: Float32Array, sampleRate: number): number {
-  const size = buffer.length;
-  if (size < 512 || sampleRate <= 0) {
+export function computeSignalMagnitude(buffer: Float32Array): number {
+  if (buffer.length === 0) {
     return 0;
   }
 
   let rms = 0;
-  for (let i = 0; i < size; i += 1) {
+  for (let i = 0; i < buffer.length; i += 1) {
     rms += buffer[i] * buffer[i];
   }
-  rms = Math.sqrt(rms / size);
+  return Math.sqrt(rms / buffer.length);
+}
 
-  if (rms < 0.008) {
-    return 0;
+export type PitchEstimate = {
+  frequency: number;
+  correlation: number;
+};
+
+export function estimateFrequencyWithConfidence(
+  buffer: Float32Array,
+  sampleRate: number,
+): PitchEstimate {
+  const size = buffer.length;
+  if (size < 512 || sampleRate <= 0) {
+    return { frequency: 0, correlation: 0 };
   }
 
   let bestOffset = -1;
@@ -81,13 +91,35 @@ export function detectPitch(buffer: Float32Array, sampleRate: number): number {
   }
 
   if (bestCorrelation <= 0.01 || bestOffset <= 0) {
+    return { frequency: 0, correlation: 0 };
+  }
+
+  return {
+    frequency: sampleRate / bestOffset,
+    correlation: bestCorrelation,
+  };
+}
+
+export function estimateFrequency(buffer: Float32Array, sampleRate: number): number {
+  return estimateFrequencyWithConfidence(buffer, sampleRate).frequency;
+}
+
+export function detectPitch(buffer: Float32Array, sampleRate: number): number {
+  const size = buffer.length;
+  if (size < 512 || sampleRate <= 0) {
     return 0;
   }
 
-  return sampleRate / bestOffset;
+  const rms = computeSignalMagnitude(buffer);
+
+  if (rms < 0.008) {
+    return 0;
+  }
+
+  return estimateFrequency(buffer, sampleRate);
 }
 
-export function analyzePitchBuffer(
+export function analyzePitchBufferLegacy(
   buffer: Float32Array,
   sampleRate: number,
 ): { currentKey: string | null; currentCents: number } {

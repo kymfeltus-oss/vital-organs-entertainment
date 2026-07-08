@@ -17,8 +17,10 @@ import HomeHeader from "../components/home/HomeHeader";
 import ChordRibbon from "../components/home/ChordRibbon";
 import IntelligenceCard from "../components/home/IntelligenceCard";
 import NoteLens from "../components/home/NoteLens";
+import StageAudioChrome from "../components/home/StageAudioChrome";
 import { COLEMAN_WEB_ROUTES } from "../config/environment";
 import { useLiveColemanState } from "../hooks/useLiveColemanState";
+import { useStageAudioRouting } from "../hooks/useStageAudioRouting";
 import { HOME_TOKENS } from "../theme/homeTokens";
 
 type ColemanHomeScreenProps = {
@@ -40,6 +42,7 @@ export default function ColemanHomeScreen({
 }: ColemanHomeScreenProps) {
   const { liveData, activeChordIndex, selectChord, micError, dismissMicError, isStandby } =
     useLiveColemanState();
+  const { externalLineConnected, routingProfile, setRoutingProfile } = useStageAudioRouting();
 
   const openRoute = useCallback(async (url: string) => {
     try {
@@ -81,6 +84,14 @@ export default function ColemanHomeScreen({
               </TouchableOpacity>
             </View>
           ) : null}
+
+          <StageAudioChrome
+            externalLineConnected={externalLineConnected}
+            routingProfile={routingProfile}
+            onRoutingProfileChange={(profile) => {
+              void setRoutingProfile(profile);
+            }}
+          />
 
           <NoteLens
             currentKey={liveData.currentKey}

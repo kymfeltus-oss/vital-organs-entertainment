@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./coleman.css";
 import "./coleman-home-premium.css";
 import "./coleman-home-material-system.css";
+import "./coleman-stage-audio.css";
 
 export const metadata: Metadata = {
   title: "COLEMAN",
