@@ -4,6 +4,8 @@ const isCapacitorBuild = process.env.CAPACITOR_BUILD === "true";
 const nextConfig = {
   ...(isCapacitorBuild ? { output: "export" } : {}),
   typedRoutes: false,
+  // Prisma must stay external — Turbopack cannot bundle the generated client.
+  serverExternalPackages: ["@prisma/client", "prisma"],
   images: {
     unoptimized: true,
   },

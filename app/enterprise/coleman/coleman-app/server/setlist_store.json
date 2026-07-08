@@ -1,0 +1,50 @@
+[
+  {
+    "id": "seed-1",
+    "title": "GREAT IS THY FAITHFULNESS",
+    "musicalKey": "Db",
+    "bpm": 72,
+    "duration": "5:42",
+    "audioFiles": []
+  },
+  {
+    "id": "seed-2",
+    "title": "WAY MAKER",
+    "musicalKey": "Ab",
+    "bpm": 68,
+    "duration": "6:30",
+    "audioFiles": []
+  },
+  {
+    "id": "seed-3",
+    "title": "WHAT A BEAUTIFUL NAME",
+    "musicalKey": "Eb",
+    "bpm": 70,
+    "duration": "5:18",
+    "audioFiles": []
+  },
+  {
+    "id": "seed-4",
+    "title": "GOODNESS OF GOD",
+    "musicalKey": "Bb",
+    "bpm": 73,
+    "duration": "4:59",
+    "audioFiles": []
+  },
+  {
+    "id": "seed-5",
+    "title": "O COME TO THE ALTAR",
+    "musicalKey": "C",
+    "bpm": 75,
+    "duration": "6:16",
+    "audioFiles": []
+  },
+  {
+    "id": "seed-6",
+    "title": "BUILD MY LIFE",
+    "musicalKey": "Db",
+    "bpm": 72,
+    "duration": "6:08",
+    "audioFiles": []
+  }
+]

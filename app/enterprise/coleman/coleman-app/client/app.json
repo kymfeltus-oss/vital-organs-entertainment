@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "COLEMAN",
+    "slug": "coleman",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#F7F2EC"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.parable.coleman"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F7F2EC"
+      },
+      "package": "com.parable.coleman"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

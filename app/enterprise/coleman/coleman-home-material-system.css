@@ -1,0 +1,359 @@
+/*
+ * COLEMAN HOME MATERIAL SYSTEM
+ * Warm monochromatic luxury: pearl ceramic + frosted acrylic + champagne metal.
+ * Palette is ordered from lightest to darkest, then mapped to semantic tokens.
+ */
+
+.coleman-reference-home {
+  /* Master palette — lightest to darkest */
+  --palette-pure-white: #ffffff;
+  --palette-reflection-white: #fffdfa;
+  --palette-porcelain: #fcf9f5;
+  --palette-pearl-white: #faf6f1;
+  --palette-soft-ivory: #f7f1eb;
+  --palette-champagne-white: #f4ece4;
+  --palette-warm-cream: #f1e8df;
+  --palette-cream-fog: #eee3d9;
+  --palette-ivory-sand: #eaded3;
+  --palette-warm-beige: #e6d8cb;
+  --palette-champagne-ivory: #e2d2c3;
+  --palette-pearl-sand: #ddcbbb;
+  --palette-warm-silver: #d9d6d0;
+  --palette-satin-silver: #cfcbc4;
+  --palette-light-sand: #d3bda9;
+  --palette-champagne-sand: #c9b098;
+  --palette-soft-bronze: #b99a7c;
+  --palette-champagne-gold: #aa8968;
+  --palette-muted-gold: #9d7d60;
+  --palette-stone-beige: #927966;
+  --palette-mushroom: #867064;
+  --palette-warm-taupe: #78665a;
+  --palette-muted-taupe: #6d5c51;
+  --palette-bronze: #785538;
+  --palette-aged-bronze: #68482f;
+  --palette-dark-bronze: #5b3f2a;
+  --palette-cocoa: #50392a;
+  --palette-dark-cocoa: #453024;
+  --palette-soft-espresso: #3b291e;
+  --palette-espresso: #332217;
+  --palette-deep-espresso: #291a11;
+  --palette-darkest-cocoa: #20130c;
+  --palette-shadow-taupe: #735b49;
+  --palette-shadow-brown: #593f2d;
+  --palette-icon-black: #12100e;
+  --palette-system-black: #070707;
+
+  /* Background system */
+  --bg-primary: var(--palette-cream-fog);
+  --bg-secondary: var(--palette-champagne-ivory);
+  --bg-tertiary: var(--palette-pearl-sand);
+  --bg-light-bloom: rgba(255, 253, 250, 0.82);
+  --bg-ambient-warm: rgba(226, 210, 195, 0.54);
+  --bg-ambient-sand: rgba(185, 154, 126, 0.22);
+  --bg-vignette: rgba(89, 63, 45, 0.09);
+
+  /* Glassmorphism system */
+  --surface: rgba(255, 253, 250, 0.24);
+  --surface-light: rgba(255, 253, 250, 0.38);
+  --surface-deep: rgba(250, 246, 241, 0.32);
+  --glass: rgba(255, 253, 250, 0.29);
+  --glass-strong: rgba(255, 253, 250, 0.44);
+  --glass-tint: rgba(244, 236, 228, 0.2);
+  --glass-border: rgba(255, 255, 255, 0.82);
+  --glass-border-soft: rgba(255, 255, 255, 0.58);
+  --glass-highlight: rgba(255, 255, 255, 0.96);
+  --glass-reflection: rgba(255, 253, 250, 0.72);
+  --glass-bottom-edge: rgba(185, 154, 126, 0.15);
+  --glass-blur: 28px;
+  --glass-blur-deep: 36px;
+
+  /* Typography and icons */
+  --text-primary: var(--palette-espresso);
+  --text-headline: var(--palette-deep-espresso);
+  --text-secondary: var(--palette-cocoa);
+  --text-label: var(--palette-muted-taupe);
+  --text-muted: var(--palette-warm-taupe);
+  --text-disabled: rgba(109, 92, 81, 0.42);
+  --text-active: var(--palette-bronze);
+  --icon-primary: var(--palette-soft-espresso);
+  --icon-secondary: #9a9087;
+  --icon-disabled: rgba(134, 112, 100, 0.45);
+
+  /* Accent system */
+  --accent-bronze: var(--palette-bronze);
+  --accent-bronze-deep: var(--palette-aged-bronze);
+  --accent-gold: var(--palette-champagne-gold);
+  --accent-champagne: var(--palette-champagne-sand);
+  --accent-cream: var(--palette-champagne-white);
+  --accent-pearl: var(--palette-pearl-white);
+  --accent-silver: var(--palette-warm-silver);
+
+  /* Border system */
+  --border-hairline: rgba(255, 255, 255, 0.44);
+  --border-glass: rgba(255, 255, 255, 0.82);
+  --border-control: rgba(255, 255, 255, 0.88);
+  --border-warm: rgba(120, 85, 56, 0.22);
+  --border-ring: rgba(255, 255, 255, 0.9);
+  --border-ring-warm: rgba(170, 137, 104, 0.28);
+
+  /* Shadow system — warm, diffuse, low contrast */
+  --shadow-xs: 0 2px 4px rgba(89, 63, 45, 0.07);
+  --shadow-soft: 0 8px 18px rgba(89, 63, 45, 0.11);
+  --shadow-medium: 0 16px 34px rgba(89, 63, 45, 0.14);
+  --shadow-large: 0 26px 54px rgba(89, 63, 45, 0.17);
+  --shadow-floating: 0 20px 44px rgba(73, 50, 34, 0.19);
+  --shadow-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.96);
+  --shadow-inset-bottom: inset 0 -14px 28px rgba(115, 91, 73, 0.07);
+  --shadow-ring: 0 18px 34px rgba(80, 57, 40, 0.17);
+
+  /* Glow and bloom system */
+  --glow-white-soft: 0 0 18px rgba(255, 255, 255, 0.38);
+  --glow-white-medium: 0 0 34px rgba(255, 255, 255, 0.5);
+  --glow-champagne: 0 0 30px rgba(201, 176, 152, 0.34);
+  --glow-cream: 0 0 46px rgba(244, 236, 228, 0.44);
+  --glow-glass-bloom: 0 0 62px rgba(255, 253, 250, 0.4);
+  --glow-reflection: 0 0 12px rgba(255, 255, 255, 0.78);
+
+  /* Gradient system */
+  --gradient-canvas:
+    radial-gradient(circle at 74% 7%, rgba(255, 253, 250, 0.86) 0%, transparent 29%),
+    radial-gradient(circle at 46% 24%, #faf6f1 0%, #eee3d9 45%, #ddcbbb 100%);
+  --gradient-glass: linear-gradient(145deg, rgba(255, 255, 255, 0.38) 0%, rgba(250, 246, 241, 0.2) 52%, rgba(221, 203, 187, 0.16) 100%);
+  --gradient-glass-highlight: linear-gradient(180deg, rgba(255, 255, 255, 0.68) 0%, rgba(255, 255, 255, 0.08) 42%, transparent 64%);
+  --gradient-key-lens: radial-gradient(circle at 36% 23%, rgba(255, 255, 255, 0.9) 0%, rgba(252, 249, 245, 0.51) 28%, rgba(238, 227, 217, 0.38) 65%, rgba(211, 189, 169, 0.23) 100%);
+  --gradient-champagne-ring: linear-gradient(132deg, rgba(255, 255, 255, 0.92), rgba(201, 176, 152, 0.31) 48%, rgba(255, 253, 250, 0.82));
+  --gradient-bronze: linear-gradient(135deg, #9d7d60 0%, #68482f 100%);
+  --gradient-progress: linear-gradient(90deg, #aa8968 0%, #d3bda9 100%);
+
+  /* Component aliases */
+  --ring-light: var(--border-ring);
+  --ring-shadow: rgba(89, 63, 45, 0.16);
+  --button-bg: var(--glass);
+  --button-border: var(--border-control);
+  --button-highlight: var(--glass-highlight);
+  --button-pressed: rgba(226, 210, 195, 0.4);
+
+  /* Bridge legacy component variables to the material system */
+  --cp-ivory: var(--bg-primary);
+  --cp-pearl: var(--palette-pearl-white);
+  --cp-warm-white: var(--palette-reflection-white);
+  --cp-bg-champagne: var(--bg-secondary);
+  --cp-espresso: var(--text-primary);
+  --cp-taupe: var(--text-secondary);
+  --cp-muted: var(--text-muted);
+  --cp-champagne: var(--accent-bronze);
+  --cp-bronze: var(--accent-bronze-deep);
+  --cp-glass: var(--glass);
+  --cp-glass-border: var(--glass-border);
+  --cp-glass-highlight: var(--glass-highlight);
+  --cp-glass-highlight-soft: var(--glass-reflection);
+  --cp-divider: rgba(109, 92, 81, 0.18);
+}
+
+/* Primary and secondary background layers */
+.coleman-reference-home,
+.coleman-reference-home .coleman-premium-bg {
+  background-color: var(--bg-primary);
+}
+
+.coleman-reference-home .coleman-premium-bg {
+  background-image: var(--coleman-bg-noise), var(--gradient-canvas);
+}
+
+.coleman-reference-home .coleman-premium-bg::after {
+  background:
+    radial-gradient(100% 46% at 50% 52%, var(--bg-light-bloom), transparent 72%),
+    linear-gradient(90deg, var(--bg-vignette), transparent 18%, transparent 82%, var(--bg-vignette));
+  opacity: 0.58;
+}
+
+/* Shared Vision-Pro glass material */
+.coleman-reference-home .coleman-glass-panel,
+.coleman-reference-home .coleman-glass-panel-deep,
+.coleman-reference-home .coleman-glass-btn,
+.coleman-reference-home .coleman-progression-ribbon,
+.coleman-reference-home .coleman-nav-dock,
+.coleman-reference-home .coleman-header-control {
+  border-color: var(--glass-border);
+  background-color: var(--glass);
+  background-image: var(--gradient-glass);
+  box-shadow: var(--shadow-inset-top), var(--shadow-inset-bottom), var(--shadow-medium);
+  backdrop-filter: blur(var(--glass-blur));
+}
+
+.coleman-reference-home .coleman-glass-panel-deep,
+.coleman-reference-home .coleman-intelligence-card {
+  background-color: var(--surface-deep);
+  backdrop-filter: blur(var(--glass-blur-deep));
+}
+
+/* Typography */
+.coleman-reference-home .coleman-heading,
+.coleman-reference-home .coleman-wordmark,
+.coleman-reference-home .coleman-key-orb__lens .coleman-heading {
+  color: var(--text-headline);
+}
+
+.coleman-reference-home .coleman-label { color: var(--text-label); }
+.coleman-reference-home .coleman-key-quality { color: var(--text-secondary); }
+
+/* Key wheel — polished acrylic lens with champagne metal rings */
+.coleman-reference-home .coleman-key-orb {
+  filter: drop-shadow(0 18px 28px rgba(80, 57, 40, 0.18));
+}
+
+.coleman-reference-home .coleman-key-orb__ambient {
+  background: radial-gradient(circle, var(--bg-light-bloom) 0%, rgba(201, 176, 152, 0.2) 55%, transparent 74%);
+  box-shadow: var(--glow-cream);
+}
+
+.coleman-reference-home .coleman-key-orb__ring-outer {
+  border-color: var(--border-ring);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.17), rgba(255, 253, 250, 0.04) 64%, rgba(170, 137, 104, 0.1));
+  box-shadow: var(--shadow-inset-top), 0 0 0 6px rgba(255, 255, 255, 0.11), var(--shadow-ring), var(--glow-white-soft);
+}
+
+.coleman-reference-home .coleman-key-orb__ring-mid {
+  border-color: rgba(255, 255, 255, 0.82);
+  box-shadow: inset 0 0 0 5px rgba(255, 255, 255, 0.12), 0 0 0 1px var(--border-ring-warm);
+}
+
+.coleman-reference-home .coleman-key-orb__ring-champagne {
+  border-color: var(--border-ring-warm);
+  background: var(--gradient-champagne-ring);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3), var(--glow-champagne), inset 0 8px 20px rgba(104, 72, 47, 0.08);
+}
+
+.coleman-reference-home .coleman-key-orb__lens {
+  border-color: var(--glass-highlight);
+  background: var(--gradient-key-lens);
+  box-shadow: var(--shadow-inset-top), inset 0 -22px 42px rgba(104, 72, 47, 0.09), var(--shadow-medium), var(--glow-glass-bloom);
+}
+
+.coleman-reference-home .coleman-key-orb__highlight {
+  background: var(--gradient-glass-highlight);
+  box-shadow: var(--glow-reflection);
+}
+
+/* Buttons and control states */
+.coleman-reference-home button,
+.coleman-reference-home a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.coleman-reference-home .coleman-header-control,
+.coleman-reference-home .coleman-home-content > div:has(.coleman-key-orb) > .coleman-glass-btn > span:first-child {
+  border-color: var(--button-border);
+  background: var(--button-bg);
+  box-shadow: var(--shadow-inset-top), var(--shadow-soft);
+  color: var(--icon-primary);
+}
+
+@media (hover: hover) {
+  .coleman-reference-home .coleman-header-control:hover,
+  .coleman-reference-home .coleman-glass-btn:hover {
+    background-color: var(--glass-strong);
+    box-shadow: var(--shadow-inset-top), var(--shadow-medium), var(--glow-white-soft);
+  }
+}
+
+.coleman-reference-home .coleman-header-control:active,
+.coleman-reference-home .coleman-glass-btn:active {
+  background-color: var(--button-pressed);
+  box-shadow: inset 0 2px 7px rgba(89, 63, 45, 0.13), var(--shadow-xs);
+  transform: scale(0.96);
+}
+
+.coleman-reference-home button:focus-visible,
+.coleman-reference-home a:focus-visible {
+  outline: 2px solid rgba(120, 85, 56, 0.52);
+  outline-offset: 3px;
+}
+
+/* Progression ribbon and intelligence card */
+.coleman-reference-home .coleman-progression-ribbon {
+  background-color: var(--surface-light);
+  box-shadow: var(--shadow-inset-top), var(--shadow-medium);
+}
+
+.coleman-reference-home .coleman-chord-active {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.16), rgba(255, 253, 250, 0.66), rgba(255, 255, 255, 0.16)) !important;
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.5), var(--glow-white-soft) !important;
+}
+
+.coleman-reference-home .coleman-chord-active::after {
+  background: var(--palette-pure-white);
+  box-shadow: var(--glow-reflection);
+}
+
+.coleman-reference-home .coleman-intelligence-card {
+  border-color: var(--border-glass);
+  background-image: var(--gradient-glass);
+  box-shadow: var(--shadow-inset-top), var(--shadow-inset-bottom), var(--shadow-large);
+}
+
+.coleman-reference-home .coleman-dashboard-knob__frame {
+  border-color: var(--border-glass);
+  background:
+    radial-gradient(circle, transparent 0 37%, rgba(255, 255, 255, 0.82) 38% 39%, transparent 40% 58%, rgba(255, 255, 255, 0.7) 59% 60%, transparent 61%),
+    radial-gradient(circle at 38% 30%, rgba(255, 255, 255, 0.62), rgba(226, 210, 195, 0.18) 68%, transparent 69%);
+  box-shadow: var(--shadow-inset-top), var(--glow-white-soft);
+}
+
+.coleman-reference-home .coleman-dashboard-knob__readout-bg {
+  border-color: var(--glass-highlight);
+  background: radial-gradient(circle at 38% 28%, var(--palette-reflection-white), rgba(244, 236, 228, 0.65) 58%, rgba(221, 203, 187, 0.38));
+  box-shadow: inset 0 1px 5px var(--palette-pure-white), var(--shadow-soft), var(--glow-white-soft);
+}
+
+.coleman-reference-home .coleman-intelligence-card .h-\[3px\] > div {
+  background: var(--gradient-progress);
+}
+
+.coleman-reference-home .coleman-voicing-pill,
+.coleman-reference-home .coleman-voicing-add {
+  border-color: var(--glass-border);
+  background-color: var(--glass);
+  color: var(--text-secondary) !important;
+  box-shadow: var(--shadow-inset-top);
+}
+
+/* Bottom navigation */
+.coleman-reference-home .coleman-nav-dock {
+  border-color: var(--border-glass);
+  background-color: var(--surface-light);
+  box-shadow: var(--shadow-inset-top), 0 14px 30px rgba(73, 50, 34, 0.15), var(--glow-white-soft);
+}
+
+.coleman-reference-home .coleman-nav-dock a svg,
+.coleman-reference-home .coleman-nav-dock a span {
+  color: var(--icon-secondary);
+}
+
+.coleman-reference-home .coleman-nav-dock a[aria-current="page"] svg,
+.coleman-reference-home .coleman-nav-dock a[aria-current="page"] span {
+  color: var(--accent-bronze);
+}
+
+.coleman-reference-home .coleman-nav-play {
+  border-color: var(--button-border);
+  background-color: var(--glass-strong);
+  box-shadow: var(--shadow-inset-top), var(--shadow-floating), var(--glow-white-medium) !important;
+}
+
+.coleman-reference-home .coleman-nav-play svg {
+  color: var(--accent-bronze-deep);
+  fill: var(--accent-bronze-deep);
+}
+
+/* Reduced transparency keeps the hierarchy legible when blur is unavailable. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .coleman-reference-home .coleman-glass-panel,
+  .coleman-reference-home .coleman-glass-panel-deep,
+  .coleman-reference-home .coleman-glass-btn,
+  .coleman-reference-home .coleman-progression-ribbon,
+  .coleman-reference-home .coleman-nav-dock,
+  .coleman-reference-home .coleman-header-control {
+    background-color: rgba(250, 246, 241, 0.88);
+  }
+}

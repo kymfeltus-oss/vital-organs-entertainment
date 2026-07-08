@@ -39,7 +39,8 @@
     "**/*.tsx"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "app/enterprise/coleman/coleman-app"
   ],
   "extends": "expo/tsconfig.base"
 }
