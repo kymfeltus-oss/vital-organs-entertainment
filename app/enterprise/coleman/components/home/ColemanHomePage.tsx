@@ -4,7 +4,6 @@ import { useState } from "react";
 
 import ColemanHomeBootLoader from "@/app/enterprise/coleman/components/home/ColemanHomeBootLoader";
 import BottomNav from "@/app/enterprise/coleman/components/home/ui/BottomNav";
-import ChordProgression from "@/app/enterprise/coleman/components/home/ui/ChordProgression";
 import HomeHeader from "@/app/enterprise/coleman/components/home/ui/HomeHeader";
 import IntelligenceCard from "@/app/enterprise/coleman/components/home/ui/IntelligenceCard";
 import KeyOrb from "@/app/enterprise/coleman/components/home/ui/KeyOrb";
@@ -29,8 +28,6 @@ function ColemanHomePageMounted() {
     liveData,
     rawLiveData,
     sessionTonic,
-    activeChordIndex,
-    selectChord,
     micError,
     dismissMicError,
     isStandby,
@@ -126,13 +123,6 @@ function ColemanHomePageMounted() {
           isStandby={isStandby && !rawLiveData.currentKey}
           noteSpelling={noteSpelling}
           onSelectSpelling={selectSpelling}
-        />
-
-        <ChordProgression
-          chordProgression={liveData.chordProgression}
-          activeChordIndex={activeChordIndex}
-          onSelectChord={selectChord}
-          isStandby={isStandby}
         />
 
         <IntelligenceCard
