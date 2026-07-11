@@ -16,6 +16,8 @@ import { getSupabase } from "@/lib/supabase/client";
 type UseLiveViewerCountOptions = {
   enabled?: boolean;
   userId?: string | null;
+  /** When false, UI reflects exact Supabase presence count (executive surfaces). */
+  applyDisplayBuffer?: boolean;
 };
 
 type UseLiveViewerCountResult = {
@@ -28,6 +30,7 @@ type UseLiveViewerCountResult = {
 export function useLiveViewerCount({
   enabled = true,
   userId = null,
+  applyDisplayBuffer = true,
 }: UseLiveViewerCountOptions = {}): UseLiveViewerCountResult {
   const [actualCount, setActualCount] = useState(0);
   const [displayBuffer, setDisplayBuffer] = useState(LIVE_VIEWER_DISPLAY_BUFFER);
@@ -71,16 +74,18 @@ export function useLiveViewerCount({
   }, [enabled, userId]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !applyDisplayBuffer) return;
 
     const timer = window.setInterval(() => {
       setDisplayBuffer((current) => nextLiveViewerDisplayBuffer(current, actualCount));
     }, LIVE_VIEWER_DECAY_INTERVAL_MS);
 
     return () => window.clearInterval(timer);
-  }, [actualCount, enabled]);
+  }, [actualCount, applyDisplayBuffer, enabled]);
 
-  const displayCount = applyLiveViewerDisplayBuffer(actualCount, displayBuffer);
+  const displayCount = applyDisplayBuffer
+    ? applyLiveViewerDisplayBuffer(actualCount, displayBuffer)
+    : Math.max(0, Math.round(actualCount));
 
   return {
     displayLabel: formatLiveViewerCount(displayCount),

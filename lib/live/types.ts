@@ -23,9 +23,21 @@ export const LIVE_ROOM_CHAT_CHANNEL = "live-room-platform";
 export const LIVE_ROOM_PLATFORM_CHANNEL = LIVE_ROOM_CHAT_CHANNEL;
 export const LIVE_STREAM_STATE_BROADCAST_EVENT = "stream-state-sync";
 export const STREAM_GRAPHICS_SYNC_EVENT = "stream-graphics-sync";
+export const LIV_MICRO_BET_LAUNCH_EVENT = "liv-micro-bet-launch";
 export const HARVEST_METRICS_CHANNEL = LIVE_ROOM_PLATFORM_CHANNEL;
 export const STREAM_STATE_SYNC_CHANNEL = LIVE_ROOM_PLATFORM_CHANNEL;
 export const LIVE_STREAM_STATE_ID = "current_event";
+/** Default LIV Golf enterprise fan viewer room scope for micro-bet realtime events. */
+export const LIV_GOLF_TOUR_MAIN_ROOM = "liv-golf-tour-main-room";
+
+export type LiveMicroBetPayload = {
+  bet_id: string;
+  question: string;
+  stake_amount: number;
+  payout_amount: number;
+  is_active: boolean;
+  options: readonly ["Yes", "No"] | readonly ["No", "Yes"];
+};
 export const HARVEST_GOAL_DOLLARS = 30_000;
 
 export type LiveStreamStateRow = {
