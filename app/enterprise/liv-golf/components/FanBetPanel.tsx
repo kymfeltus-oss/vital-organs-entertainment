@@ -10,6 +10,8 @@ type FanBetPanelProps = {
   activeBet: LiveMicroBetPayload;
   tokenBalance: number;
   isWalletLoading: boolean;
+  geoAttestationToken: string | null;
+  geoSample: { lat: number; lng: number } | null;
   onBetSuccess: () => Promise<void>;
 };
 
@@ -17,6 +19,8 @@ export default function FanBetPanel({
   activeBet,
   tokenBalance,
   isWalletLoading,
+  geoAttestationToken,
+  geoSample,
   onBetSuccess,
 }: FanBetPanelProps) {
   const [selectedOption, setSelectedOption] = useState<"Yes" | "No" | null>(null);
@@ -49,6 +53,10 @@ export default function FanBetPanel({
         body: JSON.stringify({
           betId: activeBet.bet_id,
           selection: selectedOption,
+          lat: geoSample?.lat,
+          lng: geoSample?.lng,
+          capturedAt: new Date().toISOString(),
+          geoAttestationToken,
         }),
       });
 
@@ -56,10 +64,14 @@ export default function FanBetPanel({
         const errorDetails = (await response.json().catch(() => ({}))) as {
           message?: string;
           error?: string;
+          code?: string;
         };
 
         if (response.status === 401) {
           setErrorMessage("session_expired");
+        } else if (response.status === 403) {
+          const forbidden = errorDetails as { message?: string; code?: string };
+          setErrorMessage(forbidden.message ?? "Prop wagering is unavailable in your region.");
         } else {
           setErrorMessage(errorDetails.message ?? errorDetails.error ?? "Wager transmission error occurred.");
         }

@@ -202,6 +202,9 @@ export default function StudioBetController() {
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
+                        <span className="mb-2 inline-block rounded bg-white/5 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-zinc-400">
+                          {bet.category}
+                        </span>
                         <h3 className="text-sm font-semibold tracking-wide text-zinc-100">
                           {bet.question}
                         </h3>
