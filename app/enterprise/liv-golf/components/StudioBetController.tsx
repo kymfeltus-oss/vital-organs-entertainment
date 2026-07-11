@@ -5,7 +5,9 @@ import { useCallback, useEffect, useState } from "react";
 import { getClientAppUrl } from "@/lib/client-api";
 import { LIV_MICRO_BETS } from "@/lib/liv-micro-bets";
 import { useLivStreamStatus } from "@/lib/enterprise/liv-golf/useLivStreamStatus";
+import { useRiskTelemetry } from "@/lib/enterprise/liv-golf/useRiskTelemetry";
 import { useLiveProductionBroadcast } from "@/lib/useLiveProductionBroadcast";
+import { LIV_GOLF_TOUR_MAIN_ROOM } from "@/lib/live/types";
 import type { OwnerGraphicsPreset } from "@/lib/owner/graphics-data-plane";
 
 export default function StudioBetController() {
@@ -21,6 +23,7 @@ export default function StudioBetController() {
   } = useLiveProductionBroadcast();
 
   const { status: streamStatus, isLoading: streamStatusLoading } = useLivStreamStatus();
+  const { activeAlerts: riskAlerts } = useRiskTelemetry(LIV_GOLF_TOUR_MAIN_ROOM);
 
   const [presets, setPresets] = useState<OwnerGraphicsPreset[]>([]);
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
@@ -175,6 +178,28 @@ export default function StudioBetController() {
           {error ?? graphicsError}
         </p>
       )}
+
+      {riskAlerts.length > 0 ? (
+        <div className="mx-auto mb-6 max-w-6xl space-y-3">
+          {riskAlerts.map((alert) => (
+            <p
+              key={alert.bet_id}
+              className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
+            >
+              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-amber-300">
+                Risk Exposure Alert
+              </span>
+              <span className="mt-1 block">
+                Pool <strong>{alert.bet_id}</strong> — Yes/No ratio{" "}
+                {alert.yes_to_no_ratio.toFixed(2)}x · Token risk{" "}
+                {alert.total_token_risk.toLocaleString()} · Max liability{" "}
+                {alert.max_liability_payout.toLocaleString()}
+                {alert.is_critical ? " · CRITICAL" : ""}
+              </span>
+            </p>
+          ))}
+        </div>
+      ) : null}
 
       <main className="mx-auto grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-12">
         <section className="space-y-4 lg:col-span-7">

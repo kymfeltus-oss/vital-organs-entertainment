@@ -14,7 +14,14 @@ import {
   resolvePlaceBetGeoSample,
 } from "@/lib/enterprise/liv-golf/geo/resolve-geo-sample";
 import { GEO_INELIGIBLE_CODE } from "@/lib/enterprise/liv-golf/geo/types";
+import {
+  BetPoolExposureUnavailableError,
+  recordBetPoolExposure,
+} from "@/lib/enterprise/liv-golf/bet-pool-exposure";
+import { emitProductionRiskWarning } from "@/lib/enterprise/liv-golf/emit-production-risk-warning";
+import { evaluateRiskThreshold } from "@/lib/enterprise/liv-golf/risk-threshold";
 import { LIV_MICRO_BET_TRANSACTION_TYPE, findLivMicroBet } from "@/lib/liv-micro-bets";
+import { LIV_GOLF_TOUR_MAIN_ROOM } from "@/lib/live/types";
 import { resolveAuthenticatedBuyer } from "@/lib/checkout/server";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
@@ -145,6 +152,26 @@ export async function POST(request: NextRequest) {
         : typeof result === "object" && result && typeof result.balance === "number"
           ? result.balance
           : null;
+
+    try {
+      const exposure = await recordBetPoolExposure({
+        roomId: LIV_GOLF_TOUR_MAIN_ROOM,
+        betId,
+        selection,
+        stake: bet.stake,
+        payout: bet.payout,
+        admin,
+      });
+
+      const riskAlert = evaluateRiskThreshold(exposure);
+      if (riskAlert) {
+        await emitProductionRiskWarning(riskAlert);
+      }
+    } catch (exposureError) {
+      if (!(exposureError instanceof BetPoolExposureUnavailableError)) {
+        console.error("[enterprise/liv-golf/micro-bets/place] exposure update failed:", exposureError);
+      }
+    }
 
     return auth.withSessionCookies(
       NextResponse.json({
