@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getClientAppUrl } from "@/lib/client-api";
 import type { LivMicroBet, LiveMicroBetsSession } from "@/lib/liv-micro-bets";
-import { fetchVmixSnapshot, type VmixSnapshot } from "@/lib/owner/vmix/client";
+import type { VmixSnapshot } from "@/lib/owner/vmix/client";
 
 type SessionApiResponse = {
   success?: boolean;
@@ -21,6 +21,11 @@ type MicroBetsApiResponse = {
   clearOverlays?: boolean;
   launchedAt?: string | null;
   updatedAt?: string | null;
+  error?: string;
+};
+
+type VmixStatusApiResponse = {
+  vmix?: VmixSnapshot;
   error?: string;
 };
 
@@ -46,6 +51,22 @@ function mapSessionResponse(data: SessionApiResponse | MicroBetsApiResponse): Li
   };
 }
 
+async function fetchProductionVmixSnapshot(): Promise<VmixSnapshot | null> {
+  try {
+    const response = await fetch(`${getClientAppUrl()}/api/owner/vmix/status`, {
+      cache: "no-store",
+      credentials: "include",
+    });
+
+    if (!response.ok) return null;
+
+    const payload = (await response.json()) as VmixStatusApiResponse;
+    return payload.vmix ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function useLiveProductionBroadcast() {
   const [state, setState] = useState<LiveProductionBroadcastState>({
     session: null,
@@ -63,7 +84,7 @@ export function useLiveProductionBroadcast() {
           cache: "no-store",
           credentials: "include",
         }),
-        fetchVmixSnapshot(),
+        fetchProductionVmixSnapshot(),
       ]);
 
       if (!sessionResponse.ok) {
@@ -101,53 +122,50 @@ export function useLiveProductionBroadcast() {
     void refresh();
   }, [refresh]);
 
-  const dispatchSession = useCallback(
-    async (activeBetId: string | null) => {
-      setState((prev) => ({ ...prev, isDispatching: true, error: null }));
+  const dispatchSession = useCallback(async (activeBetId: string | null) => {
+    setState((prev) => ({ ...prev, isDispatching: true, error: null }));
 
-      try {
-        const response = await fetch(
-          `${getClientAppUrl()}/api/enterprise/liv-golf/micro-bets/session`,
-          {
-            method: "PATCH",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ activeBetId }),
-          },
-        );
+    try {
+      const response = await fetch(
+        `${getClientAppUrl()}/api/enterprise/liv-golf/micro-bets/session`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ activeBetId }),
+        },
+      );
 
-        const payload = (await response.json()) as SessionApiResponse;
+      const payload = (await response.json()) as SessionApiResponse;
 
-        if (!response.ok || !payload.success) {
-          setState((prev) => ({
-            ...prev,
-            isDispatching: false,
-            error: payload.error ?? `Micro-bet dispatch failed (${response.status}).`,
-          }));
-          return false;
-        }
-
-        const session = mapSessionResponse(payload);
-        setState((prev) => ({
-          ...prev,
-          session,
-          activeBet: payload.activeBet ?? null,
-          isDispatching: false,
-          error: null,
-        }));
-
-        return true;
-      } catch (error) {
+      if (!response.ok || !payload.success) {
         setState((prev) => ({
           ...prev,
           isDispatching: false,
-          error: error instanceof Error ? error.message : "Micro-bet dispatch failed.",
+          error: payload.error ?? `Micro-bet dispatch failed (${response.status}).`,
         }));
         return false;
       }
-    },
-    [],
-  );
+
+      const session = mapSessionResponse(payload);
+      setState((prev) => ({
+        ...prev,
+        session,
+        activeBet: payload.activeBet ?? null,
+        isDispatching: false,
+        error: null,
+      }));
+
+      return true;
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        isDispatching: false,
+        error: error instanceof Error ? error.message : "Micro-bet dispatch failed.",
+      }));
+      return false;
+    }
+  }, []);
 
   const launchMicroBet = useCallback(
     async (betId: string) => dispatchSession(betId),

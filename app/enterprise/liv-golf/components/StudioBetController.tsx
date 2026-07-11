@@ -32,7 +32,8 @@ export default function StudioBetController() {
       });
 
       if (response.status === 401) {
-        setGraphicsError("Owner authentication required. Sign in to the production console.");
+        setPresets([]);
+        setActivePresetId(null);
         return;
       }
 
@@ -97,7 +98,7 @@ export default function StudioBetController() {
             </h1>
           </div>
           <p className="mt-1 text-xs text-zinc-400">
-            Owner-authenticated · PostgreSQL session · Supabase realtime · vMix broadcast lane
+            PostgreSQL session · Supabase realtime · vMix broadcast lane
           </p>
           <div className="mt-3 flex flex-wrap gap-4 text-xs">
             <Link href="/enterprise/liv-golf/live" className="text-[#CCFF00] hover:underline">

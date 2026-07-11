@@ -1,8 +1,8 @@
 /** Primary platform hosts — subdomains on these resolve to tenant IDs. */
 export const PLATFORM_ALLOWED_DOMAINS = [
   "localhost:3000",
-  "parablestreaming.com",
-  "www.parablestreaming.com",
+  "parablestream.com",
+  "www.parablestream.com",
   "yourplatform.com",
   "www.yourplatform.com",
 ] as const;

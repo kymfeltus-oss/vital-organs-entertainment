@@ -13,6 +13,12 @@ export type LiveMicroBetsSessionRow = {
 
 const TABLE = "live_micro_bets_session";
 const SESSION_ID = "current";
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function resolveSessionUpdatedBy(userId: string): string | null {
+  return UUID_PATTERN.test(userId) ? userId : null;
+}
 
 function errorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -79,7 +85,7 @@ export async function upsertLiveMicroBetsSession(input: {
       clear_overlays: input.clearOverlays,
       launched_at: input.activeBetId ? now : null,
       updated_at: now,
-      updated_by: input.updatedBy,
+      updated_by: resolveSessionUpdatedBy(input.updatedBy),
     })
     .select("id, active_bet_id, clear_overlays, launched_at, updated_at, updated_by")
     .single();

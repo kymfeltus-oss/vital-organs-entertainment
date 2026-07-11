@@ -17,13 +17,16 @@ export type OwnerAuthFailure = {
 
 export type OwnerAuthResult = OwnerAuthSuccess | OwnerAuthFailure;
 
+/** Valid UUID for E2E-only synthetic owner rows (never used in production). */
+export const E2E_SYNTHETIC_OWNER_USER_ID = "00000000-0000-4000-8000-000000000001";
+
 /** Server-only — gates /api/owner/* and /owner/* surfaces. */
 export async function requireOwnerUser(): Promise<OwnerAuthResult> {
   if (isE2EBypassEnabled()) {
     console.info("⚡ [E2E BYPASS] Injecting synthetic owner session matching core type contracts.");
     return {
       ok: true,
-      userId: "e2e-test-synthetic-owner-uuid",
+      userId: E2E_SYNTHETIC_OWNER_USER_ID,
       email: process.env.E2E_ADMIN_EMAIL?.trim().toLowerCase() || DEFAULT_TENANT_THEME.contact.email,
     };
   }
