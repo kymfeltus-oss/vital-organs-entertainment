@@ -5,9 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import type { PlatformTierId } from "@/components/admin/PlanSelectionCta";
 import { evaluatePasswordStrength } from "@/lib/auth/password-policy";
 import { isValidEmail } from "@/lib/auth/validation";
+import { buildOnboardingLoginUrl } from "@/lib/onboarding/routes";
 import { isValidTenantId, sanitizeTenantIdInput } from "@/lib/onboarding/tenant-id";
 import { getMarketingPlatformHost } from "@/lib/theme/platform-domains";
-
 type Step = 1 | 2 | 3;
 type SubdomainStatus = "idle" | "checking" | "available" | "taken" | "invalid";
 
@@ -31,18 +31,58 @@ export default function OwnerOnboardingClient({
   const [leaderEmail, setLeaderEmail] = useState("leader@yourministry.org");
   const [password, setPassword] = useState("");
   const [subdomain, setSubdomain] = useState("");
-  const [primaryColor, setPrimaryColor] = useState("#FFB800");
+  const [primaryColor, setPrimaryColor] = useState("#F5B400");
 
   const [subdomainStatus, setSubdomainStatus] = useState<SubdomainStatus>("idle");
   const [subdomainMessage, setSubdomainMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [stepValidationError, setStepValidationError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [accountSaving, setAccountSaving] = useState(false);
   const [isStartingCheckout, setIsStartingCheckout] = useState(false);
   const [successUrl, setSuccessUrl] = useState<string | null>(null);
+  const [signedInEmail, setSignedInEmail] = useState<string | null>(null);
+  const [loginPromptUrl, setLoginPromptUrl] = useState<string | null>(null);
 
   const passwordStrength = useMemo(() => evaluatePasswordStrength(password), [password]);
   const tierLabel = TIER_ALLOCATION_LABEL[selectedTier];
+
+  const onboardingLoginHref = useMemo(
+    () =>
+      buildOnboardingLoginUrl({
+        email: leaderEmail,
+        tier: selectedTier,
+      }),
+    [leaderEmail, selectedTier],
+  );
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const response = await fetch("/api/onboarding/session", { credentials: "include" });
+        const session = (await response.json()) as {
+          loggedIn?: boolean;
+          email?: string;
+          tenantUrl?: string | null;
+          onboardingComplete?: boolean;
+        };
+
+        if (!session.loggedIn || !session.email) return;
+
+        setSignedInEmail(session.email);
+        setLeaderEmail(session.email);
+
+        if (session.onboardingComplete && session.tenantUrl) {
+          setSuccessUrl(session.tenantUrl);
+          return;
+        }
+
+        setStep(2);
+      } catch {
+        // Optional session probe — ignore while building.
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     if (step !== 2) return;
@@ -95,7 +135,9 @@ export default function OwnerOnboardingClient({
       if (!isValidEmail(leaderEmail)) {
         return "Enter a valid administrative email address to continue.";
       }
-      if (!passwordStrength.isValid) {
+      const isSignedInForEmail =
+        signedInEmail !== null && signedInEmail.toLowerCase() === leaderEmail.trim().toLowerCase();
+      if (!isSignedInForEmail && !passwordStrength.isValid) {
         return passwordStrength.message ?? "Complete all password security requirements to continue.";
       }
       return null;
@@ -121,7 +163,7 @@ export default function OwnerOnboardingClient({
     return null;
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     setSubmitError(null);
     const validationError = resolveStepValidationError(step);
     if (validationError) {
@@ -130,6 +172,59 @@ export default function OwnerOnboardingClient({
     }
 
     setStepValidationError(null);
+
+    if (step === 1) {
+      setAccountSaving(true);
+      setLoginPromptUrl(null);
+
+      try {
+        const response = await fetch("/api/onboarding/account", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            companyName: ministryName.trim(),
+            ownerEmail: leaderEmail.trim().toLowerCase(),
+            password,
+          }),
+        });
+
+        const result = (await response.json()) as {
+          ok?: boolean;
+          error?: string;
+          code?: string;
+          loginUrl?: string;
+          onboardingComplete?: boolean;
+          tenantUrl?: string;
+          skipToStep?: 2 | 3;
+          message?: string;
+        };
+
+        if (!response.ok || !result.ok) {
+          if (result.code === "email_exists" && result.loginUrl) {
+            setLoginPromptUrl(result.loginUrl);
+          }
+          throw new Error(result.error ?? "Unable to provision account.");
+        }
+
+        setSignedInEmail(leaderEmail.trim().toLowerCase());
+
+        if (result.onboardingComplete && result.tenantUrl) {
+          setSuccessUrl(result.tenantUrl);
+          return;
+        }
+
+        setStep(result.skipToStep ?? 2);
+      } catch (error) {
+        setSubmitError(
+          error instanceof Error ? error.message : "Unable to provision account.",
+        );
+      } finally {
+        setAccountSaving(false);
+      }
+      return;
+    }
+
     setStep((current) => Math.min(3, current + 1) as Step);
   };
 
@@ -139,11 +234,12 @@ export default function OwnerOnboardingClient({
     setStepValidationError(null);
 
     if (step < 3) {
-      handleContinue();
+      await handleContinue();
       return;
     }
 
     setLoading(true);
+    setLoginPromptUrl(null);
 
     try {
       const cleanSubdomain = sanitizeTenantIdInput(subdomain);
@@ -153,9 +249,11 @@ export default function OwnerOnboardingClient({
       formData.append("password", password);
       formData.append("tenantId", cleanSubdomain);
       formData.append("primaryColor", primaryColor);
+      formData.append("tier", selectedTier);
 
-      const response = await fetch("/api/onboarding/register", {
+      const response = await fetch("/api/onboarding/initialize", {
         method: "POST",
+        credentials: "include",
         body: formData,
       });
 
@@ -163,9 +261,15 @@ export default function OwnerOnboardingClient({
         ok?: boolean;
         tenantUrl?: string;
         error?: string;
+        code?: string;
+        loginUrl?: string;
+        alreadyProvisioned?: boolean;
       };
 
       if (!response.ok || !result.ok || !result.tenantUrl) {
+        if (result.code === "email_exists" && result.loginUrl) {
+          setLoginPromptUrl(result.loginUrl);
+        }
         throw new Error(result.error ?? "Infrastructure provisioning timeout. Please retry.");
       }
 
@@ -207,7 +311,7 @@ export default function OwnerOnboardingClient({
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#000000] px-6 text-center text-white">
         <div>
-          <div className="mx-auto mb-5 h-10 w-10 animate-spin rounded-full border-2 border-[#FFB800]/25 border-t-[#FFB800]" />
+          <div className="mx-auto mb-5 h-10 w-10 animate-spin rounded-full border-2 border-[#F5B400]/25 border-t-[#F5B400]" />
           <h1 className="text-xl font-bold tracking-wide uppercase">Deploying Sanctuary Nodes</h1>
           <p className="mt-3 text-sm text-white/60">
             Redirecting to secure checkout for {tierLabel}…
@@ -221,7 +325,7 @@ export default function OwnerOnboardingClient({
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#000000] px-6 text-center text-white">
         <div className="max-w-md">
-          <div className="mx-auto mb-5 h-2 w-2 rounded-full bg-[#FFB800] shadow-[0_0_14px_#FFB800]" />
+          <div className="mx-auto mb-5 h-2 w-2 rounded-full bg-[#F5B400] shadow-[0_0_14px_#F5B400]" />
           <h1 className="text-2xl font-extrabold tracking-tight uppercase">Sanctuary Node Registered</h1>
           <p className="mt-3 text-sm text-white/65">
             Your ministry theme row is saved. Open your branded subdomain to launch the sanctuary
@@ -229,7 +333,7 @@ export default function OwnerOnboardingClient({
           </p>
           <a
             href={successUrl}
-            className="mt-8 inline-flex h-11 items-center justify-center rounded bg-[#FFB800] px-6 text-[10px] font-bold tracking-[0.22em] text-black uppercase"
+            className="mt-8 inline-flex h-11 items-center justify-center rounded bg-[#F5B400] px-6 text-[10px] font-bold tracking-[0.22em] text-black uppercase"
           >
             Open Sanctuary Node →
           </a>
@@ -239,7 +343,7 @@ export default function OwnerOnboardingClient({
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col justify-between overflow-y-auto bg-[#000000] pb-16 font-sans text-white selection:bg-[#FFB800] selection:text-black">
+    <div className="relative flex min-h-screen flex-col justify-between overflow-y-auto bg-[#000000] pb-16 font-sans text-white selection:bg-[#F5B400] selection:text-black">
       <style>{`
         @keyframes sanctuary-fade-in {
           from { opacity: 0; transform: translateY(8px); }
@@ -252,7 +356,7 @@ export default function OwnerOnboardingClient({
       `}</style>
 
       <div
-        className="pointer-events-none absolute left-1/2 top-[5%] z-0 h-[350px] w-[600px] -translate-x-1/2 rounded-full bg-gradient-to-b from-[#FFB800]/10 to-transparent blur-[120px]"
+        className="pointer-events-none absolute left-1/2 top-[5%] z-0 h-[350px] w-[600px] -translate-x-1/2 rounded-full bg-gradient-to-b from-[#F5B400]/10 to-transparent blur-[120px]"
         aria-hidden="true"
       />
       <div
@@ -262,7 +366,7 @@ export default function OwnerOnboardingClient({
 
       <nav className="relative z-20 mx-auto flex w-full max-w-7xl items-center justify-between border-b border-neutral-900/40 bg-black/10 px-8 py-6 backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#FFB800] shadow-[0_0_12px_#FFB800]" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[#F5B400] shadow-[0_0_12px_#F5B400]" />
           <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-neutral-400">
             PΛRΛBLE FAITH REGISTRY
           </span>
@@ -277,12 +381,17 @@ export default function OwnerOnboardingClient({
 
       <main className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center px-6 py-12">
         <div className="relative w-full rounded-3xl border border-neutral-900/80 bg-neutral-950/40 p-10 shadow-2xl backdrop-blur-xl md:p-12">
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FFB800]/30 to-transparent" />
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#F5B400]/30 to-transparent" />
 
           <header className="mb-8 text-left">
-            <p className="mb-2 font-mono text-[9px] uppercase tracking-[0.4em] text-[#FFB800]">
+            <p className="mb-2 font-mono text-[9px] uppercase tracking-[0.4em] text-[#F5B400]">
               Ministry Operator Onboarding
             </p>
+            {signedInEmail ? (
+              <p className="mb-3 rounded-xl border border-[#F5B400]/25 bg-[#F5B400]/8 px-3 py-2 font-mono text-[10px] text-[#F5B400]">
+                Signed in as {signedInEmail}. Continue provisioning your sanctuary node below.
+              </p>
+            ) : null}
             <h1 className="mb-2 text-3xl font-extrabold tracking-tight text-white">
               Provision Your Sanctuary Node
             </h1>
@@ -290,7 +399,7 @@ export default function OwnerOnboardingClient({
               Three quick infrastructure configuration steps to claim your dedicated ministry
               subdomain, sync brand assets, and activate leader credentials.
             </p>
-            <div className="mt-4 inline-block rounded-full border border-neutral-800 bg-neutral-900 px-3 py-1 font-mono text-[9px] uppercase tracking-wider text-[#FFB800]">
+            <div className="mt-4 inline-block rounded-full border border-neutral-800 bg-neutral-900 px-3 py-1 font-mono text-[9px] uppercase tracking-wider text-[#F5B400]">
               Selected Allocation: {tierLabel}
             </div>
           </header>
@@ -305,7 +414,7 @@ export default function OwnerOnboardingClient({
                 key={item.id}
                 className={`rounded border py-2 transition-colors ${
                   step === item.id
-                    ? "border-[#FFB800] bg-[#FFB800]/5 font-bold text-[#FFB800]"
+                    ? "border-[#F5B400] bg-[#F5B400]/5 font-bold text-[#F5B400]"
                     : "border-neutral-900 text-neutral-500"
                 }`}
               >
@@ -333,7 +442,7 @@ export default function OwnerOnboardingClient({
                     value={ministryName}
                     onChange={(event) => setMinistryName(event.target.value)}
                     required
-                    className="w-full rounded-xl border border-neutral-900 bg-black px-4 py-3 text-xs text-white transition-colors focus:border-[#FFB800] focus:outline-none"
+                    className="w-full rounded-xl border border-neutral-900 bg-black px-4 py-3 text-xs text-white transition-colors focus:border-[#F5B400] focus:outline-none"
                   />
                 </div>
                 <div>
@@ -349,7 +458,7 @@ export default function OwnerOnboardingClient({
                     value={leaderEmail}
                     onChange={(event) => setLeaderEmail(event.target.value)}
                     required
-                    className="w-full rounded-xl border border-neutral-900 bg-black px-4 py-3 text-xs text-white transition-colors focus:border-[#FFB800] focus:outline-none"
+                    className="w-full rounded-xl border border-neutral-900 bg-black px-4 py-3 text-xs text-white transition-colors focus:border-[#F5B400] focus:outline-none"
                   />
                 </div>
                 <div>
@@ -366,14 +475,14 @@ export default function OwnerOnboardingClient({
                     onChange={(event) => setPassword(event.target.value)}
                     required
                     placeholder="••••••••••••"
-                    className="w-full rounded-xl border border-neutral-900 bg-black px-4 py-3 text-xs text-white placeholder-neutral-800 transition-colors focus:border-[#FFB800] focus:outline-none"
+                    className="w-full rounded-xl border border-neutral-900 bg-black px-4 py-3 text-xs text-white placeholder-neutral-800 transition-colors focus:border-[#F5B400] focus:outline-none"
                   />
                 </div>
                 <ul className="grid gap-1.5 sm:grid-cols-2">
                   {passwordStrength.checks.map((check) => (
                     <li
                       key={check.id}
-                      className={`text-[10px] ${check.passed ? "text-[#FFB800]" : "text-neutral-600"}`}
+                      className={`text-[10px] ${check.passed ? "text-[#F5B400]" : "text-neutral-600"}`}
                     >
                       {check.passed ? "✓" : "○"} {check.label}
                     </li>
@@ -384,6 +493,13 @@ export default function OwnerOnboardingClient({
                     Complete the password requirements above, then press Continue.
                   </p>
                 ) : null}
+                <p className="text-[10px] text-neutral-500">
+                  Already registered?{" "}
+                  <Link href={onboardingLoginHref} className="text-[#F5B400] hover:underline">
+                    Sign in to continue onboarding
+                  </Link>
+                  {" "}(optional while we build).
+                </p>
               </div>
             ) : null}
 
@@ -399,7 +515,7 @@ export default function OwnerOnboardingClient({
                   >
                     Desired Sanctuary Prefix
                   </label>
-                  <div className="flex overflow-hidden rounded-xl border border-neutral-900 bg-black transition-colors focus-within:border-[#FFB800]">
+                  <div className="flex overflow-hidden rounded-xl border border-neutral-900 bg-black transition-colors focus-within:border-[#F5B400]">
                     <input
                       id="sanctuary-prefix"
                       type="text"
@@ -421,7 +537,7 @@ export default function OwnerOnboardingClient({
                     <p
                       className={`mt-2 text-[10px] ${
                         subdomainStatus === "available"
-                          ? "text-[#FFB800]"
+                          ? "text-[#F5B400]"
                           : subdomainStatus === "checking"
                             ? "text-neutral-500"
                             : "text-neutral-400"
@@ -466,9 +582,16 @@ export default function OwnerOnboardingClient({
                   </div>
                 </div>
                 {submitError ? (
-                  <p className="rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-3 text-xs text-neutral-300">
-                    {submitError}
-                  </p>
+                  <div className="space-y-3 rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-3 text-xs text-neutral-300">
+                    <p>{submitError}</p>
+                    {loginPromptUrl ? (
+                      <p>
+                        <Link href={loginPromptUrl} className="font-semibold text-[#F5B400] hover:underline">
+                          Sign in with your existing password →
+                        </Link>
+                      </p>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
             ) : null}
@@ -476,10 +599,23 @@ export default function OwnerOnboardingClient({
             {stepValidationError ? (
               <p
                 role="alert"
-                className="rounded-xl border border-[#FFB800]/30 bg-[#FFB800]/8 px-4 py-3 text-xs text-[#FFB800]"
+                className="rounded-xl border border-[#F5B400]/30 bg-[#F5B400]/8 px-4 py-3 text-xs text-[#F5B400]"
               >
                 {stepValidationError}
               </p>
+            ) : null}
+
+            {submitError && step < 3 ? (
+              <div className="space-y-3 rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-3 text-xs text-neutral-300">
+                <p>{submitError}</p>
+                {loginPromptUrl ? (
+                  <p>
+                    <Link href={loginPromptUrl} className="font-semibold text-[#F5B400] hover:underline">
+                      Sign in with your existing password →
+                    </Link>
+                  </p>
+                ) : null}
+              </div>
             ) : null}
 
             <div className="mt-8 flex items-center justify-between gap-4 border-t border-neutral-900/60 pt-4">
@@ -502,17 +638,21 @@ export default function OwnerOnboardingClient({
               {step < 3 ? (
                 <button
                   type="button"
-                  onClick={handleContinue}
-                  disabled={loading || (step === 2 && subdomainStatus === "checking")}
-                  className="inline-flex h-11 items-center justify-center rounded-xl bg-[#FFB800] px-6 font-mono text-xs font-bold uppercase tracking-widest text-black transition-all hover:opacity-90 hover:shadow-[0_0_24px_rgba(255,184,0,0.22)] disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => void handleContinue()}
+                  disabled={loading || accountSaving || (step === 2 && subdomainStatus === "checking")}
+                  className="inline-flex h-11 items-center justify-center rounded-xl bg-[#F5B400] px-6 font-mono text-xs font-bold uppercase tracking-widest text-black transition-all hover:opacity-90 hover:shadow-[0_0_24px_rgba(245,180,0,0.22)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {step === 2 && subdomainStatus === "checking" ? "Checking Subdomain…" : "Continue →"}
+                  {step === 1 && accountSaving
+                    ? "Provisioning Account…"
+                    : step === 2 && subdomainStatus === "checking"
+                      ? "Checking Subdomain…"
+                      : "Continue →"}
                 </button>
               ) : (
                 <button
                   type="submit"
                   disabled={loading}
-                  className="inline-flex h-11 items-center justify-center rounded-xl bg-[#FFB800] px-6 font-mono text-xs font-bold uppercase tracking-widest text-black transition-all hover:opacity-90 hover:shadow-[0_0_24px_rgba(255,184,0,0.22)] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-11 items-center justify-center rounded-xl bg-[#F5B400] px-6 font-mono text-xs font-bold uppercase tracking-widest text-black transition-all hover:opacity-90 hover:shadow-[0_0_24px_rgba(245,180,0,0.22)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {loading ? "Deploying Sanctuary Nodes..." : "Initialize Infrastructure"}
                 </button>
@@ -524,7 +664,7 @@ export default function OwnerOnboardingClient({
 
       <footer className="relative z-10 border-t border-neutral-900/50 px-8 py-5">
         <div className="mx-auto flex max-w-7xl items-center gap-2.5 font-mono text-[8px] uppercase tracking-[0.28em] text-neutral-600">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#FFB800] shadow-[0_0_10px_#FFB800]" aria-hidden="true" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[#F5B400] shadow-[0_0_10px_#F5B400]" aria-hidden="true" />
           <p>
             PΛRΛBLE INFRASTRUCTURE CORE PLATFORM SYSTEMS ONLINE // SOVEREIGN SECURITY ACTIVE
           </p>

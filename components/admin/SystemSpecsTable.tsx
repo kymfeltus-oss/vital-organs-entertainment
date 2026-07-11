@@ -100,7 +100,7 @@ export default function SystemSpecsTable() {
     >
       <div className="mx-auto max-w-7xl px-6 py-16 md:px-10">
         <header className="mb-10 max-w-3xl">
-          <p className="mb-2 font-mono text-[9px] uppercase tracking-[0.38em] text-[#FFB800]">
+          <p className="mb-2 font-mono text-[9px] uppercase tracking-[0.38em] text-[#F5B400]">
             Procurement Specifications
           </p>
           <h2 className="text-2xl font-extrabold uppercase tracking-tight text-white md:text-3xl">
@@ -118,7 +118,7 @@ export default function SystemSpecsTable() {
               key={group.groupTitle}
               className="rounded-2xl border border-white/10 bg-[rgba(255,255,255,0.04)] p-6 backdrop-blur-md"
             >
-              <h3 className="mb-5 font-mono text-[10px] font-bold uppercase tracking-[0.28em] text-[#FFB800]">
+              <h3 className="mb-5 font-mono text-[10px] font-bold uppercase tracking-[0.28em] text-[#F5B400]">
                 {group.groupTitle}
               </h3>
               <ul className="space-y-4">

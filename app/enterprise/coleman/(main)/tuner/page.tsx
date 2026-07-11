@@ -1,4 +1,4 @@
-import ColemanTuner from "@/app/enterprise/coleman/components/ColemanTuner";
+import ColemanTuner from "@/app/enterprise/coleman/components/tools/ColemanTuner";
 
 export default function TunerPage() {
   return <ColemanTuner />;

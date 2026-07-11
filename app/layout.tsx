@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 import RootLayoutShell from "@/components/ui/shell/RootLayoutShell";
 import ThemeProvider from "@/components/theme/ThemeProvider";
 import { DEFAULT_TENANT_THEME } from "@/lib/theme/default-theme";
@@ -9,6 +9,13 @@ import "./theme-layout.css";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+  weight: ["500", "600", "700"],
   display: "swap",
 });
 
@@ -35,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body
         className="font-body min-h-dvh max-w-[100vw] overflow-x-hidden antialiased"
         style={{

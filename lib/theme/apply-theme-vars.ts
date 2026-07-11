@@ -1,4 +1,5 @@
 import type { TenantTheme } from "@/lib/theme/types";
+import { FAITH_BRAND_HERO_GRADIENT } from "@/lib/theme/faith-brand-guidelines";
 
 /** Maps tenant theme to CSS custom properties on :root. */
 export function themeToCssVariables(theme: TenantTheme): Record<string, string> {
@@ -16,7 +17,7 @@ export function themeToCssVariables(theme: TenantTheme): Record<string, string> 
     "--theme-font-headline": fonts.headline,
     "--theme-font-body": fonts.body,
     "--theme-font-ui": fonts.ui,
-    "--theme-app-gradient": `linear-gradient(160deg, ${colors.background} 0%, ${colors.surface} 55%, ${colors.background} 100%)`,
+    "--theme-app-gradient": FAITH_BRAND_HERO_GRADIENT,
     "--theme-surface-gradient": `linear-gradient(180deg, ${colors.surface} 0%, ${colors.background} 100%)`,
     /* Legacy brand token aliases — existing components keep working */
     "--color-brand-black-base": colors.background,
@@ -29,7 +30,7 @@ export function themeToCssVariables(theme: TenantTheme): Record<string, string> 
     "--color-brand-muted": colors.textMuted,
     "--color-brand-border": colors.border,
     "--color-brand-charcoal": colors.surface,
-    "--app-glossy-background": `linear-gradient(160deg, ${colors.background} 0%, ${colors.surface} 55%, ${colors.background} 100%)`,
+    "--app-glossy-background": FAITH_BRAND_HERO_GRADIENT,
     "--gradient-brand": `linear-gradient(90deg, ${colors.primary} 0%, ${colors.accent} 100%)`,
     "--gradient-brand-soft": `linear-gradient(90deg, color-mix(in srgb, ${colors.primary} 25%, transparent) 0%, color-mix(in srgb, ${colors.accent} 25%, transparent) 100%)`,
     "--font-headline": fonts.headline,

@@ -1,9 +1,17 @@
 import type { Metadata, Viewport } from "next";
+import { Inter_Tight } from "next/font/google";
 import "./coleman.css";
 import "./coleman-home-premium.css";
 import "./coleman-home-material-system.css";
 import "./coleman-stage-audio.css";
+import "./coleman-explore-studio.css";
 
+const colemanDisplay = Inter_Tight({
+  subsets: ["latin"],
+  weight: ["300", "400", "500"],
+  variable: "--font-coleman-display",
+  display: "swap",
+});
 export const metadata: Metadata = {
   title: "COLEMAN",
   description:
@@ -23,8 +31,7 @@ export default function ColemanLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="coleman-root antialiased">
-      <div className="coleman-mobile-shell">
+    <div className={`coleman-root antialiased ${colemanDisplay.variable}`}>      <div className="coleman-mobile-shell">
         <div className="coleman-mobile-frame coleman-luxury-canvas">
           <main id="main-content" className="coleman-mobile-screen">
             <div id="coleman-key-finder-live-root" aria-live="polite" aria-atomic="true" role="status">

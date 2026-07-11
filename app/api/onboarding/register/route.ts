@@ -7,6 +7,7 @@ import {
   registerTenantOwnerAccount,
   uploadTenantLogo,
 } from "@/lib/onboarding/tenant-themes-repository";
+import { findTenantIdByOwnerEmail } from "@/lib/onboarding/owner-auth";
 import { isValidTenantId, normalizeTenantId } from "@/lib/onboarding/tenant-id";
 import { getMarketingPlatformHost } from "@/lib/theme/platform-domains";
 
@@ -76,7 +77,32 @@ export async function POST(request: NextRequest) {
     });
 
     if (authResult.ok === false) {
-      return NextResponse.json({ error: authResult.message }, { status: 400 });
+      const status = authResult.code === "email_exists" ? 409 : 400;
+      return NextResponse.json(
+        {
+          error: authResult.message,
+          code: authResult.code ?? "auth_failed",
+          loginUrl: `/onboarding/login?email=${encodeURIComponent(ownerEmail)}&next=${encodeURIComponent("/onboarding")}`,
+        },
+        { status },
+      );
+    }
+
+    const existingTenantId = await findTenantIdByOwnerEmail(ownerEmail);
+    if (existingTenantId) {
+      const platformHost = getMarketingPlatformHost();
+      const tenantUrl =
+        platformHost === "localhost:3000" || platformHost.startsWith("localhost:")
+          ? `http://${existingTenantId}.${platformHost}`
+          : `https://${existingTenantId}.${platformHost}`;
+
+      return NextResponse.json({
+        ok: true,
+        tenantId: existingTenantId,
+        tenantUrl,
+        alreadyProvisioned: true,
+        message: "Your sanctuary node is already provisioned for this account.",
+      });
     }
 
     let logoUrl: string | null = null;

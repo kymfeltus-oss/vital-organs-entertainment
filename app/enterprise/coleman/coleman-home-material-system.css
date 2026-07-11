@@ -1,153 +1,141 @@
 /*
  * COLEMAN HOME MATERIAL SYSTEM
- * Warm monochromatic luxury: pearl ceramic + frosted acrylic + champagne metal.
- * Palette is ordered from lightest to darkest, then mapped to semantic tokens.
+ * Luxury technical minimalism: midnight matte + frosted glass + champagne metal + neon lime.
  */
 
 .coleman-reference-home {
-  /* Master palette — lightest to darkest */
-  --palette-pure-white: #ffffff;
-  --palette-reflection-white: #fffdfa;
-  --palette-porcelain: #fcf9f5;
-  --palette-pearl-white: #faf6f1;
-  --palette-soft-ivory: #f7f1eb;
-  --palette-champagne-white: #f4ece4;
-  --palette-warm-cream: #f1e8df;
-  --palette-cream-fog: #eee3d9;
-  --palette-ivory-sand: #eaded3;
-  --palette-warm-beige: #e6d8cb;
-  --palette-champagne-ivory: #e2d2c3;
-  --palette-pearl-sand: #ddcbbb;
-  --palette-warm-silver: #d9d6d0;
-  --palette-satin-silver: #cfcbc4;
-  --palette-light-sand: #d3bda9;
-  --palette-champagne-sand: #c9b098;
-  --palette-soft-bronze: #b99a7c;
-  --palette-champagne-gold: #aa8968;
-  --palette-muted-gold: #9d7d60;
-  --palette-stone-beige: #927966;
-  --palette-mushroom: #867064;
-  --palette-warm-taupe: #78665a;
-  --palette-muted-taupe: #6d5c51;
-  --palette-bronze: #785538;
-  --palette-aged-bronze: #68482f;
-  --palette-dark-bronze: #5b3f2a;
-  --palette-cocoa: #50392a;
-  --palette-dark-cocoa: #453024;
-  --palette-soft-espresso: #3b291e;
-  --palette-espresso: #332217;
-  --palette-deep-espresso: #291a11;
-  --palette-darkest-cocoa: #20130c;
-  --palette-shadow-taupe: #735b49;
-  --palette-shadow-brown: #593f2d;
-  --palette-icon-black: #12100e;
+  /* Master palette — darkest to lightest */
+  --palette-midnight: #0a0d12;
+  --palette-carbon: #10151c;
+  --palette-obsidian: #161b22;
+  --palette-graphite: #1e242d;
+  --palette-smoke: #2a3039;
+  --palette-ash: #353b45;
+  --palette-steel: #424852;
+  --palette-slate: #4f555f;
+  --palette-muted-stone: #5c626c;
+  --palette-warm-gray: #69656a;
+  --palette-taupe-gray: #7b766f;
+  --palette-secondary-text: #b8b2a6;
+  --palette-primary-white: #f5f2ea;
+  --palette-pure-white: var(--palette-primary-white);
+  --palette-reflection-white: rgba(255, 255, 255, 0.18);
+  --palette-champagne-gold: #d6b37a;
+  --palette-soft-gold: #c9a46a;
+  --palette-bronze-gold: #a47b49;
+  --palette-burnished-brass: #886338;
+  --palette-neon-lime: #97e53a;
+  --palette-soft-lime: #74c93a;
+  --palette-shadow-black: rgba(0, 0, 0, 0.45);
   --palette-system-black: #070707;
 
   /* Background system */
-  --bg-primary: var(--coleman-app-canvas, #d9c8b5);
-  --bg-secondary: var(--coleman-app-canvas, #d9c8b5);
-  --bg-tertiary: var(--coleman-app-canvas, #d9c8b5);
-  --bg-light-bloom: rgba(255, 253, 250, 0.82);
-  --bg-ambient-warm: rgba(226, 210, 195, 0.54);
-  --bg-ambient-sand: rgba(185, 154, 126, 0.22);
-  --bg-vignette: rgba(89, 63, 45, 0.09);
+  --bg-primary: var(--coleman-app-canvas, var(--palette-midnight));
+  --bg-secondary: var(--palette-carbon);
+  --bg-tertiary: var(--palette-obsidian);
+  --bg-light-bloom: rgba(255, 255, 255, 0.06);
+  --bg-ambient-warm: rgba(214, 179, 122, 0.08);
+  --bg-ambient-sand: rgba(164, 123, 73, 0.06);
+  --bg-vignette: rgba(0, 0, 0, 0.35);
 
   /* Glassmorphism system */
-  --surface: rgba(255, 253, 250, 0.24);
-  --surface-light: rgba(255, 253, 250, 0.38);
-  --surface-deep: rgba(250, 246, 241, 0.32);
-  --glass: rgba(255, 253, 250, 0.29);
-  --glass-strong: rgba(255, 253, 250, 0.44);
-  --glass-tint: rgba(244, 236, 228, 0.2);
-  --glass-border: rgba(255, 255, 255, 0.82);
-  --glass-border-soft: rgba(255, 255, 255, 0.58);
-  --glass-highlight: rgba(255, 255, 255, 0.96);
-  --glass-reflection: rgba(255, 253, 250, 0.72);
-  --glass-bottom-edge: rgba(185, 154, 126, 0.15);
-  --glass-blur: 28px;
-  --glass-blur-deep: 36px;
+  --surface: rgba(20, 24, 30, 0.55);
+  --surface-light: rgba(22, 27, 34, 0.72);
+  --surface-deep: rgba(16, 21, 28, 0.82);
+  --glass: rgba(20, 24, 30, 0.55);
+  --glass-strong: rgba(30, 36, 45, 0.68);
+  --glass-tint: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-soft: rgba(255, 255, 255, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.18);
+  --glass-reflection: rgba(255, 255, 255, 0.08);
+  --glass-bottom-edge: rgba(0, 0, 0, 0.22);
+  --glass-blur: 30px;
+  --glass-blur-deep: 40px;
 
   /* Typography and icons */
-  --text-primary: var(--palette-espresso);
-  --text-headline: var(--palette-deep-espresso);
-  --text-secondary: var(--palette-cocoa);
-  --text-label: var(--palette-muted-taupe);
-  --text-muted: var(--palette-warm-taupe);
-  --text-disabled: rgba(109, 92, 81, 0.42);
-  --text-active: var(--palette-bronze);
-  --icon-primary: var(--palette-soft-espresso);
-  --icon-secondary: #9a9087;
-  --icon-disabled: rgba(134, 112, 100, 0.45);
+  --text-primary: var(--palette-primary-white);
+  --text-headline: var(--palette-primary-white);
+  --text-secondary: var(--palette-secondary-text);
+  --text-label: var(--palette-secondary-text);
+  --text-muted: var(--palette-taupe-gray);
+  --text-disabled: rgba(123, 118, 111, 0.42);
+  --text-active: var(--palette-champagne-gold);
+  --icon-primary: var(--palette-primary-white);
+  --icon-secondary: var(--palette-secondary-text);
+  --icon-disabled: rgba(123, 118, 111, 0.45);
 
   /* Accent system */
-  --accent-bronze: var(--palette-bronze);
-  --accent-bronze-deep: var(--palette-aged-bronze);
+  --accent-bronze: var(--palette-bronze-gold);
+  --accent-bronze-deep: var(--palette-burnished-brass);
   --accent-gold: var(--palette-champagne-gold);
-  --accent-champagne: var(--palette-champagne-sand);
-  --accent-cream: var(--palette-champagne-white);
-  --accent-pearl: var(--palette-pearl-white);
-  --accent-silver: var(--palette-warm-silver);
+  --accent-champagne: var(--palette-soft-gold);
+  --accent-cream: var(--palette-primary-white);
+  --accent-pearl: var(--palette-primary-white);
+  --accent-silver: var(--palette-secondary-text);
+  --accent-lime: var(--palette-neon-lime);
 
   /* Border system */
-  --border-hairline: rgba(255, 255, 255, 0.44);
-  --border-glass: rgba(255, 255, 255, 0.82);
-  --border-control: rgba(255, 255, 255, 0.88);
-  --border-warm: rgba(120, 85, 56, 0.22);
-  --border-ring: rgba(255, 255, 255, 0.9);
-  --border-ring-warm: rgba(170, 137, 104, 0.28);
+  --border-hairline: rgba(255, 255, 255, 0.08);
+  --border-glass: rgba(255, 255, 255, 0.12);
+  --border-control: rgba(255, 255, 255, 0.12);
+  --border-warm: rgba(214, 179, 122, 0.28);
+  --border-ring: rgba(255, 255, 255, 0.18);
+  --border-ring-warm: rgba(214, 179, 122, 0.35);
 
-  /* Shadow system — warm, diffuse, low contrast */
-  --shadow-xs: 0 2px 4px rgba(89, 63, 45, 0.07);
-  --shadow-soft: 0 8px 18px rgba(89, 63, 45, 0.11);
-  --shadow-medium: 0 16px 34px rgba(89, 63, 45, 0.14);
-  --shadow-large: 0 26px 54px rgba(89, 63, 45, 0.17);
-  --shadow-floating: 0 20px 44px rgba(73, 50, 34, 0.19);
-  --shadow-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.96);
-  --shadow-inset-bottom: inset 0 -14px 28px rgba(115, 91, 73, 0.07);
-  --shadow-ring: 0 18px 34px rgba(80, 57, 40, 0.17);
+  /* Shadow system — deep matte, low glow */
+  --shadow-xs: 0 2px 8px rgba(0, 0, 0, 0.22);
+  --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.28);
+  --shadow-medium: 0 24px 64px rgba(0, 0, 0, 0.45);
+  --shadow-large: 0 32px 80px rgba(0, 0, 0, 0.52);
+  --shadow-floating: 0 20px 56px rgba(0, 0, 0, 0.4);
+  --shadow-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --shadow-inset-bottom: inset 0 -14px 28px rgba(0, 0, 0, 0.18);
+  --shadow-ring: 0 18px 34px rgba(0, 0, 0, 0.32);
 
   /* Glow and bloom system */
-  --glow-white-soft: 0 0 18px rgba(255, 255, 255, 0.38);
-  --glow-white-medium: 0 0 34px rgba(255, 255, 255, 0.5);
-  --glow-champagne: 0 0 30px rgba(201, 176, 152, 0.34);
-  --glow-cream: 0 0 46px rgba(244, 236, 228, 0.44);
-  --glow-glass-bloom: 0 0 62px rgba(255, 253, 250, 0.4);
-  --glow-reflection: 0 0 12px rgba(255, 255, 255, 0.78);
+  --glow-white-soft: 0 0 18px rgba(255, 255, 255, 0.08);
+  --glow-white-medium: 0 0 34px rgba(255, 255, 255, 0.12);
+  --glow-champagne: 0 0 18px rgba(214, 179, 122, 0.35);
+  --glow-cream: 0 0 46px rgba(214, 179, 122, 0.18);
+  --glow-glass-bloom: 0 0 62px rgba(255, 255, 255, 0.06);
+  --glow-reflection: 0 0 12px rgba(255, 255, 255, 0.14);
+  --glow-lime: 0 0 18px rgba(151, 229, 58, 0.4);
 
   /* Gradient system */
   --gradient-canvas:
-    radial-gradient(circle at 74% 7%, rgba(255, 253, 250, 0.86) 0%, transparent 29%),
-    radial-gradient(circle at 46% 24%, #faf6f1 0%, #eee3d9 45%, #ddcbbb 100%);
-  --gradient-glass: linear-gradient(145deg, rgba(255, 255, 255, 0.38) 0%, rgba(250, 246, 241, 0.2) 52%, rgba(221, 203, 187, 0.16) 100%);
-  --gradient-glass-highlight: linear-gradient(180deg, rgba(255, 255, 255, 0.68) 0%, rgba(255, 255, 255, 0.08) 42%, transparent 64%);
-  --gradient-key-lens: radial-gradient(circle at 36% 23%, rgba(255, 255, 255, 0.9) 0%, rgba(252, 249, 245, 0.51) 28%, rgba(238, 227, 217, 0.38) 65%, rgba(211, 189, 169, 0.23) 100%);
-  --gradient-champagne-ring: linear-gradient(132deg, rgba(255, 255, 255, 0.92), rgba(201, 176, 152, 0.31) 48%, rgba(255, 253, 250, 0.82));
-  --gradient-bronze: linear-gradient(135deg, #9d7d60 0%, #68482f 100%);
-  --gradient-progress: linear-gradient(90deg, #aa8968 0%, #d3bda9 100%);
+    radial-gradient(circle at 50% -10%, rgba(30, 36, 45, 0.55) 0%, transparent 42%),
+    linear-gradient(180deg, #0a0d12 0%, #10151c 100%);
+  --gradient-glass: linear-gradient(145deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 52%, rgba(0, 0, 0, 0.14) 100%);
+  --gradient-glass-highlight: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 42%, transparent 64%);
+  --gradient-key-lens: radial-gradient(circle at 36% 23%, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 28%, rgba(22, 27, 34, 0.72) 65%, rgba(10, 13, 18, 0.92) 100%);
+  --gradient-champagne-ring: linear-gradient(132deg, rgba(214, 179, 122, 0.42), rgba(214, 179, 122, 0.12) 48%, rgba(255, 255, 255, 0.06));
+  --gradient-bronze: linear-gradient(135deg, #c9a46a 0%, #886338 100%);
+  --gradient-progress: linear-gradient(90deg, #d6b37a 0%, #a47b49 100%);
 
   /* Component aliases */
   --ring-light: var(--border-ring);
-  --ring-shadow: rgba(89, 63, 45, 0.16);
+  --ring-shadow: rgba(0, 0, 0, 0.28);
   --button-bg: var(--glass);
   --button-border: var(--border-control);
   --button-highlight: var(--glass-highlight);
-  --button-pressed: rgba(226, 210, 195, 0.4);
+  --button-pressed: rgba(0, 0, 0, 0.28);
 
   /* Bridge legacy component variables to the material system */
   --cp-ivory: var(--bg-primary);
-  --cp-pearl: var(--palette-pearl-white);
-  --cp-warm-white: var(--palette-reflection-white);
+  --cp-pearl: var(--palette-obsidian);
+  --cp-warm-white: var(--palette-primary-white);
   --cp-bg-champagne: var(--bg-secondary);
   --cp-espresso: var(--text-primary);
   --cp-taupe: var(--text-secondary);
   --cp-muted: var(--text-muted);
-  --cp-champagne: var(--accent-bronze);
-  --cp-bronze: var(--accent-bronze-deep);
+  --cp-champagne: var(--accent-gold);
+  --cp-bronze: var(--accent-bronze);
   --cp-glass: var(--glass);
   --cp-glass-border: var(--glass-border);
   --cp-glass-highlight: var(--glass-highlight);
   --cp-glass-highlight-soft: var(--glass-reflection);
-  --cp-divider: rgba(109, 92, 81, 0.18);
+  --cp-divider: rgba(255, 255, 255, 0.08);
 }
 
 /* Primary and secondary background layers — flat app canvas */
@@ -203,25 +191,25 @@
 
 .coleman-reference-home .coleman-key-orb__ring-outer {
   border-color: var(--border-ring);
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.17), rgba(255, 253, 250, 0.04) 64%, rgba(170, 137, 104, 0.1));
-  box-shadow: var(--shadow-inset-top), 0 0 0 6px rgba(255, 255, 255, 0.11), var(--shadow-ring), var(--glow-white-soft);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08), rgba(22, 27, 34, 0.42) 64%, rgba(214, 179, 122, 0.08));
+  box-shadow: var(--shadow-inset-top), 0 0 0 6px rgba(255, 255, 255, 0.04), var(--shadow-ring), var(--glow-white-soft);
 }
 
 .coleman-reference-home .coleman-key-orb__ring-mid {
-  border-color: rgba(255, 255, 255, 0.82);
-  box-shadow: inset 0 0 0 5px rgba(255, 255, 255, 0.12), 0 0 0 1px var(--border-ring-warm);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 0 0 5px rgba(255, 255, 255, 0.04), 0 0 0 1px var(--border-ring-warm);
 }
 
 .coleman-reference-home .coleman-key-orb__ring-champagne {
   border-color: var(--border-ring-warm);
   background: var(--gradient-champagne-ring);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3), var(--glow-champagne), inset 0 8px 20px rgba(104, 72, 47, 0.08);
+  box-shadow: 0 0 0 3px rgba(214, 179, 122, 0.12), var(--glow-champagne), inset 0 8px 20px rgba(0, 0, 0, 0.18);
 }
 
 .coleman-reference-home .coleman-key-orb__lens {
   border-color: var(--glass-highlight);
   background: var(--gradient-key-lens);
-  box-shadow: var(--shadow-inset-top), inset 0 -22px 42px rgba(104, 72, 47, 0.09), var(--shadow-medium), var(--glow-glass-bloom);
+  box-shadow: var(--shadow-inset-top), inset 0 -22px 42px rgba(0, 0, 0, 0.22), var(--shadow-medium), var(--glow-glass-bloom);
 }
 
 .coleman-reference-home .coleman-key-orb__highlight {
@@ -255,13 +243,13 @@
 .coleman-reference-home .coleman-header-control:active,
 .coleman-reference-home .coleman-glass-btn:active {
   background-color: var(--button-pressed);
-  box-shadow: inset 0 2px 7px rgba(89, 63, 45, 0.13), var(--shadow-xs);
+  box-shadow: inset 0 2px 7px rgba(0, 0, 0, 0.28), var(--shadow-xs);
   transform: scale(0.96);
 }
 
 .coleman-reference-home button:focus-visible,
 .coleman-reference-home a:focus-visible {
-  outline: 2px solid rgba(120, 85, 56, 0.52);
+  outline: 2px solid rgba(214, 179, 122, 0.52);
   outline-offset: 3px;
 }
 
@@ -272,13 +260,13 @@
 }
 
 .coleman-reference-home .coleman-chord-active {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.16), rgba(255, 253, 250, 0.66), rgba(255, 255, 255, 0.16)) !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.5), var(--glow-white-soft) !important;
+  background: linear-gradient(90deg, rgba(214, 179, 122, 0.08), rgba(214, 179, 122, 0.18), rgba(214, 179, 122, 0.08)) !important;
+  box-shadow: inset 0 0 20px rgba(214, 179, 122, 0.12), var(--glow-champagne) !important;
 }
 
 .coleman-reference-home .coleman-chord-active::after {
-  background: var(--palette-pure-white);
-  box-shadow: var(--glow-reflection);
+  background: var(--palette-champagne-gold);
+  box-shadow: var(--glow-champagne);
 }
 
 .coleman-reference-home .coleman-intelligence-card {
@@ -297,11 +285,11 @@
   border-color: var(--glass-highlight);
   background: radial-gradient(
     circle at 38% 28%,
-    var(--palette-reflection-white),
-    rgba(244, 236, 228, 0.96) 58%,
-    rgba(221, 203, 187, 0.94)
+    rgba(255, 255, 255, 0.12),
+    rgba(22, 27, 34, 0.92) 58%,
+    rgba(10, 13, 18, 0.96)
   );
-  box-shadow: inset 0 1px 5px var(--palette-pure-white), var(--shadow-soft);
+  box-shadow: inset 0 1px 5px rgba(255, 255, 255, 0.08), var(--shadow-soft);
 }
 
 .coleman-reference-home .coleman-intelligence-card .coleman-voicing-pill {
@@ -328,8 +316,8 @@
 
 .coleman-reference-home .coleman-dashboard-knob__readout-bg {
   border-color: var(--glass-highlight);
-  background: radial-gradient(circle at 38% 28%, var(--palette-reflection-white), rgba(244, 236, 228, 0.65) 58%, rgba(221, 203, 187, 0.38));
-  box-shadow: inset 0 1px 5px var(--palette-pure-white), var(--shadow-soft), var(--glow-white-soft);
+  background: radial-gradient(circle at 38% 28%, rgba(255, 255, 255, 0.1), rgba(22, 27, 34, 0.72) 58%, rgba(10, 13, 18, 0.88));
+  box-shadow: inset 0 1px 5px rgba(255, 255, 255, 0.08), var(--shadow-soft), var(--glow-white-soft);
 }
 
 .coleman-reference-home .coleman-intelligence-card .h-\[3px\] > div {

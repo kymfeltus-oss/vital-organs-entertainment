@@ -1,6 +1,5 @@
-"use client";
-
 import Image from "next/image";
+import { FAITH_BRAND_FULL_NAME } from "@/lib/theme/faith-brand-guidelines";
 
 const FLAGSHIP_LOGO_SRC = "/tenant-default/dashboard/logo.png";
 
@@ -17,7 +16,7 @@ export default function ParableLogo({ size = 80 }: { size?: number }) {
       >
         <Image
           src={FLAGSHIP_LOGO_SRC}
-          alt="Parable Streaming"
+          alt={FAITH_BRAND_FULL_NAME}
           width={size}
           height={size}
           priority
@@ -31,8 +30,8 @@ export default function ParableLogo({ size = 80 }: { size?: number }) {
           P<span className="inline-block scale-x-[1.15] font-extralight text-neutral-100">Λ</span>R
           <span className="inline-block scale-x-[1.15] font-extralight text-neutral-100">Λ</span>BLE
         </h1>
-        <h2 className="ml-[0.6em] mt-1 text-[10px] font-medium uppercase tracking-[0.6em] text-neutral-500 sm:text-[11px]">
-          STREAMING
+        <h2 className="ml-[0.6em] mt-1 text-[10px] font-semibold uppercase tracking-[0.55em] text-[#F5B400] sm:text-[11px]">
+          FAITH OS
         </h2>
       </div>
     </div>

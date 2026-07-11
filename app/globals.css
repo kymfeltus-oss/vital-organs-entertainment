@@ -45,12 +45,11 @@ body::-webkit-scrollbar {
 }
 
 :root {
-  /* 9:16 mobile content track — shared by artboard pages + bottom dock */
-  --color-brand-black-base: #020203;
+  /* PΛRΛBLE FAITH OS — platform shell tokens */
+  --color-brand-black-base: #000000;
   --app-glossy-background:
-    radial-gradient(ellipse 115% 75% at 50% -18%, rgb(255 255 255 / 0.038) 0%, transparent 54%),
-    radial-gradient(ellipse 88% 58% at 50% 108%, rgb(0 168 255 / 0.024) 0%, transparent 52%),
-    linear-gradient(180deg, #050507 0%, #020203 46%, #010102 100%);
+    radial-gradient(circle at right, rgba(245, 180, 0, 0.12), transparent 45%),
+    linear-gradient(180deg, #050505, #000000);
   --mobile-artboard-viewport-h: calc(
     100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
   );
@@ -60,36 +59,36 @@ body::-webkit-scrollbar {
     var(--mobile-artboard-viewport-h),
     calc(var(--mobile-app-track-w) * 1920 / 1080)
   );
-  --gradient-brand: linear-gradient(90deg, #00a8ff 0%, #8a2eff 50%, #ff2faf 100%);
+  --gradient-brand: linear-gradient(90deg, #f5b400 0%, #ffc533 100%);
   --gradient-brand-soft: linear-gradient(
     90deg,
-    rgba(0, 168, 255, 0.25) 0%,
-    rgba(255, 47, 175, 0.25) 100%
+    rgba(245, 180, 0, 0.25) 0%,
+    rgba(255, 197, 51, 0.25) 100%
   );
-  --shadow-glow-blue: 0 0 15px #00a8ff, 0 0 30px #00a8ff, 0 0 60px #00a8ff;
-  --shadow-glow-purple: 0 0 15px #8a2eff, 0 0 30px #8a2eff, 0 0 60px #8a2eff;
-  --shadow-glow-pink: 0 0 15px #ff2faf, 0 0 30px #ff2faf, 0 0 60px #ff2faf;
+  --shadow-glow-blue: 0 10px 35px rgba(245, 180, 0, 0.18);
+  --shadow-glow-purple: 0 25px 70px rgba(0, 0, 0, 0.55);
+  --shadow-glow-pink: 0 10px 35px rgba(245, 180, 0, 0.18);
   --brand-tracking-lockup: 0.22em;
   --brand-tracking-byline: 0.12em;
   --brand-tracking-tagline: 0.04em;
   --brand-tracking-enter: 0.1em;
-  --font-headline: var(--font-bebas-neue), sans-serif;
+  --font-headline: var(--font-space-grotesk), var(--font-inter), sans-serif;
   --font-ui: var(--font-montserrat), sans-serif;
   --font-body: var(--font-inter), sans-serif;
   --font-card-title: var(--font-oswald), sans-serif;
 }
 
 @theme {
-  --color-brand-black: #020203;
-  --color-brand-panel: #0c0c10;
-  --color-brand-blue: #00a8ff;
-  --color-brand-pink: #ff2faf;
-  --color-brand-purple: #8a2eff;
-  --color-brand-indigo: #8a2eff;
+  --color-brand-black: #000000;
+  --color-brand-panel: #121212;
+  --color-brand-blue: #f5b400;
+  --color-brand-pink: #ffc533;
+  --color-brand-purple: #c48a00;
+  --color-brand-indigo: #8f6500;
   --color-brand-white: #ffffff;
-  --color-brand-muted: rgba(255, 255, 255, 0.68);
-  --color-brand-border: rgba(255, 255, 255, 0.08);
-  --color-brand-charcoal: #0c0c10;
+  --color-brand-muted: #9b9b9b;
+  --color-brand-border: #252525;
+  --color-brand-charcoal: #121212;
 }
 
 @layer utilities {

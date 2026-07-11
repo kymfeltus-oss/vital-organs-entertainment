@@ -1,19 +1,21 @@
-/* Generic white-label layout — theme-driven shell (no artboard math). */
+/* PΛRΛBLE FAITH OS — generic white-label layout shell */
 
 :root {
-  --theme-primary: #2563eb;
-  --theme-secondary: #64748b;
-  --theme-bg: #0f172a;
-  --theme-surface: #1e293b;
-  --theme-text: #f8fafc;
-  --theme-text-muted: #94a3b8;
-  --theme-accent: #3b82f6;
-  --theme-border: rgba(148, 163, 184, 0.22);
-  --theme-font-headline: var(--font-inter), sans-serif;
+  --theme-primary: #f5b400;
+  --theme-secondary: #c48a00;
+  --theme-bg: #000000;
+  --theme-surface: #121212;
+  --theme-text: #ffffff;
+  --theme-text-muted: #9b9b9b;
+  --theme-accent: #ffc533;
+  --theme-border: #252525;
+  --theme-font-headline: var(--font-space-grotesk), var(--font-inter), sans-serif;
   --theme-font-body: var(--font-inter), sans-serif;
   --theme-font-ui: var(--font-inter), sans-serif;
-  --theme-app-gradient: linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #0f172a 100%);
-  --theme-surface-gradient: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  --theme-app-gradient:
+    radial-gradient(circle at right, rgba(245, 180, 0, 0.12), transparent 45%),
+    linear-gradient(180deg, #050505, #000000);
+  --theme-surface-gradient: linear-gradient(180deg, #121212 0%, #000000 100%);
 }
 
 .generic-bottom-nav {
@@ -75,7 +77,8 @@
 }
 
 .theme-button-primary:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.06);
+  box-shadow: 0 10px 35px rgba(245, 180, 0, 0.18);
 }
 
 .theme-input {
@@ -83,6 +86,7 @@
   background: color-mix(in srgb, var(--theme-surface) 88%, transparent);
   color: var(--theme-text);
   font-family: var(--theme-font-body);
+  border-radius: 10px;
 }
 
 .theme-input::placeholder {
@@ -97,30 +101,42 @@
 
 .theme-button-primary {
   background: var(--theme-primary);
-  color: var(--theme-text);
+  color: #111111;
   font-family: var(--theme-font-ui);
+  border-radius: 8px;
+  min-height: 56px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
 .theme-button-secondary {
-  border: 1px solid var(--theme-border);
-  background: color-mix(in srgb, var(--theme-surface) 90%, transparent);
+  border: 1px solid #2a2a2a;
+  background: transparent;
   color: var(--theme-text);
   font-family: var(--theme-font-ui);
+  border-radius: 8px;
+}
+
+.theme-button-secondary:hover {
+  border-color: var(--theme-accent);
+  color: var(--theme-accent);
 }
 
 .theme-label {
   color: var(--theme-text-muted);
   font-family: var(--theme-font-ui);
   font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
+  font-weight: 600;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
 }
 
 .theme-card {
   border: 1px solid var(--theme-border);
   background: var(--theme-surface);
-  border-radius: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.55);
 }
 
 .theme-card--active {
@@ -134,4 +150,3 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
-

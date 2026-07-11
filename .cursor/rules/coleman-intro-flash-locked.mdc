@@ -1,0 +1,30 @@
+---
+description: Coleman intro flash page is locked — never delete or bypass without passcode 4778
+globs: app/enterprise/coleman/ColemanIntroFlash.tsx,app/enterprise/coleman/ColemanAppShell.tsx,app/enterprise/coleman/page.tsx,app/enterprise/coleman/lib/intro-session.ts,public/enterprise/coleman/coleman_intro.mp4
+alwaysApply: false
+---
+
+# Coleman Intro Flash — Locked (4778 Required)
+
+**Do not delete, remove, bypass, or replace the Coleman intro flash experience** unless the operator’s message includes passcode **`4778`** and clearly describes the intro change.
+
+## Protected intro stack
+
+| File | Role |
+|------|------|
+| `app/enterprise/coleman/page.tsx` | `/enterprise/coleman` entry — must render `ColemanAppShell` |
+| `app/enterprise/coleman/ColemanAppShell.tsx` | Shows intro before home |
+| `app/enterprise/coleman/ColemanIntroFlash.tsx` | Full-screen intro video + ENTER handoff |
+| `app/enterprise/coleman/lib/intro-session.ts` | Session gate (`coleman-entered`) |
+| `public/enterprise/coleman/coleman_intro.mp4` | Web intro video asset |
+| `app/enterprise/coleman/coleman.css` | `.coleman-intro-*` styles |
+
+## Forbidden without 4778
+
+- Deleting intro files or routing `/enterprise/coleman` directly to home
+- Removing the video asset or ENTER tap layer
+- Replacing intro with redirect-only or boot loader screens
+
+## Session skip is not deletion
+
+If the user already tapped ENTER, `sessionStorage` key `coleman-entered` skips intro for that tab — intentional. Clear it or use a private window to test again.

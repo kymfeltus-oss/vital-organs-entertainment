@@ -21,7 +21,8 @@ export default function ColemanAppLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isHomeStudio = pathname === COLEMAN_ROUTES.home;
+  const isFullBleedStudio =
+    pathname === COLEMAN_ROUTES.home || pathname === COLEMAN_ROUTES.explore;
 
   useEffect(() => {
     void preloadColemanMicEngine();
@@ -29,7 +30,7 @@ export default function ColemanAppLayout({
 
   return (
     <ColemanAudioProvider>
-      {isHomeStudio ? children : <ColemanChromeFrame>{children}</ColemanChromeFrame>}
+      {isFullBleedStudio ? children : <ColemanChromeFrame>{children}</ColemanChromeFrame>}
     </ColemanAudioProvider>
   );
 }

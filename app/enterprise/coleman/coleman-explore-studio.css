@@ -1,0 +1,336 @@
+/* Coleman Explore Studio — luxury dark glass (Apple + B&O + Leica aesthetic) */
+
+.coleman-explore-studio {
+  --exo-bg: var(--coleman-bg-midnight, #0a0d12);
+  --exo-surface: var(--coleman-bg-obsidian, #161b22);
+  --exo-text: var(--coleman-text-primary, #f5f2ea);
+  --exo-muted: var(--coleman-text-muted, #7b766f);
+  --exo-secondary: var(--coleman-text-secondary, #b8b2a6);
+  --exo-accent: var(--coleman-champagne, #d6b37a);
+  --exo-green: var(--coleman-accent-lime, #97e53a);
+  --exo-glass: var(--coleman-glass-smoky, rgba(20, 24, 30, 0.55));
+  --exo-border: var(--coleman-glass-border, rgba(255, 255, 255, 0.12));
+  --exo-sidebar-w: 68px;
+
+  background: var(--exo-bg);
+  color: var(--exo-text);
+  min-height: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--coleman-font, "Inter Tight", "Avenir Next", ui-sans-serif, system-ui);
+}
+
+.coleman-explore-studio .exo-outset {
+  background: var(--exo-glass);
+  border: 1px solid var(--exo-border);
+  backdrop-filter: blur(var(--coleman-blur-control, 18px));
+  -webkit-backdrop-filter: blur(var(--coleman-blur-control, 18px));
+  box-shadow: var(--coleman-shadow-control, 0 8px 32px rgba(0, 0, 0, 0.28));
+}
+
+.coleman-explore-studio .exo-inset {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--exo-border);
+  backdrop-filter: blur(var(--coleman-blur-control, 18px));
+  -webkit-backdrop-filter: blur(var(--coleman-blur-control, 18px));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.coleman-explore-studio .exo-outset-pressed,
+.coleman-explore-studio button:active.exo-outset-btn {
+  background: rgba(0, 0, 0, 0.36);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.32);
+}
+
+.coleman-explore-studio .exo-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.coleman-explore-studio .exo-sidebar {
+  width: var(--exo-sidebar-w);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 12px;
+  border-right: 1px solid var(--exo-border);
+  background: rgba(16, 21, 28, 0.72);
+  backdrop-filter: blur(var(--coleman-blur, 30px));
+}
+
+.coleman-explore-studio .exo-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  padding: 8px 4px;
+  font-size: 7px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--exo-muted);
+  transition: color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.coleman-explore-studio .exo-nav-item.is-active {
+  color: var(--exo-accent);
+  background: rgba(214, 179, 122, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(214, 179, 122, 0.28);
+}
+
+.coleman-explore-studio .exo-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.coleman-explore-studio .exo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 8px;
+  gap: 8px;
+}
+
+.coleman-explore-studio .exo-header-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.coleman-explore-studio .exo-glass-button {
+  border: 1px solid var(--exo-border);
+  background: var(--exo-glass);
+  color: var(--exo-text);
+  backdrop-filter: blur(var(--coleman-blur-control, 18px));
+  -webkit-backdrop-filter: blur(var(--coleman-blur-control, 18px));
+  box-shadow: var(--coleman-shadow-control, 0 8px 32px rgba(0, 0, 0, 0.28));
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.coleman-explore-studio .exo-glass-button:hover {
+  border-color: rgba(214, 179, 122, 0.35);
+}
+
+.coleman-explore-studio .exo-wordmark {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.5em;
+  text-indent: 0.5em;
+  text-transform: uppercase;
+  color: var(--exo-text);
+  text-decoration: none;
+}
+
+.coleman-explore-studio .exo-avatar {
+  display: block;
+  width: 26px;
+  height: 26px;
+  overflow: hidden;
+  border-radius: 999px;
+  border: 1px solid rgba(214, 179, 122, 0.35);
+}
+
+.coleman-explore-studio .exo-avatar-portrait {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 32%, #c9a46a 0, #a47b49 65%, #886338 100%);
+}
+
+.coleman-explore-studio .exo-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 10px 88px;
+  scrollbar-width: none;
+}
+
+.coleman-explore-studio .exo-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.coleman-explore-studio .exo-card {
+  border-radius: 18px;
+  padding: 14px 12px;
+  margin-bottom: 12px;
+}
+
+.coleman-explore-studio .exo-card-title {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--exo-secondary);
+  margin-bottom: 10px;
+}
+
+.coleman-explore-studio .exo-media-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--exo-border);
+  background: var(--exo-glass);
+  backdrop-filter: blur(var(--coleman-blur, 30px));
+}
+
+.coleman-explore-studio .exo-bpm-dial {
+  width: 88px;
+  height: 88px;
+  border-radius: 999px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.coleman-explore-studio .exo-bpm-dial-value {
+  font-size: 28px;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--exo-text);
+}
+
+.coleman-explore-studio .exo-segment {
+  display: flex;
+  border-radius: 12px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.coleman-explore-studio .exo-segment button {
+  flex: 1;
+  border-radius: 9px;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--exo-muted);
+}
+
+.coleman-explore-studio .exo-segment button.is-active {
+  color: var(--exo-accent);
+  box-shadow: inset 0 0 0 1px rgba(214, 179, 122, 0.35);
+}
+
+.coleman-explore-studio .exo-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid var(--exo-border);
+}
+
+.coleman-explore-studio .exo-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--exo-surface);
+  border: 1px solid var(--exo-accent);
+  box-shadow: var(--coleman-glow-gold, 0 0 18px rgba(214, 179, 122, 0.35));
+  cursor: pointer;
+}
+
+.coleman-explore-studio .exo-circle-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.coleman-explore-studio .exo-beat-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-left: 4px;
+}
+
+.coleman-explore-studio .exo-beat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(123, 118, 111, 0.35);
+  transition: transform 0.1s, background 0.1s, box-shadow 0.1s;
+}
+
+.coleman-explore-studio .exo-beat-dot.is-accent {
+  transform: scale(1.25);
+  background: var(--exo-accent);
+  box-shadow: var(--coleman-glow-gold, 0 0 18px rgba(214, 179, 122, 0.35));
+}
+
+.coleman-explore-studio .exo-beat-dot.is-active {
+  background: var(--exo-text);
+}
+
+.coleman-explore-studio .exo-tuner-gauge {
+  width: 100%;
+  max-width: 200px;
+  margin: 0 auto;
+}
+
+.coleman-explore-studio .exo-matrix {
+  width: 100%;
+  font-size: 9px;
+  border-collapse: collapse;
+}
+
+.coleman-explore-studio .exo-matrix th,
+.coleman-explore-studio .exo-matrix td {
+  padding: 5px 4px;
+  text-align: center;
+  border-bottom: 1px solid var(--exo-border);
+}
+
+.coleman-explore-studio .exo-matrix th {
+  font-weight: 500;
+  color: var(--exo-secondary);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+}
+
+.coleman-explore-studio .exo-fret-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (min-width: 380px) {
+  .coleman-explore-studio .exo-fret-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+}
+
+.coleman-explore-studio .exo-fret-card {
+  border-radius: 10px;
+  padding: 6px 4px 8px;
+  text-align: center;
+}
+
+.coleman-explore-studio .exo-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--exo-green);
+  box-shadow: var(--coleman-glow-lime, 0 0 18px rgba(151, 229, 58, 0.4));
+}

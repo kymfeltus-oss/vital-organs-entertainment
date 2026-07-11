@@ -10,6 +10,7 @@ export const cb = {
   textSecondary: "text-[var(--coleman-text-secondary)]",
   textMuted: "text-[var(--coleman-text-muted)]",
   accent: "text-[var(--coleman-champagne)]",
+  lime: "text-[var(--coleman-accent-lime)]",
   bronze: "text-[var(--coleman-bronze)]",
   glass:
     "border border-[var(--coleman-glass-border)] bg-[var(--coleman-glass-fill)] backdrop-blur-[var(--coleman-blur)]",

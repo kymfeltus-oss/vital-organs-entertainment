@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: `Admin Dashboard | ${PLATFORM_APP_NAME}`,
-  description: "Self-service white-label admin console for Parable Streaming tenants.",
+  description: `Self-service white-label admin console for ${PLATFORM_APP_NAME} tenants.`,
   robots: { index: false, follow: false },
 };
 

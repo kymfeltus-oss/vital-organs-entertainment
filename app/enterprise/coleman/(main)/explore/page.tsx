@@ -1,5 +1,5 @@
-import ColemanExplore from "@/app/enterprise/coleman/components/ColemanExplore";
+import ColemanExploreStudio from "@/app/enterprise/coleman/components/explore/ColemanExploreStudio";
 
 export default function ExplorePage() {
-  return <ColemanExplore />;
+  return <ColemanExploreStudio />;
 }

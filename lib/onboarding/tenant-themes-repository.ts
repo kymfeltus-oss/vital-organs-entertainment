@@ -1,7 +1,7 @@
 import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { registerOrResumeTenantOwner } from "@/lib/onboarding/owner-auth";
 import { DEFAULT_TENANT_THEME } from "@/lib/theme/default-theme";
 import { normalizeTenantId } from "@/lib/onboarding/tenant-id";
-
 export type TenantThemeInsert = {
   tenantId: string;
   companyName: string;
@@ -119,25 +119,11 @@ export async function uploadTenantLogo(
   return { ok: true, url: data.publicUrl };
 }
 
-/** Register business owner via Supabase Auth admin API — no viewer auth helpers. */
+/** Register business owner — creates account or resumes when email already exists. */
 export async function registerTenantOwnerAccount(
   email: string,
   password: string,
   metadata: Record<string, string>,
-): Promise<{ ok: true; userId: string } | { ok: false; message: string }> {
-  const { data, error } = await getSupabaseAdmin().auth.admin.createUser({
-    email: email.trim().toLowerCase(),
-    password,
-    email_confirm: true,
-    user_metadata: {
-      account_type: "tenant_owner",
-      ...metadata,
-    },
-  });
-
-  if (error || !data.user?.id) {
-    return { ok: false, message: error?.message || "Unable to create owner account." };
-  }
-
-  return { ok: true, userId: data.user.id };
+) {
+  return registerOrResumeTenantOwner(email, password, metadata);
 }

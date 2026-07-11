@@ -1,5 +1,14 @@
 export { DEFAULT_TENANT_THEME } from "@/lib/theme/default-theme";
-export { PLATFORM_APP_NAME, PLATFORM_SHORT_NAME, PLATFORM_TAGLINE } from "@/lib/theme/brand";
+export { PLATFORM_APP_NAME, PLATFORM_SHORT_NAME, PLATFORM_TAGLINE, PLATFORM_SECONDARY_MARK } from "@/lib/theme/brand";
+export {
+  FAITH_BRAND_COLORS,
+  FAITH_BRAND_FULL_NAME,
+  FAITH_BRAND_HERO_GRADIENT,
+  FAITH_BRAND_MESSAGING,
+  FAITH_BRAND_WORDMARK,
+  faithBrandCssVariables,
+  faithGoldRgb,
+} from "@/lib/theme/faith-brand-guidelines";
 export { applyThemeToElement, themeToCssVariables } from "@/lib/theme/apply-theme-vars";
 export {
   resolveEffectiveTenantTheme,

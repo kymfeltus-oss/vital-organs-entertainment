@@ -2,72 +2,87 @@
 .coleman-root {
   --coleman-phone-width: 430px;
 
-  /* Luxury canvas — warm ivory / soft champagne beige */
-  --coleman-bg-base: #ede1d7;
-  --coleman-bg-highlight: #f8f3ed;
-  --coleman-bg-cream: #f4ece3;
-  --coleman-bg-champagne: #e7d8c8;
-  --coleman-bg-shadow: #d9c8b5;
+  /* Surfaces — midnight matte black stack */
+  --coleman-bg-midnight: #0a0d12;
+  --coleman-bg-carbon: #10151c;
+  --coleman-bg-obsidian: #161b22;
+  --coleman-bg-graphite: #1e242d;
 
-  /* In-app canvas matches desktop letterbox surround */
-  --coleman-app-canvas: var(--coleman-bg-shadow);
+  /* Semantic surface aliases */
+  --coleman-bg-base: var(--coleman-bg-midnight);
+  --coleman-bg-highlight: var(--coleman-bg-carbon);
+  --coleman-bg-cream: var(--coleman-bg-obsidian);
+  --coleman-bg-champagne: var(--coleman-bg-graphite);
+  --coleman-bg-shadow: var(--coleman-bg-midnight);
+  --coleman-app-canvas: var(--coleman-bg-midnight);
+  --coleman-logo-canvas: var(--coleman-bg-midnight);
+  --coleman-bg: var(--coleman-bg-midnight);
+  --coleman-bg-primary: var(--coleman-bg-midnight);
+  --coleman-bg-secondary: var(--coleman-bg-carbon);
 
-  /* Semantic aliases (logo + surfaces) */
-  --coleman-logo-canvas: #ede1d7;
-  --coleman-bg: #ede1d7;
-  --coleman-bg-primary: #ede1d7;
-  --coleman-bg-secondary: #d9c8b5;
+  /* Typography — primary white, secondary, muted */
+  --coleman-text-primary: #f5f2ea;
+  --coleman-text-secondary: #b8b2a6;
+  --coleman-text-muted: #7b766f;
 
-  /* Typography — deep espresso, warm taupe, soft taupe */
-  --coleman-text-primary: #20170b;
-  --coleman-text-secondary: #6f6353;
-  --coleman-text-muted: #aca092;
+  /* Luxury gold system — muted champagne metal */
+  --coleman-champagne: #d6b37a;
+  --coleman-gold-soft: #c9a46a;
+  --coleman-bronze: #a47b49;
+  --coleman-gold-brass: #886338;
 
-  /* Accents — champagne gold (sparingly), soft bronze */
-  --coleman-champagne: #926134;
-  --coleman-bronze: #48351e;
+  /* Functional green accent — live / in-tune only */
+  --coleman-accent-lime: #97e53a;
+  --coleman-accent-lime-soft: #74c93a;
 
   /* Glass materials */
-  --coleman-glass-border: rgba(255, 255, 255, 0.7);
-  --coleman-glass-fill: rgba(255, 255, 255, 0.32);
-  --coleman-glass-highlight: rgba(255, 255, 255, 0.95);
-  --coleman-glass-highlight-soft: rgba(255, 255, 255, 0.55);
+  --coleman-glass-smoky: rgba(20, 24, 30, 0.55);
+  --coleman-glass-frost: rgba(255, 255, 255, 0.04);
+  --coleman-glass-border: rgba(255, 255, 255, 0.12);
+  --coleman-glass-highlight: rgba(255, 255, 255, 0.18);
+  --coleman-glass-fill: var(--coleman-glass-smoky);
+  --coleman-glass-highlight-soft: rgba(255, 255, 255, 0.08);
+  --coleman-border-subtle: rgba(255, 255, 255, 0.08);
+  --coleman-border-active: var(--coleman-champagne);
 
   /* Shadows & glow */
-  --coleman-shadow-light: #d3c5bb;
-  --coleman-shadow-medium: #c8b9ac;
-  --coleman-divider: rgba(111, 99, 83, 0.18);
+  --coleman-shadow-light: rgba(0, 0, 0, 0.28);
+  --coleman-shadow-medium: rgba(0, 0, 0, 0.45);
+  --coleman-divider: rgba(255, 255, 255, 0.08);
+  --coleman-glow-gold: 0 0 18px rgba(214, 179, 122, 0.35);
+  --coleman-glow-lime: 0 0 18px rgba(151, 229, 58, 0.4);
 
-  /* Legacy aliases (prefer semantic tokens above) */
-  --coleman-surface: var(--coleman-glass-fill);
+  /* Legacy aliases */
+  --coleman-surface: var(--coleman-glass-smoky);
   --coleman-border: var(--coleman-glass-border);
   --coleman-accent-gold: var(--coleman-champagne);
-  --coleman-accent-platinum: var(--coleman-glass-highlight-soft);
-  --coleman-glow-soft: rgba(200, 185, 172, 0.35);
-  --coleman-glow-mid: rgba(200, 185, 172, 0.48);
-  --coleman-glow-strong: rgba(200, 185, 172, 0.58);
-  --coleman-ivory-fade: rgba(248, 243, 237, 0.55);
-  --coleman-ivory-mist: rgba(244, 236, 227, 0.92);
-  --coleman-blur: 24px;
+  --coleman-accent-platinum: var(--coleman-accent-lime);
+  --coleman-glow-soft: rgba(214, 179, 122, 0.22);
+  --coleman-glow-mid: rgba(214, 179, 122, 0.32);
+  --coleman-glow-strong: rgba(214, 179, 122, 0.42);
+  --coleman-ivory-fade: rgba(245, 242, 234, 0.06);
+  --coleman-ivory-mist: rgba(16, 21, 28, 0.92);
+  --coleman-blur: 30px;
+  --coleman-blur-card: 40px;
+  --coleman-blur-control: 18px;
   --coleman-radius: 28px;
-  --coleman-shadow-soft: 0 14px 40px rgba(211, 197, 187, 0.22);
+  --coleman-shadow-soft: 0 24px 64px rgba(0, 0, 0, 0.45);
+  --coleman-shadow-control: 0 8px 32px rgba(0, 0, 0, 0.28);
   --coleman-bg-radial: radial-gradient(
-    circle at center,
-    var(--coleman-bg-highlight) 0%,
-    var(--coleman-bg-cream) 28%,
-    var(--coleman-bg-base) 58%,
-    var(--coleman-bg-champagne) 82%,
-    var(--coleman-bg-shadow) 100%
+    ellipse 120% 70% at 50% -15%,
+    rgba(30, 36, 45, 0.55) 0%,
+    rgba(16, 21, 28, 0.92) 42%,
+    var(--coleman-bg-midnight) 100%
   );
-  --coleman-bg-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.018'/%3E%3C/svg%3E");
+  --coleman-bg-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
 
-  /* Typography — system stack; avoids blocking webfont fetch on Coleman routes */
-  --coleman-font: "Avenir Next", Avenir, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  --coleman-tracking-logo: 0.45em;
-  --coleman-tracking-heading: 0.06em;
+  /* Typography — Inter Tight + Avenir / SF Pro stack */
+  --coleman-font: var(--font-coleman-display, "Inter Tight"), "Avenir Next", "SF Pro Display",
+    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --coleman-tracking-logo: 0.5em;
+  --coleman-tracking-heading: 0.14em;
   --coleman-tracking-button: 0.12em;
-  --coleman-tracking-label: 0.1em;
+  --coleman-tracking-label: 0.14em;
 
   /* Motion */
   --coleman-duration: 450ms;
@@ -568,7 +583,7 @@
   justify-content: center;
   border-radius: 999px;
   border: 1px solid var(--coleman-border);
-  background: rgba(255, 255, 255, 0.4);
+  background: var(--coleman-glass-frost);
   color: var(--coleman-text-primary);
 }
 
@@ -638,7 +653,7 @@
   align-items: center;
   gap: 12px;
   padding: 14px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  border-bottom: 1px solid var(--coleman-border-subtle);
 }
 
 .coleman-track-row.is-active {
@@ -646,9 +661,8 @@
   padding: 14px 8px;
   border-radius: 18px;
   border-bottom-color: transparent;
-  background: rgba(255, 255, 255, 0.22);
-  box-shadow: 0 0 0 1px var(--coleman-accent-gold),
-    0 0 20px rgba(215, 192, 161, 0.28);
+  background: rgba(214, 179, 122, 0.1);
+  box-shadow: 0 0 0 1px var(--coleman-accent-gold), var(--coleman-glow-gold);
 }
 
 .coleman-play-btn {
@@ -660,7 +674,7 @@
   justify-content: center;
   border-radius: 999px;
   border: 1px solid var(--coleman-border);
-  background: rgba(255, 255, 255, 0.45);
+  background: var(--coleman-glass-smoky);
   color: var(--coleman-text-primary);
   cursor: pointer;
   transition: box-shadow var(--coleman-duration) var(--coleman-ease);
@@ -668,10 +682,9 @@
 
 .coleman-play-btn.is-active {
   border-color: var(--coleman-accent-gold);
-  background: rgba(255, 255, 255, 0.55);
+  background: var(--coleman-bg-graphite);
   color: var(--coleman-text-primary);
-  box-shadow: 0 0 0 1px var(--coleman-accent-gold),
-    0 0 18px rgba(215, 192, 161, 0.45);
+  box-shadow: 0 0 0 1px var(--coleman-accent-gold), var(--coleman-glow-gold);
 }
 
 .coleman-track-title {
@@ -817,7 +830,7 @@
   position: relative;
   height: 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .coleman-tuner-center {
@@ -839,7 +852,7 @@
   transform: translate(-50%, -50%);
   border-radius: 999px;
   background: var(--coleman-accent-gold);
-  box-shadow: 0 0 12px rgba(215, 192, 161, 0.65);
+  box-shadow: var(--coleman-glow-gold);
 }
 
 .coleman-tuner-scale,
@@ -880,8 +893,7 @@
 
 .coleman-primary-btn.is-active,
 .coleman-primary-btn.is-stop {
-  box-shadow: 0 0 0 1px var(--coleman-accent-gold),
-    0 0 32px rgba(215, 192, 161, 0.5);
+  box-shadow: 0 0 0 1px var(--coleman-accent-gold), var(--coleman-glow-gold);
 }
 
 .coleman-primary-btn:active {
@@ -895,7 +907,24 @@
 
 .coleman-theory-card {
   padding: 16px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  border-bottom: 1px solid var(--coleman-border-subtle);
+}
+
+.coleman-tool-card {
+  margin-inline: auto;
+  max-width: 28rem;
+  border-radius: 1rem;
+  border: 1px solid var(--coleman-glass-border);
+  background: var(--coleman-glass-smoky);
+  padding: 1.5rem;
+  color: var(--coleman-text-primary);
+  box-shadow: var(--coleman-shadow-control);
+  backdrop-filter: blur(var(--coleman-blur));
+  -webkit-backdrop-filter: blur(var(--coleman-blur));
+}
+
+.coleman-tool-card-wide {
+  max-width: 56rem;
 }
 
 .coleman-theory-numbers {
@@ -1033,7 +1062,7 @@
 .coleman-sheet-divider {
   margin: 24px 0;
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.45);
+  border-top: 1px solid var(--coleman-border-subtle);
 }
 
 .coleman-sheet-stat-grid {
