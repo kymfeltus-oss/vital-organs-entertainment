@@ -3,7 +3,7 @@ import {
   LiveMicroBetsSessionUnavailableError,
   loadLiveMicroBetsSession,
 } from "@/lib/enterprise/liv-golf/live-micro-bets-session";
-import { findLivMicroBet, LIV_MICRO_BETS } from "@/lib/liv-micro-bets";
+import { findLivMicroBet, LIV_MICRO_BETS, toActiveBet } from "@/lib/liv-micro-bets";
 import { LIV_GOLF_TOUR_MAIN_ROOM } from "@/lib/live/types";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,8 @@ export async function GET() {
     const isActive = Boolean(activeBetId);
 
     return NextResponse.json({
-      bets: LIV_MICRO_BETS,
+      bets: LIV_MICRO_BETS.map(toActiveBet),
+      catalog: LIV_MICRO_BETS,
       roomId: LIV_GOLF_TOUR_MAIN_ROOM,
       activeBetId,
       activeBet: findLivMicroBet(activeBetId),

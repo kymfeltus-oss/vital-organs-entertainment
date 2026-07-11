@@ -3,6 +3,17 @@ import {
   LiveMicroBetsSessionUnavailableError,
   loadLiveMicroBetsSession,
 } from "@/lib/enterprise/liv-golf/live-micro-bets-session";
+import { verifyGeoAttestationToken } from "@/lib/enterprise/liv-golf/geo/geo-attestation";
+import { evaluateLivGeoEligibility } from "@/lib/enterprise/liv-golf/geo/geo-eligibility";
+import {
+  isLivGeoBypassEnabled,
+  isLivGeoFenceEnabled,
+} from "@/lib/enterprise/liv-golf/geo/geo-fence-config";
+import {
+  requireEdgeFanGeoHeaders,
+  resolvePlaceBetGeoSample,
+} from "@/lib/enterprise/liv-golf/geo/resolve-geo-sample";
+import { GEO_INELIGIBLE_CODE } from "@/lib/enterprise/liv-golf/geo/types";
 import { LIV_MICRO_BET_TRANSACTION_TYPE, findLivMicroBet } from "@/lib/liv-micro-bets";
 import { resolveAuthenticatedBuyer } from "@/lib/checkout/server";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
@@ -12,6 +23,11 @@ export const dynamic = "force-dynamic";
 type PlaceBetBody = {
   betId?: unknown;
   selection?: unknown;
+  lat?: unknown;
+  lng?: unknown;
+  accuracyM?: unknown;
+  capturedAt?: unknown;
+  geoAttestationToken?: unknown;
 };
 
 type DeductSeedWalletResult = {
@@ -33,6 +49,60 @@ export async function POST(request: NextRequest) {
       return auth.withSessionCookies(
         NextResponse.json({ success: false, message: "Invalid bet payload." }, { status: 400 }),
       );
+    }
+
+    const geoSample = resolvePlaceBetGeoSample(request, body);
+
+    if (isLivGeoFenceEnabled() && !isLivGeoBypassEnabled()) {
+      const edgeGeo = requireEdgeFanGeoHeaders(request);
+      if (edgeGeo.ok === false) {
+        return auth.withSessionCookies(
+          NextResponse.json(
+            {
+              success: false,
+              code: "EDGE_GEO_UNAVAILABLE",
+              message: edgeGeo.message,
+              geofenced: true,
+            },
+            { status: 403 },
+          ),
+        );
+      }
+    }
+
+    const geoResult = evaluateLivGeoEligibility(request, geoSample);
+    if (!geoResult.eligible) {
+      return auth.withSessionCookies(
+        NextResponse.json(
+          {
+            success: false,
+            code: geoResult.code === GEO_INELIGIBLE_CODE ? GEO_INELIGIBLE_CODE : geoResult.code,
+            message: geoResult.reason,
+            geofenced: true,
+          },
+          { status: 403 },
+        ),
+      );
+    }
+
+    if (
+      isLivGeoFenceEnabled() &&
+      !isLivGeoBypassEnabled() &&
+      geoSample
+    ) {
+      const attestation = verifyGeoAttestationToken(
+        typeof body.geoAttestationToken === "string" ? body.geoAttestationToken : null,
+        geoSample,
+      );
+
+      if (attestation.ok === false) {
+        return auth.withSessionCookies(
+          NextResponse.json(
+            { success: false, code: "GEO_ATTESTATION_INVALID", message: attestation.reason },
+            { status: 403 },
+          ),
+        );
+      }
     }
 
     const bet = findLivMicroBet(betId);
@@ -82,6 +152,7 @@ export async function POST(request: NextRequest) {
         balance,
         payout: bet.payout,
         selection,
+        region_verified: geoResult.zoneName,
         message: `Bet locked on ${selection}. Potential payout: ${bet.payout} tokens.`,
       }),
     );

@@ -16,6 +16,12 @@ import { getSupabase } from "@/lib/supabase/client";
 
 const SEED_WALLET_LISTENER_PREFIX = "live-seed-wallet";
 
+type UseLiveSeedWalletOptions = {
+  /** When false, skips network fetch (e.g. geo-fence blocked). */
+  enabled?: boolean;
+  requestHeaders?: Record<string, string>;
+};
+
 type UseLiveSeedWalletResult = {
   balance: number;
   usedFreeTaps: number;
@@ -41,7 +47,8 @@ function reportSeedWalletFailure(
   });
 }
 
-export function useLiveSeedWallet(): UseLiveSeedWalletResult {
+export function useLiveSeedWallet(options: UseLiveSeedWalletOptions = {}): UseLiveSeedWalletResult {
+  const { enabled = true, requestHeaders } = options;
   const seeds = useParableSubsystem("seeds");
   const instanceId = useId();
   const listenerId = `${SEED_WALLET_LISTENER_PREFIX}${instanceId}`;
@@ -59,6 +66,12 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
   const allowRealtime = seeds.shouldAllowRealtime();
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
+    if (!enabled) {
+      setIsLoading(false);
+      setError("Token wallet locked pending regional compliance verification.");
+      return;
+    }
+
     if (!shouldFetchRef.current()) {
       setIsLoading(false);
       setError("Seed wallet paused to protect live stream.");
@@ -74,6 +87,7 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
           method: "GET",
           credentials: "include",
           signal,
+          headers: requestHeaders,
         },
         { subsystem: "seeds" },
       );
@@ -87,6 +101,14 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
       if (response.status === 401) {
         setBalance(0);
         setUsedFreeTaps(0);
+        setIsLoading(false);
+        return;
+      }
+
+      if (response.status === 403) {
+        setBalance(0);
+        setUsedFreeTaps(0);
+        setError(data.error ?? "Token wallet unavailable in your region.");
         setIsLoading(false);
         return;
       }
@@ -111,7 +133,7 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
       setError("Unable to load seed balance.");
       setIsLoading(false);
     }
-  }, []);
+  }, [enabled, requestHeaders]);
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -199,7 +221,7 @@ export function useLiveSeedWallet(): UseLiveSeedWalletResult {
       unregisterPlatformListener(listenerId);
       releasePlatformChannel(supabase);
     };
-  }, [allowRealtime, listenerId, refresh]);
+  }, [allowRealtime, enabled, listenerId, refresh]);
 
   useEffect(() => {
     const onRefreshRequest = () => {
