@@ -9,6 +9,7 @@ import {
   isTeamProtectedPath,
 } from "@/lib/auth/routing";
 import { isE2EBypassEnabled } from "@/lib/access/e2e-bypass";
+import { resolveLivGeoEdgeMiddleware } from "@/lib/enterprise/liv-golf/geo/edge-middleware";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
 import { extractTenantSubdomain } from "@/lib/theme/platform-domains";
 
@@ -70,6 +71,20 @@ async function getProxyAuthUser(
 }
 
 export async function proxy(request: NextRequest) {
+  const edgeResult = resolveLivGeoEdgeMiddleware(request);
+
+  if (edgeResult.action === "block") {
+    return NextResponse.json(edgeResult.body, { status: edgeResult.status });
+  }
+
+  if (edgeResult.action === "forward") {
+    return NextResponse.next({
+      request: {
+        headers: edgeResult.headers,
+      },
+    });
+  }
+
   const requestHeaders = resolveRequestHeaders(request);
   const { pathname } = request.nextUrl;
 
@@ -187,5 +202,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|assets|favicon.ico|sw.js|tenant-default).*)"],
+  matcher: [
+    "/api/enterprise/liv-golf/micro-bets/place",
+    "/((?!api|_next/static|_next/image|assets|favicon.ico|sw.js|tenant-default).*)",
+  ],
 };
