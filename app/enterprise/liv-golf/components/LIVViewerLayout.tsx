@@ -12,6 +12,7 @@ type LIVViewerLayoutProps = {
   roomId: string;
 };
 
+/** 70/30 viewport splitter — live broadcast canvas + sliding micro-bet drawer. */
 export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
   const { activeBet } = useLiveStreamSubscriber(roomId);
   const { balance, isLoading, refresh } = useLiveSeedWallet();
@@ -21,13 +22,13 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#111111] font-sans text-white antialiased">
+      {/* Left column: 70% direct video broadcast frame */}
       <div className="relative flex h-full min-w-0 flex-[7] items-center justify-center bg-black">
-        <div className="absolute inset-0">
-          <AttendeeStreamPlayer embedded={true} enabled showPaywall={false} />
-        </div>
+        <AttendeeStreamPlayer embedded enabled showPaywall={false} />
         {activeGraphic ? <LiveStreamGraphicsOverlay graphic={activeGraphic} /> : null}
       </div>
 
+      {/* Right column: 30% sliding drawer asset control panel */}
       <div
         className={`h-full transform border-l border-white/5 bg-[#161616] transition-all duration-300 ease-in-out ${
           isPanelOpen

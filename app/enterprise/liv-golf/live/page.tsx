@@ -1,13 +1,14 @@
 import LIVViewerLayout from "../components/LIVViewerLayout";
-import { resolveLivGolfRoomId } from "@/lib/live/liv-golf-room";
+import { LIV_GOLF_TOUR_MAIN_ROOM } from "@/lib/live/types";
 
 type ViewerPageProps = {
   searchParams: Promise<{ roomId?: string }>;
 };
 
+/** Server-side fan viewer entry — delivers layout shell without client state wrapping. */
 export default async function LIVGolfLivePage({ searchParams }: ViewerPageProps) {
   const resolvedParams = await searchParams;
-  const roomId = resolveLivGolfRoomId(resolvedParams.roomId);
+  const roomId = resolvedParams.roomId?.trim() || LIV_GOLF_TOUR_MAIN_ROOM;
 
   return (
     <main className="h-screen w-full select-none overflow-hidden bg-[#111111]">
