@@ -1,0 +1,321 @@
+"use client";
+
+import Link from "next/link";
+import RestreamEncoderPanel from "@/components/owner/RestreamEncoderPanel";
+import { useLivStreamSetup } from "@/lib/enterprise/liv-golf/useLivStreamSetup";
+import type { PreflightCheckStatus } from "@/lib/owner/contracts";
+
+function preflightTone(status: PreflightCheckStatus): string {
+  if (status === "pass") return "text-emerald-400";
+  if (status === "warn") return "text-amber-300";
+  if (status === "fail") return "text-red-300";
+  return "text-zinc-500";
+}
+
+function publishLabel(status: string | undefined, isLive: boolean): string {
+  if (isLive) return "LIVE ON PLATFORM";
+  if (status === "starting" || status === "preflight") return "INITIALIZING";
+  if (status === "error") return "ERROR";
+  return "STANDBY";
+}
+
+export default function LivStreamSetup() {
+  const {
+    showTitle,
+    setShowTitle,
+    eventLocation,
+    setEventLocation,
+    targetDateTime,
+    setTargetDateTime,
+    encoderFields,
+    setEncoderFields,
+    encoderLastSavedAt,
+    encoderHealth,
+    encoderHealthDetail,
+    isLive,
+    preflight,
+    hlsUrl,
+    manifestReachable,
+    isLoading,
+    encoderSaving,
+    metadataSaving,
+    broadcastAction,
+    preflightRunning,
+    saveMessage,
+    saveError,
+    actionMessage,
+    actionError,
+    saveEncoder,
+    saveMetadata,
+    runPreflight,
+    goLive,
+    stopStream,
+    snapshot,
+  } = useLivStreamSetup();
+
+  const isBusy =
+    encoderSaving || metadataSaving || preflightRunning || broadcastAction !== "idle";
+
+  return (
+    <div className="min-h-dvh w-full bg-[#111111] p-8 font-sans text-white antialiased selection:bg-[#CCFF00] selection:text-black">
+      <header className="mx-auto mb-8 flex max-w-6xl flex-col gap-6 border-b border-white/10 pb-6 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <div className="flex items-center gap-3">
+            <span className="rounded bg-[#CCFF00] px-2 py-0.5 font-mono text-[10px] font-extrabold uppercase tracking-wider text-black">
+              Stream Setup
+            </span>
+            <h1 className="text-xl font-bold tracking-tight text-white">
+              LIV Golf Live Production Pipeline
+            </h1>
+          </div>
+          <p className="mt-1 text-xs text-zinc-400">
+            Configure ingest → go live → feeds studio, command center, and fan viewer
+          </p>
+          <div className="mt-3 flex flex-wrap gap-4 text-xs">
+            <Link href="/enterprise/liv-golf/studio" className="text-[#CCFF00] hover:underline">
+              Production Studio →
+            </Link>
+            <Link href="/enterprise/liv-golf/live" className="text-white/50 hover:text-white">
+              Fan Viewer →
+            </Link>
+            <Link href="/enterprise/liv-golf/command-center" className="text-white/50 hover:text-white">
+              Command Center →
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 font-mono text-right text-xs sm:grid-cols-4">
+          <div>
+            <span className="block text-[10px] uppercase tracking-wider text-zinc-500">Platform</span>
+            <span className={`text-sm font-bold ${isLive ? "text-[#CCFF00]" : "text-zinc-400"}`}>
+              {publishLabel(snapshot?.publish.status, isLive)}
+            </span>
+          </div>
+          <div>
+            <span className="block text-[10px] uppercase tracking-wider text-zinc-500">HLS Manifest</span>
+            <span className={`text-sm font-bold ${manifestReachable ? "text-emerald-400" : "text-amber-300"}`}>
+              {manifestReachable ? "REACHABLE" : hlsUrl ? "PENDING" : "UNSET"}
+            </span>
+          </div>
+          <div>
+            <span className="block text-[10px] uppercase tracking-wider text-zinc-500">Encoder</span>
+            <span className="text-sm font-bold text-white">
+              {encoderHealth === "online"
+                ? "ONLINE"
+                : encoderHealth === "checking"
+                  ? "..."
+                  : encoderHealth.toUpperCase()}
+            </span>
+          </div>
+          <div>
+            <span className="block text-[10px] uppercase tracking-wider text-zinc-500">Phase</span>
+            <span className="text-sm font-bold text-white uppercase">
+              {snapshot?.eventPhase.phase ?? "idle"}
+            </span>
+          </div>
+        </div>
+      </header>
+
+      {(saveError || actionError) && (
+        <p className="mx-auto mb-6 max-w-6xl rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {saveError ?? actionError}
+        </p>
+      )}
+
+      {(saveMessage || actionMessage) && (
+        <p className="mx-auto mb-6 max-w-6xl rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+          {saveMessage ?? actionMessage}
+        </p>
+      )}
+
+      <main className="mx-auto grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-12">
+        <section className="lg:col-span-5">
+          <div className="rounded-xl border border-white/10 bg-black/40 p-6">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-[#CCFF00]">
+              Event Metadata
+            </h2>
+            <p className="mt-1 text-xs text-zinc-500">
+              Tournament identity flows to countdown, fan viewer, and command center
+            </p>
+
+            <div className="mt-5 space-y-4">
+              <label className="block">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                  Show Title
+                </span>
+                <input
+                  type="text"
+                  value={showTitle}
+                  onChange={(event) => setShowTitle(event.target.value)}
+                  disabled={isLoading}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[#CCFF00]/50"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                  Venue / Location
+                </span>
+                <input
+                  type="text"
+                  value={eventLocation}
+                  onChange={(event) => setEventLocation(event.target.value)}
+                  placeholder="e.g. Nashville, TN"
+                  disabled={isLoading}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[#CCFF00]/50"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                  Target Air Time
+                </span>
+                <input
+                  type="datetime-local"
+                  value={targetDateTime}
+                  onChange={(event) => setTargetDateTime(event.target.value)}
+                  disabled={isLoading}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[#CCFF00]/50"
+                />
+              </label>
+
+              <button
+                type="button"
+                disabled={isLoading || metadataSaving}
+                onClick={() => void saveMetadata()}
+                className="w-full rounded-lg bg-white/10 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-white/15 disabled:opacity-50"
+              >
+                {metadataSaving ? "Saving..." : "Save Event Metadata"}
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-xl border border-white/10 bg-black/40 p-6">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-[#CCFF00]">
+              Go-Live Controls
+            </h2>
+            <p className="mt-1 text-xs text-zinc-500">
+              Preflight → master go-live → fans receive HLS on /enterprise/liv-golf/live
+            </p>
+
+            <div className="mt-5 flex flex-col gap-3">
+              <button
+                type="button"
+                disabled={isBusy || isLoading}
+                onClick={() => void runPreflight()}
+                className="rounded-lg border border-white/15 px-4 py-3 text-xs font-bold uppercase tracking-wider text-white transition hover:border-[#CCFF00]/40 disabled:opacity-50"
+              >
+                {preflightRunning ? "Running Preflight..." : "Run Preflight"}
+              </button>
+
+              {!isLive ? (
+                <button
+                  type="button"
+                  disabled={isBusy || isLoading}
+                  onClick={() => void goLive()}
+                  className="rounded-lg bg-[#CCFF00] px-4 py-3 text-xs font-extrabold uppercase tracking-wider text-black transition hover:bg-[#b8e600] disabled:opacity-50"
+                >
+                  {broadcastAction === "go-live" ? "Going Live..." : "Go Live on Platform"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={isBusy || isLoading}
+                  onClick={() => void stopStream()}
+                  className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-xs font-bold uppercase tracking-wider text-red-200 transition hover:bg-red-500/20 disabled:opacity-50"
+                >
+                  {broadcastAction === "stop" ? "Stopping..." : "Stop Broadcast"}
+                </button>
+              )}
+            </div>
+
+            {hlsUrl ? (
+              <p className="mt-4 break-all font-mono text-[10px] text-zinc-500">
+                HLS: {hlsUrl}
+              </p>
+            ) : null}
+          </div>
+        </section>
+
+        <section className="lg:col-span-7 space-y-6">
+          <RestreamEncoderPanel
+            fields={encoderFields}
+            health={encoderHealth}
+            healthDetail={encoderHealthDetail}
+            saving={encoderSaving}
+            disabled={isLoading}
+            saveMessage={saveMessage}
+            saveError={saveError}
+            lastSavedLabel={
+              encoderLastSavedAt
+                ? `Saved ${new Date(encoderLastSavedAt).toLocaleString()}`
+                : null
+            }
+            onChange={setEncoderFields}
+            onSave={() => void saveEncoder()}
+          />
+
+          <div className="rounded-xl border border-white/10 bg-black/40 p-6">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-[#CCFF00]">
+              Preflight Checklist
+            </h2>
+            <p className="mt-1 text-xs text-zinc-500">
+              Mirrors owner cockpit checks — all green before tournament air
+            </p>
+
+            {preflight.length === 0 ? (
+              <p className="mt-4 text-sm text-zinc-500">
+                Run preflight to populate the checklist.
+              </p>
+            ) : (
+              <ul className="mt-4 space-y-2">
+                {preflight.map((check) => (
+                  <li
+                    key={check.id}
+                    className="flex items-start justify-between gap-4 rounded-lg border border-white/5 bg-[#1a1a1a]/60 px-3 py-2"
+                  >
+                    <div>
+                      <p className="text-sm text-white">{check.label}</p>
+                      {check.detail ? (
+                        <p className="mt-0.5 text-xs text-zinc-500">{check.detail}</p>
+                      ) : null}
+                    </div>
+                    <span
+                      className={`shrink-0 font-mono text-[10px] font-bold uppercase ${preflightTone(check.status)}`}
+                    >
+                      {check.status}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-dashed border-[#CCFF00]/25 bg-[#CCFF00]/5 p-5">
+            <p className="text-xs font-semibold uppercase tracking-wider text-[#CCFF00]">
+              Production Pipeline
+            </p>
+            <ol className="mt-3 space-y-2 text-sm text-zinc-300">
+              <li>1. Save Restream RTMP + HLS manifest above</li>
+              <li>2. Start OBS encoder pointed at Restream</li>
+              <li>3. Run preflight → Go Live on Platform</li>
+              <li>
+                4. Open{" "}
+                <Link href="/enterprise/liv-golf/studio" className="text-[#CCFF00] hover:underline">
+                  Production Studio
+                </Link>{" "}
+                to launch micro-bets
+              </li>
+              <li>
+                5. Fans watch at{" "}
+                <Link href="/enterprise/liv-golf/live" className="text-[#CCFF00] hover:underline">
+                  /enterprise/liv-golf/live
+                </Link>
+              </li>
+            </ol>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}

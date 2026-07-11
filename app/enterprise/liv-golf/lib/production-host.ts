@@ -8,6 +8,7 @@ export const LIV_GOLF_ROUTES = {
   live: "/enterprise/liv-golf/live",
   studio: "/enterprise/liv-golf/studio",
   commandCenter: "/enterprise/liv-golf/command-center",
+  streamSetup: "/enterprise/liv-golf/streaming/setup",
 } as const;
 
 export function livGolfProductionUrl(path: keyof typeof LIV_GOLF_ROUTES): string {

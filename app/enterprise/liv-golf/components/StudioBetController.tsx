@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { getClientAppUrl } from "@/lib/client-api";
 import { LIV_MICRO_BETS } from "@/lib/liv-micro-bets";
+import { useLivStreamStatus } from "@/lib/enterprise/liv-golf/useLivStreamStatus";
 import { useLiveProductionBroadcast } from "@/lib/useLiveProductionBroadcast";
 import type { OwnerGraphicsPreset } from "@/lib/owner/graphics-data-plane";
 
@@ -18,6 +19,8 @@ export default function StudioBetController() {
     terminateMicroBet,
     refresh,
   } = useLiveProductionBroadcast();
+
+  const { status: streamStatus, isLoading: streamStatusLoading } = useLivStreamStatus();
 
   const [presets, setPresets] = useState<OwnerGraphicsPreset[]>([]);
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
@@ -101,7 +104,13 @@ export default function StudioBetController() {
             PostgreSQL session · Supabase realtime · vMix broadcast lane
           </p>
           <div className="mt-3 flex flex-wrap gap-4 text-xs">
-            <Link href="/enterprise/liv-golf/live" className="text-[#CCFF00] hover:underline">
+            <Link
+              href="/enterprise/liv-golf/streaming/setup"
+              className="text-[#CCFF00] hover:underline"
+            >
+              Stream Setup →
+            </Link>
+            <Link href="/enterprise/liv-golf/live" className="text-white/50 hover:text-white">
               Fan Viewer →
             </Link>
             <Link href="/enterprise/liv-golf/command-center" className="text-white/50 hover:text-white">
@@ -113,17 +122,43 @@ export default function StudioBetController() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 font-mono text-right text-xs sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-4 font-mono text-right text-xs sm:grid-cols-4">
+          <div>
+            <span className="block text-[10px] uppercase tracking-wider text-zinc-500">Platform Stream</span>
+            <span
+              className={`text-sm font-bold ${
+                streamStatus?.isLive ? "text-[#CCFF00]" : "text-zinc-400"
+              }`}
+            >
+              {streamStatusLoading
+                ? "..."
+                : streamStatus?.isLive
+                  ? "LIVE"
+                  : streamStatus?.encoderConfigured
+                    ? "STANDBY"
+                    : "UNCONFIGURED"}
+            </span>
+          </div>
+          <div>
+            <span className="block text-[10px] uppercase tracking-wider text-zinc-500">HLS Manifest</span>
+            <span
+              className={`text-sm font-bold ${
+                streamStatus?.manifestReachable ? "text-emerald-400" : "text-amber-300"
+              }`}
+            >
+              {streamStatusLoading
+                ? "..."
+                : streamStatus?.manifestReachable
+                  ? "READY"
+                  : streamStatus?.hlsUrl
+                    ? "PENDING"
+                    : "—"}
+            </span>
+          </div>
           <div>
             <span className="block text-[10px] uppercase tracking-wider text-zinc-500">vMix Lane</span>
             <span className="text-sm font-bold text-[#CCFF00]">
               {vmix?.connection === "reachable" ? "ONLINE" : "STANDBY"}
-            </span>
-          </div>
-          <div>
-            <span className="block text-[10px] uppercase tracking-wider text-zinc-500">Program</span>
-            <span className="text-sm font-bold text-white">
-              {vmix?.streaming ? "STREAMING" : "IDLE"}
             </span>
           </div>
           <div>

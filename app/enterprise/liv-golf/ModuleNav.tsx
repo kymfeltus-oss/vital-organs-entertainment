@@ -1,19 +1,23 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const MODULES = [
-  "Tournaments",
-  "Players",
-  "Streaming",
-  "Commerce",
-  "Sponsors",
-  "Analytics",
-  "Settings",
+  { label: "Tournaments", href: "/enterprise/liv-golf" },
+  { label: "Players", href: "/enterprise/liv-golf" },
+  { label: "Streaming", href: "/enterprise/liv-golf/streaming/setup" },
+  { label: "Commerce", href: "/enterprise/liv-golf" },
+  { label: "Sponsors", href: "/enterprise/liv-golf" },
+  { label: "Analytics", href: "/enterprise/liv-golf/command-center" },
+  { label: "Settings", href: "/enterprise/liv-golf" },
 ] as const;
 
 export default function ModuleNav() {
+  const pathname = usePathname();
+
   return (
     <motion.nav
       initial={{ opacity: 0, y: 16 }}
@@ -22,21 +26,30 @@ export default function ModuleNav() {
       aria-label="Executive module navigation"
       className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7"
     >
-      {MODULES.map((label, index) => (
-        <button
-          key={label}
-          type="button"
-          className={cn(
-            "group relative rounded-full border border-[#2A2A2A] bg-[#111111]/80 px-4 py-3 text-center transition-all duration-300",
-            "hover:-translate-y-0.5 hover:border-[#00F2FF]/45 hover:bg-[#141414] hover:shadow-[0_0_20px_rgba(0,242,255,0.07)]",
-            index === 0 && "border-[#00F2FF]/25",
-          )}
-        >
-          <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#A9B1BC] transition-colors duration-300 group-hover:text-white">
-            {label}
-          </span>
-        </button>
-      ))}
+      {MODULES.map(({ label, href }, index) => {
+        const isActive = pathname === href || (label === "Streaming" && pathname.startsWith(href));
+
+        return (
+          <Link
+            key={label}
+            href={href}
+            className={cn(
+              "group relative rounded-full border border-[#2A2A2A] bg-[#111111]/80 px-4 py-3 text-center transition-all duration-300",
+              "hover:-translate-y-0.5 hover:border-[#00F2FF]/45 hover:bg-[#141414] hover:shadow-[0_0_20px_rgba(0,242,255,0.07)]",
+              (index === 0 || isActive) && "border-[#00F2FF]/25",
+            )}
+          >
+            <span
+              className={cn(
+                "text-[11px] font-medium uppercase tracking-[0.18em] transition-colors duration-300",
+                isActive ? "text-white" : "text-[#A9B1BC] group-hover:text-white",
+              )}
+            >
+              {label}
+            </span>
+          </Link>
+        );
+      })}
     </motion.nav>
   );
 }

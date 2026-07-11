@@ -92,7 +92,13 @@ export default function LivCommandCenter() {
               Executive Command Center
             </motion.h1>
             <div className="mt-4 flex flex-wrap gap-4 text-xs">
-              <Link href="/enterprise/liv-golf/studio" className="text-[#CCFF00] hover:underline">
+              <Link
+                href="/enterprise/liv-golf/streaming/setup"
+                className="text-[#CCFF00] hover:underline"
+              >
+                Stream Setup →
+              </Link>
+              <Link href="/enterprise/liv-golf/studio" className="text-white/50 hover:text-white">
                 Production Studio →
               </Link>
               <Link href="/enterprise/liv-golf/live" className="text-white/50 hover:text-white">
