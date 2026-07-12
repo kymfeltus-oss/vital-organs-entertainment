@@ -3,13 +3,14 @@ import {
   countLivMicroBetPlacements,
   loadLiveMicroBetsSession,
 } from "@/lib/enterprise/liv-golf/live-micro-bets-session";
+import { filterLivGolfGraphicsPresets } from "@/lib/enterprise/liv-golf/liv-graphics-scope";
 import { findLivMicroBet, LIV_MICRO_BET_TRANSACTION_TYPE } from "@/lib/liv-micro-bets";
 import {
   centsToDollars,
   fetchHarvestProgressCents,
   formatHarvestCurrency,
 } from "@/lib/live/harvest-metrics";
-import { OWNER_GRAPHICS_EVENT_ID } from "@/lib/owner/graphics-data-plane";
+import { OWNER_GRAPHICS_EVENT_ID, type OwnerGraphicsPreset } from "@/lib/owner/graphics-data-plane";
 import { loadOwnerStreamState } from "@/lib/owner/load-owner-state";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
@@ -86,9 +87,9 @@ export async function sumLivMicroBetTokenVolume(admin: SupabaseClient): Promise<
 }
 
 export async function countActiveSponsorGraphics(admin: SupabaseClient): Promise<number> {
-  const { count, error } = await admin
+  const { data, error } = await admin
     .from("owner_graphics_presets")
-    .select("id", { count: "exact", head: true })
+    .select("*")
     .eq("event_id", OWNER_GRAPHICS_EVENT_ID)
     .eq("is_active_on_stream", true)
     .in("type", [...SPONSOR_GRAPHIC_TYPES]);
@@ -98,13 +99,13 @@ export async function countActiveSponsorGraphics(admin: SupabaseClient): Promise
     throw new Error(errorMessage(error));
   }
 
-  return count ?? 0;
+  return filterLivGolfGraphicsPresets((data ?? []) as OwnerGraphicsPreset[]).length;
 }
 
 export async function countSponsorGraphicsInventory(admin: SupabaseClient): Promise<number> {
-  const { count, error } = await admin
+  const { data, error } = await admin
     .from("owner_graphics_presets")
-    .select("id", { count: "exact", head: true })
+    .select("*")
     .eq("event_id", OWNER_GRAPHICS_EVENT_ID)
     .in("type", [...SPONSOR_GRAPHIC_TYPES]);
 
@@ -113,7 +114,7 @@ export async function countSponsorGraphicsInventory(admin: SupabaseClient): Prom
     throw new Error(errorMessage(error));
   }
 
-  return count ?? 0;
+  return filterLivGolfGraphicsPresets((data ?? []) as OwnerGraphicsPreset[]).length;
 }
 
 export async function aggregateLivEnterpriseMetrics(): Promise<LivEnterpriseMetricsPayload> {

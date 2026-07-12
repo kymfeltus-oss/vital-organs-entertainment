@@ -33,7 +33,7 @@ export default function StudioBetController() {
 
   const loadPresets = useCallback(async () => {
     try {
-      const response = await fetch(`${getClientAppUrl()}/api/owner/graphics/presets`, {
+      const response = await fetch(`${getClientAppUrl()}/api/enterprise/liv-golf/graphics/presets`, {
         credentials: "include",
         cache: "no-store",
       });
@@ -69,7 +69,7 @@ export default function StudioBetController() {
     setGraphicsError(null);
     const isActive = activePresetId === presetId;
 
-    const response = await fetch(`${getClientAppUrl()}/api/owner/graphics/presets`, {
+    const response = await fetch(`${getClientAppUrl()}/api/enterprise/liv-golf/graphics/presets`, {
       method: "PATCH",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -280,11 +280,7 @@ export default function StudioBetController() {
               <p className="text-sm text-zinc-500">Loading production graphics...</p>
             ) : sponsorPresets.length === 0 ? (
               <p className="text-sm text-zinc-500">
-                No lower-third presets found. Create sponsor graphics in{" "}
-                <Link href="/owner/graphics" className="text-[#CCFF00] hover:underline">
-                  Graphics Suite
-                </Link>
-                .
+                No LIV sponsor lower-thirds loaded yet. Presets seed automatically on first studio load.
               </p>
             ) : (
               sponsorPresets.map((preset) => (
@@ -319,7 +315,7 @@ export default function StudioBetController() {
               <p className="text-sm text-zinc-500">Loading commercial presets...</p>
             ) : commercialPresets.length === 0 ? (
               <p className="text-sm text-zinc-500">
-                No slate/ticker presets found. Add a commercial slate in Graphics Suite.
+                No LIV commercial slate/ticker presets loaded yet.
               </p>
             ) : (
               commercialPresets.map((preset) => (
