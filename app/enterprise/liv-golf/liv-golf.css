@@ -110,3 +110,13 @@
 .liv-fade-in {
   animation: liv-fade-in 0.35s ease-out;
 }
+
+/* LIV Golf design tokens — Figma-ready Tailwind v4 theme extension */
+@theme {
+  --color-liv-volt: #ccff00;
+  --color-liv-charcoal: #111111;
+  --color-liv-card: #161616;
+  --color-liv-border: #222222;
+  --font-liv-sans: var(--font-inter), Inter, system-ui, sans-serif;
+  --font-liv-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}

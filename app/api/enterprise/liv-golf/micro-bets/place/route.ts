@@ -19,6 +19,10 @@ import {
   recordBetPoolExposure,
 } from "@/lib/enterprise/liv-golf/bet-pool-exposure";
 import { emitProductionRiskWarning } from "@/lib/enterprise/liv-golf/emit-production-risk-warning";
+import {
+  FanBetTicketUnavailableError,
+  recordFanBetTicket,
+} from "@/lib/enterprise/liv-golf/record-fan-bet-ticket";
 import { evaluateRiskThreshold } from "@/lib/enterprise/liv-golf/risk-threshold";
 import { LIV_MICRO_BET_TRANSACTION_TYPE, findLivMicroBet } from "@/lib/liv-micro-bets";
 import { LIV_GOLF_TOUR_MAIN_ROOM } from "@/lib/live/types";
@@ -152,6 +156,21 @@ export async function POST(request: NextRequest) {
         : typeof result === "object" && result && typeof result.balance === "number"
           ? result.balance
           : null;
+
+    try {
+      await recordFanBetTicket(admin, {
+        roomId: LIV_GOLF_TOUR_MAIN_ROOM,
+        betId,
+        userId: auth.buyer.userId,
+        selection,
+        stake: bet.stake,
+        payout: bet.payout,
+      });
+    } catch (ticketError) {
+      if (!(ticketError instanceof FanBetTicketUnavailableError)) {
+        console.error("[enterprise/liv-golf/micro-bets/place] ticket insert failed:", ticketError);
+      }
+    }
 
     try {
       const exposure = await recordBetPoolExposure({

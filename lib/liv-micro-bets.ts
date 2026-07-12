@@ -41,6 +41,7 @@ export type LivMicroBetLaunchPayload = {
   clearOverlays: boolean;
   launchedAt: string | null;
   at: string;
+  resolved_winner?: "Yes" | "No";
 };
 
 /** Production prop catalog — single source of truth for studio switcher + consumer APIs. */

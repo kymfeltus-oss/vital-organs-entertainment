@@ -8,6 +8,7 @@ import { useLivEnterpriseMetrics } from "@/lib/enterprise/liv-golf/useLivEnterpr
 import AudienceMap from "../AudienceMap";
 import MetricCard from "../MetricCard";
 import ModuleNav from "../ModuleNav";
+import LivScoreboardCard from "./LivScoreboardCard";
 
 function formatTokenVolume(tokens: number): string {
   return `${tokens.toLocaleString()} Tokens`;
@@ -176,12 +177,17 @@ export default function LivCommandCenter() {
           ))}
         </section>
 
-        <div className="mt-8">
-          <AudienceMap
-            liveViewerCount={liveViewersActual}
-            isLive={metrics?.isLive ?? false}
-            activeSponsorPlacements={metrics?.activeSponsorPlacements ?? 0}
-          />
+        <div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-12">
+          <div className="xl:col-span-8">
+            <AudienceMap
+              liveViewerCount={liveViewersActual}
+              isLive={metrics?.isLive ?? false}
+              activeSponsorPlacements={metrics?.activeSponsorPlacements ?? 0}
+            />
+          </div>
+          <div className="xl:col-span-4">
+            <LivScoreboardCard />
+          </div>
         </div>
 
         <div className={`mt-8 sm:mt-10 ${LIV_MODULE_NAV_SAFE}`}>
