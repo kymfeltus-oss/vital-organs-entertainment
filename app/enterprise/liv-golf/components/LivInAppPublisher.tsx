@@ -22,6 +22,7 @@ type PublisherPhase = "idle" | "connecting" | "preview" | "egress_starting" | "l
 type LivInAppPublisherProps = {
   roomId?: string;
   disabled?: boolean;
+  platformLive?: boolean;
   onBroadcastLive?: (hlsManifestUrl: string) => void;
   onBroadcastEnded?: () => void;
 };
@@ -29,6 +30,7 @@ type LivInAppPublisherProps = {
 export default function LivInAppPublisher({
   roomId = LIV_GOLF_TOUR_MAIN_ROOM,
   disabled = false,
+  platformLive = false,
   onBroadcastLive,
   onBroadcastEnded,
 }: LivInAppPublisherProps) {
@@ -250,6 +252,27 @@ export default function LivInAppPublisher({
     }
   }, [disabled, disconnectRoom, onBroadcastEnded]);
 
+  const wasPlatformLiveRef = useRef(platformLive);
+
+  useEffect(() => {
+    const wasLive = wasPlatformLiveRef.current;
+    wasPlatformLiveRef.current = platformLive;
+
+    if (!wasLive || platformLive) return;
+    if (phase === "idle" || phase === "connecting" || phase === "stopping") return;
+
+    void (async () => {
+      egressIdRef.current = null;
+      setHlsManifestUrl(null);
+      await disconnectRoom();
+      setPhase("idle");
+      setError(null);
+      setStatusMessage("Broadcast ended from production controls. Camera publisher is offline.");
+    })();
+  }, [disconnectRoom, platformLive, phase]);
+
+  const canEndBroadcast =
+    phase === "live" || phase === "preview" || phase === "error" || platformLive;
   const isBusy =
     phase === "connecting" || phase === "egress_starting" || phase === "stopping";
   const egressReady = egressBlockers.length === 0;
@@ -337,7 +360,7 @@ export default function LivInAppPublisher({
 
         <button
           type="button"
-          disabled={disabled || isBusy || (phase !== "live" && phase !== "preview")}
+          disabled={disabled || isBusy || !canEndBroadcast}
           onClick={() => void handleEndBroadcast()}
           className="rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-red-300 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
         >

@@ -9,6 +9,8 @@ import {
   postOwnerMasterGoLive,
   postOwnerPreflight,
 } from "@/lib/enterprise/liv-golf/liv-owner-broadcast-client";
+import { stopLivLiveKitEgress } from "@/lib/enterprise/liv-golf/liv-livekit-client";
+import type { PublishMode } from "@/lib/owner/contracts";
 import {
   canAttemptLivGoLive,
   formatLivReadinessError,
@@ -25,6 +27,7 @@ export type LivGoLiveControlsProps = {
   preflight: PreflightCheck[];
   hlsUrl: string | null;
   publishStatus: string | undefined;
+  publishMode?: PublishMode;
   eventPhase: string | undefined;
   scheduledAirTimeLabel: string | null;
   streamReadiness: LivStreamSetupStatus | null;
@@ -54,6 +57,7 @@ export default function LivGoLiveControls({
   preflight,
   hlsUrl,
   publishStatus,
+  publishMode = "none",
   eventPhase,
   scheduledAirTimeLabel,
   streamReadiness,
@@ -174,13 +178,31 @@ export default function LivGoLiveControls({
 
   const handleStopStream = useCallback(async () => {
     if (stopInFlightRef.current || broadcastAction !== "idle") return;
-    if (publishStatus !== "publishing" && !isLive) return;
+    if (!isLive && publishStatus !== "publishing") return;
 
     stopInFlightRef.current = true;
     setBroadcastAction("stop");
     setSystemWarning(null);
 
     try {
+      const useLiveKitStop = publishMode === "livekit_hls";
+
+      if (useLiveKitStop) {
+        const result = await stopLivLiveKitEgress();
+        if (!result.success) {
+          throw new Error(result.error ?? "LiveKit egress stop failed.");
+        }
+
+        await onPipelineRefresh();
+        onActionSuccess?.(
+          result.message ??
+            (result.remainingActiveEgressIds?.length
+              ? `Broadcast ended. Wait ~30s for LiveKit to release egress slots.`
+              : "Broadcast ended."),
+        );
+        return;
+      }
+
       const result = await postOwnerBroadcastEnd();
 
       if (!result.ok) {
@@ -203,7 +225,15 @@ export default function LivGoLiveControls({
       stopInFlightRef.current = false;
       setBroadcastAction("idle");
     }
-  }, [broadcastAction, isLive, onActionSuccess, onPipelineRefresh, onSnapshotUpdate, publishStatus]);
+  }, [
+    broadcastAction,
+    isLive,
+    onActionSuccess,
+    onPipelineRefresh,
+    onSnapshotUpdate,
+    publishMode,
+    publishStatus,
+  ]);
 
   const handleDismissFeedback = useCallback(() => {
     setGoLiveFeedback(null);

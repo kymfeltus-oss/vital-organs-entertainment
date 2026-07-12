@@ -21,6 +21,7 @@ import {
 import { getSupabase } from "@/lib/supabase/client";
 
 const STATUS_LISTENER_ID = "liv-stream-status-realtime";
+const REALTIME_POLL_MS = 5_000;
 
 export type StreamStateSyncPayload = {
   at?: string;
@@ -54,12 +55,10 @@ export type UseLivStreamStatusResult = {
 };
 
 /**
- * Real-time LIV Golf stream status — polling eliminated.
- * Binds to Supabase WebSocket platform channel:
- * - stream-state-sync → live_stream_state singleton (id=current_event)
- * - stream-graphics-sync → overlay deck mutations
- *
- * Target air time maps to event_countdown_config.start_time via stream-setup API.
+ * Real-time LIV Golf stream status with WebSocket push + HTTP polling fallback.
+ * Binds to Supabase platform channel for stream-state-sync / stream-graphics-sync.
+ * Polls every 5s regardless of socket state so fan viewports still open when
+ * Realtime transport is flaky (transport failure).
  */
 export function useLivStreamStatus(
   options: UseLivStreamStatusOptions = {},
@@ -152,6 +151,16 @@ export function useLivStreamStatus(
       releasePlatformChannel(supabase);
       setIsRealtimeConnected(false);
     };
+  }, [enabled]);
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const poll = window.setInterval(() => {
+      void refreshRef.current(false);
+    }, REALTIME_POLL_MS);
+
+    return () => window.clearInterval(poll);
   }, [enabled]);
 
   const isPlayerLive =

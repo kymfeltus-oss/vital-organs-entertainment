@@ -1,4 +1,8 @@
 export { LIVBettingOverlay } from "./LIVBettingOverlay";
+export { LiveBetNotificationPill } from "./LiveBetNotificationPill";
+export type { LiveBetNotificationPillProps } from "./LiveBetNotificationPill";
+export { VictoryConfettiCanvas } from "./VictoryConfettiCanvas";
+export type { VictoryConfettiCanvasProps } from "./VictoryConfettiCanvas";
 export type { LIVBettingOverlayProps } from "./LIVBettingOverlay";
 export { TokenBalance } from "./TokenBalance";
 export { ActiveMarketCard } from "./ActiveMarketCard";

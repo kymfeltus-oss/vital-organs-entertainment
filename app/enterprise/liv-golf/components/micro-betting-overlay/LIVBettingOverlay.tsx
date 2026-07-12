@@ -8,17 +8,15 @@ import { LatencyBuffer } from "./LatencyBuffer";
 import { ActiveMarketCard } from "./ActiveMarketCard";
 import { QuickStakesPanel } from "./QuickStakesPanel";
 import { TokenFlyAnimation } from "./TokenFlyAnimation";
+import { VictoryConfettiCanvas } from "./VictoryConfettiCanvas";
 import type { OverlayServerSession } from "./types";
+import { useWalletStore } from "@/lib/store/useWalletStore";
 
 export type LIVBettingOverlayProps = {
   roomId: string;
   serverSession: OverlayServerSession | null;
-  userTokens: number;
-  isWalletLoading?: boolean;
   geoSample: { lat: number; lng: number } | null;
   geoAttestationToken: string | null;
-  onTopUpTokens?: () => void;
-  onWagerDeduct: (newBalance: number) => void;
   onWagerSuccess?: () => Promise<void>;
   className?: string;
 };
@@ -26,14 +24,12 @@ export type LIVBettingOverlayProps = {
 export function LIVBettingOverlay({
   roomId,
   serverSession,
-  userTokens,
-  isWalletLoading = false,
   geoSample,
   geoAttestationToken,
-  onWagerDeduct,
   onWagerSuccess,
   className = "",
 }: LIVBettingOverlayProps) {
+  const tokenBalance = useWalletStore((state) => state.tokenBalance);
   const {
     currentMarket,
     selectedSelection,
@@ -43,15 +39,14 @@ export function LIVBettingOverlay({
     errorMessage,
     timeLeft,
     windowSeconds,
+    showVictory,
     setSelectedSelection,
     placeWager,
   } = useBettingOverlayState({
     roomId,
     serverSession,
-    userTokens,
     geoSample,
     geoAttestationToken,
-    onWagerDeduct,
     onWagerSuccess,
   });
 
@@ -69,13 +64,17 @@ export function LIVBettingOverlay({
       className={`relative h-full w-full md:w-[340px] ${className}`}
       aria-label="LIV micro-betting overlay"
     >
-      <div className="relative flex h-full min-h-[360px] select-none flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/95 p-4 font-sans text-white shadow-2xl backdrop-blur-md">
+      <div className="relative flex h-full min-h-0 select-none flex-col overflow-hidden overflow-y-auto rounded-t-3xl border-t border-neutral-800 bg-neutral-900/95 p-4 font-sans text-white shadow-2xl backdrop-blur-md md:min-h-[360px] md:rounded-2xl md:border md:bg-neutral-900/90 md:p-5">
+        <VictoryConfettiCanvas isActive={showVictory} />
+
+        <div className="mx-auto mb-3 h-1 w-12 shrink-0 rounded-full bg-neutral-700 md:hidden" aria-hidden />
+
         {localPhase === "CONFIRMED" ? <TokenFlyAnimation /> : null}
 
-        <TokenBalance balance={userTokens} isLoading={isWalletLoading} />
+        <TokenBalance />
 
-        <div className="mb-1 mt-3 flex items-center justify-between text-[11px] font-bold text-neutral-400">
-          <span className="uppercase tracking-wide">Micro Market</span>
+        <div className="mb-1 mt-3 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-neutral-400">
+          <span>⚡ Live Multipliers</span>
           <span
             className={`font-mono transition-colors ${
               localPhase === "CLOSING_SOON"
@@ -103,7 +102,7 @@ export function LIVBettingOverlay({
           <div className="mb-4 h-1 w-full rounded-full bg-neutral-800" />
         )}
 
-        <div className="relative flex flex-1 flex-col justify-between">
+        <div className="relative flex flex-1 flex-col justify-between overflow-y-auto">
           {showInteractiveMarket && currentMarket ? (
             <>
               <ActiveMarketCard
@@ -116,7 +115,7 @@ export function LIVBettingOverlay({
               <QuickStakesPanel
                 fixedStake={fixedStake}
                 payout={currentMarket.payoutAmount}
-                balance={userTokens}
+                balance={tokenBalance}
                 onSubmit={() => void placeWager()}
                 disabled={isControlDisabled || !selectedSelection}
                 isSubmitting={wagerStatus === "submitting"}
@@ -160,12 +159,26 @@ export function LIVBettingOverlay({
           ) : null}
 
           {localPhase === "RESOLVED" ? (
-            <div className="liv-overlay-fade-in absolute inset-0 z-40 flex flex-col items-center justify-center gap-2 rounded-xl bg-neutral-900/85 backdrop-blur-md">
-              <div className="rounded-full border border-neutral-600 bg-neutral-800/80 p-2.5 text-neutral-300 shadow-lg">
-                <Lock className="h-5 w-5" aria-hidden />
+            <div
+              className={`liv-overlay-fade-in absolute inset-0 z-40 flex flex-col items-center justify-center gap-2 rounded-xl backdrop-blur-md ${
+                showVictory ? "bg-neutral-900/70" : "bg-neutral-900/85"
+              }`}
+            >
+              <div
+                className={`rounded-full border p-2.5 shadow-lg ${
+                  showVictory
+                    ? "border-[#CCFF00] bg-[#CCFF00]/15 text-[#CCFF00]"
+                    : "border-neutral-600 bg-neutral-800/80 text-neutral-300"
+                }`}
+              >
+                <CheckCircle2 className={`h-5 w-5 ${showVictory ? "animate-bounce" : ""}`} aria-hidden />
               </div>
-              <span className="text-xs font-black uppercase tracking-widest text-neutral-300">
-                Market Resolved
+              <span
+                className={`text-xs font-black uppercase tracking-widest ${
+                  showVictory ? "text-[#CCFF00]" : "text-neutral-300"
+                }`}
+              >
+                {showVictory ? "You Won!" : "Market Resolved"}
               </span>
               {serverSession?.resolved_winner ? (
                 <span className="font-mono text-[11px] font-bold text-[#CCFF00]">

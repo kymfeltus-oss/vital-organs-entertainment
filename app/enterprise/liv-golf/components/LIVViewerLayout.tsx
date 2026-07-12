@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import AttendeeStreamPlayer from "@/components/features/live/AttendeeStreamPlayer";
 import LiveStreamGraphicsOverlay from "@/components/features/live/LiveStreamGraphicsOverlay";
 import { useLivStreamStatus } from "@/app/enterprise/liv-golf/hooks/useLivStreamStatus";
+import { isLivStreamLiveStatus } from "@/lib/enterprise/liv-golf/liv-stream-status-patches";
 import { useLivGeoEligibility } from "@/lib/enterprise/liv-golf/useLivGeoEligibility";
 import { useLiveStreamGraphics } from "@/lib/features/live/useLiveStreamGraphics";
 import { useLiveStreamSubscriber } from "@/lib/live/useLiveStreamSubscriber";
 import { useLiveSeedWallet } from "@/lib/useLiveSeedWallet";
+import { useWalletStore } from "@/lib/store/useWalletStore";
 import FanBetPanel from "./FanBetPanel";
 import LivGeoComplianceBanner from "./LivGeoComplianceBanner";
 import LivStreamStandbyOverlay from "./LivStreamStandbyOverlay";
@@ -56,10 +58,24 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
     return headers;
   }, [geo.attestationToken, geo.sample]);
 
-  const { balance, isLoading, refresh, setBalance } = useLiveSeedWallet({
+  const { balance, isLoading, refresh } = useLiveSeedWallet({
     enabled: true,
     requestHeaders: walletHeaders,
   });
+
+  const initializeBalance = useWalletStore((state) => state.initializeBalance);
+  const setWalletLoading = useWalletStore((state) => state.setWalletLoading);
+  const tokenBalance = useWalletStore((state) => state.tokenBalance);
+
+  useEffect(() => {
+    setWalletLoading(isLoading);
+  }, [isLoading, setWalletLoading]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      initializeBalance(balance);
+    }
+  }, [balance, initializeBalance, isLoading]);
 
   const serverSession = useMemo(() => {
     if (!sessionData) return null;
@@ -72,13 +88,6 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
       resolvedWinner,
     });
   }, [activeBet, clearOverlays, isActive, resolvedWinner, sessionData]);
-
-  const handleWagerDeduct = useCallback(
-    (newBalance: number) => {
-      setBalance(newBalance);
-    },
-    [setBalance],
-  );
 
   const handleWagerSuccess = useCallback(async () => {
     await refresh();
@@ -101,7 +110,7 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
       ? "Confirming your coordinates against the active tournament corridor..."
       : "Prop wagering is not available in your region.");
 
-  const isLive = streamStatus?.isLive === true;
+  const isLive = streamStatus?.isLive === true || isLivStreamLiveStatus(streamStatus);
   const buySeedsHref = "/buy-seeds?return=%2Fenterprise%2Fliv-golf%2Flive";
 
   const liveStreamSlot = (
@@ -154,17 +163,14 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
           </h1>
         </header>
 
-        <div className="w-full max-w-6xl overflow-hidden">
+        <div className="w-full max-w-6xl overflow-visible md:overflow-hidden">
           <VideoOverlayPlayer serverSession={serverSession} liveStream={liveStreamSlot}>
             <LIVBettingOverlay
               className="h-full"
               roomId={roomId}
               serverSession={serverSession}
-              userTokens={balance}
-              isWalletLoading={isLoading}
               geoSample={geo.sample}
               geoAttestationToken={geo.attestationToken}
-              onWagerDeduct={handleWagerDeduct}
               onWagerSuccess={handleWagerSuccess}
             />
           </VideoOverlayPlayer>
@@ -174,7 +180,7 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
           <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-[#161616]">
             <FanBetPanel
               activeBet={activeBet}
-              tokenBalance={balance}
+              tokenBalance={tokenBalance}
               isWalletLoading={isLoading}
               geoAttestationToken={geo.attestationToken}
               geoSample={geo.sample}

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   Eye,
@@ -53,6 +53,10 @@ export default function StudioBetControllerPage() {
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const [graphicsError, setGraphicsError] = useState<string | null>(null);
   const [presetsLoading, setPresetsLoading] = useState(true);
+  const [terminateInFlight, setTerminateInFlight] = useState(false);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [terminateError, setTerminateError] = useState<string | null>(null);
+  const terminateInFlightRef = useRef(false);
 
   const vmixStatus = vmix?.connection === "reachable" ? "ONLINE" : "STANDBY";
   const streamLabel = streamStatusLoading
@@ -121,6 +125,7 @@ export default function StudioBetControllerPage() {
 
   const simulationLaunch = useCallback(
     async (betId: string) => {
+      setTerminateError(null);
       const ok = await launchMicroBet(betId);
       if (ok) await refresh();
       return ok;
@@ -148,10 +153,52 @@ export default function StudioBetControllerPage() {
 
   const handleLaunch = simulationLaunch;
 
-  const handleTerminate = async () => {
-    const ok = await terminateMicroBet();
-    if (ok) await refresh();
-  };
+  const handleTerminate = useCallback(async () => {
+    if (terminateInFlightRef.current) return;
+
+    terminateInFlightRef.current = true;
+    setTerminateInFlight(true);
+    setActionMessage(null);
+    setTerminateError(null);
+
+    try {
+      const response = await fetch(
+        `${getClientAppUrl()}/api/enterprise/liv-golf/micro-bets/session`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ activeBetId: null, phase: "RESOLVED" }),
+        },
+      );
+
+      const payload = (await response.json().catch(() => ({}))) as {
+        success?: boolean;
+        error?: string;
+        activeBetId?: string | null;
+      };
+
+      if (!response.ok || !payload.success) {
+        const message =
+          payload.error ??
+          (response.status === 401 || response.status === 403
+            ? "Owner sign-in required to end bets from the studio console."
+            : `Unable to end bet (HTTP ${response.status}).`);
+        setTerminateError(message);
+        return;
+      }
+
+      await refresh();
+      setActionMessage("Micro-bet session ended. Fan overlay will clear on the live viewer.");
+    } catch (terminateError) {
+      const message =
+        terminateError instanceof Error ? terminateError.message : "Unable to end bet.";
+      setTerminateError(message);
+    } finally {
+      terminateInFlightRef.current = false;
+      setTerminateInFlight(false);
+    }
+  }, [refresh]);
 
   const handleResolveYes = async () => {
     const ok = await resolveMicroBetYes();
@@ -226,12 +273,18 @@ export default function StudioBetControllerPage() {
             {isThisBetActive ? (
               <button
                 type="button"
+                data-testid="studio-end-bet"
                 onClick={() => void handleTerminate()}
-                disabled={isDispatching}
-                className="flex items-center gap-1.5 rounded-xl bg-rose-600 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-white shadow-md transition-all hover:bg-rose-500 active:scale-95 disabled:opacity-40"
+                disabled={terminateInFlight}
+                aria-busy={terminateInFlight}
+                className={`flex items-center gap-1.5 rounded-xl bg-rose-600 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-white shadow-md transition-colors hover:bg-rose-500 active:scale-95 ${
+                  terminateInFlight
+                    ? "cursor-wait opacity-70"
+                    : "cursor-pointer opacity-100"
+                }`}
               >
                 <Square className="h-3 w-3 fill-current" aria-hidden />
-                End Bet
+                {terminateInFlight ? "Ending..." : "End Bet"}
               </button>
             ) : (
               <button
@@ -248,6 +301,14 @@ export default function StudioBetControllerPage() {
 
           {isThisBetActive ? (
             <div className="flex flex-wrap items-center gap-2">
+              {terminateError ? (
+                <p
+                  role="alert"
+                  className="w-full rounded-lg border border-red-500/30 bg-red-500/10 px-2 py-1.5 text-[10px] text-red-200"
+                >
+                  {terminateError}
+                </p>
+              ) : null}
               <span className="rounded border border-neutral-700 bg-black/40 px-2 py-1 font-mono text-[9px] uppercase tracking-wider text-neutral-400">
                 Phase: {activePhase}
               </span>
@@ -256,7 +317,7 @@ export default function StudioBetControllerPage() {
                   type="button"
                   onClick={() => void handleLock()}
                   disabled={isDispatching}
-                  className="flex items-center gap-1 rounded-lg border border-amber-500/40 bg-amber-500/10 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-300 transition hover:bg-amber-500/20 disabled:opacity-40"
+                  className="flex cursor-pointer items-center gap-1 rounded-lg border border-amber-500/40 bg-amber-500/10 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-300 transition hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <Lock className="h-3 w-3" aria-hidden />
                   Lock Market
@@ -267,7 +328,7 @@ export default function StudioBetControllerPage() {
                   type="button"
                   onClick={() => void handleResolveYes()}
                   disabled={isDispatching || activePhase === "RESOLVED"}
-                  className="flex items-center gap-1 rounded-lg border border-[#CCFF00]/40 bg-[#CCFF00]/10 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#CCFF00] transition hover:bg-[#CCFF00]/20 disabled:opacity-40"
+                  className="flex cursor-pointer items-center gap-1 rounded-lg border border-[#CCFF00]/40 bg-[#CCFF00]/10 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#CCFF00] transition hover:bg-[#CCFF00]/20 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <Trophy className="h-3 w-3" aria-hidden />
                   Resolve YES
@@ -372,6 +433,12 @@ export default function StudioBetControllerPage() {
           {error ?? graphicsError}
         </p>
       )}
+
+      {actionMessage ? (
+        <p className="mb-6 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+          {actionMessage}
+        </p>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* SECTION 2: IN-STREAM MICRO-BETS DISPATCH PANEL */}

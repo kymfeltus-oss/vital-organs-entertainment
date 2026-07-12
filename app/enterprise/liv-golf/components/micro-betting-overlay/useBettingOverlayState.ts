@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getClientAppUrl } from "@/lib/client-api";
 import { requestLiveSeedWalletRefresh } from "@/lib/live/seed-wallet-events";
+import { useWalletStore } from "@/lib/store/useWalletStore";
 import { activeBetToLiveMarket } from "./catalog-to-market";
 import {
   findLegendaryShowcaseScenario,
@@ -25,26 +26,29 @@ import type {
 type UseBettingOverlayStateProps = {
   roomId: string;
   serverSession: OverlayServerSession | null;
-  userTokens: number;
   geoSample: { lat: number; lng: number } | null;
   geoAttestationToken: string | null;
-  onWagerDeduct: (newBalance: number) => void;
   onWagerSuccess?: () => Promise<void>;
 };
 
 export function useBettingOverlayState({
   roomId,
   serverSession,
-  userTokens,
   geoSample,
   geoAttestationToken,
-  onWagerDeduct,
   onWagerSuccess,
 }: UseBettingOverlayStateProps) {
+  const tokenBalance = useWalletStore((state) => state.tokenBalance);
+  const initializeBalance = useWalletStore((state) => state.initializeBalance);
+  const triggerGlow = useWalletStore((state) => state.triggerGlow);
   const [selectedSelection, setSelectedSelection] = useState<string | null>(null);
   const [wagerStatus, setWagerStatus] = useState<WagerStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [clockMs, setClockMs] = useState(() => Date.now());
+  const [lastPlacedSelection, setLastPlacedSelection] = useState<"Yes" | "No" | null>(null);
+  const [lastPlacedBetId, setLastPlacedBetId] = useState<string | null>(null);
+  const [showVictory, setShowVictory] = useState(false);
+  const celebratedResolutionRef = useRef<string | null>(null);
 
   const activeBetId = serverSession?.active_bet_id ?? null;
 
@@ -52,7 +56,39 @@ export function useBettingOverlayState({
     setSelectedSelection(null);
     setWagerStatus("idle");
     setErrorMessage(null);
+
+    if (!activeBetId) return;
+
+    setLastPlacedSelection(null);
+    setLastPlacedBetId(null);
+    setShowVictory(false);
+    celebratedResolutionRef.current = null;
   }, [activeBetId]);
+
+  useEffect(() => {
+    if (!serverSession || !lastPlacedSelection || !lastPlacedBetId) return undefined;
+
+    const resolvedWinner = serverSession.resolved_winner;
+    if (serverSession.phase !== "RESOLVED" || !resolvedWinner) return undefined;
+    if (resolvedWinner !== lastPlacedSelection) return undefined;
+
+    const resolutionKey = `${lastPlacedBetId}:${resolvedWinner}`;
+    if (celebratedResolutionRef.current === resolutionKey) return undefined;
+
+    celebratedResolutionRef.current = resolutionKey;
+    setShowVictory(true);
+    triggerGlow("WIN");
+
+    const timer = window.setTimeout(() => setShowVictory(false), 5000);
+    return () => window.clearTimeout(timer);
+  }, [
+    lastPlacedBetId,
+    lastPlacedSelection,
+    serverSession,
+    serverSession?.phase,
+    serverSession?.resolved_winner,
+    triggerGlow,
+  ]);
 
   useEffect(() => {
     if (!serverSession?.ends_at || serverSession.phase === "RESOLVED") {
@@ -131,7 +167,7 @@ export function useBettingOverlayState({
       return;
     }
 
-    if (userTokens < fixedStake) {
+    if (tokenBalance < fixedStake) {
       setErrorMessage("Insufficient fan token balance for this entry.");
       setWagerStatus("error");
       return;
@@ -174,8 +210,12 @@ export function useBettingOverlayState({
       }
 
       if (typeof data.balance === "number") {
-        onWagerDeduct(data.balance);
+        initializeBalance(data.balance);
+        triggerGlow("DEDUCT");
       }
+
+      setLastPlacedSelection(selection);
+      setLastPlacedBetId(activeBetId);
 
       requestLiveSeedWalletRefresh();
       if (onWagerSuccess) {
@@ -195,13 +235,14 @@ export function useBettingOverlayState({
     geoAttestationToken,
     geoSample?.lat,
     geoSample?.lng,
+    initializeBalance,
     localPhase,
-    onWagerDeduct,
     onWagerSuccess,
     roomId,
     selectedSelection,
     serverSession?.activeBet,
-    userTokens,
+    tokenBalance,
+    triggerGlow,
     wagerStatus,
   ]);
 
@@ -214,6 +255,7 @@ export function useBettingOverlayState({
     errorMessage,
     timeLeft,
     windowSeconds: LIV_MICRO_BET_WINDOW_SECONDS,
+    showVictory,
     setSelectedSelection,
     placeWager,
   };

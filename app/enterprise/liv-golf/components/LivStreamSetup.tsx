@@ -227,6 +227,7 @@ export default function LivStreamSetup() {
               preflight={preflight}
               hlsUrl={hlsUrl}
               publishStatus={snapshot?.publish.status}
+              publishMode={snapshot?.publish.mode}
               eventPhase={snapshot?.eventPhase.phase}
               scheduledAirTimeLabel={scheduledAirTimeLabel}
               streamReadiness={streamReadiness}
@@ -240,6 +241,7 @@ export default function LivStreamSetup() {
         <section className="lg:col-span-7 space-y-6">
           <LivInAppPublisher
             disabled={isLoading}
+            platformLive={isLive}
             onBroadcastLive={() => void refreshPipeline()}
             onBroadcastEnded={() => void refreshPipeline()}
           />
