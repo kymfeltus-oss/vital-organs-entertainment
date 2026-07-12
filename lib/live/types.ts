@@ -24,6 +24,7 @@ export const LIVE_ROOM_PLATFORM_CHANNEL = LIVE_ROOM_CHAT_CHANNEL;
 export const LIVE_STREAM_STATE_BROADCAST_EVENT = "stream-state-sync";
 export const STREAM_GRAPHICS_SYNC_EVENT = "stream-graphics-sync";
 export const LIV_MICRO_BET_LAUNCH_EVENT = "liv-micro-bet-launch";
+export const AI_PROP_SUGGESTED_EVENT = "ai-prop-suggested";
 export const PRODUCTION_RISK_WARNING_EVENT = "production-risk-warning";
 export const HARVEST_METRICS_CHANNEL = LIVE_ROOM_PLATFORM_CHANNEL;
 export const STREAM_STATE_SYNC_CHANNEL = LIVE_ROOM_PLATFORM_CHANNEL;

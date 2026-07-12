@@ -52,15 +52,18 @@ export type LivGeoEdgeMiddlewareResult =
   | { action: "block"; status: number; body: Record<string, unknown> }
   | { action: "forward"; headers: Headers };
 
-/** Edge network geolocation pass-through for LIV wagering APIs. */
+/** Edge network geolocation pass-through for LIV wagering APIs (Next.js 16 `proxy.ts` equivalent of middleware.ts). */
 export function resolveLivGeoEdgeMiddleware(request: NextRequest): LivGeoEdgeMiddlewareResult {
   if (!isLivWageringEdgePath(request.nextUrl.pathname)) {
     return { action: "skip" };
   }
 
+  // Read the native Vercel Edge geolocation strings exactly as typed.
   const latitude = request.headers.get("x-vercel-ip-latitude");
   const longitude = request.headers.get("x-vercel-ip-longitude");
   const country = request.headers.get("x-vercel-ip-country");
+
+  console.log(`[Edge Security Check] Country: ${country}, Lat: ${latitude}, Lng: ${longitude}`);
 
   const headers = new Headers(request.headers);
 
@@ -72,15 +75,12 @@ export function resolveLivGeoEdgeMiddleware(request: NextRequest): LivGeoEdgeMid
     return { action: "forward", headers };
   }
 
-  if (!latitude || !longitude) {
+  if (!latitude || !longitude || !country) {
     return {
       action: "block",
       status: 403,
       body: {
-        success: false,
-        error: "Access Denied: Location verification coordinates missing.",
-        geofenced: true,
-        code: "EDGE_GEO_UNAVAILABLE",
+        error: "Compliance Error: Location telemetry missing.",
       },
     };
   }

@@ -71,6 +71,7 @@ async function getProxyAuthUser(
 }
 
 export async function proxy(request: NextRequest) {
+  // LIV micro-bets place: Vercel edge geo compliance (see lib/enterprise/liv-golf/geo/edge-middleware.ts).
   const edgeResult = resolveLivGeoEdgeMiddleware(request);
 
   if (edgeResult.action === "block") {

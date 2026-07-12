@@ -50,6 +50,10 @@ export function resolveCatalogBetForOddsEvent(payload: OddsFeedPayload): string 
     return "tyrell-sand-save";
   }
 
+  if (eventType === "PLAYER_SHOT_SITUATION" && lieType === "rough") {
+    return "cam-eagle";
+  }
+
   if (eventType === "TEAM_HOLE_SCORING" && payload.hole_context?.hole_number === 16) {
     return "crushers-hole-16";
   }
