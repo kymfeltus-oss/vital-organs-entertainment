@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DEVICE_FIT_PAGE } from "@/lib/responsive";
 import "./liv-golf.css";
 
 export const metadata: Metadata = {
@@ -14,7 +15,7 @@ export default function LivGolfLayout({
 }>) {
   return (
     <div
-      className="min-h-dvh w-full text-white antialiased"
+      className={`${DEVICE_FIT_PAGE} text-white antialiased`}
       style={{
         fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
       }}

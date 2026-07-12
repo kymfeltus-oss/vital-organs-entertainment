@@ -9,7 +9,7 @@ export default function LivGolfLanding() {
   return (
     <main
       id="main-content"
-      className="relative flex min-h-dvh w-full flex-col overflow-hidden bg-black text-white"
+      className="relative flex min-h-dvh w-full max-w-[100vw] flex-col overflow-x-hidden bg-black text-white"
     >
       {/* Atmospheric background — no photo */}
       <div
@@ -21,7 +21,7 @@ export default function LivGolfLanding() {
       />
 
       {/* Header */}
-      <header className="relative z-10 flex items-start justify-between px-6 pt-8 sm:px-10 sm:pt-10 lg:px-14 lg:pt-12">
+      <header className="relative z-10 flex flex-col gap-6 px-4 pt-[max(1.5rem,env(safe-area-inset-top))] sm:flex-row sm:items-start sm:justify-between sm:px-10 sm:pt-10 lg:px-14 lg:pt-12">
         <motion.div
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -34,7 +34,7 @@ export default function LivGolfLanding() {
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-          className="flex w-[148px] flex-col items-end text-right sm:w-[168px]"
+          className="flex w-full flex-col items-start text-left sm:w-[168px] sm:items-end sm:text-right"
         >
           <p className="text-[11px] font-light tracking-wide text-white/55">
             Prepared Exclusively For
@@ -56,7 +56,7 @@ export default function LivGolfLanding() {
       </header>
 
       {/* Hero */}
-      <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pb-16 pt-10 text-center sm:px-10">
+      <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pb-12 pt-8 text-center sm:px-10 sm:pb-16 sm:pt-10">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -64,13 +64,13 @@ export default function LivGolfLanding() {
           className="max-w-5xl"
         >
           <h1 className="space-y-1 sm:space-y-2">
-            <span className="block text-[2.35rem] font-bold uppercase leading-[0.95] tracking-tight text-white sm:text-[3.25rem] lg:text-[4.5rem]">
+            <span className="block text-[clamp(1.75rem,9vw,4.5rem)] font-bold uppercase leading-[0.95] tracking-tight text-white">
               OWN THE MOMENT.
             </span>
-            <span className="block text-[2.35rem] font-bold uppercase leading-[0.95] tracking-tight text-white/42 sm:text-[3.25rem] lg:text-[4.5rem]">
+            <span className="block text-[clamp(1.75rem,9vw,4.5rem)] font-bold uppercase leading-[0.95] tracking-tight text-white/42">
               OWN THE FAN.
             </span>
-            <span className="block text-[2.35rem] font-bold uppercase leading-[0.95] tracking-tight text-white/26 sm:text-[3.25rem] lg:text-[4.5rem]">
+            <span className="block text-[clamp(1.75rem,9vw,4.5rem)] font-bold uppercase leading-[0.95] tracking-tight text-white/26">
               OWN THE FUTURE.
             </span>
           </h1>
@@ -105,7 +105,7 @@ export default function LivGolfLanding() {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 flex items-center justify-between px-6 pb-7 text-[10px] text-white/45 sm:px-10 sm:pb-8 lg:px-14">
+      <footer className="relative z-10 flex flex-col gap-2 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-[10px] text-white/45 sm:flex-row sm:items-center sm:justify-between sm:px-10 sm:pb-8 lg:px-14">
         <p>
           Powered by <span className="font-semibold text-white/80">PARABLE</span> Enterprise
         </p>

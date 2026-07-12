@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import RestreamEncoderPanel from "@/components/owner/RestreamEncoderPanel";
+import { LIV_OPS_CONTENT, LIV_OPS_PAGE } from "@/lib/enterprise/liv-golf/responsive";
 import { useLivStreamSetup } from "@/lib/enterprise/liv-golf/useLivStreamSetup";
 import type { PreflightCheckStatus } from "@/lib/owner/contracts";
 
@@ -57,14 +58,14 @@ export default function LivStreamSetup() {
     encoderSaving || metadataSaving || preflightRunning || broadcastAction !== "idle";
 
   return (
-    <div className="min-h-dvh w-full bg-[#111111] p-8 font-sans text-white antialiased selection:bg-[#CCFF00] selection:text-black">
-      <header className="mx-auto mb-8 flex max-w-6xl flex-col gap-6 border-b border-white/10 pb-6 lg:flex-row lg:items-end lg:justify-between">
+    <div className={LIV_OPS_PAGE}>
+      <header className={`${LIV_OPS_CONTENT} mb-6 flex flex-col gap-6 border-b border-white/10 pb-6 sm:mb-8 lg:flex-row lg:items-end lg:justify-between`}>
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <span className="rounded bg-[#CCFF00] px-2 py-0.5 font-mono text-[10px] font-extrabold uppercase tracking-wider text-black">
               Stream Setup
             </span>
-            <h1 className="text-xl font-bold tracking-tight text-white">
+            <h1 className="text-lg font-bold tracking-tight text-white sm:text-xl">
               LIV Golf Live Production Pipeline
             </h1>
           </div>
@@ -84,7 +85,7 @@ export default function LivStreamSetup() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 font-mono text-right text-xs sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 font-mono text-left text-xs sm:gap-4 sm:text-right lg:grid-cols-4">
           <div>
             <span className="block text-[10px] uppercase tracking-wider text-zinc-500">Platform</span>
             <span className={`text-sm font-bold ${isLive ? "text-[#CCFF00]" : "text-zinc-400"}`}>
@@ -117,20 +118,20 @@ export default function LivStreamSetup() {
       </header>
 
       {(saveError || actionError) && (
-        <p className="mx-auto mb-6 max-w-6xl rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <p className={`${LIV_OPS_CONTENT} mb-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200`}>
           {saveError ?? actionError}
         </p>
       )}
 
       {(saveMessage || actionMessage) && (
-        <p className="mx-auto mb-6 max-w-6xl rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+        <p className={`${LIV_OPS_CONTENT} mb-6 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100`}>
           {saveMessage ?? actionMessage}
         </p>
       )}
 
-      <main className="mx-auto grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-12">
+      <main className={`${LIV_OPS_CONTENT} grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-12`}>
         <section className="lg:col-span-5">
-          <div className="rounded-xl border border-white/10 bg-black/40 p-6">
+          <div className="rounded-xl border border-white/10 bg-black/40 p-4 sm:p-6">
             <h2 className="text-sm font-bold uppercase tracking-wider text-[#CCFF00]">
               Event Metadata
             </h2>
@@ -255,7 +256,7 @@ export default function LivStreamSetup() {
             onSave={() => void saveEncoder()}
           />
 
-          <div className="rounded-xl border border-white/10 bg-black/40 p-6">
+          <div className="rounded-xl border border-white/10 bg-black/40 p-4 sm:p-6">
             <h2 className="text-sm font-bold uppercase tracking-wider text-[#CCFF00]">
               Preflight Checklist
             </h2>

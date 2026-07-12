@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { DEVICE_FIT_PAGE } from "@/lib/responsive";
+import { LIV_MODULE_NAV_SAFE } from "@/lib/enterprise/liv-golf/responsive";
 import { useLivEnterpriseMetrics } from "@/lib/enterprise/liv-golf/useLivEnterpriseMetrics";
 import AudienceMap from "../AudienceMap";
 import MetricCard from "../MetricCard";
@@ -68,10 +70,10 @@ export default function LivCommandCenter() {
   ];
 
   return (
-    <div className="min-h-dvh w-full bg-[#111111] font-sans text-white antialiased">
+    <div className={`${DEVICE_FIT_PAGE} bg-[#111111] font-sans text-white antialiased`}>
       <main
         id="main-content"
-        className="mx-auto w-full max-w-[1600px] px-5 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12"
+        className="mx-auto w-full min-w-0 max-w-[1600px] px-4 py-6 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-8 sm:py-10 lg:px-12 lg:py-12"
       >
         <header className="flex flex-col gap-8 border-b border-white/10 pb-10 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -142,7 +144,7 @@ export default function LivCommandCenter() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="bg-gradient-to-b from-white to-white/70 bg-clip-text text-[4.5rem] font-extralight leading-none tracking-tight text-transparent sm:text-[5.5rem] lg:text-[7rem]"
+            className="bg-gradient-to-b from-white to-white/70 bg-clip-text text-[clamp(3rem,18vw,7rem)] font-extralight leading-none tracking-tight text-transparent"
           >
             {isLoading ? "—" : liveViewersLabel}
           </motion.p>
@@ -182,7 +184,7 @@ export default function LivCommandCenter() {
           />
         </div>
 
-        <div className="mt-10">
+        <div className={`mt-8 sm:mt-10 ${LIV_MODULE_NAV_SAFE}`}>
           <ModuleNav />
         </div>
       </main>

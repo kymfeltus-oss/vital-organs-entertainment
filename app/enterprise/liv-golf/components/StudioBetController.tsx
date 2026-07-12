@@ -8,6 +8,7 @@ import { useLivStreamStatus } from "@/lib/enterprise/liv-golf/useLivStreamStatus
 import { useRiskTelemetry } from "@/lib/enterprise/liv-golf/useRiskTelemetry";
 import { useLiveProductionBroadcast } from "@/lib/useLiveProductionBroadcast";
 import { LIV_GOLF_TOUR_MAIN_ROOM } from "@/lib/live/types";
+import { LIV_OPS_CONTENT, LIV_OPS_PAGE } from "@/lib/enterprise/liv-golf/responsive";
 import type { OwnerGraphicsPreset } from "@/lib/owner/graphics-data-plane";
 
 export default function StudioBetController() {
@@ -92,14 +93,14 @@ export default function StudioBetController() {
   );
 
   return (
-    <div className="min-h-dvh w-full bg-[#111111] p-8 font-sans text-white antialiased selection:bg-[#CCFF00] selection:text-black">
-      <header className="mx-auto mb-8 flex max-w-6xl flex-col gap-6 border-b border-white/10 pb-6 lg:flex-row lg:items-end lg:justify-between">
+    <div className={LIV_OPS_PAGE}>
+      <header className={`${LIV_OPS_CONTENT} mb-6 flex flex-col gap-6 border-b border-white/10 pb-6 sm:mb-8 lg:flex-row lg:items-end lg:justify-between`}>
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <span className="rounded bg-[#CCFF00] px-2 py-0.5 font-mono text-[10px] font-extrabold uppercase tracking-wider text-black">
               Production Studio
             </span>
-            <h1 className="text-xl font-bold tracking-tight text-white">
+            <h1 className="text-lg font-bold tracking-tight text-white sm:text-xl">
               Real-Time In-Stream Micro-Bets Dispatcher
             </h1>
           </div>
@@ -125,7 +126,7 @@ export default function StudioBetController() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 font-mono text-right text-xs sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 font-mono text-left text-xs sm:gap-4 sm:text-right lg:grid-cols-4">
           <div>
             <span className="block text-[10px] uppercase tracking-wider text-zinc-500">Platform Stream</span>
             <span
@@ -174,13 +175,13 @@ export default function StudioBetController() {
       </header>
 
       {(error || graphicsError) && (
-        <p className="mx-auto mb-6 max-w-6xl rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <p className={`${LIV_OPS_CONTENT} mb-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200`}>
           {error ?? graphicsError}
         </p>
       )}
 
       {riskAlerts.length > 0 ? (
-        <div className="mx-auto mb-6 max-w-6xl space-y-3">
+        <div className={`${LIV_OPS_CONTENT} mb-6 space-y-3`}>
           {riskAlerts.map((alert) => (
             <p
               key={alert.bet_id}
@@ -201,7 +202,7 @@ export default function StudioBetController() {
         </div>
       ) : null}
 
-      <main className="mx-auto grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-12">
+      <main className={`${LIV_OPS_CONTENT} grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-12`}>
         <section className="space-y-4 lg:col-span-7">
           <div className="border-b border-white/5 pb-2">
             <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-[#CCFF00]">
@@ -225,8 +226,8 @@ export default function StudioBetController() {
                         : "border-white/5 bg-[#141414] hover:border-white/10"
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 flex-1">
                         <span className="mb-2 inline-block rounded bg-white/5 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-zinc-400">
                           {bet.category}
                         </span>
@@ -252,7 +253,7 @@ export default function StudioBetController() {
                             },
                           )
                         }
-                        className={`rounded-lg px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50 ${
+                        className={`shrink-0 rounded-lg px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50 ${
                           isActive
                             ? "bg-red-500 text-white hover:bg-red-600"
                             : "bg-[#CCFF00] text-black hover:bg-[#bce600]"

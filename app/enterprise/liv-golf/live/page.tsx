@@ -1,4 +1,5 @@
 import LIVViewerLayout from "../components/LIVViewerLayout";
+import { LIV_VIEWER_SHELL } from "@/lib/enterprise/liv-golf/responsive";
 import { LIV_GOLF_TOUR_MAIN_ROOM } from "@/lib/live/types";
 
 type ViewerPageProps = {
@@ -11,7 +12,7 @@ export default async function LIVGolfLivePage({ searchParams }: ViewerPageProps)
   const roomId = resolvedParams.roomId?.trim() || LIV_GOLF_TOUR_MAIN_ROOM;
 
   return (
-    <main className="h-screen w-full select-none overflow-hidden bg-[#111111]">
+    <main className={`${LIV_VIEWER_SHELL} select-none bg-[#111111]`}>
       <LIVViewerLayout roomId={roomId} />
     </main>
   );

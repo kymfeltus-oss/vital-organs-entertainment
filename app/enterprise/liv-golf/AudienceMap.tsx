@@ -140,8 +140,8 @@ export default function AudienceMap({
           );
         })}
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between px-6 pb-5 pt-12 sm:px-8">
-          <div>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-3 px-4 pb-4 pt-10 sm:flex-row sm:items-end sm:justify-between sm:px-8 sm:pb-5">
+          <div className="min-w-0">
             <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-white/50">
               Global Fan Activity
             </p>
@@ -151,7 +151,7 @@ export default function AudienceMap({
                 : "Awaiting live broadcast signal"}
             </p>
           </div>
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-white/50">
               Sponsor Deck
             </p>

@@ -13,6 +13,7 @@ type FanBetPanelProps = {
   geoAttestationToken: string | null;
   geoSample: { lat: number; lng: number } | null;
   onBetSuccess: () => Promise<void>;
+  compact?: boolean;
 };
 
 export default function FanBetPanel({
@@ -22,6 +23,7 @@ export default function FanBetPanel({
   geoAttestationToken,
   geoSample,
   onBetSuccess,
+  compact = false,
 }: FanBetPanelProps) {
   const [selectedOption, setSelectedOption] = useState<"Yes" | "No" | null>(null);
   const [status, setStatus] = useState<"idle" | "submitting" | "confirmed" | "error">("idle");
@@ -90,16 +92,20 @@ export default function FanBetPanel({
   };
 
   return (
-    <aside className="flex h-full w-full flex-col justify-between bg-[#161616] p-6">
+    <aside
+      className={`flex h-full w-full min-w-0 flex-col justify-between overflow-y-auto bg-[#161616] ${
+        compact ? "p-4" : "p-4 sm:p-6"
+      }`}
+    >
       <div>
-        <div className="flex items-center justify-between border-b border-white/5 pb-4">
+        <div className="flex flex-col gap-3 border-b border-white/5 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#CCFF00]">
               In-Stream Micro-Bets
             </p>
             <p className="mt-0.5 text-xs text-zinc-500">LIV Digital Tour Deck</p>
           </div>
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <span className="block font-mono text-[10px] uppercase text-zinc-500">
               Tokens Available
             </span>
@@ -109,25 +115,31 @@ export default function FanBetPanel({
           </div>
         </div>
 
-        <div className="mt-8">
-          <h4 className="text-base font-semibold leading-relaxed text-zinc-100">
+        <div className={compact ? "mt-4" : "mt-8"}>
+          <h4
+            className={`font-semibold leading-relaxed text-zinc-100 ${
+              compact ? "text-sm" : "text-base"
+            }`}
+          >
             {activeBet.question}
           </h4>
 
-          <div className="mt-3 flex gap-3 font-mono text-xs text-zinc-500">
+          <div className="mt-2 flex flex-wrap gap-2 font-mono text-[11px] text-zinc-500 sm:mt-3 sm:gap-3 sm:text-xs">
             <span>Risk: {activeBet.stake_amount} Tokens</span>
             <span>•</span>
             <span className="text-[#CCFF00]">To Win: {activeBet.payout_amount} Tokens</span>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-3">
+          <div className={`grid grid-cols-2 gap-2 sm:gap-3 ${compact ? "mt-4" : "mt-6"}`}>
             {activeBet.options.map((opt) => (
               <button
                 key={opt}
                 type="button"
                 disabled={status === "submitting" || status === "confirmed"}
                 onClick={() => setSelectedOption(opt)}
-                className={`rounded-xl border py-3.5 text-xs font-bold uppercase tracking-wider transition-all duration-150 ${
+                className={`rounded-xl border font-bold uppercase tracking-wider transition-all duration-150 ${
+                  compact ? "py-2.5 text-[10px]" : "py-3.5 text-xs"
+                } ${
                   selectedOption === opt
                     ? "border-[#CCFF00] bg-[#CCFF00]/10 text-[#CCFF00]"
                     : "border-white/5 bg-white/5 text-zinc-300 hover:border-white/10"
@@ -168,7 +180,9 @@ export default function FanBetPanel({
             type="button"
             disabled={!selectedOption || status === "submitting"}
             onClick={handlePlaceWager}
-            className="w-full rounded-full bg-[#CCFF00] py-4 text-[11px] font-extrabold uppercase tracking-[0.2em] text-black shadow-md transition-all hover:bg-[#bce600] disabled:bg-zinc-800 disabled:text-zinc-600"
+            className={`w-full rounded-full bg-[#CCFF00] font-extrabold uppercase tracking-[0.2em] text-black shadow-md transition-all hover:bg-[#bce600] disabled:bg-zinc-800 disabled:text-zinc-600 ${
+              compact ? "py-3 text-[10px]" : "py-4 text-[11px]"
+            }`}
           >
             {status === "submitting" ? "Processing Ledger..." : "Submit Token Ticket"}
           </button>

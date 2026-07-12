@@ -4,12 +4,14 @@ type LivGeoComplianceBannerProps = {
   status: "locating" | "checking" | "ineligible" | "unavailable" | "unsupported";
   message: string;
   onRetry?: () => void;
+  compact?: boolean;
 };
 
 export default function LivGeoComplianceBanner({
   status,
   message,
   onRetry,
+  compact = false,
 }: LivGeoComplianceBannerProps) {
   const title =
     status === "locating" || status === "checking"
@@ -17,8 +19,12 @@ export default function LivGeoComplianceBanner({
       : "Prop Wagering Unavailable";
 
   return (
-    <aside className="flex h-full w-full min-w-[320px] flex-col justify-center bg-[#161616] p-6">
-      <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-5">
+    <aside
+      className={`flex h-full w-full min-w-0 flex-col justify-center overflow-y-auto bg-[#161616] ${
+        compact ? "p-4" : "p-4 sm:p-6"
+      }`}
+    >
+      <div className={`rounded-xl border border-amber-500/25 bg-amber-500/10 ${compact ? "p-4" : "p-5"}`}>
         <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-amber-200">
           {title}
         </p>

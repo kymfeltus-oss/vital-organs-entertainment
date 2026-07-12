@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import { LIV_MODULE_NAV_SAFE } from "@/lib/enterprise/liv-golf/responsive";
 import { cn } from "@/lib/utils";
 
 const MODULES = [
@@ -24,7 +25,7 @@ export default function ModuleNav() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.55, delay: 0.75, ease: [0.22, 1, 0.36, 1] }}
       aria-label="Executive module navigation"
-      className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7"
+      className={`grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-7 ${LIV_MODULE_NAV_SAFE}`}
     >
       {MODULES.map(({ label, href }, index) => {
         const isActive = pathname === href || (label === "Streaming" && pathname.startsWith(href));
@@ -34,7 +35,7 @@ export default function ModuleNav() {
             key={label}
             href={href}
             className={cn(
-              "group relative rounded-full border border-[#2A2A2A] bg-[#111111]/80 px-4 py-3 text-center transition-all duration-300",
+              "group relative rounded-full border border-[#2A2A2A] bg-[#111111]/80 px-3 py-2.5 text-center transition-all duration-300 sm:px-4 sm:py-3",
               "hover:-translate-y-0.5 hover:border-[#00F2FF]/45 hover:bg-[#141414] hover:shadow-[0_0_20px_rgba(0,242,255,0.07)]",
               (index === 0 || isActive) && "border-[#00F2FF]/25",
             )}
