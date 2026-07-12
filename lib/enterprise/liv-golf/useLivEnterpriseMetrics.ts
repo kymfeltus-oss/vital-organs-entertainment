@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getClientAppUrl } from "@/lib/client-api";
 import type { LivEnterpriseMetricsPayload } from "@/lib/enterprise/liv-golf/aggregate-liv-enterprise-metrics";
-import type { LivMetricsGatewayResponse } from "@/lib/enterprise/liv-golf/metrics-gateway";
+import {
+  mapPublicMetricsToCommandCenterPayload,
+  type LivPublicMetricsApiResponse,
+} from "@/lib/enterprise/liv-golf/metrics-gateway";
 import { useLiveViewerCount } from "@/lib/features/live/useLiveViewerCount";
 import {
   LIV_MICRO_BET_LAUNCH_EVENT,
@@ -52,9 +55,9 @@ export function useLivEnterpriseMetrics() {
         return;
       }
 
-      const data = (await response.json()) as LivMetricsGatewayResponse;
-      setMetrics(data);
-      setError(data.degraded ? (data.error ?? "Metrics running on structural default template.") : null);
+      const data = (await response.json()) as LivPublicMetricsApiResponse;
+      setMetrics(mapPublicMetricsToCommandCenterPayload(data));
+      setError(data.success ? null : (data.error ?? "Metrics running on structural default template."));
     } catch (refreshError) {
       setError(
         refreshError instanceof Error

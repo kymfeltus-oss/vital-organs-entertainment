@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { aggregateLivEnterpriseMetrics } from "@/lib/enterprise/liv-golf/aggregate-liv-enterprise-metrics";
 import {
-  buildLivMetricsFallbackPayload,
-  wrapLivMetricsGatewayResponse,
+  buildLivMetricsGatewayEnvelope,
+  buildLivMetricsGatewayFallbackResponse,
+  type LivPublicMetricsApiResponse,
 } from "@/lib/enterprise/liv-golf/metrics-gateway";
 import { countLivMicroBetPlacements } from "@/lib/enterprise/liv-golf/live-micro-bets-session";
 import { createServerSupabaseClient } from "@/lib/supabase/ssr-server";
@@ -17,34 +17,56 @@ function errorMessage(error: unknown): string {
   return "Unknown metrics gateway error";
 }
 
-/** Production metrics gateway — live ledger counts, resilient executive fallbacks. */
-export async function GET() {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+function isMissingTicketsTable(error: unknown): boolean {
+  const message = errorMessage(error);
+  const code =
+    typeof error === "object" && error && "code" in error
+      ? String((error as { code: unknown }).code)
+      : "";
 
-  if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized access path" }, { status: 401 });
+  return (
+    code === "PGRST205" ||
+    /fan_bet_tickets|does not exist|Could not find the table|schema cache|42P01|PGRST205/i.test(
+      message,
+    )
+  );
+}
+
+async function countLedgerBets(): Promise<number> {
+  const supabase = await createServerSupabaseClient();
+
+  const { count, error } = await supabase
+    .from("fan_bet_tickets")
+    .select("*", { count: "exact", head: true });
+
+  if (!error) {
+    return count ?? 0;
   }
 
+  if (isMissingTicketsTable(error)) {
+    return countLivMicroBetPlacements();
+  }
+
+  throw error;
+}
+
+/** Public production metrics gateway — ledger counts with structural fallbacks. */
+export async function GET() {
   try {
-    const [metrics, ticketCount] = await Promise.all([
-      aggregateLivEnterpriseMetrics(),
-      countLivMicroBetPlacements(),
-    ]);
+    const totalBetsPlaced = await countLedgerBets();
 
-    const resolvedMetrics =
-      ticketCount > metrics.microBetPlacements
-        ? { ...metrics, microBetPlacements: ticketCount }
-        : metrics;
+    // Presence is tracked client-side; server returns stable baseline when channels are empty.
+    const metrics = buildLivMetricsGatewayEnvelope(totalBetsPlaced);
 
-    return NextResponse.json(wrapLivMetricsGatewayResponse(resolvedMetrics));
+    const response: LivPublicMetricsApiResponse = {
+      success: true,
+      metrics,
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
-    console.error("[Metrics Sub-System Connection Exception Handled]:", errorMessage(error));
+    console.error("[Metrics Database Error Handled]:", errorMessage(error));
 
-    // Gracefully degrade from a hard 503 to 200 OK with baseline metrics.
-    return NextResponse.json(buildLivMetricsFallbackPayload(), { status: 200 });
+    return NextResponse.json(buildLivMetricsGatewayFallbackResponse(), { status: 200 });
   }
 }

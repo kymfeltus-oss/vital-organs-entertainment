@@ -16,11 +16,10 @@ export type LivMetricsGatewayEnvelope = {
   margin_retention_rate: string;
 };
 
-export type LivMetricsGatewayResponse = LivEnterpriseMetricsPayload & {
+export type LivPublicMetricsApiResponse = {
   success: boolean;
-  degraded: boolean;
   error?: string;
-  gateway: LivMetricsGatewayEnvelope;
+  metrics: LivMetricsGatewayEnvelope;
 };
 
 export function buildLivMetricsGatewayEnvelope(
@@ -38,21 +37,28 @@ export function buildLivMetricsGatewayEnvelope(
   };
 }
 
-/** Structural default metrics template — keeps the executive dashboard responsive under stress. */
-export function buildLivMetricsFallbackPayload(): LivMetricsGatewayResponse {
-  const gateway = buildLivMetricsGatewayEnvelope(0);
-  const retainedRevenueCents = gateway.retained_ad_revenue * 100;
-
+export function buildLivMetricsGatewayFallbackResponse(): LivPublicMetricsApiResponse {
   return {
     success: false,
-    degraded: true,
     error: "Service degraded, running on structural default metrics template.",
+    metrics: buildLivMetricsGatewayEnvelope(0),
+  };
+}
+
+/** Map public gateway envelope into command center dashboard fields. */
+export function mapPublicMetricsToCommandCenterPayload(
+  response: LivPublicMetricsApiResponse,
+): LivEnterpriseMetricsPayload {
+  const envelope = response.metrics;
+  const retainedRevenueCents = envelope.retained_ad_revenue * 100;
+
+  return {
     isLive: true,
     streamHealth: "EXCELLENT",
     harvestRevenueCents: retainedRevenueCents,
-    harvestRevenue: formatHarvestCurrency(gateway.retained_ad_revenue),
-    tokenEngagementVolume: gateway.total_bets_placed * 20,
-    microBetPlacements: gateway.total_bets_placed,
+    harvestRevenue: formatHarvestCurrency(envelope.retained_ad_revenue),
+    tokenEngagementVolume: envelope.total_bets_placed * 20,
+    microBetPlacements: envelope.total_bets_placed,
     activeBetId: null,
     activeBetQuestion: null,
     clearOverlays: false,
@@ -60,25 +66,7 @@ export function buildLivMetricsFallbackPayload(): LivMetricsGatewayResponse {
     sponsorPresetInventory: 3,
     sponsorUtilizationPercent: 33,
     retainedRevenueCents,
-    retainedRevenue: formatHarvestCurrency(gateway.retained_ad_revenue),
+    retainedRevenue: formatHarvestCurrency(envelope.retained_ad_revenue),
     updatedAt: new Date().toISOString(),
-    gateway,
-  };
-}
-
-export function wrapLivMetricsGatewayResponse(
-  metrics: LivEnterpriseMetricsPayload,
-  options?: { liveViewers?: number },
-): LivMetricsGatewayResponse {
-  const gateway = buildLivMetricsGatewayEnvelope(
-    metrics.microBetPlacements,
-    options?.liveViewers,
-  );
-
-  return {
-    success: true,
-    degraded: false,
-    ...metrics,
-    gateway,
   };
 }
