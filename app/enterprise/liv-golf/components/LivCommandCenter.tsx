@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { DEVICE_FIT_PAGE } from "@/lib/responsive";
 import { LIV_MODULE_NAV_SAFE } from "@/lib/enterprise/liv-golf/responsive";
 import { useLivEnterpriseMetrics } from "@/lib/enterprise/liv-golf/useLivEnterpriseMetrics";
+import { useLivStreamStatus } from "@/lib/enterprise/liv-golf/useLivStreamStatus";
 import AudienceMap from "../AudienceMap";
 import MetricCard from "../MetricCard";
 import ModuleNav from "../ModuleNav";
@@ -22,6 +23,10 @@ export default function LivCommandCenter() {
     liveViewersLabel,
     liveViewersActual,
   } = useLivEnterpriseMetrics();
+  const { status: streamStatus } = useLivStreamStatus();
+
+  const eventTitle = streamStatus?.showTitle?.trim() || "LIV Golf Command Center";
+  const eventVenue = streamStatus?.eventLocation?.trim();
 
   const metricCards = [
     {
@@ -92,8 +97,11 @@ export default function LivCommandCenter() {
               transition={{ duration: 0.55, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
               className="mt-3 text-3xl font-light tracking-tight text-white sm:text-4xl lg:text-[2.75rem] lg:leading-tight"
             >
-              Executive Command Center
+              {eventTitle}
             </motion.h1>
+            {eventVenue ? (
+              <p className="mt-2 text-sm text-white/60">{eventVenue}</p>
+            ) : null}
             <div className="mt-4 flex flex-wrap gap-4 text-xs">
               <Link
                 href="/enterprise/liv-golf/streaming/setup"

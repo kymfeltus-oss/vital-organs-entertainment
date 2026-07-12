@@ -2,9 +2,22 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getClientAppUrl } from "@/lib/client-api";
+import {
+  canAttemptLivGoLive,
+  fetchLivStreamReadiness,
+  formatLivReadinessError,
+} from "@/lib/enterprise/liv-golf/check-stream-readiness";
+import { sanitizeLivShowSetupFields } from "@/lib/enterprise/liv-golf/sanitize-liv-show-setup";
+import type { LivStreamSetupStatus } from "@/lib/enterprise/liv-golf/liv-stream-setup-status";
 import type { EncoderHealthStatus } from "@/lib/owner/encoder-health";
 import type { OwnerBroadcastSnapshot, PreflightCheck } from "@/lib/owner/contracts";
 import { HLS_PLAYBACK_REQUIREMENT, isValidHlsUrl } from "@/lib/live/hls";
+import {
+  DEFAULT_SCHEDULE_TIMEZONE,
+  isoToScheduleDatetimeLocal,
+  scheduleDatetimeLocalToIso,
+  type ScheduleTimezone,
+} from "@/lib/live/schedule-timezone";
 import type { RestreamEncoderFields } from "@/components/owner/RestreamEncoderPanel";
 
 const SNAPSHOT_POLL_MS = 5_000;
@@ -15,6 +28,7 @@ type ShowSetupStatePayload = {
   presenterName?: string;
   eventLocation?: string;
   targetDateTime?: string;
+  scheduleTimezone?: ScheduleTimezone;
   primaryIngestEndpoint?: string;
   streamKey?: string;
   attendeePlaybackHlsUrl?: string;
@@ -51,7 +65,7 @@ const EMPTY_ENCODER_FIELDS: RestreamEncoderFields = {
   attendeePlaybackHlsUrl: "",
 };
 
-const LIV_DEFAULT_SHOW_TITLE = "LIV Golf Tour Championship";
+const LIV_EMPTY_SHOW_TITLE = "";
 
 function parseApiError(
   response: Response,
@@ -62,9 +76,11 @@ function parseApiError(
 }
 
 export function useLivStreamSetup() {
-  const [showTitle, setShowTitle] = useState(LIV_DEFAULT_SHOW_TITLE);
+  const [showTitle, setShowTitle] = useState(LIV_EMPTY_SHOW_TITLE);
   const [eventLocation, setEventLocation] = useState("");
   const [targetDateTime, setTargetDateTime] = useState("");
+  const [scheduleTimezone, setScheduleTimezone] =
+    useState<ScheduleTimezone>(DEFAULT_SCHEDULE_TIMEZONE);
   const [encoderFields, setEncoderFields] = useState<RestreamEncoderFields>(EMPTY_ENCODER_FIELDS);
   const [encoderLastSavedAt, setEncoderLastSavedAt] = useState<string | null>(null);
 
@@ -82,21 +98,40 @@ export function useLivStreamSetup() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [streamReadiness, setStreamReadiness] = useState<LivStreamSetupStatus | null>(null);
 
   const snapshotInFlightRef = useRef(false);
   const goLiveInFlightRef = useRef(false);
   const stopInFlightRef = useRef(false);
 
   const applyShowSetup = useCallback((state: ShowSetupStatePayload) => {
-    setShowTitle(state.showTitle?.trim() || LIV_DEFAULT_SHOW_TITLE);
-    setEventLocation(state.eventLocation?.trim() || "");
-    setTargetDateTime(state.targetDateTime ?? "");
+    const sanitized = sanitizeLivShowSetupFields(state);
+    const timezone = sanitized.scheduleTimezone ?? DEFAULT_SCHEDULE_TIMEZONE;
+    setShowTitle(sanitized.showTitle?.trim() || LIV_EMPTY_SHOW_TITLE);
+    setEventLocation(sanitized.eventLocation?.trim() || "");
+    setScheduleTimezone(timezone);
+    setTargetDateTime(
+      sanitized.targetDateTime
+        ? isoToScheduleDatetimeLocal(sanitized.targetDateTime, timezone)
+        : "",
+    );
     setEncoderFields({
-      primaryIngestEndpoint: state.primaryIngestEndpoint ?? "",
-      streamKey: state.streamKey ?? "",
-      attendeePlaybackHlsUrl: state.attendeePlaybackHlsUrl ?? "",
+      primaryIngestEndpoint: sanitized.primaryIngestEndpoint ?? "",
+      streamKey: sanitized.streamKey ?? "",
+      attendeePlaybackHlsUrl: sanitized.attendeePlaybackHlsUrl ?? "",
     });
-    setEncoderLastSavedAt(state.updatedAt ?? null);
+    setEncoderLastSavedAt(sanitized.updatedAt ?? null);
+  }, []);
+
+  const loadStreamReadiness = useCallback(async () => {
+    try {
+      const status = await fetchLivStreamReadiness(getClientAppUrl());
+      setStreamReadiness(status);
+      return status;
+    } catch {
+      setStreamReadiness(null);
+      return null;
+    }
   }, []);
 
   const loadShowSetup = useCallback(async () => {
@@ -159,7 +194,7 @@ export function useLivStreamSetup() {
 
     async function bootstrap() {
       try {
-        await Promise.all([loadShowSetup(), loadSnapshot(), loadEncoderHealth()]);
+        await Promise.all([loadShowSetup(), loadSnapshot(), loadEncoderHealth(), loadStreamReadiness()]);
       } catch (error) {
         if (!cancelled) {
           setSaveError(error instanceof Error ? error.message : "Unable to load stream setup.");
@@ -179,7 +214,7 @@ export function useLivStreamSetup() {
       window.clearInterval(snapshotInterval);
       window.clearInterval(encoderInterval);
     };
-  }, [loadEncoderHealth, loadShowSetup, loadSnapshot]);
+  }, [loadEncoderHealth, loadShowSetup, loadSnapshot, loadStreamReadiness]);
 
   const saveEncoder = useCallback(async () => {
     if (encoderSaving) return false;
@@ -211,6 +246,7 @@ export function useLivStreamSetup() {
       setSaveMessage(json.message ?? "Encoder credentials saved.");
       await loadSnapshot();
       await loadEncoderHealth();
+      await loadStreamReadiness();
       return true;
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "Unable to save encoder config.");
@@ -218,7 +254,12 @@ export function useLivStreamSetup() {
     } finally {
       setEncoderSaving(false);
     }
-  }, [applyShowSetup, encoderFields, encoderSaving, loadEncoderHealth, loadSnapshot]);
+  }, [applyShowSetup, encoderFields, encoderSaving, loadEncoderHealth, loadSnapshot, loadStreamReadiness]);
+
+  const setAirTimeOneHourFromNow = useCallback(() => {
+    const next = new Date(Date.now() + 60 * 60 * 1000);
+    setTargetDateTime(isoToScheduleDatetimeLocal(next.toISOString(), scheduleTimezone));
+  }, [scheduleTimezone]);
 
   const saveMetadata = useCallback(async () => {
     if (metadataSaving) return false;
@@ -228,6 +269,14 @@ export function useLivStreamSetup() {
     setSaveMessage(null);
 
     try {
+      const targetIso = targetDateTime.trim()
+        ? scheduleDatetimeLocalToIso(targetDateTime, scheduleTimezone)
+        : null;
+
+      if (targetDateTime.trim() && !targetIso) {
+        throw new Error("Target air time must use a valid date and time.");
+      }
+
       const response = await fetch(`${getClientAppUrl()}/api/owner/show-setup`, {
         method: "POST",
         credentials: "include",
@@ -235,7 +284,8 @@ export function useLivStreamSetup() {
         body: JSON.stringify({
           showTitle,
           eventLocation,
-          targetDateTime: targetDateTime || undefined,
+          targetDateTime: targetIso ?? undefined,
+          scheduleTimezone,
         }),
       });
       const json = (await response.json()) as ShowSetupResponse;
@@ -245,8 +295,14 @@ export function useLivStreamSetup() {
       }
 
       applyShowSetup(json.state);
-      setSaveMessage(json.message ?? "Event metadata saved.");
       await loadSnapshot();
+      const readiness = await loadStreamReadiness();
+      const phaseLabel = readiness?.eventPhase ?? "updated";
+      setSaveMessage(
+        json.message
+          ? `${json.message} Event phase: ${phaseLabel}.`
+          : `Event metadata saved. Event phase: ${phaseLabel}.`,
+      );
       return true;
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "Unable to save event metadata.");
@@ -258,7 +314,9 @@ export function useLivStreamSetup() {
     applyShowSetup,
     eventLocation,
     loadSnapshot,
+    loadStreamReadiness,
     metadataSaving,
+    scheduleTimezone,
     showTitle,
     targetDateTime,
   ]);
@@ -282,6 +340,7 @@ export function useLivStreamSetup() {
       }
 
       if (json.snapshot) setSnapshot(json.snapshot);
+      await loadStreamReadiness();
 
       setActionMessage(
         json.blocked
@@ -296,7 +355,7 @@ export function useLivStreamSetup() {
     } finally {
       setPreflightRunning(false);
     }
-  }, []);
+  }, [loadStreamReadiness]);
 
   const goLive = useCallback(async () => {
     if (goLiveInFlightRef.current || broadcastAction !== "idle") return false;
@@ -306,6 +365,11 @@ export function useLivStreamSetup() {
     setActionMessage("Sending go-live command...");
 
     try {
+      const readiness = (await loadStreamReadiness()) ?? streamReadiness;
+      if (readiness && !canAttemptLivGoLive(readiness)) {
+        throw new Error(`Stream cannot launch: ${formatLivReadinessError(readiness)}`);
+      }
+
       const response = await fetch(`${getClientAppUrl()}/api/owner/master-go-live`, {
         method: "POST",
         credentials: "include",
@@ -321,6 +385,7 @@ export function useLivStreamSetup() {
       if (json.snapshot) setSnapshot(json.snapshot);
       if (json.state) applyShowSetup(json.state);
       await loadSnapshot();
+      await loadStreamReadiness();
 
       setActionMessage(json.message ?? "Stream is live on platform.");
       return true;
@@ -332,7 +397,7 @@ export function useLivStreamSetup() {
       goLiveInFlightRef.current = false;
       setBroadcastAction("idle");
     }
-  }, [applyShowSetup, broadcastAction, loadSnapshot]);
+  }, [applyShowSetup, broadcastAction, loadSnapshot, loadStreamReadiness, streamReadiness]);
 
   const stopStream = useCallback(async () => {
     if (stopInFlightRef.current || broadcastAction !== "idle") return false;
@@ -374,7 +439,11 @@ export function useLivStreamSetup() {
   const preflight: PreflightCheck[] = snapshot?.preflight ?? [];
   const hlsUrl = snapshot?.playback.hlsUrl ?? snapshot?.feed.primary.hlsUrl ?? null;
   const manifestReachable =
-    snapshot?.playback.manifestReachable ?? snapshot?.feed.primary.manifestReachable ?? false;
+    streamReadiness?.manifestReachable ??
+    snapshot?.playback.manifestReachable ??
+    snapshot?.feed.primary.manifestReachable ??
+    false;
+  const canAttemptGoLive = canAttemptLivGoLive(streamReadiness);
 
   return {
     showTitle,
@@ -383,6 +452,8 @@ export function useLivStreamSetup() {
     setEventLocation,
     targetDateTime,
     setTargetDateTime,
+    setAirTimeOneHourFromNow,
+    scheduleTimezone,
     encoderFields,
     setEncoderFields,
     encoderLastSavedAt,
@@ -393,6 +464,8 @@ export function useLivStreamSetup() {
     preflight,
     hlsUrl,
     manifestReachable,
+    streamReadiness,
+    canAttemptGoLive,
     isLoading,
     encoderSaving,
     metadataSaving,
@@ -407,6 +480,9 @@ export function useLivStreamSetup() {
     runPreflight,
     goLive,
     stopStream,
-    refresh: loadSnapshot,
+    refresh: async () => {
+      await loadSnapshot();
+      await loadStreamReadiness();
+    },
   };
 }

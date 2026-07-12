@@ -2,6 +2,7 @@ import { buildOwnerBroadcastSnapshot } from "@/lib/owner/build-broadcast-snapsho
 import { LIV_STREAM_SETUP_PROBE_TIMEOUT_MS } from "@/lib/owner/hls-readiness";
 import { loadShowSetupState } from "@/lib/owner/show-setup-state";
 import type { PreflightCheck } from "@/lib/owner/contracts";
+import { sanitizeLivShowSetupFields } from "@/lib/enterprise/liv-golf/sanitize-liv-show-setup";
 
 export type LivStreamSetupStatus = {
   isLive: boolean;
@@ -17,7 +18,14 @@ export type LivStreamSetupStatus = {
   targetDateTime: string | null;
   scheduleEnded: boolean;
   encoderConfigured: boolean;
+  /** All operator-facing issues (hard blockers + ingest warnings). */
   readinessBlockers: string[];
+  /** Hard stops before master go-live. */
+  goLiveBlockers: string[];
+  /** Encoder / ingest hints that do not block go-live when manifest is healthy. */
+  ingestWarnings: string[];
+  canAttemptGoLive: boolean;
+  canMountPlayer: boolean;
   preflight: PreflightCheck[];
   capturedAt: string;
 };
@@ -30,7 +38,7 @@ function isScheduleEnded(targetDateTime: string | null, eventPhase: string): boo
   return Number.isFinite(targetMs) && targetMs <= Date.now();
 }
 
-function buildReadinessBlockers(input: {
+function buildLivStreamReadiness(input: {
   eventPhase: string;
   targetDateTime: string | null;
   hlsUrl: string | null;
@@ -38,35 +46,49 @@ function buildReadinessBlockers(input: {
   manifestProbeDetail: string | null;
   publishStatus: string;
   encoderConfigured: boolean;
-}): string[] {
-  const blockers: string[] = [];
+  isLive: boolean;
+}) {
+  const goLiveBlockers: string[] = [];
+  const ingestWarnings: string[] = [];
 
   if (isScheduleEnded(input.targetDateTime, input.eventPhase)) {
-    blockers.push(
+    goLiveBlockers.push(
       "Event schedule has ended. Update targetDateTime to a future window in Stream Setup.",
     );
   }
 
   if (!input.hlsUrl) {
-    blockers.push("No HLS playback URL configured. Save a valid .m3u8 URL in encoder settings.");
+    goLiveBlockers.push("No HLS playback URL configured. Save a valid .m3u8 URL in encoder settings.");
   } else if (!input.manifestReachable) {
-    blockers.push(
+    goLiveBlockers.push(
       input.manifestProbeDetail ??
         "HLS manifest is unreachable. Verify the active Amazon IVS channel playback URL.",
     );
   }
 
   if (!input.encoderConfigured) {
-    blockers.push("Encoder ingest credentials are incomplete. Configure RTMP endpoint and stream key.");
-  }
-
-  if (input.publishStatus === "offline") {
-    blockers.push(
-      "Publish status is offline. Start your encoder (OBS/vMix) and push to the ingest endpoint.",
+    goLiveBlockers.push(
+      "Encoder ingest credentials are incomplete. Configure RTMP endpoint and stream key.",
     );
   }
 
-  return blockers;
+  if (input.publishStatus === "offline" && !input.isLive) {
+    ingestWarnings.push(
+      input.manifestReachable
+        ? "Publish status is offline — encoder feed detected. Run Preflight, then Go Live on Platform."
+        : "Publish status is offline. Start your encoder (OBS/vMix) and push to the ingest endpoint.",
+    );
+  }
+
+  const readinessBlockers = [...goLiveBlockers, ...ingestWarnings];
+
+  return {
+    goLiveBlockers,
+    ingestWarnings,
+    readinessBlockers,
+    canAttemptGoLive: goLiveBlockers.length === 0,
+    canMountPlayer: input.isLive,
+  };
 }
 
 export async function loadLivStreamSetupStatus(): Promise<LivStreamSetupStatus> {
@@ -92,8 +114,9 @@ export async function loadLivStreamSetupStatus(): Promise<LivStreamSetupStatus> 
   const eventPhase = snapshot?.eventPhase.phase ?? "idle";
   const targetDateTime = showSetup.targetDateTime ?? null;
   const publishStatus = snapshot?.publish.status ?? "offline";
+  const isLive = Boolean(snapshot?.publish.status === "publishing");
 
-  const readinessBlockers = buildReadinessBlockers({
+  const readiness = buildLivStreamReadiness({
     eventPhase,
     targetDateTime,
     hlsUrl,
@@ -101,10 +124,16 @@ export async function loadLivStreamSetupStatus(): Promise<LivStreamSetupStatus> 
     manifestProbeDetail,
     publishStatus,
     encoderConfigured,
+    isLive,
+  });
+
+  const sanitizedMetadata = sanitizeLivShowSetupFields({
+    showTitle: showSetup.showTitle,
+    eventLocation: showSetup.eventLocation,
   });
 
   return {
-    isLive: Boolean(snapshot?.publish.status === "publishing"),
+    isLive,
     publishStatus,
     playbackStatus: snapshot?.playback.status ?? "unconfigured",
     eventPhase,
@@ -112,12 +141,16 @@ export async function loadLivStreamSetupStatus(): Promise<LivStreamSetupStatus> 
     manifestReachable,
     manifestProbeDetail,
     manifestInvalidReason,
-    showTitle: showSetup.showTitle?.trim() || "LIV Golf Tour",
-    eventLocation: showSetup.eventLocation?.trim() || "",
+    showTitle: sanitizedMetadata.showTitle ?? "",
+    eventLocation: sanitizedMetadata.eventLocation ?? "",
     targetDateTime,
     scheduleEnded: isScheduleEnded(targetDateTime, eventPhase),
     encoderConfigured,
-    readinessBlockers,
+    readinessBlockers: readiness.readinessBlockers,
+    goLiveBlockers: readiness.goLiveBlockers,
+    ingestWarnings: readiness.ingestWarnings,
+    canAttemptGoLive: readiness.canAttemptGoLive,
+    canMountPlayer: readiness.canMountPlayer,
     preflight: snapshot?.preflight ?? [],
     capturedAt: snapshot?.capturedAt ?? new Date().toISOString(),
   };

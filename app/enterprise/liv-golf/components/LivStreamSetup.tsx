@@ -4,7 +4,6 @@ import Link from "next/link";
 import RestreamEncoderPanel from "@/components/owner/RestreamEncoderPanel";
 import { LIV_OPS_CONTENT, LIV_OPS_PAGE } from "@/lib/enterprise/liv-golf/responsive";
 import { useLivStreamSetup } from "@/lib/enterprise/liv-golf/useLivStreamSetup";
-import { useLivStreamStatus } from "@/lib/enterprise/liv-golf/useLivStreamStatus";
 import LivStreamReadinessBanner from "./LivStreamReadinessBanner";
 import type { PreflightCheckStatus } from "@/lib/owner/contracts";
 
@@ -30,6 +29,8 @@ export default function LivStreamSetup() {
     setEventLocation,
     targetDateTime,
     setTargetDateTime,
+    setAirTimeOneHourFromNow,
+    scheduleTimezone,
     encoderFields,
     setEncoderFields,
     encoderLastSavedAt,
@@ -54,8 +55,9 @@ export default function LivStreamSetup() {
     goLive,
     stopStream,
     snapshot,
+    streamReadiness,
+    canAttemptGoLive,
   } = useLivStreamSetup();
-  const { status: streamReadiness, isLoading: streamReadinessLoading } = useLivStreamStatus();
 
   const scheduleEnded = streamReadiness?.scheduleEnded ?? snapshot?.eventPhase.phase === "ended";
 
@@ -137,7 +139,7 @@ export default function LivStreamSetup() {
       <LivStreamReadinessBanner
         className={`${LIV_OPS_CONTENT} mb-6`}
         status={streamReadiness}
-        isLoading={streamReadinessLoading}
+        isLoading={isLoading}
       />
 
       <main className={`${LIV_OPS_CONTENT} grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-12`}>
@@ -172,7 +174,6 @@ export default function LivStreamSetup() {
                   type="text"
                   value={eventLocation}
                   onChange={(event) => setEventLocation(event.target.value)}
-                  placeholder="e.g. Nashville, TN"
                   disabled={isLoading}
                   className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[#CCFF00]/50"
                 />
@@ -182,20 +183,35 @@ export default function LivStreamSetup() {
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
                   Target Air Time
                 </span>
-                <input
-                  type="datetime-local"
-                  value={targetDateTime}
-                  onChange={(event) => setTargetDateTime(event.target.value)}
-                  disabled={isLoading}
-                  className={`mt-1 w-full rounded-lg border bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[#CCFF00]/50 ${
-                    scheduleEnded ? "border-amber-500/50" : "border-white/10"
-                  }`}
-                />
+                <div className="mt-1 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="datetime-local"
+                    value={targetDateTime}
+                    onChange={(event) => setTargetDateTime(event.target.value)}
+                    disabled={isLoading}
+                    className={`w-full rounded-lg border bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[#CCFF00]/50 ${
+                      scheduleEnded ? "border-amber-500/50" : "border-white/10"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={setAirTimeOneHourFromNow}
+                    className="shrink-0 rounded-lg border border-white/15 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-white transition hover:border-[#CCFF00]/40 disabled:opacity-50"
+                  >
+                    +1 Hour
+                  </button>
+                </div>
                 {scheduleEnded ? (
                   <p className="mt-1 text-xs text-amber-300">
-                    Schedule is in the past — event phase is ended until you set a future air time.
+                    Schedule is in the past — set a future air time, then click Save Event Metadata to
+                    clear the ended phase blocker.
                   </p>
-                ) : null}
+                ) : (
+                  <p className="mt-1 text-xs liv-text-secondary">
+                    Saves to PostgreSQL and updates fan viewer + command center headers instantly.
+                  </p>
+                )}
               </label>
 
               <button
@@ -230,7 +246,7 @@ export default function LivStreamSetup() {
               {!isLive ? (
                 <button
                   type="button"
-                  disabled={isBusy || isLoading}
+                  disabled={isBusy || isLoading || !canAttemptGoLive}
                   onClick={() => void goLive()}
                   className="rounded-lg bg-[#CCFF00] px-4 py-3 text-xs font-extrabold uppercase tracking-wider text-black transition hover:bg-[#b8e600] disabled:opacity-50"
                 >
