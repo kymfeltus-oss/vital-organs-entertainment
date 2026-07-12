@@ -1,16 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getClientAppUrl } from "@/lib/client-api";
-import {
-  canAttemptLivGoLive,
-  fetchLivStreamReadiness,
-  formatLivReadinessError,
-} from "@/lib/enterprise/liv-golf/check-stream-readiness";
+import { useLivStreamStatus } from "@/app/enterprise/liv-golf/hooks/useLivStreamStatus";
+import { canAttemptLivGoLive } from "@/lib/enterprise/liv-golf/check-stream-readiness";
 import { sanitizeLivShowSetupFields } from "@/lib/enterprise/liv-golf/sanitize-liv-show-setup";
-import type { LivStreamSetupStatus } from "@/lib/enterprise/liv-golf/liv-stream-setup-status";
 import type { EncoderHealthStatus } from "@/lib/owner/encoder-health";
 import type { OwnerBroadcastSnapshot, PreflightCheck } from "@/lib/owner/contracts";
+import { getClientAppUrl } from "@/lib/client-api";
 import { HLS_PLAYBACK_REQUIREMENT, isValidHlsUrl } from "@/lib/live/hls";
 import {
   DEFAULT_SCHEDULE_TIMEZONE,
@@ -20,7 +16,6 @@ import {
 } from "@/lib/live/schedule-timezone";
 import type { RestreamEncoderFields } from "@/components/owner/RestreamEncoderPanel";
 
-const SNAPSHOT_POLL_MS = 5_000;
 const ENCODER_POLL_MS = 10_000;
 
 type ShowSetupStatePayload = {
@@ -42,22 +37,12 @@ type ShowSetupResponse = {
   error?: string;
 };
 
-type BroadcastResponse = {
-  ok?: boolean;
-  message?: string;
-  error?: string;
-  snapshot?: OwnerBroadcastSnapshot;
-  blocked?: boolean;
-};
-
 type EncoderHealthResponse = {
   ok?: boolean;
   status?: EncoderHealthStatus;
   detail?: string | null;
   error?: string;
 };
-
-type BroadcastAction = "idle" | "go-live" | "stop";
 
 const EMPTY_ENCODER_FIELDS: RestreamEncoderFields = {
   primaryIngestEndpoint: "",
@@ -76,6 +61,12 @@ function parseApiError(
 }
 
 export function useLivStreamSetup() {
+  const {
+    status: streamReadiness,
+    refresh: refreshStreamStatus,
+    isRealtimeConnected,
+  } = useLivStreamStatus({ mountPlayerDuringStateSync: false });
+
   const [showTitle, setShowTitle] = useState(LIV_EMPTY_SHOW_TITLE);
   const [eventLocation, setEventLocation] = useState("");
   const [targetDateTime, setTargetDateTime] = useState("");
@@ -91,18 +82,12 @@ export function useLivStreamSetup() {
   const [isLoading, setIsLoading] = useState(true);
   const [encoderSaving, setEncoderSaving] = useState(false);
   const [metadataSaving, setMetadataSaving] = useState(false);
-  const [broadcastAction, setBroadcastAction] = useState<BroadcastAction>("idle");
-  const [preflightRunning, setPreflightRunning] = useState(false);
 
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [streamReadiness, setStreamReadiness] = useState<LivStreamSetupStatus | null>(null);
 
   const snapshotInFlightRef = useRef(false);
-  const goLiveInFlightRef = useRef(false);
-  const stopInFlightRef = useRef(false);
 
   const applyShowSetup = useCallback((state: ShowSetupStatePayload) => {
     const sanitized = sanitizeLivShowSetupFields(state);
@@ -123,15 +108,8 @@ export function useLivStreamSetup() {
     setEncoderLastSavedAt(sanitized.updatedAt ?? null);
   }, []);
 
-  const loadStreamReadiness = useCallback(async () => {
-    try {
-      const status = await fetchLivStreamReadiness(getClientAppUrl());
-      setStreamReadiness(status);
-      return status;
-    } catch {
-      setStreamReadiness(null);
-      return null;
-    }
+  const applyBroadcastSnapshot = useCallback((next: OwnerBroadcastSnapshot) => {
+    setSnapshot(next);
   }, []);
 
   const loadShowSetup = useCallback(async () => {
@@ -189,12 +167,16 @@ export function useLivStreamSetup() {
     }
   }, []);
 
+  const refreshPipeline = useCallback(async () => {
+    await Promise.all([loadSnapshot(), refreshStreamStatus()]);
+  }, [loadSnapshot, refreshStreamStatus]);
+
   useEffect(() => {
     let cancelled = false;
 
     async function bootstrap() {
       try {
-        await Promise.all([loadShowSetup(), loadSnapshot(), loadEncoderHealth(), loadStreamReadiness()]);
+        await Promise.all([loadShowSetup(), loadSnapshot(), loadEncoderHealth()]);
       } catch (error) {
         if (!cancelled) {
           setSaveError(error instanceof Error ? error.message : "Unable to load stream setup.");
@@ -206,15 +188,13 @@ export function useLivStreamSetup() {
 
     void bootstrap();
 
-    const snapshotInterval = window.setInterval(() => void loadSnapshot(), SNAPSHOT_POLL_MS);
     const encoderInterval = window.setInterval(() => void loadEncoderHealth(), ENCODER_POLL_MS);
 
     return () => {
       cancelled = true;
-      window.clearInterval(snapshotInterval);
       window.clearInterval(encoderInterval);
     };
-  }, [loadEncoderHealth, loadShowSetup, loadSnapshot, loadStreamReadiness]);
+  }, [loadEncoderHealth, loadShowSetup, loadSnapshot]);
 
   const saveEncoder = useCallback(async () => {
     if (encoderSaving) return false;
@@ -244,9 +224,8 @@ export function useLivStreamSetup() {
 
       applyShowSetup(json.state);
       setSaveMessage(json.message ?? "Encoder credentials saved.");
-      await loadSnapshot();
+      await refreshPipeline();
       await loadEncoderHealth();
-      await loadStreamReadiness();
       return true;
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "Unable to save encoder config.");
@@ -254,7 +233,7 @@ export function useLivStreamSetup() {
     } finally {
       setEncoderSaving(false);
     }
-  }, [applyShowSetup, encoderFields, encoderSaving, loadEncoderHealth, loadSnapshot, loadStreamReadiness]);
+  }, [applyShowSetup, encoderFields, encoderSaving, loadEncoderHealth, refreshPipeline]);
 
   const setAirTimeOneHourFromNow = useCallback(() => {
     const next = new Date(Date.now() + 60 * 60 * 1000);
@@ -295,9 +274,8 @@ export function useLivStreamSetup() {
       }
 
       applyShowSetup(json.state);
-      await loadSnapshot();
-      const readiness = await loadStreamReadiness();
-      const phaseLabel = readiness?.eventPhase ?? "updated";
+      await refreshPipeline();
+      const phaseLabel = streamReadiness?.eventPhase ?? "updated";
       setSaveMessage(
         json.message
           ? `${json.message} Event phase: ${phaseLabel}.`
@@ -313,127 +291,13 @@ export function useLivStreamSetup() {
   }, [
     applyShowSetup,
     eventLocation,
-    loadSnapshot,
-    loadStreamReadiness,
     metadataSaving,
+    refreshPipeline,
     scheduleTimezone,
     showTitle,
+    streamReadiness?.eventPhase,
     targetDateTime,
   ]);
-
-  const runPreflight = useCallback(async () => {
-    setPreflightRunning(true);
-    setActionError(null);
-    setActionMessage("Running preflight checks...");
-
-    try {
-      const response = await fetch(`${getClientAppUrl()}/api/owner/broadcast/preflight`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "external_hls" }),
-      });
-      const json = (await response.json()) as BroadcastResponse;
-
-      if (!response.ok) {
-        throw new Error(parseApiError(response, json, "Preflight failed"));
-      }
-
-      if (json.snapshot) setSnapshot(json.snapshot);
-      await loadStreamReadiness();
-
-      setActionMessage(
-        json.blocked
-          ? "Preflight found blocking issues — resolve before go-live."
-          : "Preflight complete — ready for go-live.",
-      );
-      return !json.blocked;
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : "Preflight failed.");
-      setActionMessage(null);
-      return false;
-    } finally {
-      setPreflightRunning(false);
-    }
-  }, [loadStreamReadiness]);
-
-  const goLive = useCallback(async () => {
-    if (goLiveInFlightRef.current || broadcastAction !== "idle") return false;
-    goLiveInFlightRef.current = true;
-    setBroadcastAction("go-live");
-    setActionError(null);
-    setActionMessage("Sending go-live command...");
-
-    try {
-      const readiness = (await loadStreamReadiness()) ?? streamReadiness;
-      if (readiness && !canAttemptLivGoLive(readiness)) {
-        throw new Error(`Stream cannot launch: ${formatLivReadinessError(readiness)}`);
-      }
-
-      const response = await fetch(`${getClientAppUrl()}/api/owner/master-go-live`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "external_hls", confirm: true, masterOverride: true }),
-      });
-      const json = (await response.json()) as BroadcastResponse & { state?: ShowSetupStatePayload };
-
-      if (!response.ok || json.ok === false) {
-        throw new Error(parseApiError(response, json, "Go-live failed"));
-      }
-
-      if (json.snapshot) setSnapshot(json.snapshot);
-      if (json.state) applyShowSetup(json.state);
-      await loadSnapshot();
-      await loadStreamReadiness();
-
-      setActionMessage(json.message ?? "Stream is live on platform.");
-      return true;
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : "Go-live failed.");
-      setActionMessage(null);
-      return false;
-    } finally {
-      goLiveInFlightRef.current = false;
-      setBroadcastAction("idle");
-    }
-  }, [applyShowSetup, broadcastAction, loadSnapshot, loadStreamReadiness, streamReadiness]);
-
-  const stopStream = useCallback(async () => {
-    if (stopInFlightRef.current || broadcastAction !== "idle") return false;
-    if (snapshot?.publish.status !== "publishing") return false;
-
-    stopInFlightRef.current = true;
-    setBroadcastAction("stop");
-    setActionError(null);
-    setActionMessage("Stopping broadcast...");
-
-    try {
-      const response = await fetch(`${getClientAppUrl()}/api/owner/broadcast-end`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
-      const json = (await response.json()) as BroadcastResponse;
-
-      if (!response.ok || json.ok === false) {
-        throw new Error(parseApiError(response, json, "Stop broadcast failed"));
-      }
-
-      if (json.snapshot) setSnapshot(json.snapshot);
-      else await loadSnapshot();
-
-      setActionMessage(json.message ?? "Broadcast ended.");
-      return true;
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : "Stop broadcast failed.");
-      setActionMessage(null);
-      return false;
-    } finally {
-      stopInFlightRef.current = false;
-      setBroadcastAction("idle");
-    }
-  }, [broadcastAction, loadSnapshot, snapshot?.publish.status]);
 
   const isLive = snapshot?.publish.status === "publishing";
   const preflight: PreflightCheck[] = snapshot?.preflight ?? [];
@@ -466,23 +330,18 @@ export function useLivStreamSetup() {
     manifestReachable,
     streamReadiness,
     canAttemptGoLive,
+    isRealtimeConnected,
     isLoading,
     encoderSaving,
     metadataSaving,
-    broadcastAction,
-    preflightRunning,
     saveMessage,
     saveError,
     actionMessage,
-    actionError,
     saveEncoder,
     saveMetadata,
-    runPreflight,
-    goLive,
-    stopStream,
-    refresh: async () => {
-      await loadSnapshot();
-      await loadStreamReadiness();
-    },
+    applyBroadcastSnapshot,
+    refreshPipeline,
+    setActionMessage,
+    refresh: refreshPipeline,
   };
 }

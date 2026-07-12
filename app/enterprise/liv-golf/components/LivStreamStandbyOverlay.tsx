@@ -1,18 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import { isLivStreamLiveStatus } from "@/lib/enterprise/liv-golf/liv-stream-status-patches";
 import type { LivStreamSetupStatus } from "@/lib/enterprise/liv-golf/liv-stream-setup-status";
 
 type LivStreamStandbyOverlayProps = {
   status: LivStreamSetupStatus | null;
   isLoading?: boolean;
+  isStateSyncing?: boolean;
+  syncError?: string | null;
 };
 
 export default function LivStreamStandbyOverlay({
   status,
   isLoading = false,
+  isStateSyncing = false,
+  syncError = null,
 }: LivStreamStandbyOverlayProps) {
-  if (isLoading) {
+  if (isLoading && !status) {
     return (
       <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 px-6 text-center">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-400">
@@ -20,6 +25,10 @@ export default function LivStreamStandbyOverlay({
         </p>
       </div>
     );
+  }
+
+  if (isStateSyncing || isLivStreamLiveStatus(status)) {
+    return null;
   }
 
   if (!status || status.canMountPlayer) return null;
@@ -32,6 +41,7 @@ export default function LivStreamStandbyOverlay({
         : "Broadcast standby";
 
   const detail =
+    syncError ??
     status.goLiveBlockers[0] ??
     status.readinessBlockers[0] ??
     "Production has not gone live on platform yet.";

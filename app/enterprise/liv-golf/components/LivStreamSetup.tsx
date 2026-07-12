@@ -4,15 +4,8 @@ import Link from "next/link";
 import RestreamEncoderPanel from "@/components/owner/RestreamEncoderPanel";
 import { LIV_OPS_CONTENT, LIV_OPS_PAGE } from "@/lib/enterprise/liv-golf/responsive";
 import { useLivStreamSetup } from "@/lib/enterprise/liv-golf/useLivStreamSetup";
+import LivGoLiveControls from "./LivGoLiveControls";
 import LivStreamReadinessBanner from "./LivStreamReadinessBanner";
-import type { PreflightCheckStatus } from "@/lib/owner/contracts";
-
-function preflightTone(status: PreflightCheckStatus): string {
-  if (status === "pass") return "text-emerald-400";
-  if (status === "warn") return "text-amber-300";
-  if (status === "fail") return "text-red-300";
-  return "text-zinc-500";
-}
 
 function publishLabel(status: string | undefined, isLive: boolean): string {
   if (isLive) return "LIVE ON PLATFORM";
@@ -30,7 +23,6 @@ export default function LivStreamSetup() {
     targetDateTime,
     setTargetDateTime,
     setAirTimeOneHourFromNow,
-    scheduleTimezone,
     encoderFields,
     setEncoderFields,
     encoderLastSavedAt,
@@ -43,17 +35,14 @@ export default function LivStreamSetup() {
     isLoading,
     encoderSaving,
     metadataSaving,
-    broadcastAction,
-    preflightRunning,
     saveMessage,
     saveError,
     actionMessage,
-    actionError,
     saveEncoder,
     saveMetadata,
-    runPreflight,
-    goLive,
-    stopStream,
+    applyBroadcastSnapshot,
+    refreshPipeline,
+    setActionMessage,
     snapshot,
     streamReadiness,
     canAttemptGoLive,
@@ -61,8 +50,11 @@ export default function LivStreamSetup() {
 
   const scheduleEnded = streamReadiness?.scheduleEnded ?? snapshot?.eventPhase.phase === "ended";
 
-  const isBusy =
-    encoderSaving || metadataSaving || preflightRunning || broadcastAction !== "idle";
+  const scheduledAirTimeLabel =
+    targetDateTime.trim() ||
+    (streamReadiness?.targetDateTime
+      ? new Date(streamReadiness.targetDateTime).toLocaleString()
+      : null);
 
   return (
     <div className={LIV_OPS_PAGE}>
@@ -124,9 +116,9 @@ export default function LivStreamSetup() {
         </div>
       </header>
 
-      {(saveError || actionError) && (
+      {(saveError) && (
         <p className={`${LIV_OPS_CONTENT} mb-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200`}>
-          {saveError ?? actionError}
+          {saveError}
         </p>
       )}
 
@@ -225,50 +217,21 @@ export default function LivStreamSetup() {
             </div>
           </div>
 
-          <div className="mt-6 rounded-xl border border-white/10 bg-black/40 p-6">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-[#CCFF00]">
-              Go-Live Controls
-            </h2>
-            <p className="mt-1 text-xs text-zinc-500">
-              Preflight → master go-live → fans receive HLS on /enterprise/liv-golf/live
-            </p>
-
-            <div className="mt-5 flex flex-col gap-3">
-              <button
-                type="button"
-                disabled={isBusy || isLoading}
-                onClick={() => void runPreflight()}
-                className="rounded-lg border border-white/15 px-4 py-3 text-xs font-bold uppercase tracking-wider text-white transition hover:border-[#CCFF00]/40 disabled:opacity-50"
-              >
-                {preflightRunning ? "Running Preflight..." : "Run Preflight"}
-              </button>
-
-              {!isLive ? (
-                <button
-                  type="button"
-                  disabled={isBusy || isLoading || !canAttemptGoLive}
-                  onClick={() => void goLive()}
-                  className="rounded-lg bg-[#CCFF00] px-4 py-3 text-xs font-extrabold uppercase tracking-wider text-black transition hover:bg-[#b8e600] disabled:opacity-50"
-                >
-                  {broadcastAction === "go-live" ? "Going Live..." : "Go Live on Platform"}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  disabled={isBusy || isLoading}
-                  onClick={() => void stopStream()}
-                  className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-xs font-bold uppercase tracking-wider text-red-200 transition hover:bg-red-500/20 disabled:opacity-50"
-                >
-                  {broadcastAction === "stop" ? "Stopping..." : "Stop Broadcast"}
-                </button>
-              )}
-            </div>
-
-            {hlsUrl ? (
-              <p className="mt-4 break-all font-mono text-[10px] text-zinc-500">
-                HLS: {hlsUrl}
-              </p>
-            ) : null}
+          <div className="mt-6">
+            <LivGoLiveControls
+              isLoading={isLoading}
+              isLive={isLive}
+              canAttemptGoLive={canAttemptGoLive}
+              preflight={preflight}
+              hlsUrl={hlsUrl}
+              publishStatus={snapshot?.publish.status}
+              eventPhase={snapshot?.eventPhase.phase}
+              scheduledAirTimeLabel={scheduledAirTimeLabel}
+              streamReadiness={streamReadiness}
+              onSnapshotUpdate={applyBroadcastSnapshot}
+              onPipelineRefresh={refreshPipeline}
+              onActionSuccess={setActionMessage}
+            />
           </div>
         </section>
 
@@ -290,42 +253,6 @@ export default function LivStreamSetup() {
             onSave={() => void saveEncoder()}
           />
 
-          <div className="rounded-xl border border-white/10 bg-black/40 p-4 sm:p-6">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-[#CCFF00]">
-              Preflight Checklist
-            </h2>
-            <p className="mt-1 text-xs text-zinc-500">
-              Mirrors owner cockpit checks — all green before tournament air
-            </p>
-
-            {preflight.length === 0 ? (
-              <p className="mt-4 text-sm text-zinc-500">
-                Run preflight to populate the checklist.
-              </p>
-            ) : (
-              <ul className="mt-4 space-y-2">
-                {preflight.map((check) => (
-                  <li
-                    key={check.id}
-                    className="flex items-start justify-between gap-4 rounded-lg border border-white/5 bg-[#1a1a1a]/60 px-3 py-2"
-                  >
-                    <div>
-                      <p className="text-sm text-white">{check.label}</p>
-                      {check.detail ? (
-                        <p className="mt-0.5 text-xs text-zinc-500">{check.detail}</p>
-                      ) : null}
-                    </div>
-                    <span
-                      className={`shrink-0 font-mono text-[10px] font-bold uppercase ${preflightTone(check.status)}`}
-                    >
-                      {check.status}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
           <div className="rounded-xl border border-dashed border-[#CCFF00]/25 bg-[#CCFF00]/5 p-5">
             <p className="text-xs font-semibold uppercase tracking-wider text-[#CCFF00]">
               Production Pipeline
@@ -333,7 +260,7 @@ export default function LivStreamSetup() {
             <ol className="mt-3 space-y-2 text-sm text-zinc-300">
               <li>1. Save Restream RTMP + HLS manifest above</li>
               <li>2. Start OBS encoder pointed at Restream</li>
-              <li>3. Run preflight → Go Live on Platform</li>
+              <li>3. Run preflight → Master Go-Live</li>
               <li>
                 4. Open{" "}
                 <Link href="/enterprise/liv-golf/studio" className="text-[#CCFF00] hover:underline">

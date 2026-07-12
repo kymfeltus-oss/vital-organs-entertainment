@@ -1,3 +1,4 @@
+import { fetchLivStreamStatus } from "@/lib/enterprise/liv-golf/fetch-liv-stream-status";
 import type { LivStreamSetupStatus } from "@/lib/enterprise/liv-golf/liv-stream-setup-status";
 
 export type LivStreamReadinessSnapshot = Pick<
@@ -22,17 +23,7 @@ export type LivStreamReadinessSnapshot = Pick<
 export async function fetchLivStreamReadiness(
   baseUrl = "",
 ): Promise<LivStreamSetupStatus> {
-  const prefix = baseUrl.replace(/\/$/, "");
-  const response = await fetch(`${prefix}/api/enterprise/liv-golf/stream-setup`, {
-    cache: "no-store",
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    throw new Error(`Stream readiness check failed (HTTP ${response.status}).`);
-  }
-
-  return (await response.json()) as LivStreamSetupStatus;
+  return fetchLivStreamStatus(baseUrl);
 }
 
 /** True when the platform publish lane is active and fans may attach HLS playback. */

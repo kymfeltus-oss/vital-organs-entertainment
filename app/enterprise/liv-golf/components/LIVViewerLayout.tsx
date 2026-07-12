@@ -4,14 +4,13 @@ import Link from "next/link";
 import { useMemo } from "react";
 import AttendeeStreamPlayer from "@/components/features/live/AttendeeStreamPlayer";
 import LiveStreamGraphicsOverlay from "@/components/features/live/LiveStreamGraphicsOverlay";
+import { useLivStreamStatus } from "@/app/enterprise/liv-golf/hooks/useLivStreamStatus";
+import { useLivGeoEligibility } from "@/lib/enterprise/liv-golf/useLivGeoEligibility";
+import { LIV_VIEWER_OVERLAY_INSET, LIV_VIEWER_SHELL } from "@/lib/enterprise/liv-golf/responsive";
+import { useLivViewerLayout } from "@/lib/enterprise/liv-golf/useLivViewerLayout";
 import { useLiveStreamGraphics } from "@/lib/features/live/useLiveStreamGraphics";
 import { useLiveStreamSubscriber } from "@/lib/live/useLiveStreamSubscriber";
 import { useLiveSeedWallet } from "@/lib/useLiveSeedWallet";
-import { useLivGeoEligibility } from "@/lib/enterprise/liv-golf/useLivGeoEligibility";
-import { useLivStreamStatus } from "@/lib/enterprise/liv-golf/useLivStreamStatus";
-import { canMountLivPlayer } from "@/lib/enterprise/liv-golf/check-stream-readiness";
-import { LIV_VIEWER_OVERLAY_INSET, LIV_VIEWER_SHELL } from "@/lib/enterprise/liv-golf/responsive";
-import { useLivViewerLayout } from "@/lib/enterprise/liv-golf/useLivViewerLayout";
 import FanBetPanel from "./FanBetPanel";
 import LivGeoComplianceBanner from "./LivGeoComplianceBanner";
 import LivStreamStandbyOverlay from "./LivStreamStandbyOverlay";
@@ -23,8 +22,13 @@ type LIVViewerLayoutProps = {
 /** Responsive viewer — mobile stack, tablet sidebar, desktop 70/30 split. */
 export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
   const layoutMode = useLivViewerLayout();
-  const { status: streamStatus, isLoading: streamStatusLoading } = useLivStreamStatus();
-  const playerEnabled = canMountLivPlayer(streamStatus);
+  const {
+    status: streamStatus,
+    isLoading: streamStatusLoading,
+    isStateSyncing,
+    isPlayerLive,
+    error: streamStatusError,
+  } = useLivStreamStatus({ mountPlayerDuringStateSync: true });
   const { activeBet } = useLiveStreamSubscriber(roomId);
   const { activeGraphic } = useLiveStreamGraphics({ enabled: true });
 
@@ -92,8 +96,13 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
           isMobile && isPanelOpen ? "min-h-[56dvh]" : "h-full"
         }`}
       >
-        <AttendeeStreamPlayer embedded enabled={playerEnabled} showPaywall={false} />
-        <LivStreamStandbyOverlay status={streamStatus} isLoading={streamStatusLoading} />
+        <AttendeeStreamPlayer embedded enabled={isPlayerLive} showPaywall={false} />
+        <LivStreamStandbyOverlay
+          status={streamStatus}
+          isLoading={streamStatusLoading}
+          isStateSyncing={isStateSyncing}
+          syncError={streamStatusError}
+        />
         {activeGraphic ? <LiveStreamGraphicsOverlay graphic={activeGraphic} /> : null}
       </div>
 
