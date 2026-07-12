@@ -4,7 +4,9 @@ import Link from "next/link";
 import RestreamEncoderPanel from "@/components/owner/RestreamEncoderPanel";
 import { LIV_OPS_CONTENT, LIV_OPS_PAGE } from "@/lib/enterprise/liv-golf/responsive";
 import { useLivStreamSetup } from "@/lib/enterprise/liv-golf/useLivStreamSetup";
+import LivBroadcastAudioPanel from "./LivBroadcastAudioPanel";
 import LivGoLiveControls from "./LivGoLiveControls";
+import LivInAppPublisher from "./LivInAppPublisher";
 import LivStreamReadinessBanner from "./LivStreamReadinessBanner";
 
 function publishLabel(status: string | undefined, isLive: boolean): string {
@@ -236,31 +238,46 @@ export default function LivStreamSetup() {
         </section>
 
         <section className="lg:col-span-7 space-y-6">
-          <RestreamEncoderPanel
-            fields={encoderFields}
-            health={encoderHealth}
-            healthDetail={encoderHealthDetail}
-            saving={encoderSaving}
+          <LivInAppPublisher
             disabled={isLoading}
-            saveMessage={saveMessage}
-            saveError={saveError}
-            lastSavedLabel={
-              encoderLastSavedAt
-                ? `Saved ${new Date(encoderLastSavedAt).toLocaleString()}`
-                : null
-            }
-            onChange={setEncoderFields}
-            onSave={() => void saveEncoder()}
+            onBroadcastLive={() => void refreshPipeline()}
+            onBroadcastEnded={() => void refreshPipeline()}
           />
+
+          <LivBroadcastAudioPanel disabled={isLoading} />
+
+          <details className="rounded-xl border border-white/10 bg-[#141414] p-4">
+            <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wider text-zinc-400">
+              Advanced: External RTMP Encoder (optional)
+            </summary>
+            <div className="mt-4">
+              <RestreamEncoderPanel
+                fields={encoderFields}
+                health={encoderHealth}
+                healthDetail={encoderHealthDetail}
+                saving={encoderSaving}
+                disabled={isLoading}
+                saveMessage={saveMessage}
+                saveError={saveError}
+                lastSavedLabel={
+                  encoderLastSavedAt
+                    ? `Saved ${new Date(encoderLastSavedAt).toLocaleString()}`
+                    : null
+                }
+                onChange={setEncoderFields}
+                onSave={() => void saveEncoder()}
+              />
+            </div>
+          </details>
 
           <div className="rounded-xl border border-dashed border-[#CCFF00]/25 bg-[#CCFF00]/5 p-5">
             <p className="text-xs font-semibold uppercase tracking-wider text-[#CCFF00]">
               Production Pipeline
             </p>
             <ol className="mt-3 space-y-2 text-sm text-zinc-300">
-              <li>1. Save Restream RTMP + HLS manifest above</li>
-              <li>2. Start OBS encoder pointed at Restream</li>
-              <li>3. Run preflight → Master Go-Live</li>
+              <li>1. Start Camera in the in-app LiveKit publisher</li>
+              <li>2. Configure tournament audio routing matrix</li>
+              <li>3. Click Open to Fans to start HLS egress</li>
               <li>
                 4. Open{" "}
                 <Link href="/enterprise/liv-golf/studio" className="text-[#CCFF00] hover:underline">

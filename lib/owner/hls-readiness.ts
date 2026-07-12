@@ -17,8 +17,10 @@ export type HlsProbeResult = {
     | null;
 };
 
+import { resolveLivStreamSetupProbeTimeoutMs } from "@/lib/enterprise/liv-golf/liv-env-config";
+
 const MANIFEST_PROBE_TIMEOUT_MS = 4_000;
-export const LIV_STREAM_SETUP_PROBE_TIMEOUT_MS = 1_200;
+export const LIV_STREAM_SETUP_PROBE_TIMEOUT_MS = resolveLivStreamSetupProbeTimeoutMs();
 
 export type HlsProbeOptions = {
   timeoutMs?: number;
@@ -46,6 +48,23 @@ function getConfiguredIvsChannelArn(): string | null {
 
 function responseBodySaysIvsChannelNotFound(body: string): boolean {
   return /can\s*not\s*find\s*channel|cannot\s*find\s*channel/i.test(body);
+}
+
+function isLiveKitS3HlsUrl(url: string): boolean {
+  return /\.s3\.[a-z0-9-]+\.amazonaws\.com\//i.test(url) || url.includes(".s3.amazonaws.com/");
+}
+
+function describeManifestProbeFailure(url: string, status: number, body: string): string {
+  if (responseBodySaysIvsChannelNotFound(body)) {
+    return "IVS playback channel was not found. Update or remove stale IVS env vars.";
+  }
+  if (status === 403 && isLiveKitS3HlsUrl(url)) {
+    return "S3 HLS manifest returned 403. LiveKit egress must upload segments to the bucket and the bucket must allow public GetObject on liv-golf/*.";
+  }
+  if (status === 404 && isLiveKitS3HlsUrl(url)) {
+    return "S3 HLS manifest not found. Confirm LiveKit egress is running and IAM PutObject is allowed on the broadcast bucket.";
+  }
+  return `Manifest request failed (${status}).`;
 }
 
 export function isFatalHlsProbeFailure(result: HlsProbeResult): boolean {
@@ -150,9 +169,7 @@ async function fetchHlsProbe(
         envConfigured,
         hlsUrl,
         manifestReachable: false,
-        detail: ivsChannelNotFound
-          ? "IVS playback channel was not found. Update the active IVS channel/playback URL."
-          : `Manifest request failed (${response.status}).`,
+        detail: describeManifestProbeFailure(hlsUrl, response.status, body),
         invalidReason: ivsChannelNotFound ? "ivs_channel_not_found" : "manifest_unreachable",
       };
     }

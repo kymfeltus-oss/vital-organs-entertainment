@@ -73,3 +73,13 @@ model AudioRoutingConfig {
   latencyOffsetMs Int      @default(0)
   updatedAt       DateTime @updatedAt
 }
+
+/// LIV Golf tournament broadcast audio routing — singleton per realtime room scope.
+model LivBroadcastAudioRouting {
+  roomId           String   @id @default("liv-golf-tour-main-room")
+  masterOutputMode String   @default("WORLD_MIX")
+  onCourseMatrix   Json     @default("[]")
+  commentaryTracks Json     @default("[]")
+  updatedAt        DateTime @updatedAt
+  updatedBy        String?
+}

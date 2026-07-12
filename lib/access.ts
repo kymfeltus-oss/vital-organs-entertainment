@@ -15,7 +15,7 @@ export type AccessContext = {
   isGuest: boolean;
 };
 
-export type LivePublishMode = "none" | "external_hls" | "rtmp_encoder" | "browser_camera";
+export type LivePublishMode = "none" | "external_hls" | "rtmp_encoder" | "browser_camera" | "livekit_hls";
 
 export type LiveAccessEvaluation = {
   authenticated: boolean;

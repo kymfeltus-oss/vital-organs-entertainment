@@ -16,7 +16,7 @@ export type EventPhaseState = {
   scheduleTimezone: string | null;
 };
 
-export type PublishMode = "none" | "external_hls" | "rtmp_encoder" | "browser_camera";
+export type PublishMode = "none" | "external_hls" | "rtmp_encoder" | "browser_camera" | "livekit_hls";
 
 export type PublishStatus =
   | "offline"

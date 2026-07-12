@@ -6,6 +6,7 @@ export const DEV_MANIFEST_FALLBACK_HLS =
 
 const ENV_PLAYBACK_KEYS = [
   "ATTENDEE_PLAYBACK_HLS_URL",
+  "NEXT_PUBLIC_LIV_GOLF_HLS_MANIFEST_URL",
   "NEXT_PUBLIC_HLS_STREAM_URL",
 ] as const;
 
@@ -50,10 +51,14 @@ function logManifestEnvRoutingCheck(): void {
   );
 }
 
-/** ATTENDEE_PLAYBACK_HLS_URL only — highest-priority env lane for production. */
+/** ATTENDEE_PLAYBACK_HLS_URL, then LIV Golf manifest env — production lanes. */
 export function resolvePrimaryAttendeePlaybackFromEnv(): string | null {
   const attendee = normalizeEnvPlaybackString(process.env.ATTENDEE_PLAYBACK_HLS_URL);
   if (attendee && isValidHlsUrl(attendee)) return attendee;
+
+  const livManifest = normalizeEnvPlaybackString(process.env.NEXT_PUBLIC_LIV_GOLF_HLS_MANIFEST_URL);
+  if (livManifest && isValidHlsUrl(livManifest)) return livManifest;
+
   return null;
 }
 
@@ -112,8 +117,12 @@ export function isAttendeePlaybackEnvPopulated(): boolean {
  */
 export function resolveConfiguredAttendeePlaybackFromEnv(): string | null {
   const attendee = normalizeEnvPlaybackString(process.env.ATTENDEE_PLAYBACK_HLS_URL);
-  if (!attendee) return null;
-  return attendee;
+  if (attendee) return attendee;
+
+  const livManifest = normalizeEnvPlaybackString(process.env.NEXT_PUBLIC_LIV_GOLF_HLS_MANIFEST_URL);
+  if (livManifest) return livManifest;
+
+  return null;
 }
 
 /** True only when Mux demo fallback is explicitly allowed and no env playback is configured. */

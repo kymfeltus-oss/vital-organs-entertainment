@@ -15,6 +15,10 @@ const ALLOWED_HOST_SUFFIXES = [
   "restream.io",
   // AWS IVS — covers *.playback / *.playlist / *.global-contribute .live-video.net
   "live-video.net",
+  // LiveKit HLS egress on S3 (virtual-hosted–style and path-style hosts)
+  "amazonaws.com",
+  // Optional CloudFront front for LIV_GOLF_BROADCAST_CDN_BASE
+  "cloudfront.net",
 ];
 
 function relayReject(reason: string, detail: Record<string, unknown> = {}): void {

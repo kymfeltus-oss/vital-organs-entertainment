@@ -54,7 +54,8 @@ function normalizePublishMode(raw: unknown): PublishMode {
   if (
     raw === "external_hls" ||
     raw === "rtmp_encoder" ||
-    raw === "browser_camera"
+    raw === "browser_camera" ||
+    raw === "livekit_hls"
   ) {
     return raw;
   }

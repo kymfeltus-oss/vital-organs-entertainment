@@ -39,11 +39,6 @@ function jsonResponse(
     status,
     headers: {
       ...manifestCorsHeaderRecord(request),
-      // Short edge cache absorbs viewer-poll bursts (1 origin fetch per PoP per
-      // few seconds instead of per-viewer) while keeping GO LIVE / STOP signals
-      // fast to propagate. Kept short on purpose — a long TTL would delay the
-      // live/offline transition for attendees. Vary: Origin so the reflected
-      // CORS Allow-Origin header is cache-keyed per requesting origin.
       "Cache-Control": "public, max-age=2, stale-while-revalidate=5",
       Vary: "Origin",
     },
@@ -54,6 +49,13 @@ type PlaybackCandidate = {
   source: "database" | "env";
   playbackUrl: string;
   activeSource: "primary";
+};
+
+type ManifestProbeFailure = {
+  source: PlaybackCandidate["source"];
+  playbackUrl: string;
+  detail: string | null;
+  invalidReason: string | null;
 };
 
 function logPlaybackSelection(input: {
@@ -75,6 +77,26 @@ function logPlaybackSelection(input: {
     playerMountStatus: input.playerMountStatus,
     probeDetail: input.probeDetail ?? null,
   });
+}
+
+function buildManifestUnavailableError(
+  streamIsLive: boolean,
+  failures: ManifestProbeFailure[],
+): string {
+  if (!streamIsLive) {
+    return "Stream not available yet.";
+  }
+
+  const primary = failures.find((failure) => failure.source === "database");
+  if (primary?.detail) {
+    return primary.detail;
+  }
+
+  if (failures.length > 0) {
+    return failures[0]?.detail ?? "No validated HLS manifest candidate.";
+  }
+
+  return "Broadcast is live but no playback URL is configured.";
 }
 
 export async function OPTIONS(request: NextRequest) {
@@ -102,7 +124,9 @@ export async function GET(request: NextRequest) {
   }
 
   const envPlaybackUrl =
-    resolved.streamIsLive && experience === "main_stage"
+    resolved.streamIsLive &&
+    experience === "main_stage" &&
+    candidates.length === 0
       ? resolveConfiguredAttendeePlaybackFromEnv()
       : null;
   if (
@@ -116,45 +140,63 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  for (const candidate of candidates) {
-    const probe = await probeHlsManifest(candidate.playbackUrl);
+  const streamStatus = resolved.streamIsLive ? "live" : "offline";
+  const probeResults = await Promise.all(
+    candidates.map(async (candidate) => ({
+      candidate,
+      probe: await probeHlsManifest(candidate.playbackUrl),
+    })),
+  );
+
+  const failures: ManifestProbeFailure[] = [];
+
+  for (const { candidate, probe } of probeResults) {
     const playerMountStatus = probe.manifestReachable ? "ready" : "waiting";
 
     logPlaybackSelection({
       selectedShowId: resolved.selectedShowId,
       candidate,
-      streamStatus: resolved.streamIsLive ? "live" : "offline",
+      streamStatus,
       playerMountStatus,
       probeDetail: probe.detail,
     });
 
-    if (!probe.manifestReachable) {
-      continue;
+    if (probe.manifestReachable) {
+      return jsonResponse(request, {
+        success: true,
+        activeExperience: experience,
+        activeSource: candidate.activeSource,
+        carrier: resolveManifestCarrier(candidate.activeSource),
+        fallback: false,
+        playbackUrl: resolveClientPlaybackUrl(request, candidate.playbackUrl),
+      });
     }
 
-    return jsonResponse(request, {
-      success: true,
-      activeExperience: experience,
-      activeSource: candidate.activeSource,
-      carrier: resolveManifestCarrier(candidate.activeSource),
-      fallback: false,
-      playbackUrl: resolveClientPlaybackUrl(request, candidate.playbackUrl),
+    failures.push({
+      source: candidate.source,
+      playbackUrl: candidate.playbackUrl,
+      detail: probe.detail,
+      invalidReason: probe.invalidReason,
     });
   }
 
   logPlaybackSelection({
     selectedShowId: resolved.selectedShowId || LIVE_STREAM_STATE_ID,
     candidate: null,
-    streamStatus: resolved.streamIsLive ? "live" : "offline",
+    streamStatus,
     playerMountStatus: "waiting",
-    probeDetail: candidates.length ? "No validated HLS manifest candidate." : "No playback URL candidate.",
+    probeDetail: failures.length
+      ? "No validated HLS manifest candidate."
+      : "No playback URL candidate.",
   });
 
   return jsonResponse(
     request,
     {
       success: false,
-      error: "Stream not available yet.",
+      error: buildManifestUnavailableError(resolved.streamIsLive, failures),
+      streamStatus,
+      probeFailures: failures,
     },
     404,
   );

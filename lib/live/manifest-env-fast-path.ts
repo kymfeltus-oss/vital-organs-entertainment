@@ -34,6 +34,12 @@ export function resolveManifestCorsOrigin(request: NextRequest): string {
 
   if (trusted) return origin;
 
+  const requestOrigin =
+    host !== "" ? `${proto}://${host.split(",")[0]?.trim() ?? host}` : "";
+  if (requestOrigin && LOCALHOST_ORIGIN.test(requestOrigin)) {
+    return requestOrigin;
+  }
+
   // Fall back to the configured production origin, not a hardcoded localhost.
   return appUrl || "http://localhost:3000";
 }

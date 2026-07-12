@@ -1,3 +1,5 @@
+import { isAmazonIvsPlaybackUrl } from "@/lib/live/ivs-playback-url";
+
 type LivShowSetupFields = {
   showTitle?: string;
   eventLocation?: string;
@@ -22,12 +24,20 @@ const VITAL_ORGANS_TEXT_PATTERNS = [
   /new\s+orleans,\s*la/i,
   /^live\s+event$/i,
   /^host$/i,
+  /dayspring\s*family\s*church/i,
 ];
 
 function isVitalOrgansDefaultText(value: string | undefined): boolean {
   const trimmed = value?.trim() ?? "";
   if (!trimmed) return false;
   return VITAL_ORGANS_TEXT_PATTERNS.some((pattern) => pattern.test(trimmed));
+}
+
+function sanitizePlaybackHlsUrl(value: string | undefined): string {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) return "";
+  if (isAmazonIvsPlaybackUrl(trimmed)) return "";
+  return trimmed;
 }
 
 /** Strip shared Vital Organs / 300 Awakening defaults from LIV stream setup form fields. */
@@ -40,5 +50,6 @@ export function sanitizeLivShowSetupFields<T extends LivShowSetupFields>(state: 
       state.eventLocation && !isVitalOrgansDefaultText(state.eventLocation)
         ? state.eventLocation.trim()
         : "",
+    attendeePlaybackHlsUrl: sanitizePlaybackHlsUrl(state.attendeePlaybackHlsUrl),
   };
 }
