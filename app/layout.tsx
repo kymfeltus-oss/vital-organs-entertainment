@@ -51,15 +51,7 @@ export default function RootLayout({
           fontFamily: "var(--theme-font-body)",
         }}
       >
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:border focus:px-4 focus:py-2 focus:text-sm focus:font-semibold"
-          style={{
-            borderColor: "var(--theme-border)",
-            backgroundColor: "var(--theme-surface)",
-            color: "var(--theme-primary)",
-          }}
-        >
+        <a href="#main-content" className="skip-to-main">
           Skip to main content
         </a>
         <ThemeProvider>

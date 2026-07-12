@@ -103,10 +103,10 @@ export default function FanBetPanel({
             <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#CCFF00]">
               In-Stream Micro-Bets
             </p>
-            <p className="mt-0.5 text-xs text-zinc-500">LIV Digital Tour Deck</p>
+            <p className="mt-0.5 text-xs liv-text-secondary">LIV Digital Tour Deck</p>
           </div>
           <div className="text-left sm:text-right">
-            <span className="block font-mono text-[10px] uppercase text-zinc-500">
+            <span className="block font-mono text-[10px] uppercase liv-text-secondary">
               Tokens Available
             </span>
             <span className="font-mono text-sm font-bold text-white">
@@ -124,7 +124,7 @@ export default function FanBetPanel({
             {activeBet.question}
           </h4>
 
-          <div className="mt-2 flex flex-wrap gap-2 font-mono text-[11px] text-zinc-500 sm:mt-3 sm:gap-3 sm:text-xs">
+          <div className="mt-2 flex flex-wrap gap-2 font-mono text-[11px] liv-text-secondary sm:mt-3 sm:gap-3 sm:text-xs">
             <span>Risk: {activeBet.stake_amount} Tokens</span>
             <span>•</span>
             <span className="text-[#CCFF00]">To Win: {activeBet.payout_amount} Tokens</span>

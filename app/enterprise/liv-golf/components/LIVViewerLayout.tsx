@@ -173,7 +173,7 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
             Buy LIV Fan Tokens
           </Link>
         ) : (
-          <span className="text-zinc-500">Token wallet geo-gated</span>
+          <span className="liv-text-secondary">Token wallet geo-gated</span>
         )}
       </div>
     </div>

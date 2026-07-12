@@ -29,7 +29,7 @@ export default function LivGeoComplianceBanner({
           {title}
         </p>
         <p className="mt-3 text-sm leading-relaxed text-zinc-200">{message}</p>
-        <p className="mt-4 text-xs text-zinc-500">
+        <p className="mt-4 text-xs liv-text-secondary-on-amber">
           LIV Golf prop modules and token wallets are geo-fenced per local wagering jurisdictions.
           Live stream viewing remains available.
         </p>

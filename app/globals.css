@@ -1,5 +1,42 @@
 @import "tailwindcss";
 
+/* Keyboard skip link — visible on focus without relying on clip-path reset utilities */
+.skip-to-main {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.skip-to-main:focus,
+.skip-to-main:focus-visible {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0.5rem 1rem;
+  overflow: visible;
+  clip: auto;
+  clip-path: none;
+  white-space: normal;
+  border-radius: 0.5rem;
+  border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.2));
+  background-color: var(--theme-surface, #111111);
+  color: var(--theme-primary, #f5b400);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
