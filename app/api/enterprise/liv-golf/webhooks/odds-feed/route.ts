@@ -67,6 +67,63 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 });
   }
 
+  const lieType = feedData.shot_data?.lie?.trim().toLowerCase();
+  const isBunkerShot =
+    feedData.event_type === "SHOT_RECORDED" && lieType === "bunker" && feedData.player?.name?.trim();
+
+  if (signatureResult.mode === "dev-bypass" && isBunkerShot) {
+    try {
+      const playerName = feedData.player!.name!.trim();
+      const holeNumber = feedData.shot_data?.hole_number;
+      const result = await processOddsFeedPayload(
+        {
+          event_type: "PLAYER_SHOT_SITUATION",
+          hole_context: {
+            hole_number: holeNumber,
+            associated_room_id: feedData.room_id,
+          },
+          event_details: {
+            lie_type: "bunker",
+            player_name: playerName,
+          },
+        },
+        "sportradar-dev-bypass",
+      );
+
+      if (result.status === "processed") {
+        return NextResponse.json({
+          success: true,
+          active_prop: "tyrell-sand-save",
+          mode: "dev-bypass",
+          ...result,
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        status: "Ignored event context parameters.",
+        message: result.message,
+        mode: "dev-bypass",
+      });
+    } catch (error) {
+      if (error instanceof LiveMicroBetsSessionUnavailableError) {
+        return NextResponse.json(
+          {
+            error:
+              "Production micro-bet session table is unavailable. Apply migration 20260711161000_live_micro_bets_session.sql.",
+          },
+          { status: 503 },
+        );
+      }
+
+      console.error("[enterprise/liv-golf/webhooks/odds-feed] dev bypass launch failed:", error);
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "Unable to launch dev bypass prop." },
+        { status: 500 },
+      );
+    }
+  }
+
   const aiInput = mapSportradarShotToAiInput(feedData);
   if (aiInput) {
     try {

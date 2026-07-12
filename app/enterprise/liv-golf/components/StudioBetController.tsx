@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getClientAppUrl } from "@/lib/client-api";
 import { LIV_MICRO_BETS } from "@/lib/liv-micro-bets";
 import { useLivStreamStatus } from "@/lib/enterprise/liv-golf/useLivStreamStatus";
+import LivStreamReadinessBanner from "./LivStreamReadinessBanner";
 import { useRiskTelemetry } from "@/lib/enterprise/liv-golf/useRiskTelemetry";
 import { useLiveProductionBroadcast } from "@/lib/useLiveProductionBroadcast";
 import { LIV_GOLF_TOUR_MAIN_ROOM } from "@/lib/live/types";
@@ -179,6 +180,12 @@ export default function StudioBetController() {
           {error ?? graphicsError}
         </p>
       )}
+
+      <LivStreamReadinessBanner
+        className={`${LIV_OPS_CONTENT} mb-6`}
+        status={streamStatus}
+        isLoading={streamStatusLoading}
+      />
 
       {riskAlerts.length > 0 ? (
         <div className={`${LIV_OPS_CONTENT} mb-6 space-y-3`}>

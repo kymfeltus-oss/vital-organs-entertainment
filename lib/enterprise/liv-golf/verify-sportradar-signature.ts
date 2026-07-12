@@ -1,10 +1,10 @@
 import { createHmac, timingSafeEqual } from "crypto";
 
 export type SportradarSignatureResult =
-  | { ok: true }
+  | { ok: true; mode: "dev-bypass" | "hmac" }
   | { ok: false; status: 401 | 500; error: string };
 
-function safeEqualHex(expected: string, received: string): boolean {
+function safeEqualString(expected: string, received: string): boolean {
   try {
     const expectedBuffer = Buffer.from(expected, "utf8");
     const receivedBuffer = Buffer.from(received, "utf8");
@@ -15,45 +15,47 @@ function safeEqualHex(expected: string, received: string): boolean {
   }
 }
 
-/** Verify Sportradar HMAC-SHA256 signature over the raw webhook body. */
+/** Verify Sportradar HMAC-SHA256 signature with local dev static-key bypass support. */
 export function verifySportradarWebhookSignature(
   request: Request,
   rawBody: string,
 ): SportradarSignatureResult {
+  const signature = request.headers.get("X-Sportradar-Signature")?.trim();
   const secretKey = process.env.SPORTRADAR_SIGNATURE_KEY?.trim();
+  const devFallbackSecret = process.env.LIV_ODDS_WEBHOOK_SECRET?.trim();
 
-  if (!secretKey) {
+  if (!secretKey && !devFallbackSecret) {
     return {
       ok: false,
       status: 500,
-      error: "Configuration Error: Signing key missing.",
+      error: "Configuration Error: Security signing keys missing entirely.",
     };
   }
 
-  const signature = request.headers.get("X-Sportradar-Signature")?.trim();
   if (!signature) {
     return {
       ok: false,
       status: 401,
-      error: "Unauthorized: Invalid signature packet.",
+      error: "Unauthorized: Cryptographic signature mismatch.",
     };
   }
 
-  const computedHash = createHmac("sha256", secretKey).update(rawBody).digest("hex");
+  const isDevTestBypass = Boolean(devFallbackSecret && safeEqualString(devFallbackSecret, signature));
+  if (isDevTestBypass) {
+    return { ok: true, mode: "dev-bypass" };
+  }
 
-  if (!safeEqualHex(computedHash, signature)) {
-    // Dev fallback: shared static header when LIV_ODDS_WEBHOOK_SECRET is configured.
-    const devSecret = process.env.LIV_ODDS_WEBHOOK_SECRET?.trim();
-    if (devSecret && safeEqualHex(devSecret, signature)) {
-      return { ok: true };
-    }
+  const computedHash = createHmac("sha256", secretKey || "")
+    .update(rawBody)
+    .digest("hex");
 
+  if (!safeEqualString(computedHash, signature)) {
     return {
       ok: false,
       status: 401,
-      error: "Unauthorized: Invalid signature packet.",
+      error: "Unauthorized: Cryptographic signature mismatch.",
     };
   }
 
-  return { ok: true };
+  return { ok: true, mode: "hmac" };
 }

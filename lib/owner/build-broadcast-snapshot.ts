@@ -69,6 +69,7 @@ function resolvePlaybackState(
 async function buildFeedState(
   row: Awaited<ReturnType<typeof loadOwnerStreamState>>["row"],
   showSetupHlsUrl: string | null,
+  manifestProbeTimeoutMs?: number,
 ): Promise<FeedState> {
   const inputs = {
     primary_playback_url: row?.primary_playback_url,
@@ -77,7 +78,9 @@ async function buildFeedState(
   };
 
   const primaryUrl = resolvePrimaryFeedUrl(inputs, { showSetupHlsUrl });
-  const primaryProbe = await probeHlsManifest(primaryUrl);
+  const primaryProbe = await probeHlsManifest(primaryUrl, {
+    timeoutMs: manifestProbeTimeoutMs,
+  });
 
   return {
     activeSource: row?.is_live ? "primary" : "offline",
@@ -90,8 +93,13 @@ async function buildFeedState(
   };
 }
 
+export type BuildOwnerBroadcastSnapshotOptions = {
+  manifestProbeTimeoutMs?: number;
+};
+
 export async function buildOwnerBroadcastSnapshot(
   _requestedMode?: PublishState["mode"],
+  options: BuildOwnerBroadcastSnapshotOptions = {},
 ): Promise<{ snapshot: OwnerBroadcastSnapshot; error: string | null }> {
   const admin = getSupabaseAdmin();
 
@@ -104,7 +112,7 @@ export async function buildOwnerBroadcastSnapshot(
   const row = streamResult.row;
   const encoderConfig = readEncoderConfigFromStreamPresets(row?.audio_master_presets);
   const showSetupHlsUrl = encoderConfig.hlsPlaybackUrl;
-  const feed = await buildFeedState(row, showSetupHlsUrl);
+  const feed = await buildFeedState(row, showSetupHlsUrl, options.manifestProbeTimeoutMs);
 
   const hlsUrl = feed.primary.hlsUrl;
   const manifestReachable = feed.primary.manifestReachable;

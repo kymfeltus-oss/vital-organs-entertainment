@@ -18,6 +18,11 @@ export type HlsProbeResult = {
 };
 
 const MANIFEST_PROBE_TIMEOUT_MS = 4_000;
+export const LIV_STREAM_SETUP_PROBE_TIMEOUT_MS = 1_200;
+
+export type HlsProbeOptions = {
+  timeoutMs?: number;
+};
 
 /**
  * Short-lived probe cache + in-flight dedupe.
@@ -60,7 +65,10 @@ export function resolveSafePublicHlsUrl(
   return null;
 }
 
-export async function probeHlsManifest(url: string | null): Promise<HlsProbeResult> {
+export async function probeHlsManifest(
+  url: string | null,
+  options?: HlsProbeOptions,
+): Promise<HlsProbeResult> {
   const envConfigured = Boolean(resolveAttendeePlaybackFromEnv()?.trim());
   const hlsUrl = url;
 
@@ -96,36 +104,42 @@ export async function probeHlsManifest(url: string | null): Promise<HlsProbeResu
     });
   }
 
+  const timeoutMs = options?.timeoutMs ?? MANIFEST_PROBE_TIMEOUT_MS;
+  const cacheKey = `${hlsUrl}::${timeoutMs}`;
   const now = Date.now();
-  const cached = probeCache.get(hlsUrl);
+  const cached = probeCache.get(cacheKey);
   if (cached && cached.expiresAt > now) {
     return { ...cached.result, envConfigured };
   }
 
-  const existing = probeInFlight.get(hlsUrl);
+  const existing = probeInFlight.get(cacheKey);
   if (existing) {
     const result = await existing;
     return { ...result, envConfigured };
   }
 
-  const pending = fetchHlsProbe(hlsUrl, envConfigured);
-  probeInFlight.set(hlsUrl, pending);
+  const pending = fetchHlsProbe(hlsUrl, envConfigured, timeoutMs);
+  probeInFlight.set(cacheKey, pending);
 
   try {
     const result = await pending;
-    probeCache.set(hlsUrl, { result, expiresAt: Date.now() + PROBE_CACHE_TTL_MS });
+    probeCache.set(cacheKey, { result, expiresAt: Date.now() + PROBE_CACHE_TTL_MS });
     return result;
   } finally {
-    probeInFlight.delete(hlsUrl);
+    probeInFlight.delete(cacheKey);
   }
 }
 
-async function fetchHlsProbe(hlsUrl: string, envConfigured: boolean): Promise<HlsProbeResult> {
+async function fetchHlsProbe(
+  hlsUrl: string,
+  envConfigured: boolean,
+  timeoutMs: number,
+): Promise<HlsProbeResult> {
   try {
     const response = await fetch(hlsUrl, {
       method: "GET",
       headers: { Accept: "application/vnd.apple.mpegurl, application/x-mpegURL, */*" },
-      signal: AbortSignal.timeout(MANIFEST_PROBE_TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
       cache: "no-store",
     });
 

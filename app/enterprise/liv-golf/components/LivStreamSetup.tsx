@@ -4,6 +4,8 @@ import Link from "next/link";
 import RestreamEncoderPanel from "@/components/owner/RestreamEncoderPanel";
 import { LIV_OPS_CONTENT, LIV_OPS_PAGE } from "@/lib/enterprise/liv-golf/responsive";
 import { useLivStreamSetup } from "@/lib/enterprise/liv-golf/useLivStreamSetup";
+import { useLivStreamStatus } from "@/lib/enterprise/liv-golf/useLivStreamStatus";
+import LivStreamReadinessBanner from "./LivStreamReadinessBanner";
 import type { PreflightCheckStatus } from "@/lib/owner/contracts";
 
 function preflightTone(status: PreflightCheckStatus): string {
@@ -53,6 +55,9 @@ export default function LivStreamSetup() {
     stopStream,
     snapshot,
   } = useLivStreamSetup();
+  const { status: streamReadiness, isLoading: streamReadinessLoading } = useLivStreamStatus();
+
+  const scheduleEnded = streamReadiness?.scheduleEnded ?? snapshot?.eventPhase.phase === "ended";
 
   const isBusy =
     encoderSaving || metadataSaving || preflightRunning || broadcastAction !== "idle";
@@ -129,6 +134,12 @@ export default function LivStreamSetup() {
         </p>
       )}
 
+      <LivStreamReadinessBanner
+        className={`${LIV_OPS_CONTENT} mb-6`}
+        status={streamReadiness}
+        isLoading={streamReadinessLoading}
+      />
+
       <main className={`${LIV_OPS_CONTENT} grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-12`}>
         <section className="lg:col-span-5">
           <div className="rounded-xl border border-white/10 bg-black/40 p-4 sm:p-6">
@@ -176,8 +187,15 @@ export default function LivStreamSetup() {
                   value={targetDateTime}
                   onChange={(event) => setTargetDateTime(event.target.value)}
                   disabled={isLoading}
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[#CCFF00]/50"
+                  className={`mt-1 w-full rounded-lg border bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[#CCFF00]/50 ${
+                    scheduleEnded ? "border-amber-500/50" : "border-white/10"
+                  }`}
                 />
+                {scheduleEnded ? (
+                  <p className="mt-1 text-xs text-amber-300">
+                    Schedule is in the past — event phase is ended until you set a future air time.
+                  </p>
+                ) : null}
               </label>
 
               <button
