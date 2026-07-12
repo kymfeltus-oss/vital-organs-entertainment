@@ -109,7 +109,7 @@ export default function LivGolfLanding() {
         <p>
           Powered by <span className="font-semibold text-white/80">PARABLE</span> Enterprise
         </p>
-        <p>Executive Demonstration v1.0</p>
+        <p>LIV Golf Enterprise — Live</p>
       </footer>
     </main>
   );

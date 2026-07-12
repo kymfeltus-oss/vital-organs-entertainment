@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { getClientAppUrl } from "@/lib/client-api";
 import {
   findLivMicroBet,
+  mapLiveMicroBetsSessionRow,
   toLiveMicroBetPayload,
+  type LiveMicroBetsSession,
   type LivMicroBetLaunchPayload,
 } from "@/lib/liv-micro-bets";
 import { livGolfRoomIdsMatch } from "@/lib/live/liv-golf-room";
@@ -28,10 +30,14 @@ const POLL_MS = 5_000;
 
 type MicroBetsApiResponse = {
   activeBetId?: string | null;
+  activeBet?: LiveMicroBetPayload | null;
   isActive?: boolean;
   clearOverlays?: boolean;
   launchedAt?: string | null;
   updatedAt?: string | null;
+  phase?: LiveMicroBetsSession["phase"];
+  endsAt?: string | null;
+  resolvedWinner?: "Yes" | "No" | null;
   error?: string;
 };
 
@@ -43,6 +49,8 @@ type SubscriberData = {
   clearOverlays: boolean;
   launchedAt: string | null;
   updatedAt: string | null;
+  resolvedWinner: "Yes" | "No" | null;
+  sessionData: LiveMicroBetsSession | null;
   isLoading: boolean;
   error: string | null;
 };
@@ -86,6 +94,28 @@ function parseLaunchPayload(raw: unknown, expectedRoomId: string): LivMicroBetLa
     launchedAt = raw.launchedAt;
   }
 
+  let resolved_winner: "Yes" | "No" | undefined;
+  if (raw.resolved_winner === "Yes" || raw.resolved_winner === "No") {
+    resolved_winner = raw.resolved_winner;
+  }
+
+  let phase: LivMicroBetLaunchPayload["phase"];
+  if (
+    raw.phase === "OPEN" ||
+    raw.phase === "CLOSING_SOON" ||
+    raw.phase === "LOCKED" ||
+    raw.phase === "RESOLVED"
+  ) {
+    phase = raw.phase;
+  }
+
+  let ends_at: string | null | undefined;
+  if (raw.ends_at === null) {
+    ends_at = null;
+  } else if (typeof raw.ends_at === "string") {
+    ends_at = raw.ends_at;
+  }
+
   return {
     roomId,
     activeBetId,
@@ -93,6 +123,9 @@ function parseLaunchPayload(raw: unknown, expectedRoomId: string): LivMicroBetLa
     clearOverlays,
     launchedAt,
     at,
+    resolved_winner,
+    phase,
+    ends_at,
   };
 }
 
@@ -106,10 +139,27 @@ function resolveActiveBetPayload(
   return toLiveMicroBetPayload(bet, true);
 }
 
+function buildSessionData(data: MicroBetsApiResponse): LiveMicroBetsSession | null {
+  if (!data.updatedAt) return null;
+
+  return mapLiveMicroBetsSessionRow({
+    id: "current",
+    active_bet_id: data.activeBetId ?? null,
+    clear_overlays: data.clearOverlays ?? false,
+    launched_at: data.launchedAt ?? null,
+    updated_at: data.updatedAt,
+    updated_by: null,
+    phase: data.phase ?? "OPEN",
+    ends_at: data.endsAt ?? null,
+    resolved_winner: data.resolvedWinner ?? null,
+  });
+}
+
 function mapApiResponse(data: MicroBetsApiResponse): SubscriberData {
   const activeBetId = data.activeBetId ?? null;
   const isActive = data.isActive ?? Boolean(activeBetId);
-  const activeBet = resolveActiveBetPayload(activeBetId, isActive);
+  const activeBet =
+    data.activeBet ?? resolveActiveBetPayload(activeBetId, isActive);
 
   return {
     activeBetId,
@@ -119,6 +169,8 @@ function mapApiResponse(data: MicroBetsApiResponse): SubscriberData {
     clearOverlays: data.clearOverlays ?? false,
     launchedAt: data.launchedAt ?? null,
     updatedAt: data.updatedAt ?? null,
+    resolvedWinner: data.resolvedWinner ?? null,
+    sessionData: buildSessionData(data),
     isLoading: false,
     error: null,
   };
@@ -132,6 +184,8 @@ const INITIAL_DATA: SubscriberData = {
   clearOverlays: false,
   launchedAt: null,
   updatedAt: null,
+  resolvedWinner: null,
+  sessionData: null,
   isLoading: true,
   error: null,
 };
@@ -232,6 +286,33 @@ export function useLiveStreamSubscriber(roomId: string): LiveStreamSubscriberSta
             clearOverlays: launch.clearOverlays,
             launchedAt: launch.launchedAt,
             updatedAt: launch.at,
+            resolvedWinner: launch.is_active
+              ? null
+              : launch.resolved_winner ?? prev.resolvedWinner,
+            sessionData: prev.sessionData
+              ? {
+                  ...prev.sessionData,
+                  activeBetId: launch.activeBetId,
+                  clearOverlays: launch.clearOverlays,
+                  launchedAt: launch.launchedAt,
+                  updatedAt: launch.at,
+                  phase: launch.phase ?? prev.sessionData.phase,
+                  endsAt: launch.ends_at ?? prev.sessionData.endsAt,
+                  resolvedWinner: launch.is_active
+                    ? null
+                    : launch.resolved_winner ?? prev.sessionData.resolvedWinner,
+                }
+              : {
+                  id: "current",
+                  activeBetId: launch.activeBetId,
+                  clearOverlays: launch.clearOverlays,
+                  launchedAt: launch.launchedAt,
+                  updatedAt: launch.at,
+                  updatedBy: null,
+                  phase: launch.phase ?? "OPEN",
+                  endsAt: launch.ends_at ?? null,
+                  resolvedWinner: launch.resolved_winner ?? null,
+                },
             isLoading: false,
             error:
               launch.is_active && !activeBet

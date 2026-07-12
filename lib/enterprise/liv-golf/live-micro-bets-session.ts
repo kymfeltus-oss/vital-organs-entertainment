@@ -1,5 +1,9 @@
-import type { LiveMicroBetsSession } from "@/lib/liv-micro-bets";
+import type { LiveMicroBetsSession, MicroBetSessionPhase } from "@/lib/liv-micro-bets";
 import { mapLiveMicroBetsSessionRow } from "@/lib/liv-micro-bets";
+import {
+  computeShowcaseEndsAt,
+  findLegendaryShowcaseScenario,
+} from "@/lib/enterprise/liv-golf/legendary-showcase-scenarios";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 export type LiveMicroBetsSessionRow = {
@@ -9,12 +13,18 @@ export type LiveMicroBetsSessionRow = {
   launched_at: string | null;
   updated_at: string;
   updated_by: string | null;
+  phase?: string | null;
+  ends_at?: string | null;
+  resolved_winner?: string | null;
 };
 
 const TABLE = "live_micro_bets_session";
 const SESSION_ID = "current";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const SESSION_COLUMNS =
+  "id, active_bet_id, clear_overlays, launched_at, updated_at, updated_by, phase, ends_at, resolved_winner";
 
 function resolveSessionUpdatedBy(userId: string): string | null {
   return UUID_PATTERN.test(userId) ? userId : null;
@@ -43,6 +53,22 @@ function isMissingSessionTable(error: unknown): boolean {
   );
 }
 
+function isMissingPhaseColumn(error: unknown): boolean {
+  const message = errorMessage(error);
+  return /phase|ends_at|resolved_winner|column/i.test(message);
+}
+
+function resolveLaunchEndsAt(activeBetId: string, launchedAt: string): string | null {
+  const showcase = findLegendaryShowcaseScenario(activeBetId);
+  if (showcase) {
+    return computeShowcaseEndsAt(showcase, launchedAt);
+  }
+
+  const end = new Date(launchedAt);
+  end.setSeconds(end.getSeconds() + 30);
+  return end.toISOString();
+}
+
 export class LiveMicroBetsSessionUnavailableError extends Error {
   constructor(message = "live_micro_bets_session table is unavailable.") {
     super(message);
@@ -54,7 +80,7 @@ export async function loadLiveMicroBetsSession(): Promise<LiveMicroBetsSession |
   const admin = getSupabaseAdmin();
   const { data, error } = await admin
     .from(TABLE)
-    .select("id, active_bet_id, clear_overlays, launched_at, updated_at, updated_by")
+    .select(SESSION_COLUMNS)
     .eq("id", SESSION_ID)
     .maybeSingle();
 
@@ -62,6 +88,20 @@ export async function loadLiveMicroBetsSession(): Promise<LiveMicroBetsSession |
     if (isMissingSessionTable(error)) {
       throw new LiveMicroBetsSessionUnavailableError(errorMessage(error));
     }
+
+    if (isMissingPhaseColumn(error)) {
+      const legacy = await admin
+        .from(TABLE)
+        .select("id, active_bet_id, clear_overlays, launched_at, updated_at, updated_by")
+        .eq("id", SESSION_ID)
+        .maybeSingle();
+
+      if (legacy.error) throw new Error(errorMessage(legacy.error));
+      if (!legacy.data) return null;
+
+      return mapLiveMicroBetsSessionRow(legacy.data as LiveMicroBetsSessionRow);
+    }
+
     throw new Error(errorMessage(error));
   }
 
@@ -73,27 +113,78 @@ export async function upsertLiveMicroBetsSession(input: {
   activeBetId: string | null;
   clearOverlays: boolean;
   updatedBy: string;
+  phase?: MicroBetSessionPhase;
+  endsAt?: string | null;
+  resolvedWinner?: "Yes" | "No" | null;
+  preserveLaunchedAt?: boolean;
+  launchedAt?: string | null;
 }): Promise<LiveMicroBetsSession> {
   const admin = getSupabaseAdmin();
   const now = new Date().toISOString();
+  const isLaunch = Boolean(input.activeBetId);
+
+  let launchedAt: string | null = null;
+  if (isLaunch) {
+    if (input.preserveLaunchedAt && input.launchedAt) {
+      launchedAt = input.launchedAt;
+    } else if (input.preserveLaunchedAt) {
+      const existing = await loadLiveMicroBetsSession();
+      launchedAt = existing?.launchedAt ?? now;
+    } else {
+      launchedAt = now;
+    }
+  }
+
+  const endsAt =
+    input.endsAt !== undefined
+      ? input.endsAt
+      : isLaunch && launchedAt
+        ? resolveLaunchEndsAt(input.activeBetId!, launchedAt)
+        : null;
+
+  const row = {
+    id: SESSION_ID,
+    active_bet_id: input.activeBetId,
+    clear_overlays: input.clearOverlays,
+    launched_at: launchedAt ?? (isLaunch ? now : null),
+    updated_at: now,
+    updated_by: resolveSessionUpdatedBy(input.updatedBy),
+    phase: input.phase ?? (isLaunch ? "OPEN" : "RESOLVED"),
+    ends_at: isLaunch ? endsAt : null,
+    resolved_winner: input.resolvedWinner ?? null,
+  };
 
   const { data, error } = await admin
     .from(TABLE)
-    .upsert({
-      id: SESSION_ID,
-      active_bet_id: input.activeBetId,
-      clear_overlays: input.clearOverlays,
-      launched_at: input.activeBetId ? now : null,
-      updated_at: now,
-      updated_by: resolveSessionUpdatedBy(input.updatedBy),
-    })
-    .select("id, active_bet_id, clear_overlays, launched_at, updated_at, updated_by")
+    .upsert(row)
+    .select(SESSION_COLUMNS)
     .single();
 
   if (error) {
     if (isMissingSessionTable(error)) {
       throw new LiveMicroBetsSessionUnavailableError(errorMessage(error));
     }
+
+    if (isMissingPhaseColumn(error)) {
+      const legacyRow = {
+        id: SESSION_ID,
+        active_bet_id: input.activeBetId,
+        clear_overlays: input.clearOverlays,
+        launched_at: launchedAt ?? (isLaunch ? now : null),
+        updated_at: now,
+        updated_by: resolveSessionUpdatedBy(input.updatedBy),
+      };
+
+      const legacy = await admin
+        .from(TABLE)
+        .upsert(legacyRow)
+        .select("id, active_bet_id, clear_overlays, launched_at, updated_at, updated_by")
+        .single();
+
+      if (legacy.error) throw new Error(errorMessage(legacy.error));
+      return mapLiveMicroBetsSessionRow(legacy.data as LiveMicroBetsSessionRow);
+    }
+
     throw new Error(errorMessage(error));
   }
 

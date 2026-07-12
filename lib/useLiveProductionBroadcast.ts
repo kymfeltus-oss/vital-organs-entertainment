@@ -2,31 +2,51 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getClientAppUrl } from "@/lib/client-api";
-import type { LivMicroBet, LiveMicroBetsSession } from "@/lib/liv-micro-bets";
+import type { LivMicroBet, LiveMicroBetsSession, MicroBetSessionPhase } from "@/lib/liv-micro-bets";
+import type { LiveMicroBetPayload } from "@/lib/live/types";
 import type { VmixSnapshot } from "@/lib/owner/vmix/client";
 
 type SessionApiResponse = {
   success?: boolean;
   error?: string;
   activeBetId?: string | null;
-  activeBet?: LivMicroBet | null;
+  activeBet?: LivMicroBet | LiveMicroBetPayload | null;
   clearOverlays?: boolean;
   launchedAt?: string | null;
   updatedAt?: string | null;
+  phase?: MicroBetSessionPhase;
+  endsAt?: string | null;
+  resolvedWinner?: "Yes" | "No" | null;
 };
 
 type MicroBetsApiResponse = {
   activeBetId?: string | null;
-  activeBet?: LivMicroBet | null;
+  activeBet?: LiveMicroBetPayload | null;
   clearOverlays?: boolean;
   launchedAt?: string | null;
   updatedAt?: string | null;
+  phase?: MicroBetSessionPhase;
+  endsAt?: string | null;
+  resolvedWinner?: "Yes" | "No" | null;
   error?: string;
 };
 
 type VmixStatusApiResponse = {
   vmix?: VmixSnapshot;
   error?: string;
+};
+
+/** Postgres `live_micro_bets_session` row mirror for studio dashboards. */
+export type ProductionSessionRow = {
+  id: string;
+  active_bet_id: string | null;
+  clear_overlays: boolean;
+  launched_at: string | null;
+  updated_at: string;
+  updated_by: string | null;
+  phase: MicroBetSessionPhase;
+  ends_at: string | null;
+  resolved_winner: "Yes" | "No" | null;
 };
 
 export type LiveProductionBroadcastState = {
@@ -38,7 +58,25 @@ export type LiveProductionBroadcastState = {
   error: string | null;
 };
 
-function mapSessionResponse(data: SessionApiResponse | MicroBetsApiResponse): LiveMicroBetsSession | null {
+function toProductionSessionRow(session: LiveMicroBetsSession | null): ProductionSessionRow | null {
+  if (!session) return null;
+
+  return {
+    id: session.id,
+    active_bet_id: session.activeBetId,
+    clear_overlays: session.clearOverlays,
+    launched_at: session.launchedAt,
+    updated_at: session.updatedAt,
+    updated_by: session.updatedBy,
+    phase: session.phase,
+    ends_at: session.endsAt,
+    resolved_winner: session.resolvedWinner,
+  };
+}
+
+function mapSessionResponse(
+  data: SessionApiResponse | MicroBetsApiResponse,
+): LiveMicroBetsSession | null {
   if (!data.updatedAt) return null;
 
   return {
@@ -48,6 +86,9 @@ function mapSessionResponse(data: SessionApiResponse | MicroBetsApiResponse): Li
     launchedAt: data.launchedAt ?? null,
     updatedAt: data.updatedAt,
     updatedBy: null,
+    phase: data.phase ?? "OPEN",
+    endsAt: data.endsAt ?? null,
+    resolvedWinner: data.resolvedWinner ?? null,
   };
 }
 
@@ -104,7 +145,7 @@ export function useLiveProductionBroadcast() {
       setState((prev) => ({
         ...prev,
         session,
-        activeBet: payload.activeBet ?? null,
+        activeBet: null,
         vmix: vmixSnapshot,
         isLoading: false,
         error: null,
@@ -122,7 +163,7 @@ export function useLiveProductionBroadcast() {
     void refresh();
   }, [refresh]);
 
-  const dispatchSession = useCallback(async (activeBetId: string | null) => {
+  const patchSession = useCallback(async (body: Record<string, unknown>) => {
     setState((prev) => ({ ...prev, isDispatching: true, error: null }));
 
     try {
@@ -132,7 +173,7 @@ export function useLiveProductionBroadcast() {
           method: "PATCH",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ activeBetId }),
+          body: JSON.stringify(body),
         },
       );
 
@@ -151,7 +192,6 @@ export function useLiveProductionBroadcast() {
       setState((prev) => ({
         ...prev,
         session,
-        activeBet: payload.activeBet ?? null,
         isDispatching: false,
         error: null,
       }));
@@ -167,6 +207,11 @@ export function useLiveProductionBroadcast() {
     }
   }, []);
 
+  const dispatchSession = useCallback(
+    async (activeBetId: string | null) => patchSession({ activeBetId }),
+    [patchSession],
+  );
+
   const launchMicroBet = useCallback(
     async (betId: string) => dispatchSession(betId),
     [dispatchSession],
@@ -174,11 +219,64 @@ export function useLiveProductionBroadcast() {
 
   const terminateMicroBet = useCallback(async () => dispatchSession(null), [dispatchSession]);
 
+  const lockMicroBet = useCallback(async () => patchSession({ phase: "LOCKED" }), [patchSession]);
+
+  const resolveMicroBetYes = useCallback(async () => {
+    const betId = state.session?.activeBetId;
+    if (!betId) return false;
+
+    setState((prev) => ({ ...prev, isDispatching: true, error: null }));
+
+    try {
+      const response = await fetch(
+        `${getClientAppUrl()}/api/enterprise/liv-golf/micro-bets/resolve`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            bet_id: betId,
+            action: "RESOLVE",
+            winning_option: "Yes",
+          }),
+        },
+      );
+
+      const payload = (await response.json().catch(() => ({}))) as {
+        success?: boolean;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.success) {
+        setState((prev) => ({
+          ...prev,
+          isDispatching: false,
+          error: payload.error ?? "Unable to resolve micro-bet to YES.",
+        }));
+        return false;
+      }
+
+      await refresh();
+      setState((prev) => ({ ...prev, isDispatching: false, error: null }));
+      return true;
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        isDispatching: false,
+        error: error instanceof Error ? error.message : "Unable to resolve micro-bet.",
+      }));
+      return false;
+    }
+  }, [refresh, state.session?.activeBetId]);
+
   return {
     ...state,
     activeBetId: state.session?.activeBetId ?? null,
+    currentSession: toProductionSessionRow(state.session),
     refresh,
     launchMicroBet,
     terminateMicroBet,
+    lockMicroBet,
+    resolveMicroBetYes,
   };
 }

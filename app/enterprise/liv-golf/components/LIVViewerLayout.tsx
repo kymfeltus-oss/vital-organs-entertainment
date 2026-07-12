@@ -1,27 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import AttendeeStreamPlayer from "@/components/features/live/AttendeeStreamPlayer";
 import LiveStreamGraphicsOverlay from "@/components/features/live/LiveStreamGraphicsOverlay";
 import { useLivStreamStatus } from "@/app/enterprise/liv-golf/hooks/useLivStreamStatus";
 import { useLivGeoEligibility } from "@/lib/enterprise/liv-golf/useLivGeoEligibility";
-import { LIV_VIEWER_OVERLAY_INSET, LIV_VIEWER_SHELL } from "@/lib/enterprise/liv-golf/responsive";
-import { useLivViewerLayout } from "@/lib/enterprise/liv-golf/useLivViewerLayout";
 import { useLiveStreamGraphics } from "@/lib/features/live/useLiveStreamGraphics";
 import { useLiveStreamSubscriber } from "@/lib/live/useLiveStreamSubscriber";
 import { useLiveSeedWallet } from "@/lib/useLiveSeedWallet";
 import FanBetPanel from "./FanBetPanel";
 import LivGeoComplianceBanner from "./LivGeoComplianceBanner";
 import LivStreamStandbyOverlay from "./LivStreamStandbyOverlay";
+import { LIVBettingOverlay } from "./micro-betting-overlay";
+import { buildOverlayServerSession, toOverlaySessionRow } from "./micro-betting-overlay/session-utils";
+import { VideoOverlayPlayer } from "../live/components/VideoOverlayPlayer";
 
 type LIVViewerLayoutProps = {
   roomId: string;
 };
 
-/** Responsive viewer — mobile stack, tablet sidebar, desktop 70/30 split. */
+/** Live fan viewer — framed stream with floating micro-betting overlay. */
 export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
-  const layoutMode = useLivViewerLayout();
   const {
     status: streamStatus,
     isLoading: streamStatusLoading,
@@ -29,7 +29,16 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
     isPlayerLive,
     error: streamStatusError,
   } = useLivStreamStatus({ mountPlayerDuringStateSync: true });
-  const { activeBet } = useLiveStreamSubscriber(roomId);
+
+  const {
+    sessionData,
+    activeBet,
+    isActive,
+    clearOverlays,
+    resolvedWinner,
+    refresh: refreshSession,
+  } = useLiveStreamSubscriber(roomId);
+
   const { activeGraphic } = useLiveStreamGraphics({ enabled: true });
 
   const isPanelOpen = Boolean(activeBet?.is_active);
@@ -47,11 +56,34 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
     return headers;
   }, [geo.attestationToken, geo.sample]);
 
-  const walletEnabled = !isPanelOpen || geo.status === "eligible";
-  const { balance, isLoading, refresh } = useLiveSeedWallet({
-    enabled: walletEnabled,
+  const { balance, isLoading, refresh, setBalance } = useLiveSeedWallet({
+    enabled: true,
     requestHeaders: walletHeaders,
   });
+
+  const serverSession = useMemo(() => {
+    if (!sessionData) return null;
+
+    return buildOverlayServerSession({
+      session: toOverlaySessionRow(sessionData),
+      activeBet: activeBet ?? null,
+      isActive,
+      clearOverlays,
+      resolvedWinner,
+    });
+  }, [activeBet, clearOverlays, isActive, resolvedWinner, sessionData]);
+
+  const handleWagerDeduct = useCallback(
+    (newBalance: number) => {
+      setBalance(newBalance);
+    },
+    [setBalance],
+  );
+
+  const handleWagerSuccess = useCallback(async () => {
+    await refresh();
+    await refreshSession();
+  }, [refresh, refreshSession]);
 
   const showBetPanel = isPanelOpen && geo.status === "eligible" && activeBet;
   const showGeoBanner =
@@ -69,127 +101,111 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
       ? "Confirming your coordinates against the active tournament corridor..."
       : "Prop wagering is not available in your region.");
 
-  const isMobile = layoutMode === "mobile";
-  const isDesktopSplit = layoutMode === "desktop-split";
-  const showSidePanel = isPanelOpen && !isMobile;
+  const isLive = streamStatus?.isLive === true;
+  const buySeedsHref = "/buy-seeds?return=%2Fenterprise%2Fliv-golf%2Flive";
 
-  const streamFlexClass = isDesktopSplit
-    ? "flex-[7] min-h-0"
-    : layoutMode === "tablet-sidebar"
-      ? "flex-[65] min-h-0"
-      : "min-h-0 flex-1";
-
-  const panelWidthClass = isDesktopSplit
-    ? "w-[30%] max-w-[480px]"
-    : "w-[35%] max-w-[420px]";
-
-  const mobilePanelHeight = "h-[min(44dvh,400px)] shrink-0";
-
-  return (
-    <div
-      className={`${LIV_VIEWER_SHELL} flex bg-[#111111] font-sans text-white antialiased ${
-        isMobile ? "flex-col" : "flex-row"
-      }`}
-    >
-      <div
-        className={`relative flex min-w-0 items-center justify-center bg-black ${streamFlexClass} ${
-          isMobile && isPanelOpen ? "min-h-[56dvh]" : "h-full"
-        }`}
-      >
+  const liveStreamSlot = (
+    <>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(204,255,0,0.06),transparent_45%)]" />
+      <div className="absolute inset-0">
         <AttendeeStreamPlayer embedded enabled={isPlayerLive} showPaywall={false} />
-        <LivStreamStandbyOverlay
-          status={streamStatus}
-          isLoading={streamStatusLoading}
-          isStateSyncing={isStateSyncing}
-          syncError={streamStatusError}
-        />
-        {activeGraphic ? <LiveStreamGraphicsOverlay graphic={activeGraphic} /> : null}
       </div>
-
-      {showSidePanel ? (
-        <div
-          className={`h-full min-w-0 transform border-white/5 bg-[#161616] transition-all duration-300 ease-in-out ${
-            layoutMode === "tablet-sidebar" || isDesktopSplit
-              ? `border-l ${panelWidthClass} translate-x-0 opacity-100`
-              : ""
-          }`}
-        >
-          {showBetPanel ? (
-            <div className="h-full w-full min-w-0">
-              <FanBetPanel
-                activeBet={activeBet}
-                tokenBalance={balance}
-                isWalletLoading={isLoading}
-                geoAttestationToken={geo.attestationToken}
-                geoSample={geo.sample}
-                onBetSuccess={refresh}
-              />
-            </div>
-          ) : null}
-
-          {showGeoBanner ? (
-            <LivGeoComplianceBanner
-              status={
-                geo.status === "locating" || geo.status === "checking"
-                  ? geo.status
-                  : geo.status === "unsupported"
-                    ? "unsupported"
-                    : geo.status === "unavailable"
-                      ? "unavailable"
-                      : "ineligible"
-              }
-              message={geoBannerMessage}
-              onRetry={() => void geo.refresh()}
-            />
-          ) : null}
+      <LivStreamStandbyOverlay
+        status={streamStatus}
+        isLoading={streamStatusLoading}
+        isStateSyncing={isStateSyncing}
+        syncError={streamStatusError}
+      />
+      {activeGraphic ? <LiveStreamGraphicsOverlay graphic={activeGraphic} /> : null}
+      {!isPlayerLive && !streamStatusLoading ? (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+          <div className="text-center">
+            <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-neutral-500">
+              LIV Golf Digital Stream Feed
+            </span>
+            <h2 className="text-2xl font-black tracking-tight text-[#CCFF00]">
+              {isLive ? "Live Broadcast" : "Awaiting Stream"}
+            </h2>
+          </div>
         </div>
       ) : null}
+      <div className="pointer-events-none absolute left-4 top-4 z-20 flex items-center gap-2">
+        {isLive ? (
+          <>
+            <span className="liv-live-dot h-2 w-2 rounded-full bg-red-500" />
+            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-white">
+              Live Feed
+            </span>
+          </>
+        ) : null}
+      </div>
+    </>
+  );
 
-      {isMobile && isPanelOpen ? (
-        <div
-          className={`w-full min-w-0 border-t border-white/5 bg-[#161616] transition-all duration-300 ease-in-out ${mobilePanelHeight}`}
-        >
-          {showBetPanel ? (
+  return (
+    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-neutral-950 p-6 font-sans text-white antialiased">
+      <div className="w-full max-w-6xl space-y-4">
+        <header className="space-y-1 text-center sm:text-left">
+          <p className="font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-[#CCFF00]">
+            LIV Golf Digital Stream
+          </p>
+          <h1 className="text-xl font-black tracking-tight text-white sm:text-2xl">
+            {isLive ? "Live Broadcast" : "Fan Viewer"}
+          </h1>
+        </header>
+
+        <div className="w-full max-w-6xl overflow-hidden">
+          <VideoOverlayPlayer serverSession={serverSession} liveStream={liveStreamSlot}>
+            <LIVBettingOverlay
+              className="h-full"
+              roomId={roomId}
+              serverSession={serverSession}
+              userTokens={balance}
+              isWalletLoading={isLoading}
+              geoSample={geo.sample}
+              geoAttestationToken={geo.attestationToken}
+              onWagerDeduct={handleWagerDeduct}
+              onWagerSuccess={handleWagerSuccess}
+            />
+          </VideoOverlayPlayer>
+        </div>
+
+        {showBetPanel ? (
+          <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-[#161616]">
             <FanBetPanel
               activeBet={activeBet}
               tokenBalance={balance}
               isWalletLoading={isLoading}
               geoAttestationToken={geo.attestationToken}
               geoSample={geo.sample}
-              onBetSuccess={refresh}
+              onBetSuccess={handleWagerSuccess}
               compact
             />
-          ) : null}
+          </div>
+        ) : null}
 
-          {showGeoBanner ? (
-            <LivGeoComplianceBanner
-              compact
-              status={
-                geo.status === "locating" || geo.status === "checking"
-                  ? geo.status
-                  : geo.status === "unsupported"
-                    ? "unsupported"
-                    : geo.status === "unavailable"
-                      ? "unavailable"
-                      : "ineligible"
-              }
-              message={geoBannerMessage}
-              onRetry={() => void geo.refresh()}
-            />
-          ) : null}
-        </div>
-      ) : null}
+        {showGeoBanner ? (
+          <LivGeoComplianceBanner
+            compact
+            status={
+              geo.status === "locating" || geo.status === "checking"
+                ? geo.status
+                : geo.status === "unsupported"
+                  ? "unsupported"
+                  : geo.status === "unavailable"
+                    ? "unavailable"
+                    : "ineligible"
+            }
+            message={geoBannerMessage}
+            onRetry={() => void geo.refresh()}
+          />
+        ) : null}
 
-      <div
-        className={`pointer-events-none absolute z-30 text-[10px] text-white/40 ${LIV_VIEWER_OVERLAY_INSET}`}
-      >
-        {geo.status === "eligible" ? (
-          <Link href="/buy-seeds" className="pointer-events-auto text-[#CCFF00] hover:underline">
+        <footer className="text-center text-[10px] text-white/40 sm:text-left">
+          <Link href={buySeedsHref} className="text-[#CCFF00] hover:underline">
             Buy LIV Fan Tokens
           </Link>
-        ) : (
-          <span className="liv-text-secondary">Token wallet geo-gated</span>
-        )}
+        </footer>
       </div>
     </div>
   );

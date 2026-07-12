@@ -1,10 +1,16 @@
 import type { LiveMicroBetPayload } from "@/lib/live/types";
+import {
+  findLegendaryShowcaseScenario,
+  LEGENDARY_SHOWCASE_SCENARIOS,
+} from "@/lib/enterprise/liv-golf/legendary-showcase-scenarios";
 
 export type LivOverlayState = "none" | "sponsor" | "commercial";
 
 export type LivMicroBetOption = "Yes" | "No";
 
-export type LivMicroBetCategory = "driving" | "putting" | "scrambling" | "team-prop";
+export type LivMicroBetCategory = "driving" | "putting" | "scrambling" | "team-prop" | "showcase";
+
+export type MicroBetSessionPhase = "OPEN" | "CLOSING_SOON" | "LOCKED" | "RESOLVED";
 
 export type LivMicroBet = {
   readonly id: string;
@@ -32,6 +38,9 @@ export type LiveMicroBetsSession = {
   launchedAt: string | null;
   updatedAt: string;
   updatedBy: string | null;
+  phase: MicroBetSessionPhase;
+  endsAt: string | null;
+  resolvedWinner: "Yes" | "No" | null;
 };
 
 export type LivMicroBetLaunchPayload = {
@@ -41,7 +50,9 @@ export type LivMicroBetLaunchPayload = {
   clearOverlays: boolean;
   launchedAt: string | null;
   at: string;
-  resolved_winner?: "Yes" | "No";
+  phase?: MicroBetSessionPhase;
+  ends_at?: string | null;
+  resolved_winner?: "Yes" | "No" | null;
 };
 
 /** Production prop catalog — single source of truth for studio switcher + consumer APIs. */
@@ -96,6 +107,12 @@ export const LIV_MICRO_BETS: readonly LivMicroBet[] = [
   },
 ] as const;
 
+/** Full dispatch catalog — production props + legendary showcase moments. */
+export const LIV_MICRO_BETS_CATALOG: readonly LivMicroBet[] = [
+  ...LIV_MICRO_BETS,
+  ...LEGENDARY_SHOWCASE_SCENARIOS,
+];
+
 /** @deprecated Alias — prefer `LIV_MICRO_BETS` in production code. */
 export const DEMO_BETS: readonly ActiveBet[] = LIV_MICRO_BETS.map(toActiveBet);
 
@@ -114,7 +131,11 @@ export function toActiveBet(bet: LivMicroBet): ActiveBet {
 
 export function findLivMicroBet(betId: string | null | undefined): LivMicroBet | null {
   if (!betId) return null;
-  return LIV_MICRO_BETS.find((bet) => bet.id === betId) ?? null;
+  return (
+    LIV_MICRO_BETS.find((bet) => bet.id === betId) ??
+    findLegendaryShowcaseScenario(betId) ??
+    null
+  );
 }
 
 export function findLivMicroBetsByCategory(category: LivMicroBetCategory): readonly LivMicroBet[] {
@@ -122,6 +143,8 @@ export function findLivMicroBetsByCategory(category: LivMicroBetCategory): reado
 }
 
 export function toLiveMicroBetPayload(bet: LivMicroBet, isActive: boolean): LiveMicroBetPayload {
+  const showcase = findLegendaryShowcaseScenario(bet.id);
+
   return {
     bet_id: bet.id,
     question: bet.question,
@@ -129,6 +152,20 @@ export function toLiveMicroBetPayload(bet: LivMicroBet, isActive: boolean): Live
     payout_amount: bet.payout,
     is_active: isActive,
     options: bet.options as LiveMicroBetPayload["options"],
+    ...(showcase
+      ? {
+          showcase: true as const,
+          player_name: showcase.playerName,
+          team_name: showcase.teamName,
+          team_color: showcase.teamColor,
+          player_image: showcase.playerImage,
+          selection_labels: showcase.selections.map((selection) => ({
+            id: selection.id,
+            name: selection.name,
+            multiplier: selection.multiplier,
+          })),
+        }
+      : {}),
   };
 }
 
@@ -139,7 +176,23 @@ export function mapLiveMicroBetsSessionRow(row: {
   launched_at: string | null;
   updated_at: string;
   updated_by: string | null;
+  phase?: string | null;
+  ends_at?: string | null;
+  resolved_winner?: string | null;
 }): LiveMicroBetsSession {
+  const phaseRaw = row.phase?.trim();
+  const phase: MicroBetSessionPhase =
+    phaseRaw === "CLOSING_SOON" ||
+    phaseRaw === "LOCKED" ||
+    phaseRaw === "RESOLVED" ||
+    phaseRaw === "OPEN"
+      ? phaseRaw
+      : "OPEN";
+
+  const resolvedRaw = row.resolved_winner?.trim();
+  const resolvedWinner: "Yes" | "No" | null =
+    resolvedRaw === "Yes" || resolvedRaw === "No" ? resolvedRaw : null;
+
   return {
     id: row.id,
     activeBetId: row.active_bet_id,
@@ -147,5 +200,8 @@ export function mapLiveMicroBetsSessionRow(row: {
     launchedAt: row.launched_at,
     updatedAt: row.updated_at,
     updatedBy: row.updated_by,
+    phase,
+    endsAt: row.ends_at ?? null,
+    resolvedWinner,
   };
 }

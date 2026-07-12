@@ -39,6 +39,12 @@ export type LiveMicroBetPayload = {
   payout_amount: number;
   is_active: boolean;
   options: readonly ["Yes", "No"] | readonly ["No", "Yes"];
+  player_name?: string;
+  team_name?: string;
+  team_color?: string;
+  player_image?: string;
+  selection_labels?: readonly { id: string; name: string; multiplier: number }[];
+  showcase?: boolean;
 };
 export const HARVEST_GOAL_DOLLARS = 30_000;
 

@@ -2,10 +2,11 @@ import { emitLivMicroBetLaunch } from "@/lib/enterprise/liv-golf/emit-micro-bet-
 import { clearActiveStreamGraphics } from "@/lib/enterprise/liv-golf/clear-active-stream-graphics";
 import {
   LiveMicroBetsSessionUnavailableError,
+  loadLiveMicroBetsSession,
   upsertLiveMicroBetsSession,
 } from "@/lib/enterprise/liv-golf/live-micro-bets-session";
 import { emitStreamGraphicsSync } from "@/lib/owner/emit-stream-graphics-sync";
-import { findLivMicroBet } from "@/lib/liv-micro-bets";
+import { findLivMicroBet, type MicroBetSessionPhase } from "@/lib/liv-micro-bets";
 import { LIV_GOLF_TOUR_MAIN_ROOM } from "@/lib/live/types";
 import { requireOwnerUser } from "@/lib/owner/auth";
 import { isOwnerAuthed, ownerAuthFailureResponse, ownerJsonResponse } from "@/lib/owner/api-response";
@@ -15,7 +16,35 @@ export const dynamic = "force-dynamic";
 
 type SessionBody = {
   activeBetId?: unknown;
+  phase?: unknown;
+  resolvedWinner?: unknown;
 };
+
+function parsePhase(value: unknown): MicroBetSessionPhase | null {
+  if (value === "OPEN" || value === "CLOSING_SOON" || value === "LOCKED" || value === "RESOLVED") {
+    return value;
+  }
+  return null;
+}
+
+function parseResolvedWinner(value: unknown): "Yes" | "No" | null {
+  if (value === "Yes" || value === "No") return value;
+  return null;
+}
+
+async function broadcastSession(session: Awaited<ReturnType<typeof upsertLiveMicroBetsSession>>) {
+  await emitLivMicroBetLaunch({
+    roomId: LIV_GOLF_TOUR_MAIN_ROOM,
+    activeBetId: session.activeBetId,
+    is_active: Boolean(session.activeBetId),
+    clearOverlays: session.clearOverlays,
+    launchedAt: session.launchedAt,
+    at: session.updatedAt,
+    phase: session.phase,
+    ends_at: session.endsAt,
+    resolved_winner: session.resolvedWinner ?? undefined,
+  });
+}
 
 export async function PATCH(request: Request) {
   const auth = await requireOwnerUser();
@@ -24,8 +53,12 @@ export async function PATCH(request: Request) {
   try {
     const body = (await request.json()) as SessionBody;
     const rawId = body.activeBetId;
+    const requestedPhase = parsePhase(body.phase);
+    const requestedWinner = parseResolvedWinner(body.resolvedWinner);
 
-    let activeBetId: string | null = null;
+    const current = await loadLiveMicroBetsSession();
+
+    let activeBetId: string | null | undefined = undefined;
     if (rawId === null) {
       activeBetId = null;
     } else if (typeof rawId === "string") {
@@ -35,11 +68,17 @@ export async function PATCH(request: Request) {
       return ownerJsonResponse({ success: false, error: "Invalid active bet id." }, 400);
     }
 
-    if (activeBetId && !findLivMicroBet(activeBetId)) {
+    const nextActiveBetId = activeBetId !== undefined ? activeBetId : (current?.activeBetId ?? null);
+
+    if (nextActiveBetId && !findLivMicroBet(nextActiveBetId)) {
       return ownerJsonResponse({ success: false, error: "Unknown micro-bet id." }, 400);
     }
 
-    const isLaunch = Boolean(activeBetId);
+    const isLaunch = activeBetId !== undefined && Boolean(activeBetId);
+    const isTerminate = activeBetId === null;
+    const isPhaseOnly =
+      activeBetId === undefined && requestedPhase !== null && Boolean(current?.activeBetId);
+
     const admin = getSupabaseAdmin();
 
     if (isLaunch) {
@@ -48,19 +87,17 @@ export async function PATCH(request: Request) {
     }
 
     const session = await upsertLiveMicroBetsSession({
-      activeBetId,
-      clearOverlays: isLaunch,
+      activeBetId: isPhaseOnly ? current!.activeBetId : nextActiveBetId,
+      clearOverlays: isLaunch ? true : (current?.clearOverlays ?? false),
       updatedBy: auth.userId,
+      phase: requestedPhase ?? (isLaunch ? "OPEN" : isTerminate ? "RESOLVED" : current?.phase ?? "OPEN"),
+      endsAt: isPhaseOnly ? current?.endsAt ?? null : isTerminate ? null : undefined,
+      resolvedWinner: requestedWinner ?? (isTerminate ? current?.resolvedWinner ?? null : current?.resolvedWinner ?? null),
+      preserveLaunchedAt: isPhaseOnly,
+      launchedAt: isPhaseOnly ? current?.launchedAt ?? null : undefined,
     });
 
-    await emitLivMicroBetLaunch({
-      roomId: LIV_GOLF_TOUR_MAIN_ROOM,
-      activeBetId: session.activeBetId,
-      is_active: Boolean(session.activeBetId),
-      clearOverlays: session.clearOverlays,
-      launchedAt: session.launchedAt,
-      at: session.updatedAt,
-    });
+    await broadcastSession(session);
 
     return ownerJsonResponse({
       success: true,
@@ -71,6 +108,9 @@ export async function PATCH(request: Request) {
       clearOverlays: session.clearOverlays,
       launchedAt: session.launchedAt,
       updatedAt: session.updatedAt,
+      phase: session.phase,
+      endsAt: session.endsAt,
+      resolvedWinner: session.resolvedWinner,
     });
   } catch (error) {
     if (error instanceof LiveMicroBetsSessionUnavailableError) {
