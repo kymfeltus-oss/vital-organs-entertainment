@@ -4,24 +4,49 @@ import type { LivStreamSetupStatus } from "@/lib/enterprise/liv-golf/liv-stream-
 
 export const dynamic = "force-dynamic";
 
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error !== null && "message" in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return "Unknown error";
+}
+
 /**
  * Read-only LIV Golf stream status gateway.
- * Aggregates live_stream_state row (id=current_event), event_countdown_config.start_time,
- * HLS manifest probe, and preflight blockers.
  *
- * Realtime client surfaces subscribe to stream-state-sync / stream-graphics-sync
- * and call this route on broadcast (no polling interval).
+ * Data sources (production):
+ * - live_stream_state singleton row id = current_event
+ * - event_countdown_config.start_time for target air time
+ * - HLS manifest probe + owner preflight blockers via loadLivStreamSetupStatus()
  *
- * Mutations: POST /api/owner/broadcast/preflight | master-go-live | broadcast-end
+ * Realtime clients subscribe to stream-state-sync / stream-graphics-sync (no polling).
  */
 export async function GET() {
   try {
     const status: LivStreamSetupStatus = await loadLivStreamSetupStatus();
-    const response = NextResponse.json(status);
-    response.headers.set("Cache-Control", "no-store, max-age=0");
-    return response;
-  } catch (error) {
-    console.error("[enterprise/liv-golf/stream-setup] GET failed:", error);
-    return NextResponse.json({ error: "Unable to load stream setup status." }, { status: 500 });
+
+    return NextResponse.json(
+      status,
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      },
+    );
+  } catch (error: unknown) {
+    const details = errorMessage(error);
+    console.error("[enterprise/liv-golf/stream-setup] GET failed:", details);
+
+    return NextResponse.json(
+      {
+        error: "Unable to load stream setup status.",
+        details,
+      },
+      {
+        status: 500,
+      },
+    );
   }
 }
