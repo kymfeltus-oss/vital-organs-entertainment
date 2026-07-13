@@ -1,20 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
-  Eye,
-  Layers,
   Lock,
   Play,
-  Radio,
-  RefreshCw,
-  ShieldCheck,
-  Sliders,
   Square,
   Trophy,
-  Tv,
 } from "lucide-react";
 import { getClientAppUrl } from "@/lib/client-api";
 import { useLivStreamStatus } from "@/app/enterprise/liv-golf/hooks/useLivStreamStatus";
@@ -23,11 +15,12 @@ import {
   LEGENDARY_SHOWCASE_SCENARIOS,
   isShowcaseBetId,
 } from "@/lib/enterprise/liv-golf/legendary-showcase-scenarios";
-import { LIV_MICRO_BETS } from "@/lib/liv-micro-bets";
+import { LIV_MICRO_BETS, LIV_MICRO_BETS_CATALOG } from "@/lib/liv-micro-bets";
 import { LIV_GOLF_TOUR_MAIN_ROOM } from "@/lib/live/types";
 import { useLiveProductionBroadcast } from "@/lib/useLiveProductionBroadcast";
 import type { OwnerGraphicsPreset } from "@/lib/owner/graphics-data-plane";
 import { StudioSimulationDeck } from "./StudioSimulationDeck";
+import StudioHeader from "./StudioHeader";
 
 export default function StudioBetControllerPage() {
   const {
@@ -168,7 +161,7 @@ export default function StudioBetControllerPage() {
           method: "PATCH",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ activeBetId: null, phase: "RESOLVED" }),
+          body: JSON.stringify({ activeBetId: null, phase: "OPEN" }),
         },
       );
 
@@ -212,6 +205,10 @@ export default function StudioBetControllerPage() {
 
   const activePhase = currentSession?.phase ?? "OPEN";
   const activeIsShowcase = isShowcaseBetId(currentSession?.active_bet_id);
+  const catalogBetIds = new Set(LIV_MICRO_BETS_CATALOG.map((bet) => bet.id));
+  const isOrphanSession = Boolean(
+    currentSession?.active_bet_id && !catalogBetIds.has(currentSession.active_bet_id),
+  );
 
   const renderBetCard = (
     prop: (typeof LIV_MICRO_BETS)[number] | (typeof LEGENDARY_SHOWCASE_SCENARIOS)[number],
@@ -348,85 +345,16 @@ export default function StudioBetControllerPage() {
 
   return (
     <div className="min-h-screen select-none bg-neutral-950 p-6 font-sans text-white selection:bg-[#CCFF00] selection:text-black">
-      {/* SECTION 1: GLOBAL TELEMETRY BAR HEADER */}
-      <header className="mb-6 flex w-full flex-col items-center justify-between gap-4 rounded-2xl border border-neutral-800 bg-neutral-900 p-4 shadow-xl md:flex-row">
-        <div className="flex items-center gap-3">
-          <div className="rounded-xl border border-[#CCFF00]/20 bg-[#CCFF00]/10 p-2">
-            <Sliders className="h-5 w-5 text-[#CCFF00]" aria-hidden />
-          </div>
-          <div>
-            <h1 className="flex items-center gap-2 text-md font-black uppercase tracking-tight">
-              LIV Production Control Center
-            </h1>
-            <p className="text-[10px] font-medium tracking-wide text-neutral-400">
-              PostgreSQL session · Supabase realtime · vMix broadcast lane
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 rounded-lg border border-neutral-800 bg-black/40 px-3 py-1.5 text-[11px] font-bold">
-            <Radio
-              className={`h-3.5 w-3.5 ${streamStatus?.isLive ? "animate-pulse text-[#CCFF00]" : "text-neutral-500"}`}
-              aria-hidden
-            />
-            <span>
-              STREAM:{" "}
-              <span className={streamStatus?.isLive ? "text-[#CCFF00]" : "text-amber-500"}>
-                {streamLabel}
-              </span>
-            </span>
-          </div>
-          <div className="flex items-center gap-2 rounded-lg border border-neutral-800 bg-black/40 px-3 py-1.5 text-[11px] font-bold">
-            <Tv className="h-3.5 w-3.5 text-[#CCFF00]" aria-hidden />
-            <span>
-              VMIX:{" "}
-              <span className={vmixStatus === "ONLINE" ? "text-[#CCFF00]" : "text-amber-500"}>
-                {vmixStatus}
-              </span>
-            </span>
-          </div>
-          <div className="flex items-center gap-2 rounded-lg border border-neutral-800 bg-black/40 px-3 py-1.5 text-[11px] font-bold">
-            <Layers className="h-3.5 w-3.5 text-neutral-400" aria-hidden />
-            <span>
-              DISPATCHER:{" "}
-              <span className={isDispatching ? "font-bold text-amber-500" : "text-[#CCFF00]"}>
-                {isDispatching ? "SYNCING" : "READY"}
-              </span>
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => void refresh()}
-            className="flex items-center gap-1 rounded-lg border border-neutral-800 bg-black/40 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-400 transition hover:text-white"
-          >
-            <RefreshCw className="h-3 w-3" aria-hidden />
-            Sync
-          </button>
-        </div>
-
-        <nav className="flex items-center gap-2 border-neutral-800 md:border-l md:pl-4">
-          <Link
-            href="/enterprise/liv-golf/streaming/setup"
-            className="px-2 py-1 text-[11px] font-bold text-neutral-400 transition-colors hover:text-white"
-          >
-            Stream Setup
-          </Link>
-          <span className="font-mono text-neutral-700">|</span>
-          <Link
-            href="/enterprise/liv-golf/live"
-            className="flex items-center gap-1 rounded px-2 py-1 text-[11px] font-bold text-neutral-400 transition-colors hover:text-white"
-          >
-            <Eye className="h-3 w-3" aria-hidden />
-            Fan Viewer
-          </Link>
-          <span className="font-mono text-neutral-700">|</span>
-          <div className="flex items-center gap-1 rounded border border-neutral-700 bg-neutral-800 px-2 py-1 font-mono text-[10px] text-neutral-300">
-            <ShieldCheck className="h-3 w-3 text-[#CCFF00]" aria-hidden />
-            Studio-Operator Session
-          </div>
-        </nav>
-      </header>
+      <StudioHeader
+        activeBetId={currentSession?.active_bet_id ?? null}
+        isOrphanSession={isOrphanSession}
+        streamLabel={streamLabel}
+        streamIsLive={Boolean(streamStatus?.isLive)}
+        vmixStatus={vmixStatus}
+        isDispatching={isDispatching}
+        onResetRefresh={refresh}
+        onSync={() => void refresh()}
+      />
 
       {(error || graphicsError) && (
         <p className="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">

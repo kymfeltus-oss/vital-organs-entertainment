@@ -6,6 +6,7 @@ import { resolvePrimaryRtmpIngestUrl } from "@/lib/owner/broadcast-engine-fallba
 import { resolvePrimaryFeedUrl, seedFeedUrlsFromEnv } from "@/lib/owner/feed-urls";
 import { isFatalHlsProbeFailure, probeHlsManifest } from "@/lib/owner/hls-readiness";
 import { loadOwnerStreamState, updateOwnerStreamState } from "@/lib/owner/load-owner-state";
+import { preserveOfflinePlaybackFields } from "@/lib/owner/offline-stream-state";
 import {
   buildPreflightChecks,
   preflightHasBlockers,
@@ -18,6 +19,11 @@ import { buildRtmpIngestUrlFromEncoderConfig } from "@/lib/owner/resolve-show-en
 import { resolveIvsChannelConfig } from "@/lib/owner/resolve-ivs-config";
 import { loadShowSetupState, type ShowSetupState } from "@/lib/owner/show-setup-state";
 import { armMonetizationReminderScheduleOnGoLive } from "@/lib/owner/graphics-monetization-reminders";
+import {
+  clearActiveLiveKitEgressSessions,
+  mergeLivLiveKitBroadcastPreset,
+  readLivLiveKitBroadcastState,
+} from "@/lib/enterprise/liv-golf/livekit-server";
 import { LIVE_STREAM_STATE_ID } from "@/lib/live/types";
 
 export { parseGoLiveBody, parseSwitchFeedBody };
@@ -215,10 +221,43 @@ export async function runOwnerEndBroadcast(
     return { ok: false, snapshot, message: "Broadcast is not live." };
   }
 
+  const livekitState = readLivLiveKitBroadcastState(row.audio_master_presets);
+  const isLiveKitBroadcast =
+    row.publish_mode === "livekit_hls" ||
+    Boolean(livekitState?.egressId) ||
+    Boolean(row.publisher_session_id);
+
+  let remainingActiveEgressIds: string[] = [];
+
+  if (isLiveKitBroadcast) {
+    try {
+      const cleared = await clearActiveLiveKitEgressSessions({
+        roomName: livekitState?.roomName ?? row.publisher_channel ?? undefined,
+        knownEgressIds: [
+          livekitState?.egressId,
+          row.publisher_session_id,
+        ].filter((id): id is string => typeof id === "string" && id.trim() !== ""),
+        waitForSlots: false,
+      });
+      remainingActiveEgressIds = cleared.remainingActiveIds;
+    } catch (error) {
+      console.warn("[runOwnerEndBroadcast] LiveKit egress stop failed:", error);
+    }
+  }
+
+  const presets = isLiveKitBroadcast
+    ? mergeLivLiveKitBroadcastPreset(row.audio_master_presets, {
+        egressId: null,
+        endedAt: new Date().toISOString(),
+      })
+    : row.audio_master_presets;
+
   await updateOwnerStreamState(admin, {
     publish_status: "ending",
     updated_by: updatedBy,
   });
+
+  const offlinePlayback = preserveOfflinePlaybackFields(row);
 
   const offlineUpdate = await updateOwnerStreamState(admin, {
     is_live: false,
@@ -228,9 +267,14 @@ export async function runOwnerEndBroadcast(
     publish_mode: "none",
     playback_status: "ready",
     playback_error_message: null,
-    publish_error_message: null,
+    publish_error_message:
+      remainingActiveEgressIds.length > 0
+        ? `LiveKit is still releasing egress slot(s): ${remainingActiveEgressIds.join(", ")}. Wait ~30s before Open to Fans.`
+        : null,
+    ...offlinePlayback,
     publisher_session_id: null,
     publisher_channel: null,
+    audio_master_presets: presets,
     updated_by: updatedBy,
   });
 
@@ -246,7 +290,12 @@ export async function runOwnerEndBroadcast(
   await emitStreamStateSync();
 
   const { snapshot } = await buildOwnerBroadcastSnapshot();
-  return { ok: true, snapshot, message: "Broadcast ended." };
+  const message =
+    remainingActiveEgressIds.length > 0
+      ? `Broadcast ended. LiveKit is still releasing ${remainingActiveEgressIds.length} egress slot(s) — wait ~30s before Open to Fans.`
+      : "Broadcast ended.";
+
+  return { ok: true, snapshot, message };
 }
 
 /** Restream-only — feed switching removed (mixer failover can return later). */

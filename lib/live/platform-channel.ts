@@ -35,14 +35,39 @@ let platformSupabase: SupabaseClient | null = null;
 let isSubscribed = false;
 let subscriberCount = 0;
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let reconnectAttempt = 0;
 let syncChain: Promise<void> = Promise.resolve();
 const listeners = new Map<string, PlatformListenerApply>();
+
+const SYNC_DEBOUNCE_MS = 50;
+const MAX_RECONNECT_DELAY_MS = 30_000;
 
 function clearSyncTimer(): void {
   if (syncTimer !== null) {
     clearTimeout(syncTimer);
     syncTimer = null;
   }
+}
+
+function clearReconnectTimer(): void {
+  if (reconnectTimer !== null) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+}
+
+function schedulePlatformChannelReconnect(): void {
+  if (subscriberCount === 0 || listeners.size === 0) return;
+
+  clearReconnectTimer();
+  const delay = Math.min(1000 * 2 ** reconnectAttempt, MAX_RECONNECT_DELAY_MS);
+  reconnectAttempt += 1;
+
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    schedulePlatformChannelSync();
+  }, delay);
 }
 
 function applyAllListeners(channel: RealtimeChannel): RealtimeChannel {
@@ -73,10 +98,13 @@ async function syncPlatformChannel(): Promise<void> {
   channel = applyAllListeners(channel);
   channel.subscribe((status, err) => {
     emitPlatformChannelStatus(status, err);
-    if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-      isSubscribed = false;
-    } else if (status === "SUBSCRIBED") {
+    if (status === "SUBSCRIBED") {
       isSubscribed = true;
+      reconnectAttempt = 0;
+      clearReconnectTimer();
+    } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+      isSubscribed = false;
+      schedulePlatformChannelReconnect();
     }
   });
   platformChannel = channel;
@@ -93,14 +121,17 @@ function schedulePlatformChannelSync(): void {
         console.error("Platform channel sync failed:", error);
         isSubscribed = false;
         platformChannel = null;
+        schedulePlatformChannelReconnect();
       });
-  }, 0);
+  }, SYNC_DEBOUNCE_MS);
 }
 
 /** Shared live-room Realtime channel — one WebSocket for stream sync and seed wallets. */
 export function acquirePlatformChannel(supabase: SupabaseClient): RealtimeChannel {
   if (platformChannel && platformSupabase !== supabase) {
     clearSyncTimer();
+    clearReconnectTimer();
+    reconnectAttempt = 0;
     listeners.clear();
     void removeChannelsByName(platformSupabase, LIVE_ROOM_PLATFORM_CHANNEL);
     platformChannel = null;
@@ -141,6 +172,8 @@ export function releasePlatformChannel(supabase: SupabaseClient): void {
 
   if (subscriberCount === 0) {
     clearSyncTimer();
+    clearReconnectTimer();
+    reconnectAttempt = 0;
     listeners.clear();
     syncChain = syncChain
       .then(async () => {

@@ -41,6 +41,7 @@ export type LiveMicroBetsSession = {
   phase: MicroBetSessionPhase;
   endsAt: string | null;
   resolvedWinner: "Yes" | "No" | null;
+  winningSelectionId: string | null;
 };
 
 export type LivMicroBetLaunchPayload = {
@@ -179,6 +180,7 @@ export function mapLiveMicroBetsSessionRow(row: {
   phase?: string | null;
   ends_at?: string | null;
   resolved_winner?: string | null;
+  winning_selection_id?: string | null;
 }): LiveMicroBetsSession {
   const phaseRaw = row.phase?.trim();
   const phase: MicroBetSessionPhase =
@@ -193,6 +195,8 @@ export function mapLiveMicroBetsSessionRow(row: {
   const resolvedWinner: "Yes" | "No" | null =
     resolvedRaw === "Yes" || resolvedRaw === "No" ? resolvedRaw : null;
 
+  const winningSelectionRaw = row.winning_selection_id?.trim();
+
   return {
     id: row.id,
     activeBetId: row.active_bet_id,
@@ -203,5 +207,6 @@ export function mapLiveMicroBetsSessionRow(row: {
     phase,
     endsAt: row.ends_at ?? null,
     resolvedWinner,
+    winningSelectionId: winningSelectionRaw && winningSelectionRaw.length > 0 ? winningSelectionRaw : null,
   };
 }

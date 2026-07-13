@@ -114,7 +114,9 @@ export async function loadLivStreamSetupStatus(): Promise<LivStreamSetupStatus> 
   const eventPhase = snapshot?.eventPhase.phase ?? "idle";
   const targetDateTime = showSetup.targetDateTime ?? null;
   const publishStatus = snapshot?.publish.status ?? "offline";
-  const isLive = Boolean(snapshot?.publish.status === "publishing");
+  const isLive =
+    Boolean(snapshot?.publish.status === "publishing") ||
+    snapshot?.eventPhase.phase === "live";
 
   const readiness = buildLivStreamReadiness({
     eventPhase,
@@ -126,6 +128,9 @@ export async function loadLivStreamSetupStatus(): Promise<LivStreamSetupStatus> 
     encoderConfigured,
     isLive,
   });
+
+  const canMountPlayer =
+    isLive || eventPhase === "live" || publishStatus === "publishing" || publishStatus === "starting";
 
   const sanitizedMetadata = sanitizeLivShowSetupFields({
     showTitle: showSetup.showTitle,
@@ -150,7 +155,7 @@ export async function loadLivStreamSetupStatus(): Promise<LivStreamSetupStatus> 
     goLiveBlockers: readiness.goLiveBlockers,
     ingestWarnings: readiness.ingestWarnings,
     canAttemptGoLive: readiness.canAttemptGoLive,
-    canMountPlayer: readiness.canMountPlayer,
+    canMountPlayer,
     preflight: snapshot?.preflight ?? [],
     capturedAt: snapshot?.capturedAt ?? new Date().toISOString(),
   };

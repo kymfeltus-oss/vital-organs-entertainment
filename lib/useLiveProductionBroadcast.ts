@@ -17,6 +17,7 @@ type SessionApiResponse = {
   phase?: MicroBetSessionPhase;
   endsAt?: string | null;
   resolvedWinner?: "Yes" | "No" | null;
+  winningSelectionId?: string | null;
 };
 
 type MicroBetsApiResponse = {
@@ -28,6 +29,7 @@ type MicroBetsApiResponse = {
   phase?: MicroBetSessionPhase;
   endsAt?: string | null;
   resolvedWinner?: "Yes" | "No" | null;
+  winningSelectionId?: string | null;
   error?: string;
 };
 
@@ -89,6 +91,7 @@ function mapSessionResponse(
     phase: data.phase ?? "OPEN",
     endsAt: data.endsAt ?? null,
     resolvedWinner: data.resolvedWinner ?? null,
+    winningSelectionId: data.winningSelectionId ?? null,
   };
 }
 
@@ -166,6 +169,9 @@ export function useLiveProductionBroadcast() {
   const patchSession = useCallback(async (body: Record<string, unknown>) => {
     setState((prev) => ({ ...prev, isDispatching: true, error: null }));
 
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 30_000);
+
     try {
       const response = await fetch(
         `${getClientAppUrl()}/api/enterprise/liv-golf/micro-bets/session`,
@@ -174,6 +180,7 @@ export function useLiveProductionBroadcast() {
           credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
+          signal: controller.signal,
         },
       );
 
@@ -182,7 +189,6 @@ export function useLiveProductionBroadcast() {
       if (!response.ok || !payload.success) {
         setState((prev) => ({
           ...prev,
-          isDispatching: false,
           error: payload.error ?? `Micro-bet dispatch failed (${response.status}).`,
         }));
         return false;
@@ -192,18 +198,26 @@ export function useLiveProductionBroadcast() {
       setState((prev) => ({
         ...prev,
         session,
-        isDispatching: false,
         error: null,
       }));
 
       return true;
     } catch (error) {
+      const message =
+        error instanceof Error && error.name === "AbortError"
+          ? "Micro-bet dispatch timed out after 30 seconds."
+          : error instanceof Error
+            ? error.message
+            : "Micro-bet dispatch failed.";
+
       setState((prev) => ({
         ...prev,
-        isDispatching: false,
-        error: error instanceof Error ? error.message : "Micro-bet dispatch failed.",
+        error: message,
       }));
       return false;
+    } finally {
+      window.clearTimeout(timeoutId);
+      setState((prev) => ({ ...prev, isDispatching: false }));
     }
   }, []);
 
@@ -217,7 +231,14 @@ export function useLiveProductionBroadcast() {
     [dispatchSession],
   );
 
-  const terminateMicroBet = useCallback(async () => dispatchSession(null), [dispatchSession]);
+  const terminateMicroBet = useCallback(
+    async () =>
+      patchSession({
+        activeBetId: null,
+        phase: "OPEN",
+      }),
+    [patchSession],
+  );
 
   const lockMicroBet = useCallback(async () => patchSession({ phase: "LOCKED" }), [patchSession]);
 
@@ -250,22 +271,22 @@ export function useLiveProductionBroadcast() {
       if (!response.ok || !payload.success) {
         setState((prev) => ({
           ...prev,
-          isDispatching: false,
           error: payload.error ?? "Unable to resolve micro-bet to YES.",
         }));
         return false;
       }
 
       await refresh();
-      setState((prev) => ({ ...prev, isDispatching: false, error: null }));
+      setState((prev) => ({ ...prev, error: null }));
       return true;
     } catch (error) {
       setState((prev) => ({
         ...prev,
-        isDispatching: false,
         error: error instanceof Error ? error.message : "Unable to resolve micro-bet.",
       }));
       return false;
+    } finally {
+      setState((prev) => ({ ...prev, isDispatching: false }));
     }
   }, [refresh, state.session?.activeBetId]);
 

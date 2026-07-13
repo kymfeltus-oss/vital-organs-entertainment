@@ -3,6 +3,7 @@ import { consumeRateLimit, resolveClientIp } from "@/lib/auth/rate-limit";
 import { isValidHlsUrl } from "@/lib/live/hls";
 import { emitStreamStateSync } from "@/lib/owner/broadcast-stream-sync";
 import { loadOwnerStreamState, updateOwnerStreamState } from "@/lib/owner/load-owner-state";
+import { preserveOfflinePlaybackFields } from "@/lib/owner/offline-stream-state";
 import { armMonetizationReminderScheduleOnGoLive } from "@/lib/owner/graphics-monetization-reminders";
 import { LiveKitConfigError } from "@/lib/enterprise/liv-golf/livekit-config";
 import {
@@ -77,13 +78,34 @@ export async function POST(request: Request) {
 
   try {
     const { row } = await loadOwnerStreamState(admin);
-    if (row?.is_live) {
+    const existingManifest = row?.primary_playback_url ?? row?.playback_url ?? "";
+
+    if (row?.is_live && isValidHlsUrl(existingManifest)) {
       await emitStreamStateSync();
       return ownerJsonResponse({
         success: true,
         alreadyLive: true,
-        hlsManifestUrl: row.primary_playback_url ?? row.playback_url,
+        hlsManifestUrl: existingManifest,
         message: "Broadcast is already live on the platform.",
+      });
+    }
+
+    if (row?.is_live) {
+      const offlinePlayback = preserveOfflinePlaybackFields(row);
+
+      await updateOwnerStreamState(admin, {
+        is_live: false,
+        attendee_ui_phase: "ended",
+        active_source: "offline",
+        publish_status: "offline",
+        publish_mode: "none",
+        publish_error_message: null,
+        playback_status: "ready",
+        playback_error_message: null,
+        ...offlinePlayback,
+        publisher_session_id: null,
+        publisher_channel: null,
+        updated_by: auth.email,
       });
     }
 

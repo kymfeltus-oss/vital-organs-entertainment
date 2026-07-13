@@ -16,6 +16,7 @@ export type LiveMicroBetsSessionRow = {
   phase?: string | null;
   ends_at?: string | null;
   resolved_winner?: string | null;
+  winning_selection_id?: string | null;
 };
 
 const TABLE = "live_micro_bets_session";
@@ -24,7 +25,7 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const SESSION_COLUMNS =
-  "id, active_bet_id, clear_overlays, launched_at, updated_at, updated_by, phase, ends_at, resolved_winner";
+  "id, active_bet_id, clear_overlays, launched_at, updated_at, updated_by, phase, ends_at, resolved_winner, winning_selection_id";
 
 function resolveSessionUpdatedBy(userId: string): string | null {
   return UUID_PATTERN.test(userId) ? userId : null;
@@ -55,7 +56,7 @@ function isMissingSessionTable(error: unknown): boolean {
 
 function isMissingPhaseColumn(error: unknown): boolean {
   const message = errorMessage(error);
-  return /phase|ends_at|resolved_winner|column/i.test(message);
+  return /phase|ends_at|resolved_winner|winning_selection_id|column/i.test(message);
 }
 
 function resolveLaunchEndsAt(activeBetId: string, launchedAt: string): string | null {
@@ -116,6 +117,7 @@ export async function upsertLiveMicroBetsSession(input: {
   phase?: MicroBetSessionPhase;
   endsAt?: string | null;
   resolvedWinner?: "Yes" | "No" | null;
+  winningSelectionId?: string | null;
   preserveLaunchedAt?: boolean;
   launchedAt?: string | null;
 }): Promise<LiveMicroBetsSession> {
@@ -142,6 +144,12 @@ export async function upsertLiveMicroBetsSession(input: {
         ? resolveLaunchEndsAt(input.activeBetId!, launchedAt)
         : null;
 
+  const shouldPreserveResolution =
+    input.resolvedWinner === undefined || input.winningSelectionId === undefined;
+  const shouldPreserveEndsAt = input.endsAt === undefined && !isLaunch;
+  const existingSession =
+    shouldPreserveResolution || shouldPreserveEndsAt ? await loadLiveMicroBetsSession() : null;
+
   const row = {
     id: SESSION_ID,
     active_bet_id: input.activeBetId,
@@ -149,9 +157,17 @@ export async function upsertLiveMicroBetsSession(input: {
     launched_at: launchedAt ?? (isLaunch ? now : null),
     updated_at: now,
     updated_by: resolveSessionUpdatedBy(input.updatedBy),
-    phase: input.phase ?? (isLaunch ? "OPEN" : "RESOLVED"),
-    ends_at: isLaunch ? endsAt : null,
-    resolved_winner: input.resolvedWinner ?? null,
+    phase: input.phase ?? "OPEN",
+    ends_at:
+      input.endsAt !== undefined ? input.endsAt : isLaunch ? endsAt : (existingSession?.endsAt ?? null),
+    resolved_winner:
+      input.resolvedWinner !== undefined
+        ? input.resolvedWinner
+        : (existingSession?.resolvedWinner ?? null),
+    winning_selection_id:
+      input.winningSelectionId !== undefined
+        ? input.winningSelectionId
+        : (existingSession?.winningSelectionId ?? null),
   };
 
   const { data, error } = await admin

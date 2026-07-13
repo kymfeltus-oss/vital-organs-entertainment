@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { consumeRateLimit, resolveClientIp } from "@/lib/auth/rate-limit";
 import { emitStreamStateSync } from "@/lib/owner/broadcast-stream-sync";
 import { loadOwnerStreamState, updateOwnerStreamState } from "@/lib/owner/load-owner-state";
+import { preserveOfflinePlaybackFields } from "@/lib/owner/offline-stream-state";
 import { LiveKitConfigError } from "@/lib/enterprise/liv-golf/livekit-config";
 import {
   clearActiveLiveKitEgressSessions,
@@ -68,6 +69,7 @@ export async function POST(request: Request) {
     const cleared = await clearActiveLiveKitEgressSessions({
       roomName: livekitState?.roomName ?? row?.publisher_channel ?? undefined,
       knownEgressIds: egressId ? [egressId] : [],
+      waitForSlots: false,
     });
 
     const egressAlreadyTerminal = false;
@@ -76,6 +78,8 @@ export async function POST(request: Request) {
       egressId: null,
       endedAt: new Date().toISOString(),
     });
+
+    const offlinePlayback = preserveOfflinePlaybackFields(row);
 
     const offlineUpdate = await updateOwnerStreamState(admin, {
       is_live: false,
@@ -90,8 +94,7 @@ export async function POST(request: Request) {
           : null,
       playback_status: "ready",
       playback_error_message: null,
-      primary_playback_url: null,
-      playback_url: null,
+      ...offlinePlayback,
       publisher_session_id: null,
       publisher_channel: null,
       audio_master_presets: presets,

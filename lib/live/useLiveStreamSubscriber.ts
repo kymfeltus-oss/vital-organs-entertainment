@@ -38,6 +38,7 @@ type MicroBetsApiResponse = {
   phase?: LiveMicroBetsSession["phase"];
   endsAt?: string | null;
   resolvedWinner?: "Yes" | "No" | null;
+  winningSelectionId?: string | null;
   error?: string;
 };
 
@@ -152,6 +153,7 @@ function buildSessionData(data: MicroBetsApiResponse): LiveMicroBetsSession | nu
     phase: data.phase ?? "OPEN",
     ends_at: data.endsAt ?? null,
     resolved_winner: data.resolvedWinner ?? null,
+    winning_selection_id: data.winningSelectionId ?? null,
   });
 }
 
@@ -301,6 +303,9 @@ export function useLiveStreamSubscriber(roomId: string): LiveStreamSubscriberSta
                   resolvedWinner: launch.is_active
                     ? null
                     : launch.resolved_winner ?? prev.sessionData.resolvedWinner,
+                  winningSelectionId: launch.is_active
+                    ? null
+                    : prev.sessionData.winningSelectionId,
                 }
               : {
                   id: "current",
@@ -312,6 +317,7 @@ export function useLiveStreamSubscriber(roomId: string): LiveStreamSubscriberSta
                   phase: launch.phase ?? "OPEN",
                   endsAt: launch.ends_at ?? null,
                   resolvedWinner: launch.resolved_winner ?? null,
+                  winningSelectionId: null,
                 },
             isLoading: false,
             error:

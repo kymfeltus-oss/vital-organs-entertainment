@@ -33,17 +33,24 @@ function parseResolvedWinner(value: unknown): "Yes" | "No" | null {
 }
 
 async function broadcastSession(session: Awaited<ReturnType<typeof upsertLiveMicroBetsSession>>) {
-  await emitLivMicroBetLaunch({
-    roomId: LIV_GOLF_TOUR_MAIN_ROOM,
-    activeBetId: session.activeBetId,
-    is_active: Boolean(session.activeBetId),
-    clearOverlays: session.clearOverlays,
-    launchedAt: session.launchedAt,
-    at: session.updatedAt,
-    phase: session.phase,
-    ends_at: session.endsAt,
-    resolved_winner: session.resolvedWinner ?? undefined,
-  });
+  try {
+    await emitLivMicroBetLaunch({
+      roomId: LIV_GOLF_TOUR_MAIN_ROOM,
+      activeBetId: session.activeBetId,
+      is_active: Boolean(session.activeBetId),
+      clearOverlays: session.clearOverlays,
+      launchedAt: session.launchedAt,
+      at: session.updatedAt,
+      phase: session.phase,
+      ends_at: session.endsAt,
+      resolved_winner: session.resolvedWinner ?? undefined,
+    });
+  } catch (broadcastError) {
+    console.error(
+      "[enterprise/liv-golf/micro-bets/session] realtime broadcast failed; session row was saved:",
+      broadcastError,
+    );
+  }
 }
 
 export async function PATCH(request: Request) {
@@ -88,13 +95,16 @@ export async function PATCH(request: Request) {
 
     const session = await upsertLiveMicroBetsSession({
       activeBetId: isPhaseOnly ? current!.activeBetId : nextActiveBetId,
-      clearOverlays: isLaunch ? true : (current?.clearOverlays ?? false),
+      clearOverlays: isLaunch ? true : isTerminate ? false : (current?.clearOverlays ?? false),
       updatedBy: auth.userId,
-      phase: requestedPhase ?? (isLaunch ? "OPEN" : isTerminate ? "RESOLVED" : current?.phase ?? "OPEN"),
+      phase:
+        requestedPhase ??
+        (isLaunch ? "OPEN" : isTerminate ? "OPEN" : current?.phase ?? "OPEN"),
       endsAt: isPhaseOnly ? current?.endsAt ?? null : isTerminate ? null : undefined,
-      resolvedWinner: requestedWinner ?? (isTerminate ? current?.resolvedWinner ?? null : current?.resolvedWinner ?? null),
+      resolvedWinner: isTerminate || isLaunch ? null : requestedWinner ?? undefined,
+      winningSelectionId: isTerminate || isLaunch ? null : undefined,
       preserveLaunchedAt: isPhaseOnly,
-      launchedAt: isPhaseOnly ? current?.launchedAt ?? null : undefined,
+      launchedAt: isPhaseOnly ? current?.launchedAt ?? null : isTerminate ? null : undefined,
     });
 
     await broadcastSession(session);
@@ -111,6 +121,7 @@ export async function PATCH(request: Request) {
       phase: session.phase,
       endsAt: session.endsAt,
       resolvedWinner: session.resolvedWinner,
+      winningSelectionId: session.winningSelectionId,
     });
   } catch (error) {
     if (error instanceof LiveMicroBetsSessionUnavailableError) {

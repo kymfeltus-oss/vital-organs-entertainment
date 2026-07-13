@@ -4,6 +4,7 @@ import {
   LiveMicroBetsSessionUnavailableError,
   upsertLiveMicroBetsSession,
 } from "@/lib/enterprise/liv-golf/live-micro-bets-session";
+import { resolveWinningSelectionId } from "@/lib/enterprise/liv-golf/winning-selection";
 import { findLivMicroBet } from "@/lib/liv-micro-bets";
 import { LIV_GOLF_TOUR_MAIN_ROOM } from "@/lib/live/types";
 import { requireOwnerUser } from "@/lib/owner/auth";
@@ -60,9 +61,14 @@ export async function POST(request: Request) {
 
     if (rpcError) throw rpcError;
 
+    const winningSelectionId = resolveWinningSelectionId(betId, winningOption);
+
     const session = await upsertLiveMicroBetsSession({
       activeBetId: null,
       clearOverlays: false,
+      phase: "RESOLVED",
+      resolvedWinner: winningOption,
+      winningSelectionId,
       updatedBy: auth.userId,
     });
 

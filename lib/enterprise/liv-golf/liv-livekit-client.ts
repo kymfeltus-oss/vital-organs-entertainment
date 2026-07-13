@@ -90,7 +90,17 @@ export async function stopLivLiveKitEgress(egressId?: string | null): Promise<Li
     },
   );
 
-  return (await response.json()) as LivLiveKitEgressStopResponse;
+  const payload = (await response.json()) as LivLiveKitEgressStopResponse;
+
+  if (!response.ok || !payload.success) {
+    return {
+      ...payload,
+      success: false,
+      error: payload.error ?? `LiveKit egress stop failed (HTTP ${response.status}).`,
+    };
+  }
+
+  return payload;
 }
 
 export async function fetchLivLiveKitEgressReadiness(): Promise<LivLiveKitEgressReadinessResponse> {

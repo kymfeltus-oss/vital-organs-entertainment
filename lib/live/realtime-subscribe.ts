@@ -47,12 +47,27 @@ export function logRealtimeSubscribeStatus(
   status: string,
   err?: Error,
 ): void {
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV !== "development") return;
+
+  if (status === "SUBSCRIBED") {
     console.log(`${REALTIME_LOG_PREFIX} ${channelLabel} status: ${status}`);
-    if (err) {
-      console.error(`${REALTIME_LOG_PREFIX} ${channelLabel} error:`, err);
-    }
+    return;
   }
+
+  if (err) {
+    const isTransportFailure = /transport failure|websocket|connection/i.test(err.message);
+    if (isTransportFailure) {
+      console.warn(
+        `${REALTIME_LOG_PREFIX} ${channelLabel} transport disconnected (${err.message}). Reconnecting with polling fallback.`,
+      );
+      return;
+    }
+
+    console.error(`${REALTIME_LOG_PREFIX} ${channelLabel} error:`, err);
+    return;
+  }
+
+  console.log(`${REALTIME_LOG_PREFIX} ${channelLabel} status: ${status}`);
 }
 
 function channelTopic(channelName: string): string {
