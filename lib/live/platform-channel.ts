@@ -175,12 +175,17 @@ export function releasePlatformChannel(supabase: SupabaseClient): void {
     clearReconnectTimer();
     reconnectAttempt = 0;
     listeners.clear();
+
+    // Sync: detach handles immediately so Strict Mode / HMR remounts never reuse stale state.
+    isSubscribed = false;
+    const supabaseToRelease = platformSupabase ?? supabase;
+    platformChannel = null;
+    platformSupabase = null;
+
+    // Async: unbind socket(s) on the serialized sync queue.
     syncChain = syncChain
       .then(async () => {
-        await removeChannelsByName(supabase, LIVE_ROOM_PLATFORM_CHANNEL);
-        platformChannel = null;
-        platformSupabase = null;
-        isSubscribed = false;
+        await removeChannelsByName(supabaseToRelease, LIVE_ROOM_PLATFORM_CHANNEL);
       })
       .catch((error) => {
         console.error("Platform channel release failed:", error);
