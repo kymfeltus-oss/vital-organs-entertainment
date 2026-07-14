@@ -175,7 +175,7 @@ export default function LivStreamSetup() {
 
               <label className="block">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
-                  Target Air Time
+                  Target Air Time <span className="font-normal normal-case text-zinc-600">(optional)</span>
                 </span>
                 <div className="mt-1 flex flex-col gap-2 sm:flex-row">
                   <input
@@ -184,7 +184,7 @@ export default function LivStreamSetup() {
                     onChange={(event) => setTargetDateTime(event.target.value)}
                     disabled={isLoading}
                     className={`w-full rounded-lg border bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[#CCFF00]/50 ${
-                      scheduleEnded ? "border-amber-500/50" : "border-white/10"
+                      scheduleEnded ? "border-amber-500/30" : "border-white/10"
                     }`}
                   />
                   <button
@@ -197,13 +197,14 @@ export default function LivStreamSetup() {
                   </button>
                 </div>
                 {scheduleEnded ? (
-                  <p className="mt-1 text-xs text-amber-300">
-                    Schedule is in the past — set a future air time, then click Save Event Metadata to
-                    clear the ended phase blocker.
+                  <p className="mt-1 text-xs text-amber-300/90">
+                    Schedule is in the past — optional for go-live. Master Go-Live refreshes the
+                    broadcast window automatically, or set a future air time for countdown headers.
                   </p>
                 ) : (
                   <p className="mt-1 text-xs liv-text-secondary">
-                    Saves to PostgreSQL and updates fan viewer + command center headers instantly.
+                    Optional fan countdown anchor. Saves to PostgreSQL and updates command center
+                    headers when set.
                   </p>
                 )}
               </label>

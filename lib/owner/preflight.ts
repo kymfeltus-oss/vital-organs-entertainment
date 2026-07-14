@@ -84,7 +84,7 @@ function scheduleCheck(input: BuildPreflightInput): PreflightCheck {
       id: "schedule_active",
       label: "Countdown schedule active",
       status: "warn",
-      detail: "No active countdown config — event phase may be idle.",
+      detail: "No active countdown config — optional; master go-live does not require a scheduled air time.",
     };
   }
 
@@ -92,8 +92,8 @@ function scheduleCheck(input: BuildPreflightInput): PreflightCheck {
     return {
       id: "schedule_times",
       label: "Go-live and end times configured",
-      status: "fail",
-      detail: "Start and end times are required.",
+      status: "warn",
+      detail: "No scheduled air window — optional; set Target Air Time in Stream Setup for fan countdown headers.",
     };
   }
 

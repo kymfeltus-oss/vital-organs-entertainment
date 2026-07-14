@@ -51,9 +51,10 @@ function buildLivStreamReadiness(input: {
   const goLiveBlockers: string[] = [];
   const ingestWarnings: string[] = [];
 
+  // Schedule / eventPhase is informational only — operators may go live without a future air time.
   if (isScheduleEnded(input.targetDateTime, input.eventPhase)) {
-    goLiveBlockers.push(
-      "Event schedule has ended. Update targetDateTime to a future window in Stream Setup.",
+    ingestWarnings.push(
+      "Event schedule is in the past or marked ended. Master go-live will refresh the broadcast window automatically.",
     );
   }
 

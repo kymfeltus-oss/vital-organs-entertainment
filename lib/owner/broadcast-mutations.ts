@@ -13,7 +13,14 @@ import {
   parseGoLiveBody,
   parseSwitchFeedBody,
 } from "@/lib/owner/preflight";
-import { loadActiveCountdownConfig } from "@/lib/live/fetch-countdown-config";
+import {
+  validateCountdownConfigInput,
+  type EventCountdownConfig,
+} from "@/lib/live/countdown-config";
+import {
+  loadActiveCountdownConfig,
+  saveCountdownConfig,
+} from "@/lib/live/fetch-countdown-config";
 import { mapEventPhaseState } from "@/lib/owner/map-event-phase";
 import { buildRtmpIngestUrlFromEncoderConfig } from "@/lib/owner/resolve-show-encoder-config";
 import { resolveIvsChannelConfig } from "@/lib/owner/resolve-ivs-config";
@@ -27,6 +34,47 @@ import {
 import { LIVE_STREAM_STATE_ID } from "@/lib/live/types";
 
 export { parseGoLiveBody, parseSwitchFeedBody };
+
+const GO_LIVE_DEFAULT_WINDOW_MS = 2 * 60 * 60 * 1000;
+
+/** Open or extend the countdown window when an expired schedule would leave eventPhase stuck on ended. */
+async function ensureCountdownWindowOpenForGoLive(
+  countdownConfig: EventCountdownConfig,
+): Promise<EventCountdownConfig> {
+  const nowMs = Date.now();
+  const endMs = countdownConfig.end_time ? new Date(countdownConfig.end_time).getTime() : Number.NaN;
+  const scheduleExpired =
+    !countdownConfig.is_active ||
+    !countdownConfig.end_time?.trim() ||
+    Number.isNaN(endMs) ||
+    endMs <= nowMs;
+
+  if (!scheduleExpired) {
+    return countdownConfig;
+  }
+
+  const startIso = new Date(nowMs).toISOString();
+  const endIso = new Date(nowMs + GO_LIVE_DEFAULT_WINDOW_MS).toISOString();
+  const candidate: EventCountdownConfig = {
+    ...countdownConfig,
+    is_active: true,
+    start_time: startIso,
+    end_time: endIso,
+  };
+
+  const validation = validateCountdownConfigInput(candidate);
+  if (!validation.ok) {
+    console.warn("[owner/go-live] countdown window refresh skipped:", validation.error);
+    return countdownConfig;
+  }
+
+  try {
+    return await saveCountdownConfig(validation.config as EventCountdownConfig);
+  } catch (error) {
+    console.warn("[owner/go-live] countdown window refresh failed:", error);
+    return countdownConfig;
+  }
+}
 
 export async function runOwnerPreflight(
   mode?: PublishMode,
@@ -57,7 +105,8 @@ export async function runOwnerGoLive(
     return { ok: false, snapshot, message: "Broadcast is already live." };
   }
 
-  const countdownConfig = await loadActiveCountdownConfig();
+  let countdownConfig = await loadActiveCountdownConfig();
+  countdownConfig = await ensureCountdownWindowOpenForGoLive(countdownConfig);
   const eventPhase = mapEventPhaseState(countdownConfig);
   const showSetup = await loadShowSetupState();
   const feedOptions = { showSetupHlsUrl: showSetup.attendeePlaybackHlsUrl };

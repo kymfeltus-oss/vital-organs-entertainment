@@ -34,15 +34,16 @@ export default function LivStreamStandbyOverlay({
   if (!status || status.canMountPlayer) return null;
 
   const headline =
-    status.scheduleEnded
-      ? "Tournament window has ended"
-      : !status.hlsUrl || !status.manifestReachable
-        ? "Live feed not available"
-        : "Broadcast standby";
+    !status.hlsUrl || !status.manifestReachable
+      ? "Live feed not available"
+      : "Broadcast standby";
 
   const detail =
     syncError ??
     status.goLiveBlockers[0] ??
+    (status.scheduleEnded
+      ? "Production has not gone live yet. Schedule is optional — use Stream Setup to launch when ingest is ready."
+      : null) ??
     status.readinessBlockers[0] ??
     "Production has not gone live on platform yet.";
 
