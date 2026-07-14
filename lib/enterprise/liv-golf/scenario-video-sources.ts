@@ -39,9 +39,21 @@ export function resolveScenarioVideoSource(
   return SCENARIO_VIDEO_SOURCES[marketId] ?? null;
 }
 
+/** Prefer public/videos/*.mp4 when present; player falls back to CDN on 404 or decode error. Set NEXT_PUBLIC_LIV_SCENARIO_VIDEO_LOCAL=0 to force CDN only. */
+export function shouldUseLocalScenarioVideo(): boolean {
+  const preference = process.env.NEXT_PUBLIC_LIV_SCENARIO_VIDEO_LOCAL?.trim().toLowerCase();
+  if (preference === "0" || preference === "false" || preference === "no") {
+    return false;
+  }
+  return true;
+}
+
 export function getScenarioPlaybackUrl(
   source: ScenarioVideoSource,
   useFallback: boolean,
 ): string {
-  return useFallback ? source.fallbackMp4 : source.localMp4;
+  if (useFallback || !shouldUseLocalScenarioVideo()) {
+    return source.fallbackMp4;
+  }
+  return source.localMp4;
 }

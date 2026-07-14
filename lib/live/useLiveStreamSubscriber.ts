@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getClientAppUrl } from "@/lib/client-api";
+import { normalizeVideoAssetPath } from "@/lib/enterprise/liv-golf/simulation-video-path";
 import {
   findLivMicroBet,
   mapLiveMicroBetsSessionRow,
@@ -52,6 +53,7 @@ type SubscriberData = {
   updatedAt: string | null;
   resolvedWinner: "Yes" | "No" | null;
   sessionData: LiveMicroBetsSession | null;
+  videoAssetPath: string | null;
   isLoading: boolean;
   error: string | null;
 };
@@ -117,6 +119,8 @@ function parseLaunchPayload(raw: unknown, expectedRoomId: string): LivMicroBetLa
     ends_at = raw.ends_at;
   }
 
+  const video_asset_path = normalizeVideoAssetPath(raw.video_asset_path) ?? undefined;
+
   return {
     roomId,
     activeBetId,
@@ -127,6 +131,7 @@ function parseLaunchPayload(raw: unknown, expectedRoomId: string): LivMicroBetLa
     resolved_winner,
     phase,
     ends_at,
+    video_asset_path,
   };
 }
 
@@ -173,6 +178,7 @@ function mapApiResponse(data: MicroBetsApiResponse): SubscriberData {
     updatedAt: data.updatedAt ?? null,
     resolvedWinner: data.resolvedWinner ?? null,
     sessionData: buildSessionData(data),
+    videoAssetPath: null,
     isLoading: false,
     error: null,
   };
@@ -188,6 +194,7 @@ const INITIAL_DATA: SubscriberData = {
   updatedAt: null,
   resolvedWinner: null,
   sessionData: null,
+  videoAssetPath: null,
   isLoading: true,
   error: null,
 };
@@ -217,10 +224,17 @@ export function useLiveStreamSubscriber(roomId: string): LiveStreamSubscriberSta
       }
 
       const apiData = (await response.json()) as MicroBetsApiResponse;
-      setData({
-        ...mapApiResponse(apiData),
-        isLoading: false,
-        error: null,
+      setData((prev) => {
+        const nextActiveBetId = apiData.activeBetId ?? null;
+        const keepVideoPath =
+          nextActiveBetId !== null && nextActiveBetId === prev.activeBetId;
+
+        return {
+          ...mapApiResponse(apiData),
+          videoAssetPath: keepVideoPath ? prev.videoAssetPath : null,
+          isLoading: false,
+          error: null,
+        };
       });
     } catch (refreshError) {
       setData((prev) => ({
@@ -288,6 +302,9 @@ export function useLiveStreamSubscriber(roomId: string): LiveStreamSubscriberSta
             clearOverlays: launch.clearOverlays,
             launchedAt: launch.launchedAt,
             updatedAt: launch.at,
+            videoAssetPath:
+              launch.video_asset_path ??
+              (launch.activeBetId === prev.activeBetId ? prev.videoAssetPath : null),
             resolvedWinner: launch.is_active
               ? null
               : launch.resolved_winner ?? prev.resolvedWinner,

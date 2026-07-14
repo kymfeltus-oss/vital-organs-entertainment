@@ -41,9 +41,6 @@ export default function LivStreamStandbyOverlay({
   const detail =
     syncError ??
     status.goLiveBlockers[0] ??
-    (status.scheduleEnded
-      ? "Production has not gone live yet. Schedule is optional — use Stream Setup to launch when ingest is ready."
-      : null) ??
     status.readinessBlockers[0] ??
     "Production has not gone live on platform yet.";
 

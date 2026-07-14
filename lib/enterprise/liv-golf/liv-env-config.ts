@@ -3,6 +3,15 @@ import { isValidHlsUrl } from "@/lib/live/hls";
 
 const DEFAULT_LIV_STREAM_SETUP_PROBE_TIMEOUT_MS = 1_200;
 
+/**
+ * When false (default), LIV stream setup / master go-live ignore targetDateTime and
+ * eventPhase ended state. Set LIV_REQUIRE_SCHEDULE_GATE=1 to re-enable schedule gates.
+ */
+export function isLivScheduleGateEnabled(): boolean {
+  const raw = process.env.LIV_REQUIRE_SCHEDULE_GATE?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
+}
+
 /** Read LIV stream-setup manifest probe timeout from env (ms). */
 export function resolveLivStreamSetupProbeTimeoutMs(): number {
   const raw = process.env.LIV_STREAM_SETUP_PROBE_TIMEOUT_MS?.trim();

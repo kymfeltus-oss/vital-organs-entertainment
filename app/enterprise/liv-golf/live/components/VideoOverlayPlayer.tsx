@@ -6,12 +6,15 @@ import {
   getScenarioPlaybackUrl,
   resolveScenarioVideoSource,
 } from "@/lib/enterprise/liv-golf/scenario-video-sources";
+import { normalizeVideoAssetPath } from "@/lib/enterprise/liv-golf/simulation-video-path";
 import { isShowcaseBetId } from "@/lib/enterprise/liv-golf/legendary-showcase-scenarios";
 import { LiveBetNotificationPill } from "@/app/enterprise/liv-golf/components/micro-betting-overlay/LiveBetNotificationPill";
 import type { OverlayServerSession } from "@/app/enterprise/liv-golf/components/micro-betting-overlay/types";
 
 export type VideoOverlayPlayerProps = {
   serverSession: OverlayServerSession | null;
+  /** Ephemeral clip path from realtime launch broadcast (no DB column). */
+  videoAssetPath?: string | null;
   children: React.ReactNode;
   /** Rendered when no showcase scenario is driving the video lane (live HLS path). */
   liveStream?: React.ReactNode;
@@ -25,6 +28,7 @@ function sessionMarketId(session: OverlayServerSession | null): string | null {
 
 export const VideoOverlayPlayer = React.memo(function VideoOverlayPlayer({
   serverSession,
+  videoAssetPath = null,
   children,
   liveStream,
   className = "",
@@ -38,24 +42,48 @@ export const VideoOverlayPlayer = React.memo(function VideoOverlayPlayer({
   const lastMarketIdRef = useRef<string | null>(null);
 
   const marketId = sessionMarketId(serverSession);
+  const dynamicVideoPath = useMemo(
+    () => normalizeVideoAssetPath(videoAssetPath),
+    [videoAssetPath],
+  );
   const scenarioSource = useMemo(() => resolveScenarioVideoSource(marketId), [marketId]);
-  const isShowcaseFeed = Boolean(scenarioSource && isShowcaseBetId(marketId));
+  const isShowcaseFeed = Boolean(
+    dynamicVideoPath || (scenarioSource && isShowcaseBetId(marketId)),
+  );
 
   const videoSrc = useMemo(() => {
+    if (dynamicVideoPath) return dynamicVideoPath;
     if (!scenarioSource) return "";
     return getScenarioPlaybackUrl(scenarioSource, useFallbackSrc);
-  }, [scenarioSource, useFallbackSrc]);
+  }, [dynamicVideoPath, scenarioSource, useFallbackSrc]);
 
   useEffect(() => {
-    if (!isShowcaseFeed) {
-      setUseFallbackSrc(false);
-      setIsPlaying(true);
-      return;
-    }
+    if (!isShowcaseFeed) return;
+
+    const probeTarget = dynamicVideoPath ?? scenarioSource?.localMp4;
+    if (!probeTarget) return;
 
     setUseFallbackSrc(false);
     setIsPlaying(true);
-  }, [marketId, isShowcaseFeed]);
+
+    let cancelled = false;
+
+    void fetch(probeTarget, { method: "HEAD", cache: "no-store" })
+      .then((response) => {
+        if (!cancelled && !response.ok) {
+          setUseFallbackSrc(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setUseFallbackSrc(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [dynamicVideoPath, isShowcaseFeed, marketId, scenarioSource]);
 
   useEffect(() => {
     if (!videoRef.current || !videoSrc) return;
@@ -112,10 +140,11 @@ export const VideoOverlayPlayer = React.memo(function VideoOverlayPlayer({
   ]);
 
   const handleVideoError = useCallback(() => {
-    if (!useFallbackSrc) {
-      setUseFallbackSrc(true);
-    }
-  }, [useFallbackSrc]);
+    setUseFallbackSrc((current) => {
+      if (current) return current;
+      return true;
+    });
+  }, []);
 
   const togglePlay = useCallback(() => {
     if (!videoRef.current) return;
@@ -164,16 +193,17 @@ export const VideoOverlayPlayer = React.memo(function VideoOverlayPlayer({
           onActionClick={handlePillAction}
         />
 
-        {isShowcaseFeed && scenarioSource && videoSrc ? (
+        {isShowcaseFeed && videoSrc ? (
           <video
             ref={videoRef}
             key={videoSrc}
             src={videoSrc}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain object-center"
             autoPlay
             muted={isMuted}
             playsInline
             loop
+            preload="auto"
             onError={handleVideoError}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
@@ -233,7 +263,7 @@ export const VideoOverlayPlayer = React.memo(function VideoOverlayPlayer({
             <div className="hidden rounded border border-neutral-800 bg-black/40 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider sm:inline">
               Feed: {feedLabel} · {phaseLabel}
             </div>
-            {useFallbackSrc && isShowcaseFeed ? (
+            {useFallbackSrc && isShowcaseFeed && scenarioSource ? (
               <span className="hidden text-[9px] font-bold uppercase tracking-wider text-amber-400 sm:inline">
                 CDN fallback
               </span>

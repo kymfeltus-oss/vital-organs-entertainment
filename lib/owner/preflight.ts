@@ -8,6 +8,7 @@ import type {
   SwitchFeedRequestBody,
 } from "@/lib/owner/contracts";
 import { isFatalHlsProbeFailure, type HlsProbeResult } from "@/lib/owner/hls-readiness";
+import { isLivScheduleGateEnabled } from "@/lib/enterprise/liv-golf/liv-env-config";
 import type { OwnerStreamStateRow } from "@/lib/owner/load-owner-state";
 
 export const BROADCAST_HARDWARE_DEFAULTS = {
@@ -77,6 +78,15 @@ function restreamFeedCheck(feed: FeedState | undefined): PreflightCheck[] {
 }
 
 function scheduleCheck(input: BuildPreflightInput): PreflightCheck {
+  if (!isLivScheduleGateEnabled()) {
+    return {
+      id: "schedule_times",
+      label: "Go-live and end times configured",
+      status: "skipped",
+      detail: "Schedule gate disabled — master go-live does not require a future targetDateTime.",
+    };
+  }
+
   const { eventPhase, countdownConfig } = input;
 
   if (!countdownConfig.is_active) {

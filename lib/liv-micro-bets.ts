@@ -54,6 +54,8 @@ export type LivMicroBetLaunchPayload = {
   phase?: MicroBetSessionPhase;
   ends_at?: string | null;
   resolved_winner?: "Yes" | "No" | null;
+  /** Ephemeral showcase clip path — carried on realtime broadcast only (no DB column). */
+  video_asset_path?: string | null;
 };
 
 /** Production prop catalog — single source of truth for studio switcher + consumer APIs. */

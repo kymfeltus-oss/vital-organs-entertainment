@@ -8,7 +8,10 @@ import {
   type OddsFeedPayload,
   processOddsFeedPayload,
 } from "@/lib/enterprise/liv-golf/process-odds-feed";
+import { normalizeVideoAssetPath } from "@/lib/enterprise/liv-golf/simulation-video-path";
 import { verifySportradarWebhookSignature } from "@/lib/enterprise/liv-golf/verify-sportradar-signature";
+import { findLivMicroBet } from "@/lib/liv-micro-bets";
+import { resolveLivGolfRoomId } from "@/lib/live/liv-golf-room";
 
 export const dynamic = "force-dynamic";
 
@@ -68,58 +71,77 @@ export async function POST(request: Request) {
   }
 
   const lieType = feedData.shot_data?.lie?.trim().toLowerCase();
+  const playerName = feedData.player?.name?.trim();
+  const explicitBetId = typeof feedData.bet_id === "string" ? feedData.bet_id.trim() : "";
+  const videoAssetPath = normalizeVideoAssetPath(feedData.shot_data?.video_asset_path);
+  const roomId = resolveLivGolfRoomId(feedData.room_id);
   const isBunkerShot =
-    feedData.event_type === "SHOT_RECORDED" && lieType === "bunker" && feedData.player?.name?.trim();
+    feedData.event_type === "SHOT_RECORDED" && lieType === "bunker" && Boolean(playerName);
 
-  if (signatureResult.mode === "dev-bypass" && isBunkerShot) {
-    try {
-      const playerName = feedData.player!.name!.trim();
-      const holeNumber = feedData.shot_data?.hole_number;
-      const result = await processOddsFeedPayload(
-        {
-          event_type: "PLAYER_SHOT_SITUATION",
-          hole_context: {
-            hole_number: holeNumber,
-            associated_room_id: feedData.room_id,
-          },
-          event_details: {
-            lie_type: "bunker",
-            player_name: playerName,
-          },
-        },
-        "sportradar-dev-bypass",
-      );
+  if (signatureResult.mode === "dev-bypass" && feedData.event_type === "SHOT_RECORDED") {
+    const betIdOverride = explicitBetId || (isBunkerShot ? "tyrell-sand-save" : "");
 
-      if (result.status === "processed") {
+    if (betIdOverride && findLivMicroBet(betIdOverride)) {
+      try {
+        const holeNumber = feedData.shot_data?.hole_number;
+        const result = await processOddsFeedPayload(
+          {
+            event_type: "PLAYER_SHOT_SITUATION",
+            hole_context: {
+              hole_number: holeNumber,
+              associated_room_id: roomId,
+            },
+            event_details: {
+              lie_type: lieType || "bunker",
+              player_name: playerName ?? "",
+            },
+          },
+          "sportradar-dev-bypass",
+          {
+            betIdOverride,
+            videoAssetPath,
+            roomIdOverride: roomId,
+          },
+        );
+
+        if (result.status === "processed") {
+          return NextResponse.json({
+            success: true,
+            active_prop: result.auto_launched_bet,
+            mode: "dev-bypass",
+            ...result,
+          });
+        }
+
         return NextResponse.json({
           success: true,
-          active_prop: "tyrell-sand-save",
+          status: "Ignored event context parameters.",
+          message: result.message,
           mode: "dev-bypass",
-          ...result,
         });
-      }
+      } catch (error) {
+        if (error instanceof LiveMicroBetsSessionUnavailableError) {
+          return NextResponse.json(
+            {
+              error:
+                "Production micro-bet session table is unavailable. Apply migration 20260711161000_live_micro_bets_session.sql.",
+            },
+            { status: 503 },
+          );
+        }
 
-      return NextResponse.json({
-        success: true,
-        status: "Ignored event context parameters.",
-        message: result.message,
-        mode: "dev-bypass",
-      });
-    } catch (error) {
-      if (error instanceof LiveMicroBetsSessionUnavailableError) {
+        console.error("[enterprise/liv-golf/webhooks/odds-feed] dev bypass launch failed:", error);
         return NextResponse.json(
-          {
-            error:
-              "Production micro-bet session table is unavailable. Apply migration 20260711161000_live_micro_bets_session.sql.",
-          },
-          { status: 503 },
+          { error: error instanceof Error ? error.message : "Unable to launch dev bypass prop." },
+          { status: 500 },
         );
       }
+    }
 
-      console.error("[enterprise/liv-golf/webhooks/odds-feed] dev bypass launch failed:", error);
+    if (explicitBetId) {
       return NextResponse.json(
-        { error: error instanceof Error ? error.message : "Unable to launch dev bypass prop." },
-        { status: 500 },
+        { error: `Unknown bet_id "${explicitBetId}" — not in production catalog.` },
+        { status: 400 },
       );
     }
   }

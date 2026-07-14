@@ -3,6 +3,7 @@ import { LIV_STREAM_SETUP_PROBE_TIMEOUT_MS } from "@/lib/owner/hls-readiness";
 import { loadShowSetupState } from "@/lib/owner/show-setup-state";
 import type { PreflightCheck } from "@/lib/owner/contracts";
 import { sanitizeLivShowSetupFields } from "@/lib/enterprise/liv-golf/sanitize-liv-show-setup";
+import { isLivScheduleGateEnabled } from "@/lib/enterprise/liv-golf/liv-env-config";
 
 export type LivStreamSetupStatus = {
   isLive: boolean;
@@ -51,10 +52,12 @@ function buildLivStreamReadiness(input: {
   const goLiveBlockers: string[] = [];
   const ingestWarnings: string[] = [];
 
-  // Schedule / eventPhase is informational only — operators may go live without a future air time.
-  if (isScheduleEnded(input.targetDateTime, input.eventPhase)) {
-    ingestWarnings.push(
-      "Event schedule is in the past or marked ended. Master go-live will refresh the broadcast window automatically.",
+  if (
+    isLivScheduleGateEnabled() &&
+    isScheduleEnded(input.targetDateTime, input.eventPhase)
+  ) {
+    goLiveBlockers.push(
+      "Event schedule has ended. Update targetDateTime to a future window in Stream Setup.",
     );
   }
 
@@ -150,7 +153,9 @@ export async function loadLivStreamSetupStatus(): Promise<LivStreamSetupStatus> 
     showTitle: sanitizedMetadata.showTitle ?? "",
     eventLocation: sanitizedMetadata.eventLocation ?? "",
     targetDateTime,
-    scheduleEnded: isScheduleEnded(targetDateTime, eventPhase),
+    scheduleEnded: isLivScheduleGateEnabled()
+      ? isScheduleEnded(targetDateTime, eventPhase)
+      : false,
     encoderConfigured,
     readinessBlockers: readiness.readinessBlockers,
     goLiveBlockers: readiness.goLiveBlockers,

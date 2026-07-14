@@ -3,8 +3,9 @@ import {
   LiveMicroBetsSessionUnavailableError,
   upsertLiveMicroBetsSession,
 } from "@/lib/enterprise/liv-golf/live-micro-bets-session";
+import { normalizeVideoAssetPath } from "@/lib/enterprise/liv-golf/simulation-video-path";
 import { findLivMicroBet } from "@/lib/liv-micro-bets";
-import { LIV_GOLF_TOUR_MAIN_ROOM } from "@/lib/live/types";
+import { resolveLivGolfRoomId } from "@/lib/live/liv-golf-room";
 
 export type OddsFeedHoleContext = {
   hole_number?: number;
@@ -30,15 +31,21 @@ export type OddsFeedProcessResult =
       auto_launched_bet: string;
       room_id: string;
       suggested_payout?: number;
+      video_asset_path?: string | null;
     }
   | {
       status: "ignored";
       message: string;
     };
 
+export type OddsFeedLaunchOptions = {
+  betIdOverride?: string;
+  videoAssetPath?: string | null;
+  roomIdOverride?: string;
+};
+
 function resolveRoomId(payload: OddsFeedPayload): string {
-  const roomId = payload.hole_context?.associated_room_id?.trim();
-  return roomId && roomId.length > 0 ? roomId : LIV_GOLF_TOUR_MAIN_ROOM;
+  return resolveLivGolfRoomId(payload.hole_context?.associated_room_id);
 }
 
 /** Map live data feed situations to catalog bet template IDs. */
@@ -84,8 +91,9 @@ export function computeSuggestedPayout(
 export async function processOddsFeedPayload(
   payload: OddsFeedPayload,
   updatedBy = "",
+  launchOptions?: OddsFeedLaunchOptions,
 ): Promise<OddsFeedProcessResult> {
-  const catalogBetId = resolveCatalogBetForOddsEvent(payload);
+  const catalogBetId = launchOptions?.betIdOverride ?? resolveCatalogBetForOddsEvent(payload);
 
   if (!catalogBetId) {
     return {
@@ -102,7 +110,8 @@ export async function processOddsFeedPayload(
     };
   }
 
-  const roomId = resolveRoomId(payload);
+  const roomId = launchOptions?.roomIdOverride ?? resolveRoomId(payload);
+  const videoAssetPath = normalizeVideoAssetPath(launchOptions?.videoAssetPath);
   const suggestedPayout = computeSuggestedPayout(
     bet.stake,
     payload.event_details?.live_scramble_odds_multiplier,
@@ -122,6 +131,9 @@ export async function processOddsFeedPayload(
     clearOverlays: session.clearOverlays,
     launchedAt: session.launchedAt,
     at: session.updatedAt,
+    phase: session.phase,
+    ends_at: session.endsAt,
+    video_asset_path: videoAssetPath,
   });
 
   return {
@@ -129,5 +141,6 @@ export async function processOddsFeedPayload(
     auto_launched_bet: bet.id,
     room_id: roomId,
     suggested_payout: suggestedPayout,
+    video_asset_path: videoAssetPath,
   };
 }

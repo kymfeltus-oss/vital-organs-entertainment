@@ -62,14 +62,6 @@ export default function LivStreamReadinessBanner({
           Manifest probe: {status.manifestProbeDetail}
         </p>
       ) : null}
-
-      {status.scheduleEnded ? (
-        <p className="mt-2 font-mono text-[10px] text-amber-200/80">
-          Schedule note: past air time or eventPhase {status.eventPhase}
-          {status.targetDateTime ? ` · targetDateTime: ${status.targetDateTime}` : ""} — does not
-          block go-live.
-        </p>
-      ) : null}
     </aside>
   );
 }

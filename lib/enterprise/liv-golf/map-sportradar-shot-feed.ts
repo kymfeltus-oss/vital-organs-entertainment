@@ -4,6 +4,8 @@ import { LIV_GOLF_TOUR_MAIN_ROOM } from "@/lib/live/types";
 export type SportradarShotFeedPayload = {
   event_type?: string;
   room_id?: string;
+  bet_id?: string;
+  question?: string;
   player?: {
     name?: string;
     id?: string;
@@ -12,6 +14,7 @@ export type SportradarShotFeedPayload = {
     lie?: string;
     distance_remaining_yards?: number;
     hole_number?: number;
+    video_asset_path?: string;
   };
 };
 

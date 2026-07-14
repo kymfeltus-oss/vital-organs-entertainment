@@ -38,6 +38,7 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
     isActive,
     clearOverlays,
     resolvedWinner,
+    videoAssetPath,
     refresh: refreshSession,
   } = useLiveStreamSubscriber(roomId);
 
@@ -164,7 +165,11 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
         </header>
 
         <div className="w-full max-w-6xl overflow-visible md:overflow-hidden">
-          <VideoOverlayPlayer serverSession={serverSession} liveStream={liveStreamSlot}>
+          <VideoOverlayPlayer
+            serverSession={serverSession}
+            videoAssetPath={videoAssetPath}
+            liveStream={liveStreamSlot}
+          >
             <LIVBettingOverlay
               className="h-full"
               roomId={roomId}

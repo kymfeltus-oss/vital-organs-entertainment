@@ -50,8 +50,6 @@ export default function LivStreamSetup() {
     canAttemptGoLive,
   } = useLivStreamSetup();
 
-  const scheduleEnded = streamReadiness?.scheduleEnded ?? snapshot?.eventPhase.phase === "ended";
-
   const scheduledAirTimeLabel =
     targetDateTime.trim() ||
     (streamReadiness?.targetDateTime
@@ -183,9 +181,7 @@ export default function LivStreamSetup() {
                     value={targetDateTime}
                     onChange={(event) => setTargetDateTime(event.target.value)}
                     disabled={isLoading}
-                    className={`w-full rounded-lg border bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[#CCFF00]/50 ${
-                      scheduleEnded ? "border-amber-500/30" : "border-white/10"
-                    }`}
+                    className="w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[#CCFF00]/50"
                   />
                   <button
                     type="button"
@@ -196,17 +192,9 @@ export default function LivStreamSetup() {
                     +1 Hour
                   </button>
                 </div>
-                {scheduleEnded ? (
-                  <p className="mt-1 text-xs text-amber-300/90">
-                    Schedule is in the past — optional for go-live. Master Go-Live refreshes the
-                    broadcast window automatically, or set a future air time for countdown headers.
-                  </p>
-                ) : (
-                  <p className="mt-1 text-xs liv-text-secondary">
-                    Optional fan countdown anchor. Saves to PostgreSQL and updates command center
-                    headers when set.
-                  </p>
-                )}
+                <p className="mt-1 text-xs liv-text-secondary">
+                  Optional fan countdown anchor. Not required for master go-live.
+                </p>
               </label>
 
               <button

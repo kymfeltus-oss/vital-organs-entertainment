@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
   Lock,
@@ -21,8 +21,16 @@ import { useLiveProductionBroadcast } from "@/lib/useLiveProductionBroadcast";
 import type { OwnerGraphicsPreset } from "@/lib/owner/graphics-data-plane";
 import { StudioSimulationDeck } from "./StudioSimulationDeck";
 import StudioHeader from "./StudioHeader";
+import LivStudioSimulationDeck from "./LivStudioSimulationDeck";
 
-export default function StudioBetControllerPage() {
+type StudioBetControllerPageProps = {
+  /** Optional ingestion switcher — defaults to the 3-button live transmission deck. */
+  ingestionSwitcher?: ReactNode;
+};
+
+export default function StudioBetControllerPage({
+  ingestionSwitcher,
+}: StudioBetControllerPageProps = {}) {
   const {
     currentSession,
     isDispatching,
@@ -369,8 +377,13 @@ export default function StudioBetControllerPage() {
       ) : null}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* SECTION 2: IN-STREAM MICRO-BETS DISPATCH PANEL */}
-        <main className="flex flex-col rounded-3xl border border-neutral-800 bg-neutral-900 p-5 shadow-2xl lg:col-span-2">
+        {/* SECTION 1: INGESTION SWITCHER + DISPATCH HUB */}
+        <main className="flex flex-col gap-6 lg:col-span-2">
+          {ingestionSwitcher ?? (
+            <LivStudioSimulationDeck onDispatchComplete={() => void refresh()} />
+          )}
+
+          <div className="flex flex-col rounded-3xl border border-neutral-800 bg-neutral-900 p-5 shadow-2xl">
           <div className="mb-4 flex items-center justify-between border-b border-neutral-800 pb-3">
             <div>
               <h2 className="text-sm font-black uppercase tracking-wider text-neutral-200">
@@ -414,6 +427,7 @@ export default function StudioBetControllerPage() {
               </div>
             </div>
           )}
+          </div>
         </main>
 
         {/* SECTION 3: SIMULATOR + RISK + GRAPHICS */}
@@ -422,7 +436,7 @@ export default function StudioBetControllerPage() {
             roomId={LIV_GOLF_TOUR_MAIN_ROOM}
             currentSession={currentSession}
             isDispatching={isDispatching}
-            onLaunch={simulationLaunch}
+            onSessionRefresh={refresh}
             onLock={simulationLock}
             onResolveYes={simulationResolve}
             onReset={simulationReset}
