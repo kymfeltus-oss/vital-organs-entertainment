@@ -11,10 +11,9 @@ import { useLiveStreamGraphics } from "@/lib/features/live/useLiveStreamGraphics
 import { useLiveStreamSubscriber } from "@/lib/live/useLiveStreamSubscriber";
 import { useLiveSeedWallet } from "@/lib/useLiveSeedWallet";
 import { useWalletStore } from "@/lib/store/useWalletStore";
-import FanBetPanel from "./FanBetPanel";
+import FanLiveBettingPanel from "./FanLiveBettingPanel";
 import LivGeoComplianceBanner from "./LivGeoComplianceBanner";
 import LivStreamStandbyOverlay from "./LivStreamStandbyOverlay";
-import { LIVBettingOverlay } from "./micro-betting-overlay";
 import { buildOverlayServerSession, toOverlaySessionRow } from "./micro-betting-overlay/session-utils";
 import { VideoOverlayPlayer } from "../live/components/VideoOverlayPlayer";
 
@@ -66,7 +65,6 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
 
   const initializeBalance = useWalletStore((state) => state.initializeBalance);
   const setWalletLoading = useWalletStore((state) => state.setWalletLoading);
-  const tokenBalance = useWalletStore((state) => state.tokenBalance);
 
   useEffect(() => {
     setWalletLoading(isLoading);
@@ -95,7 +93,7 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
     await refreshSession();
   }, [refresh, refreshSession]);
 
-  const showBetPanel = isPanelOpen && geo.status === "eligible" && activeBet;
+  const sidebarActiveBet = isPanelOpen && activeBet ? activeBet : null;
   const showGeoBanner =
     isPanelOpen &&
     (geo.status === "locating" ||
@@ -153,9 +151,9 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
   );
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-neutral-950 p-6 font-sans text-white antialiased">
-      <div className="w-full max-w-6xl space-y-4">
-        <header className="space-y-1 text-center sm:text-left">
+    <div className="min-h-screen bg-black p-6 font-sans text-white antialiased">
+      <div className="mx-auto w-full max-w-7xl space-y-4">
+        <header className="space-y-1 text-center lg:text-left">
           <p className="font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-[#CCFF00]">
             LIV Golf Digital Stream
           </p>
@@ -164,36 +162,28 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
           </h1>
         </header>
 
-        <div className="w-full max-w-6xl overflow-visible md:overflow-hidden">
-          <VideoOverlayPlayer
-            serverSession={serverSession}
-            videoAssetPath={videoAssetPath}
-            liveStream={liveStreamSlot}
-          >
-            <LIVBettingOverlay
-              className="h-full"
-              roomId={roomId}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/5 bg-zinc-950 lg:col-span-2">
+            <VideoOverlayPlayer
               serverSession={serverSession}
-              geoSample={geo.sample}
-              geoAttestationToken={geo.attestationToken}
-              onWagerSuccess={handleWagerSuccess}
-            />
-          </VideoOverlayPlayer>
-        </div>
+              videoAssetPath={videoAssetPath ?? activeBet?.video_asset_path ?? null}
+              liveStream={liveStreamSlot}
+              className="h-full rounded-2xl border-0"
+            >
+              {null}
+            </VideoOverlayPlayer>
+          </div>
 
-        {showBetPanel ? (
-          <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-[#161616]">
-            <FanBetPanel
-              activeBet={activeBet}
-              tokenBalance={tokenBalance}
-              isWalletLoading={isLoading}
+          <div className="min-h-[420px] w-full lg:min-h-0">
+            <FanLiveBettingPanel
+              activeBet={sidebarActiveBet}
               geoAttestationToken={geo.attestationToken}
               geoSample={geo.sample}
               onBetSuccess={handleWagerSuccess}
-              compact
+              className="h-full min-h-[420px]"
             />
           </div>
-        ) : null}
+        </div>
 
         {showGeoBanner ? (
           <LivGeoComplianceBanner
@@ -212,7 +202,7 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
           />
         ) : null}
 
-        <footer className="text-center text-[10px] text-white/40 sm:text-left">
+        <footer className="text-center text-[10px] text-white/40 lg:text-left">
           <Link href={buySeedsHref} className="text-[#CCFF00] hover:underline">
             Buy LIV Fan Tokens
           </Link>
