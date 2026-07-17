@@ -1,14 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { getClientAppUrl } from "@/lib/client-api";
+import {
+  computeSecondsRemaining,
+  LIV_MICRO_BET_WINDOW_SECONDS,
+} from "@/app/enterprise/liv-golf/components/micro-betting-overlay/session-utils";
+import type { MicroBetSessionPhase } from "@/app/enterprise/liv-golf/components/micro-betting-overlay/types";
 import { requestLiveSeedWalletRefresh } from "@/lib/live/seed-wallet-events";
 import type { LiveMicroBetPayload } from "@/lib/live/types";
 import { useWalletStore } from "@/lib/store/useWalletStore";
 
 export type FanLiveBettingPanelProps = {
   activeBet: LiveMicroBetPayload | null;
+  sessionPhase?: MicroBetSessionPhase;
+  endsAt?: string | null;
+  windowSeconds?: number;
   geoAttestationToken?: string | null;
   geoSample?: { lat: number; lng: number } | null;
   onBetSuccess?: () => Promise<void>;
@@ -17,6 +25,9 @@ export type FanLiveBettingPanelProps = {
 
 export default function FanLiveBettingPanel({
   activeBet,
+  sessionPhase = "OPEN",
+  endsAt = null,
+  windowSeconds = LIV_MICRO_BET_WINDOW_SECONDS,
   geoAttestationToken = null,
   geoSample = null,
   onBetSuccess,
@@ -26,6 +37,8 @@ export default function FanLiveBettingPanel({
   const [selectedOption, setSelectedOption] = useState<"Yes" | "No" | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [txMessage, setTxMessage] = useState<string | null>(null);
+  const [secondsRemaining, setSecondsRemaining] = useState(windowSeconds);
+  const [clockMs, setClockMs] = useState(() => Date.now());
 
   const activeBetId = activeBet?.bet_id ?? null;
   const questionText = activeBet?.question ?? null;
@@ -34,13 +47,52 @@ export default function FanLiveBettingPanel({
   const multiplier =
     stakeAmount > 0 ? (payoutAmount / stakeAmount).toFixed(1) : "2.0";
 
+  const serverSecondsRemaining = useMemo(
+    () => (endsAt ? computeSecondsRemaining(endsAt, clockMs) : null),
+    [clockMs, endsAt],
+  );
+
+  const isServerLocked =
+    sessionPhase === "LOCKED" ||
+    sessionPhase === "RESOLVED" ||
+    (serverSecondsRemaining !== null && serverSecondsRemaining <= 0);
+
+  const isLocked = !activeBetId || isServerLocked || secondsRemaining <= 0;
+
   useEffect(() => {
     setSelectedOption(null);
     setTxMessage(null);
-  }, [activeBetId]);
+    setSecondsRemaining(windowSeconds);
+  }, [activeBetId, windowSeconds]);
+
+  useEffect(() => {
+    if (!activeBetId || endsAt) return undefined;
+
+    const countdownTimer = window.setInterval(() => {
+      setSecondsRemaining((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+
+    return () => window.clearInterval(countdownTimer);
+  }, [activeBetId, endsAt]);
+
+  useEffect(() => {
+    if (!activeBetId || !endsAt || sessionPhase === "RESOLVED") return undefined;
+
+    const tick = () => setClockMs(Date.now());
+    const intervalId = window.setInterval(tick, 250);
+    return () => window.clearInterval(intervalId);
+  }, [activeBetId, endsAt, sessionPhase]);
+
+  useEffect(() => {
+    if (serverSecondsRemaining === null) return;
+    setSecondsRemaining(serverSecondsRemaining);
+  }, [serverSecondsRemaining]);
+
+  const displaySeconds =
+    serverSecondsRemaining !== null ? serverSecondsRemaining : secondsRemaining;
 
   const handlePlaceWager = async () => {
-    if (!activeBetId || !selectedOption) return;
+    if (!activeBetId || !selectedOption || isLocked) return;
 
     if (tokenBalance < stakeAmount) {
       setTxMessage("Insufficient fan token balance for this entry.");
@@ -135,17 +187,31 @@ export default function FanLiveBettingPanel({
       ) : (
         <div className="flex flex-1 flex-col justify-between pt-4">
           <div className="rounded-xl border border-white/5 bg-zinc-900/50 p-4">
-            <div className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 animate-ping rounded-full bg-[#CCFF00]" />
-              <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#CCFF00]">
-                Live Multiplier ({multiplier}x)
-              </span>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5">
+                {!isLocked ? (
+                  <span className="h-1.5 w-1.5 animate-ping rounded-full bg-[#CCFF00]" />
+                ) : null}
+                <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#CCFF00]">
+                  {isLocked ? "Market Locked" : "Live Window"}
+                </span>
+              </div>
+              {activeBetId && !isLocked ? (
+                <span
+                  className={`font-mono text-xs font-bold ${
+                    displaySeconds <= 5 ? "animate-pulse text-red-500" : "text-white"
+                  }`}
+                >
+                  {displaySeconds}s left
+                </span>
+              ) : null}
             </div>
             <p className="mt-2 text-xs font-bold leading-relaxed text-white">
               {questionText ?? "Will the athlete secure the play?"}
             </p>
             <p className="mt-2 font-mono text-[10px] text-zinc-500">
-              Stake {stakeAmount.toLocaleString()} · To win {payoutAmount.toLocaleString()}
+              Live Multiplier ({multiplier}x) · Stake {stakeAmount.toLocaleString()} · To win{" "}
+              {payoutAmount.toLocaleString()}
             </p>
           </div>
 
@@ -155,7 +221,7 @@ export default function FanLiveBettingPanel({
                 key={option}
                 type="button"
                 onClick={() => setSelectedOption(option)}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isLocked}
                 className={`rounded-xl border py-3 font-mono text-xs font-bold uppercase tracking-wider transition-all ${
                   selectedOption === option
                     ? option === "Yes"
@@ -177,11 +243,15 @@ export default function FanLiveBettingPanel({
 
           <button
             type="button"
-            disabled={isSubmitting || !selectedOption}
+            disabled={isSubmitting || !selectedOption || isLocked}
             onClick={() => void handlePlaceWager()}
             className="mt-4 w-full rounded-xl bg-[#CCFF00] py-4 font-mono text-[10px] font-black uppercase tracking-widest text-black shadow-md transition-all hover:bg-[#bce600] disabled:bg-zinc-800 disabled:text-zinc-600"
           >
-            {isSubmitting ? "Processing Ticket..." : "Submit Token Ticket"}
+            {isSubmitting
+              ? "Processing Ticket..."
+              : isLocked
+                ? "Betting Window Closed"
+                : "Submit Token Ticket"}
           </button>
 
           <p className="mt-2 text-center text-[10px] text-zinc-600">

@@ -2,18 +2,13 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo } from "react";
-import AttendeeStreamPlayer from "@/components/features/live/AttendeeStreamPlayer";
-import LiveStreamGraphicsOverlay from "@/components/features/live/LiveStreamGraphicsOverlay";
-import { useLivStreamStatus } from "@/app/enterprise/liv-golf/hooks/useLivStreamStatus";
-import { isLivStreamLiveStatus } from "@/lib/enterprise/liv-golf/liv-stream-status-patches";
 import { useLivGeoEligibility } from "@/lib/enterprise/liv-golf/useLivGeoEligibility";
-import { useLiveStreamGraphics } from "@/lib/features/live/useLiveStreamGraphics";
+import { isShowcaseBetId } from "@/lib/enterprise/liv-golf/legendary-showcase-scenarios";
 import { useLiveStreamSubscriber } from "@/lib/live/useLiveStreamSubscriber";
 import { useLiveSeedWallet } from "@/lib/useLiveSeedWallet";
 import { useWalletStore } from "@/lib/store/useWalletStore";
 import FanLiveBettingPanel from "./FanLiveBettingPanel";
 import LivGeoComplianceBanner from "./LivGeoComplianceBanner";
-import LivStreamStandbyOverlay from "./LivStreamStandbyOverlay";
 import { buildOverlayServerSession, toOverlaySessionRow } from "./micro-betting-overlay/session-utils";
 import { VideoOverlayPlayer } from "../live/components/VideoOverlayPlayer";
 
@@ -24,14 +19,6 @@ type LIVViewerLayoutProps = {
 /** Live fan viewer — framed stream with floating micro-betting overlay. */
 export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
   const {
-    status: streamStatus,
-    isLoading: streamStatusLoading,
-    isStateSyncing,
-    isPlayerLive,
-    error: streamStatusError,
-  } = useLivStreamStatus({ mountPlayerDuringStateSync: true });
-
-  const {
     sessionData,
     activeBet,
     isActive,
@@ -40,8 +27,6 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
     videoAssetPath,
     refresh: refreshSession,
   } = useLiveStreamSubscriber(roomId);
-
-  const { activeGraphic } = useLiveStreamGraphics({ enabled: true });
 
   const isPanelOpen = Boolean(activeBet?.is_active);
   const geo = useLivGeoEligibility({ enabled: isPanelOpen });
@@ -109,46 +94,11 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
       ? "Confirming your coordinates against the active tournament corridor..."
       : "Prop wagering is not available in your region.");
 
-  const isLive = streamStatus?.isLive === true || isLivStreamLiveStatus(streamStatus);
-  const buySeedsHref = "/buy-seeds?return=%2Fenterprise%2Fliv-golf%2Flive";
-
-  const liveStreamSlot = (
-    <>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(204,255,0,0.06),transparent_45%)]" />
-      <div className="absolute inset-0">
-        <AttendeeStreamPlayer embedded enabled={isPlayerLive} showPaywall={false} />
-      </div>
-      <LivStreamStandbyOverlay
-        status={streamStatus}
-        isLoading={streamStatusLoading}
-        isStateSyncing={isStateSyncing}
-        syncError={streamStatusError}
-      />
-      {activeGraphic ? <LiveStreamGraphicsOverlay graphic={activeGraphic} /> : null}
-      {!isPlayerLive && !streamStatusLoading ? (
-        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-          <div className="text-center">
-            <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-neutral-500">
-              LIV Golf Digital Stream Feed
-            </span>
-            <h2 className="text-2xl font-black tracking-tight text-[#CCFF00]">
-              {isLive ? "Live Broadcast" : "Awaiting Stream"}
-            </h2>
-          </div>
-        </div>
-      ) : null}
-      <div className="pointer-events-none absolute left-4 top-4 z-20 flex items-center gap-2">
-        {isLive ? (
-          <>
-            <span className="liv-live-dot h-2 w-2 rounded-full bg-red-500" />
-            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-white">
-              Live Feed
-            </span>
-          </>
-        ) : null}
-      </div>
-    </>
+  const hasShowcaseVideo = Boolean(
+    videoAssetPath ||
+      (isPanelOpen && activeBet?.bet_id && isShowcaseBetId(activeBet.bet_id)),
   );
+  const buySeedsHref = "/buy-seeds?return=%2Fenterprise%2Fliv-golf%2Flive";
 
   return (
     <div className="min-h-screen bg-black p-6 font-sans text-white antialiased">
@@ -158,7 +108,7 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
             LIV Golf Digital Stream
           </p>
           <h1 className="text-xl font-black tracking-tight text-white sm:text-2xl">
-            {isLive ? "Live Broadcast" : "Fan Viewer"}
+            {hasShowcaseVideo ? "Live Simulation" : "Fan Viewer"}
           </h1>
         </header>
 
@@ -167,7 +117,6 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
             <VideoOverlayPlayer
               serverSession={serverSession}
               videoAssetPath={videoAssetPath ?? activeBet?.video_asset_path ?? null}
-              liveStream={liveStreamSlot}
               className="h-full rounded-2xl border-0"
             >
               {null}
@@ -177,6 +126,8 @@ export default function LIVViewerLayout({ roomId }: LIVViewerLayoutProps) {
           <div className="min-h-[420px] w-full lg:min-h-0">
             <FanLiveBettingPanel
               activeBet={sidebarActiveBet}
+              sessionPhase={sessionData?.phase}
+              endsAt={sessionData?.endsAt ?? null}
               geoAttestationToken={geo.attestationToken}
               geoSample={geo.sample}
               onBetSuccess={handleWagerSuccess}

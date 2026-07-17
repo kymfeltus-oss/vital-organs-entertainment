@@ -72,35 +72,70 @@ export function useLivStreamStatus(
   const [error, setError] = useState<string | null>(null);
 
   const inFlightRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const mountedRef = useRef(true);
   const refreshRef = useRef<(fromStateSync: boolean) => Promise<void>>(async () => {});
 
   const refresh = useCallback(
     async (fromStateSync = false) => {
-      if (!enabled) return;
+      if (!enabled || !mountedRef.current) return;
       if (inFlightRef.current) return;
+
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
 
       inFlightRef.current = true;
       if (fromStateSync) setIsStateSyncing(true);
 
       try {
-        const data = await fetchLivStreamStatus();
+        const data = await fetchLivStreamStatus(undefined, controller.signal);
+        if (!mountedRef.current || controller.signal.aborted) return;
+
         setStatus(data);
         setError(null);
       } catch (refreshError) {
+        if (!mountedRef.current || controller.signal.aborted) return;
+
         const message =
           refreshError instanceof Error ? refreshError.message : "Stream status refresh failed.";
-        console.error("[liv-golf/useLivStreamStatus] refresh failed:", message);
-        setError(message);
+        const isTransientNetwork =
+          refreshError instanceof TypeError &&
+          message.toLowerCase().includes("failed to fetch");
+
+        if (isTransientNetwork) {
+          setError(
+            "Stream status is temporarily unreachable. Confirm the dev server is running on this port.",
+          );
+          console.warn("[liv-golf/useLivStreamStatus] refresh failed:", message);
+        } else {
+          console.error("[liv-golf/useLivStreamStatus] refresh failed:", message);
+          setError(message);
+        }
       } finally {
+        if (abortRef.current === controller) {
+          abortRef.current = null;
+        }
         inFlightRef.current = false;
-        setIsLoading(false);
-        if (fromStateSync) setIsStateSyncing(false);
+        if (mountedRef.current) {
+          setIsLoading(false);
+          if (fromStateSync) setIsStateSyncing(false);
+        }
       }
     },
     [enabled],
   );
 
   refreshRef.current = refresh;
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      abortRef.current?.abort();
+      abortRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     if (!enabled) {
